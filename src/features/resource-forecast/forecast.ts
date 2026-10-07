@@ -134,18 +134,25 @@ export function outlook(state: ColonyState, now: Date): Outlook {
   return result;
 }
 
-/** Working workers split so that `foodWorkers` harvest food and the rest materials. */
-export function withFoodWorkers(state: ColonyState, foodWorkers: number): ColonyState {
-  const working = state.foodWorkers + state.materialWorkers;
-  const food = Math.min(working, Math.max(0, foodWorkers));
-  return { ...state, foodWorkers: food, materialWorkers: working - food };
+/** `total` workers (by default those working now) split: `foodWorkers` on food, the rest on materials. */
+export function withFoodWorkers(
+  state: ColonyState,
+  foodWorkers: number,
+  total = state.foodWorkers + state.materialWorkers,
+): ColonyState {
+  const food = Math.min(total, Math.max(0, foodWorkers));
+  return { ...state, foodWorkers: food, materialWorkers: total - food };
 }
 
 /** Fewest food workers (the rest on materials) for food never to run out, or null if none suffice. */
-export function balancedFoodWorkers(state: ColonyState, now: Date): number | null {
-  const starves = (foodWorkers: number) => outlook(withFoodWorkers(state, foodWorkers), now).famineAt !== null;
+export function balancedFoodWorkers(
+  state: ColonyState,
+  now: Date,
+  total = state.foodWorkers + state.materialWorkers,
+): number | null {
+  const starves = (foodWorkers: number) => outlook(withFoodWorkers(state, foodWorkers, total), now).famineAt !== null;
   let low = 0;
-  let high = state.foodWorkers + state.materialWorkers;
+  let high = total;
   if (starves(high)) return null;
   while (low < high) {
     const middle = Math.floor((low + high) / 2);
