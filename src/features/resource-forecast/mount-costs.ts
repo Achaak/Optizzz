@@ -1,4 +1,4 @@
-// The forecast line added to each cost table of construction.php and laboratoire.php.
+// The forecast line added to each row of construction.php and laboratoire.php, under its description.
 import { formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import type { WorkQueue } from "../work-queue/queue";
@@ -21,26 +21,17 @@ export function renderCostForecasts(
 ): void {
   for (const old of doc.querySelectorAll(`.${LINE_CLASS}`)) old.remove();
 
-  for (const { cost, locked, costTable } of readCosts(doc)) {
-    if (locked || !costTable) continue;
+  for (const { cost, locked, description } of readCosts(doc)) {
+    if (locked || !description) continue;
     const forecast = forecastFor(state, cost, queue, readAt);
-    const text = describe(forecast, now);
-    if (!text) continue;
+    const parts = [describe(forecast, now), describeMissing(state, cost, forecast)].filter(Boolean);
+    if (!parts[0]) continue;
 
-    const line = doc.createElement("tr");
+    const line = doc.createElement("div");
     line.className = LINE_CLASS;
     line.title = "Optizzz : estimation d'après tes récoltes, ta champignonnière et ton armée";
-    const cell = doc.createElement("td");
-    cell.colSpan = Math.max(1, costTable.rows[0]?.cells.length ?? 1);
-    cell.append(text);
-    const missing = describeMissing(state, cost, forecast);
-    if (missing) {
-      const detail = doc.createElement("small");
-      detail.append(missing);
-      cell.append(doc.createElement("br"), detail);
-    }
-    line.append(cell);
-    (costTable.tBodies[0] ?? costTable).append(line);
+    line.textContent = parts.join(" · ");
+    description.append(line);
   }
 }
 
@@ -57,7 +48,7 @@ function describe({ affordability, readyAt, blockedBy }: Forecast, now: Date): s
       if (!readyAt) return null;
       const remaining = Math.max(0, readyAt.getTime() - now.getTime());
       const when = `dans ${formatDuration(remaining)} (${formatEndTime(readyAt, now)})`;
-      return blockedBy === "queue" ? `${when} · file pleine` : when;
+      return blockedBy === "queue" ? `Disponible ${when} · file pleine` : `Disponible ${when}`;
     }
   }
 }
@@ -68,5 +59,5 @@ function describeMissing(state: ColonyState, cost: Cost, { affordability }: Fore
   const missing = (["food", "materials"] as const)
     .filter((resource) => cost[resource] > state[resource])
     .map((resource) => `${formatNumber(Math.ceil(cost[resource] - state[resource]))} ${RESOURCE_NAMES[resource]}`);
-  return missing.length ? `Manque ${missing.join(", ")}` : null;
+  return missing.length ? `manque ${missing.join(", ")}` : null;
 }

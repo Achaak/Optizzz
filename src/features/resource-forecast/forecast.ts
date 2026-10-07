@@ -134,6 +134,11 @@ export function outlook(state: ColonyState, now: Date): Outlook {
   return result;
 }
 
+/** The colony with `foodWorkers` harvesting food and `materialWorkers` harvesting materials. */
+export function withSplit(state: ColonyState, foodWorkers: number, materialWorkers: number): ColonyState {
+  return { ...state, foodWorkers, materialWorkers };
+}
+
 /** `total` workers (by default those working now) split: `foodWorkers` on food, the rest on materials. */
 export function withFoodWorkers(
   state: ColonyState,
@@ -141,7 +146,7 @@ export function withFoodWorkers(
   total = state.foodWorkers + state.materialWorkers,
 ): ColonyState {
   const food = Math.min(total, Math.max(0, foodWorkers));
-  return { ...state, foodWorkers: food, materialWorkers: total - food };
+  return withSplit(state, food, total - food);
 }
 
 /** Fewest food workers (the rest on materials) for food never to run out, or null if none suffice. */

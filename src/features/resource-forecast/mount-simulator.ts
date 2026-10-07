@@ -1,12 +1,12 @@
 // Worker split simulator on Ressources.php: try a split, see the outlook, apply it through the game's form.
 import { formatDuration } from "@/utils/time-format";
-import { balancedFoodWorkers, outlook, withFoodWorkers, type ColonyState } from "./forecast";
+import { balancedFoodWorkers, outlook, withSplit, type ColonyState } from "./forecast";
 
 const PANEL_CLASS = "optizzz-simulator";
 
 /**
- * Mounts the simulator after the game's worker form. `assignable` is how many workers can harvest
- * (one per cm² of hunting field); `clock` gives the current time.
+ * Mounts the simulator under the harvest summary of Ressources.php, starting from the game's split. `assignable` is
+ * how many workers can harvest (one per cm² of hunting field); `clock` gives the current time.
  */
 export function mountSimulator(doc: Document, state: ColonyState, assignable: number, clock: () => Date): HTMLElement {
   const working = assignable;
@@ -20,6 +20,7 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
       <input type="range" name="optizzz-split" min="0" max="${String(working)}" aria-label="Répartition" />
       <label>Matériaux <input type="number" name="optizzz-materials" min="0" max="${String(working)}" /></label>
     </div>
+    <div class="${PANEL_CLASS}-idle"></div>
     <div class="${PANEL_CLASS}-outlook"></div>
     <button type="button">Équilibre nourriture</button>
     <button type="button">Appliquer</button>`;
@@ -32,27 +33,37 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
   const [balanceButton, applyButton] = panel.querySelectorAll("button");
   if (!food || !split || !materials || !summary || !balanceButton || !applyButton) return panel;
 
+  const idle = panel.querySelector(`.${PANEL_CLASS}-idle`);
   let foodWorkers = state.foodWorkers;
-  const show = (value: number) => {
-    foodWorkers = Math.min(working, Math.max(0, Math.round(value) || 0));
+  let materialWorkers = state.materialWorkers;
+  const count = (value: string) => Math.max(0, Math.round(Number(value)) || 0);
+  const show = (foodValue: number, materialsValue: number) => {
+    foodWorkers = Math.min(working, foodValue);
+    materialWorkers = Math.min(working - foodWorkers, materialsValue);
     food.value = String(foodWorkers);
     split.value = String(foodWorkers);
-    materials.value = String(working - foodWorkers);
-    summary.textContent = describeOutlook(withFoodWorkers(state, foodWorkers, working), clock());
+    materials.value = String(materialWorkers);
+    const idleWorkers = working - foodWorkers - materialWorkers;
+    if (idle) idle.textContent = idleWorkers > 0 ? `${String(idleWorkers)} ouvrières sans travail` : "";
+    summary.textContent = describeOutlook(withSplit(state, foodWorkers, materialWorkers), clock());
   };
 
+  // Food takes idle workers first, then materials; the slider moves workers between the two.
   food.addEventListener("input", () => {
-    show(Number(food.value));
-  });
-  split.addEventListener("input", () => {
-    show(Number(split.value));
+    const value = count(food.value);
+    show(value, Math.min(materialWorkers, working - value));
   });
   materials.addEventListener("input", () => {
-    show(working - Number(materials.value));
+    const value = count(materials.value);
+    show(Math.min(foodWorkers, working - value), value);
+  });
+  split.addEventListener("input", () => {
+    const value = count(split.value);
+    show(value, Math.max(0, foodWorkers + materialWorkers - value));
   });
   balanceButton.addEventListener("click", () => {
     const balance = balancedFoodWorkers(state, clock(), working);
-    if (balance !== null) show(balance);
+    if (balance !== null) show(balance, working - balance);
   });
   applyButton.addEventListener("click", () => {
     const gameFood = doc.querySelector<HTMLInputElement>("#RecolteNourriture");
@@ -60,13 +71,16 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
     const submit = doc.querySelector<HTMLInputElement>("#ChangeRessource");
     if (!gameFood || !gameMaterials || !submit) return;
     gameFood.value = String(foodWorkers);
-    gameMaterials.value = String(working - foodWorkers);
+    gameMaterials.value = String(materialWorkers);
     submit.click();
   });
 
-  show(foodWorkers);
-  const form = doc.querySelector("#ChangeRessource")?.closest("form");
-  if (form) form.after(panel);
+  show(foodWorkers, materialWorkers);
+  // Under the « Chaque jour, vous récoltez… » summary. The game's form is nested in a table, so it is
+  // not an ancestor of its own fields: never place anything relative to it.
+  const summaryParagraph = doc.querySelector("#nbNourriture")?.closest("p");
+  if (summaryParagraph) summaryParagraph.after(panel);
+  else doc.querySelector("#ChangeRessource")?.closest("table")?.after(panel);
   return panel;
 }
 

@@ -10,8 +10,8 @@ import { readCapacities, readIncome, readStock, type Income } from "./pages";
 const REFRESH_MS = 60_000;
 
 const STYLE = `
-.optizzz-forecast td { font-size: 0.9em; padding-top: 2px; }
-.optizzz-forecast small { opacity: 0.8; }
+.optizzz-forecast { margin-top: 4px; font-weight: bold; }
+.optizzz-forecast::before { content: "⏳ "; }
 .optizzz-outlook { font-size: 0.8em; line-height: 1.2; padding: 1px 0 2px; }
 .optizzz-outlook-warning { color: #c76b00; font-weight: bold; }
 .optizzz-outlook-danger { color: #c00; font-weight: bold; }
@@ -19,6 +19,8 @@ const STYLE = `
 .optizzz-simulator-split { display: flex; align-items: center; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
 .optizzz-simulator-split input[type="number"] { width: 80px; }
 .optizzz-simulator-split input[type="range"] { flex: 1; min-width: 120px; }
+.optizzz-simulator-idle { font-style: italic; }
+.optizzz-simulator-idle:empty { display: none; }
 .optizzz-simulator-outlook { margin: 6px 0; font-weight: bold; }
 .optizzz-simulator button { margin-right: 6px; }`;
 

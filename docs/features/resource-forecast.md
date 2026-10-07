@@ -19,7 +19,7 @@ Savoir quand on pourra payer un bâtiment ou une recherche, quand on tombera en 
 
 ## 1. Délais sur Construction et Laboratoire
 
-- Une ligne ajoutée au tableau des coûts de chaque élément pas encore payable, dans le style du jeu : horloge, « dans 3 h 12 · vers 18 h 40 », puis ce qui manque par ressource. La ressource qui bloque le plus longtemps est mise en avant.
+- Une ligne sous la description de chaque élément pas encore payable (la colonne des coûts est trop étroite) : « ⏳ Disponible dans 3 h 12 (aujourd'hui 18 h 40) · manque 12 400 matériaux ».
 - Sur Construction, la ligne Compte+ du jeu reste en place ; la nôtre se place dessous.
 - Cas particuliers :
   - ouvrières manquantes (recherches) : « il manque N ouvrières », sans délai ;
@@ -30,14 +30,15 @@ Savoir quand on pourra payer un bâtiment ou une recherche, quand on tombera en 
 
 ## 2. Famine et entrepôt plein (en-tête, toutes les pages)
 
-- Sous la jauge de nourriture : « Famine dans 9 h 32 », sinon « Entrepôt plein dans 4 h » ; pareil pour les matériaux (entrepôt plein).
+- Sous la jauge de nourriture : « Famine dans 9 h 32 », sinon « Entrepôt plein dans 4 h », sinon le solde « Solde : +3 223 / jour » ; sous la jauge des matériaux : « Entrepôt plein dans … ».
 - Couleurs : neutre au-delà de 24 h, orange en dessous de 24 h, rouge en dessous de 6 h.
-- Infobulle : solde par jour (détail récolte, champignonnière, armée, taxe), retours de chasse prévus, ouvrières à mettre sur la nourriture pour rester à l'équilibre.
+- Infobulle (toujours présente) : solde par jour (détail récolte, champignonnière, armée, taxe), retours de chasse prévus, ouvrières à mettre sur la nourriture pour rester à l'équilibre.
 
 ## 3. Simulation sur Ressources
 
-- Un curseur répartit min(TDC, ouvrières) entre nourriture et matériaux, avec deux nombres modifiables.
-- Bouton « équilibre nourriture » : le minimum d'ouvrières sur la nourriture pour que le stock ne tombe jamais à zéro (retours de chasse compris), le reste sur les matériaux.
+- Part de la répartition du jeu ; les ouvrières qui pourraient récolter (min(TDC, ouvrières)) sans être affectées sont affichées à part (« 100 ouvrières sans travail »).
+- Deux nombres modifiables : la nourriture prend d'abord les ouvrières sans travail, puis sur les matériaux. Un curseur fait passer des ouvrières de l'un à l'autre.
+- Bouton « équilibre nourriture » : le minimum d'ouvrières sur la nourriture pour que le stock ne tombe jamais à zéro (retours de chasse compris), toutes les autres sur les matériaux (plus aucune sans travail).
 - La famine et l'entrepôt plein se recalculent en direct.
 - « Appliquer » : remplit `#RecolteNourriture` / `#RecolteMateriaux` et déclenche `#ChangeRessource`. Première action de jeu d'Optizzz, toujours sur un clic du joueur.
 
