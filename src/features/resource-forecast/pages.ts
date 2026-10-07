@@ -73,6 +73,16 @@ function summaryNumber(summary: Element, label: string): number | null {
   return null;
 }
 
+/** The `<strong>` whose following text (icons skipped) contains `label`. */
+function numberFollowedBy(summary: Element, label: string): number | null {
+  for (const strong of summary.querySelectorAll("strong")) {
+    let next = strong.nextSibling;
+    while (next?.nodeName === "IMG") next = next.nextSibling;
+    if (next?.textContent?.includes(label)) return toInteger(strong.textContent);
+  }
+  return null;
+}
+
 /** Income figures of Ressources.php (all per day, before the colony tax). */
 export function readIncome(doc: Document, now: Date): Income | null {
   const summary = doc.querySelector("#nbNourriture")?.closest("p");
@@ -81,7 +91,7 @@ export function readIncome(doc: Document, now: Date): Income | null {
   const harvestSeconds = remainingSeconds(doc, "retour_ouvrieres");
   if (!summary || !foodInput || !materialInput || harvestSeconds === null) return null;
 
-  const mushroomPerDay = scriptNumber(doc, "champi") ?? summaryNumber(summary, "et ");
+  const mushroomPerDay = scriptNumber(doc, "champi") ?? numberFollowedBy(summary, "champignonnière");
   const armyPerDay = summaryNumber(summary, "consomme");
   if (mushroomPerDay === null || armyPerDay === null) return null;
 
