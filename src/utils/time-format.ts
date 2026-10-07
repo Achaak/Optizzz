@@ -31,6 +31,11 @@ export function formatEndTime(end: Date, now: Date): string {
   return `${date} ${clock(end)}`;
 }
 
+/** Same, without « aujourd'hui » where space is short: « 14 h 23 », « demain 2 h 10 ». */
+export function formatEndTimeShort(end: Date, now: Date): string {
+  return calendarDaysBetween(now, end) === 0 ? clock(end) : formatEndTime(end, now);
+}
+
 /** Whole calendar days from `from` to `to`, ignoring the time of day. */
 function calendarDaysBetween(from: Date, to: Date): number {
   const midnight = (date: Date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());

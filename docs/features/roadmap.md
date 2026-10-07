@@ -5,7 +5,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 ## Ordre
 
 1. **Activer / désactiver les fonctionnalités** : voir `feature-toggles.md`.
-2. **Compteurs « fin dans » partout** : chasses, convois, attaques avec leur heure de fin, comme les Chantiers en cours.
+2. **Heures de fin** : l'heure de fin à côté des décomptes du jeu et un encart « Prochaines fins » ; voir `end-times.md`.
 3. **Rapports lisibles** (`messagerie.php`) : tableau des pertes, gains, rendement ; sert aussi à recaler le moteur de chasse.
 4. **Simulateur de combat** (attaque / défense, Dôme et Loge).
 5. **Planificateur de ponte** : coût, durée, date à laquelle on pourra payer, entretien.
@@ -23,6 +23,6 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 - **Historique** : export public nocturne pour le passé (jamais purgé, tous les joueurs), plus un point « maintenant » lu en direct.
 - **Actions de jeu** : liens pré-remplis vers les formulaires d'attaque ou de convoi du jeu, que le joueur valide lui-même. Jamais d'automatisation.
 - **Alertes** :
-  - étape 1, badge : background script + permission `alarms`, calculé depuis les données mémorisées, sans jamais interroger le jeu. Délai avant le premier problème (rouge < 2 h, orange < 12 h, rien sinon), « ? » gris si les données ont plus de 24 h, pire des serveurs avec le détail par serveur au survol ;
+  - étape 1, badge : background script + permission `alarms`, calculé depuis les données mémorisées (dont les fins mémorisées par « Heures de fin »), sans jamais interroger le jeu. Délai avant le premier problème (rouge < 2 h, orange < 12 h, rien sinon), « ? » gris si les données ont plus de 24 h, pire des serveurs avec le détail par serveur au survol ;
   - étape 2, notifications : permission `notifications` **optionnelle**, demandée à l'activation. Types activables un par un, tous coupés par défaut : famine, entrepôt plein, chantier terminé, chasse rentrée. Le serveur est nommé (« S5 : … »). Pas d'attaque entrante ;
   - mettre à jour `PRIVACY.md` et `docs/store/fiche.md` avant de publier.

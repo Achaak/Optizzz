@@ -23,6 +23,15 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "end-times",
+    label: "Heures de fin",
+    description: "L'heure de fin des chasses, pontes et chantiers, à côté des décomptes et dans la colonne de gauche.",
+    options: [
+      { id: "inline", label: "À côté des décomptes du jeu" },
+      { id: "recap", label: "Encart « Prochaines fins »" },
+    ],
+  },
+  {
     id: "resource-forecast",
     label: "Prévisions de ressources",
     description: "Quand vous pourrez payer, quand vous tomberez en famine, quand un entrepôt sera plein.",

@@ -19,6 +19,9 @@ describe("buildFeaturesSection", () => {
     const boxes = [...section.querySelectorAll<HTMLInputElement>("input[type=checkbox]")];
     expect(boxes.map((box) => box.dataset.toggle)).toEqual([
       "work-queue",
+      "end-times",
+      "end-times.inline",
+      "end-times.recap",
       "resource-forecast",
       "resource-forecast.costs",
       "resource-forecast.outlook",

@@ -111,6 +111,27 @@ terrain <br />et <strong>5 022</strong> avec votre champignonnière. <br /><br /
 - Chiffres **avant taxe** ; la consommation de l'armée **inclut les troupes en déplacement**. Voir `ressources-et-entretien.md`.
 - Chasses en cours, après `span.titre` « Chasse en cours » : `- Vos chasseuses vont conquérir 122 cm² dans <span id="chasse_139778">…</span><script>reste(1090, "chasse_139778");</script>`. Compte+ seulement : `<small><em>Troupes en chasses : 1 975 Jeunes Soldates Naines, 124 Soldates Naines.<br>Arrivée à 12h39</em></small>`.
 
+## Reine.php
+
+Relevé le 2026-10-07 sur s5 (sans Compte+).
+
+- « Pontes en cours » : `h4` « Pontes en cours: » puis `table.tableau_leger`. En-tête Unités | Garnison | Temps requis | Temps total restant, puis une ligne par ponte, dans l'ordre de la file.
+- Unités : texte de la première case (« 100 ouvrières », « 65 Jeunes Soldates Naines ») ; pour la première ponte, `span#unites_restantes_premiere_ponte`, décompté par `reste_unite(<s>, "unites_restantes_premiere_ponte", "<nom>", "<nombre>")`.
+- Temps total restant : `span#ponte_<n>` + `reste(<s>, "ponte_<n>")`, **cumulé le long de la file**. La première ligne a aussi `span#temps_restant_premiere_ponte` (même valeur) dans « Temps requis » ; les suivantes y ont un texte fixe.
+- Les scripts `reste()` sont regroupés après le tableau.
+
+## Colonne de gauche (toutes les pages)
+
+- `div#menuBoite` (position fixe, 250 × 500 px) contient `#boiteComptePlus.boite_compte_plus` (absolu, `top: 200px`), `#data` et `#boiteInfo.boite_info` (absolu, `top: 20px`), placés à `left: 65px`.
+- Une boîte : `.titre_colonne_cliquable` (25 px, fond `sprite_menu.png`, texte `rgb(211, 217, 184)` 16 px centré) puis `.contenu_boite_compte_plus` / `.contenu_boite_info` en absolu à `top: 25px`, 220 px de large.
+- Sans Compte+, `#boiteComptePlus` n'a qu'un texte publicitaire ; avec, des lignes `#ligne_*`.
+
+## Décomptes
+
+- Le jeu met à jour un `<span id>` par un script `reste(<secondes>, "<id>")` placé à côté (ou regroupé plus loin). Vus : `retour_ouvrieres`, `chasse_<n>` (Ressources), `ponte_<n>`, `temps_restant_premiere_ponte` (Reine), `batiment_<n>`, `recherche_<n>` (Construction, Laboratoire). La boîte Compte+ utilise `resteTemps(…)`.
+- Le jeu donne parfois l'heure lui-même après la ligne : « Arrivée à 12h39 » (chasse, Compte+), « Terminé à 13h06 » (recherche).
+- Le 2026-10-07, aucune attaque ni aucun convoi en cours : `Armee.php` et `commerce.php` sans `reste()`.
+
 ## colonies.php et profil
 
 - Colonisé : `div.simulateur` avec `<h2>Vous êtes colonisés par …</h2>`, la force d'occupation, un lien « Déclencher une rebellion ».
