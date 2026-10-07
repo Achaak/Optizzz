@@ -1,0 +1,39 @@
+<!-- Structure observed on s1.fourmizzz.fr/Ressources.php on 2026-10-07 (colonized, no Compte+). Fictitious numbers. -->
+<div id="data" style="display: none">
+  <span id="pseudo">Vassal</span><span id="nb_ouvrieres">32000</span><span id="nb_materiaux">500000</span>
+  <span id="nb_nourriture">1200000.5</span><span id="quantite_tdc">31799</span><span id="tag_alliance"></span>
+</div>
+<div id="centre">
+  <span class="titre">Chasse en cours</span><br />
+  <span>- Vos chasseuses vont conquérir 423 cm² dans <span id="chasse_2001">1 heure 55 minutes 4 secondes</span></span>
+  <script>
+    reste(6904, "chasse_2001");
+  </script>
+  <br />
+  <form method="post" action="Ressources.php">
+    <input type="tel" id="RecolteNourriture" name="RecolteNourriture" value="6 360" />
+    <input type="tel" id="RecolteMateriaux" name="RecolteMateriaux" value="25 439" />
+    <input type="submit" id="ChangeRessource" name="ChangeRessource" value="Valider" />
+  </form>
+  <p>Vous avez <span id="ouvrieresAuTravail">31 799</span> ouvrières qui travaillent sur 31 799 cm².</p>
+  <p>
+    Les ouvrières rentreront dans : <strong id="retour_ouvrieres">9 minutes 41 secondes</strong>
+    <script>
+      reste(581, "retour_ouvrieres");
+    </script>
+  </p>
+  <p>
+    Chaque jour, vous récoltez <strong id="nbNourriture">305 280</strong><img title="Nourriture" /> et
+    <strong id="nbMateriaux">1 221 072</strong><img title="Materiaux" /> sur votre terrain<br />et
+    <strong>1 721 321</strong><img title="Nourriture" /> avec votre champignonnière.<br /><br />Pendant ce temps, votre
+    armée consomme <strong>320 058</strong><img title="Nourriture" />.<br />et
+    <a href="Membre.php?Pseudo=Master">Master</a> vous pille <strong id="nbNourritureMaitre">871 438 </strong
+    ><img title="Nourriture" /> et <strong id="nbMateriauxMaitre">525 060 </strong><img title="Materiaux" />.
+  </p>
+  <script>
+    var pourcentagePillage = 43;
+    var terrain = 31799;
+    var nbOuvrieres = 32000;
+    var champi = 1721321.5369331;
+  </script>
+</div>
