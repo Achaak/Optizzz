@@ -16,6 +16,7 @@ Notes plus larges (connexion, convois, pontes…) : `bot-fourmizzz/research/four
 - `nav#menu` > `ul#menu_horizontal` (Fourmilière, Alliance, Communauté, Compte +, Aide) + des colonnes `ul.menu_colonne`.
 - Menu d'alliance : `ul#menuAlliance.menu_colonne`, une `li > a.bouton<Nom>` par entrée : `boutonChat` (`alliance.php`), `boutonForum` (`?forum_menu`), `boutonMembres` (`?Membres`), `boutonCandidature` (`?voirCandidature`), `boutonMC` (`?messCollectif`), `boutonDiplomatie` (`?Diplomatie2`), `boutonDescription` (`?Description`), `boutonOptions` (`?Options`).
 - Absent quand le joueur n'a pas d'alliance.
+- Barre du haut : `#menu` (`position: fixed`, `z-index: 20000`, 30 px de haut). Onglets `ul#menu_horizontal li` à `width: 19.9%` (en ajouter un fait passer à la ligne) ; `ul#menu_horizontal` a `margin-right: 45px` pour `a#boutonDeconnexion` (`position: absolute; right: 0; width: 45px`). Optizzz y place sa roue à `right: 45px` et porte la marge à 90 px.
 - Autres liens utiles : `boutonSimulateurDuree` → `simulateurDuree.php`, carte du jeu `carte2.php` (vue isométrique).
 
 ## En-tête du joueur

@@ -1,0 +1,41 @@
+import type { ContentScriptContext } from "wxt/utils/content-script-context";
+import type { ShadowRootContentScriptUi } from "wxt/utils/content-script-ui/shadow-root";
+import { buildSettingsDialog, DIALOG_STYLE, settingsTabs } from "./dialog";
+
+/** Opens the settings dialog over the game, or closes it when it is already open. */
+export function createSettingsPanel(ctx: ContentScriptContext) {
+  let ui: ShadowRootContentScriptUi<() => void> | undefined;
+
+  const close = () => {
+    ui?.remove();
+    ui = undefined;
+  };
+
+  async function open() {
+    ui = await createShadowRootUi(ctx, {
+      name: "optizzz-settings",
+      position: "inline",
+      anchor: "body",
+      append: "last",
+      css: `${DIALOG_STYLE}\n:host { position: relative; z-index: 30000; }`,
+      onMount(container) {
+        const tabs = settingsTabs(browser.runtime.getManifest().version, navigator.userAgent);
+        container.append(buildSettingsDialog(document, tabs, close));
+        const onKeyDown = (event: KeyboardEvent) => {
+          if (event.key === "Escape") close();
+        };
+        document.addEventListener("keydown", onKeyDown);
+        return () => document.removeEventListener("keydown", onKeyDown);
+      },
+      onRemove: (removeListener) => removeListener?.(),
+    });
+    ui.mount();
+  }
+
+  return {
+    toggle: async () => {
+      if (ui) close();
+      else await open();
+    },
+  };
+}
