@@ -88,6 +88,7 @@ Directement dans `div#centre`, avant `div.Bas` et le tableau, une ligne par él�
 - Coût : `td.cout_amelioration table` avec `div.icone_X` + `div.X`, X dans l'ordre `temps`, `ouvriere`, `nourriture`, `materiaux` ; valeurs avec espace final (« 3 000 »). **Une recherche coûte ouvrières + nourriture + matériaux.**
 - Action : `div.icone_recherche > a[href*="Rechercher=<id>"]` (ids : Architecture = 10, Communication avec les animaux = 4), `div.bouton_gris > img[title="Ressources insuffisants"]` (sic), ou `td` vide. Pas de ligne « temps pour récolter », même avec Compte+.
 - Recherches : Technique de ponte, Bouclier Thoracique, Armes, Architecture, Communication avec les animaux, Vitesse de chasse, **Vitesse d'attaque**, Génétique, Acide, Poison.
+- Bâtiments (`construction.php`, même structure) : Champignonnière, Entrepôt de Nourriture, Entrepôt de Matériaux, Couveuse, Solarium, Laboratoire, Salle d'analyse, Salle de combat, Caserne, Dôme, Loge Impériale, Etable à pucerons, Etable à cochenilles (relevé sur s5).
 - Un `fetch('/laboratoire.php')` depuis une page du jeu renvoie la page complète (session par cookie).
 
 ## Ressources.php
@@ -141,6 +142,36 @@ Relevé le 2026-10-07 sur s5 (sans Compte+).
 
 - La ligne « Consommation Journalière » vue sur certains comptes est ajoutée par Toolzzz, pas par le jeu ; elle ne compte que la garnison.
 - Attaques en cours (Toolzzz, non relevé) : `span[id^="attaque_"]` + `reste()`.
+- « Troupes en Garnison » : `.simulateur` avec en-tête Unités | Terrain de Chasse | Dôme (niveau) | Loge (niveau), chaque lieu sur 3 colonnes (`colspan=3`) ; une ligne par unité (nom + abréviation), une case vide quand l'effectif est nul. Lignes Vie / Dégâts en Attaque / en Défense avec les bonus Bouclier, Arme, Lieu. Relevé le 2026-10-07 (s5).
+
+## AcquerirTerrain.php (lancer une chasse)
+
+Relevé le 2026-10-07 sur s5, en GET seulement.
+
+- Un `GET` sans paramètre renvoie le formulaire complet : `form[action="AcquerirTerrain.php"]` avec `input#AcquerirTerrain` (`name="AcquerirTerrain"`, `type="tel"`, surface en cm²), le choix de l'armée et le jeton.
+- `table#tabChoixArmee` : en-tête Unités | Terrain | Fourmilière | Loge | Armée, puis une ligne par unité (nom complet). La dernière case n'a un `input[name="uniteN"]` que pour les unités possédées, **pré-rempli avec le total des trois lieux** (« 2 112 » = 2 042 + 70) : le dôme et la loge partent en chasse aussi.
+- Numéros `uniteN` : 1 JSN, 2 SN, 3 NE, 4 JS, 5 S, 6 C, 7 A, 8 AE, 9 SE, 10 Tk, 11 Tu, 12 TuE, 13 TkE, 14 CE (Calystene et Zéro perte ; seuls 1 et 2 vus sur le compte relevé).
+- Champs cachés : `input#t[name="t"]` (jeton, dans le `tbody` du tableau), `input[name="pseudoCible"]` (vide). Bouton `input[type=submit][name="ChoixArmee"]`, valeur « Lancer la Chasse ! ». Un `textarea#textAreaArmee` sert à importer une armée en texte.
+- Lancer = `POST AcquerirTerrain.php` avec `AcquerirTerrain`, `uniteN`, `t`, `ChoixArmee` (Calystene et Toolzzz). Réponse : « La chasse est lancée. ». Le jeton se relit par un nouveau `GET` avant chaque chasse.
+- Le formulaire de `Ressources.php` (`#AgrandirTerrain`, `form[action="AcquerirTerrain.php"]`) a une étape « Etes vous sûr de vouloir lancer une chasse si longue ? » (`input[name="validation_chasse_longue"]`, radios oui / non) ; le POST direct de l'armée ne passe pas par elle.
+
+## messagerie.php (rapports de chasse)
+
+- Les rapports sont regroupés en conversations `tr.en_tete_message[data-type="Chasses"]` (`id="conversation_<n>"`), titre `a.intitule_message` « Vos chasseuses ont conquis 610 cm² en 5 expéditions » ; le clic charge le détail en AJAX dans les lignes suivantes.
+- Un combat :
+
+```
+07/10/26 à 11h08
+Troupes en attaque : 1 921 Jeunes Soldates Naines, 119 Soldates Naines.
+Troupes en défense : 43 Petites araignées.
+Vous infligez 6 358 (+ 2 544) dégâts et tuez 43 ennemies.
+L’ennemie inflige 56 (+ 0) dégâts à vos fourmis et en tue 4.
+Les unités survivantes ont appris de cette bataille :
+- 5 Jeunes Soldates Naines sont devenues des Soldates Naines
+Vos chasseuses ont conquis 118 cm², les carcasses des prédateurs vous rapportent 794
+```
+
+- Le TDC au combat et les niveaux ne sont pas dans le rapport. Mécaniques et validation : `chasse.md`.
 
 ## simulateurDuree.php
 

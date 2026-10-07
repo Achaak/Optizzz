@@ -1,0 +1,35 @@
+<!-- Structure observed on s5.fourmizzz.fr/Ressources.php on 2026-10-07 (Compte+), a second hunt added. Fictitious numbers. -->
+<div id="data" style="display: none">
+  <span id="pseudo">Me</span><span id="nb_ouvrieres">4170</span><span id="nb_materiaux">29508</span>
+  <span id="nb_nourriture">2883.1475837896</span><span id="quantite_tdc">4004</span><span id="tag_alliance">TAG</span>
+</div>
+<div id="centre">
+  <table id="boite_tdc">
+    <tr>
+      <td>
+        Terrain de Chasse : <span>4 004</span>cm2 <span class="titre">Chasse en cours</span><br />
+        <span>- Vos chasseuses vont conquérir 122 cm² dans <span id="chasse_139778">17 minutes 58 secondes</span></span>
+        <script>
+          reste(1090, "chasse_139778");
+        </script>
+        <br />
+        <small
+          ><em>Troupes en chasses : 1 975 Jeunes Soldates Naines, 124 Soldates Naines.<br />Arrivée à 12h39</em></small
+        >
+        <br />
+        <span>- Vos chasseuses vont conquérir 1 250 cm² dans <span id="chasse_139779">1 heure 2 minutes</span></span>
+        <script>
+          reste(3725, "chasse_139779");
+        </script>
+        <br />
+        <small
+          ><em>Troupes en chasses : 300 Jeunes Soldates Naines, 1 Tank.<br />Arrivée à 13h11</em></small
+        >
+        <form method="post" action="AcquerirTerrain.php">
+          Agrandir son terrain de chasse de <input type="tel" id="AcquerirTerrain" name="AcquerirTerrain" /> cm2
+          <input type="submit" id="AgrandirTerrain" name="AgrandirTerrain" value="Valider" />
+        </form>
+      </td>
+    </tr>
+  </table>
+</div>

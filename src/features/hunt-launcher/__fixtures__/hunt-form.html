@@ -1,0 +1,59 @@
+<!-- Structure observed on s5.fourmizzz.fr/AcquerirTerrain.php (GET) on 2026-10-07. Token replaced, one unit added on the hunting field for the test. -->
+<div id="centre">
+  <form method="post" action="AcquerirTerrain.php">
+    <fieldset>
+      <legend>Vous Partez Chasser</legend>
+      Agrandir mon terrain de chasse de <input type="tel" id="AcquerirTerrain" name="AcquerirTerrain" value="0" /> cm2
+      <div id="camp"><input type="hidden" id="camp" /></div>
+      Cette chasse durera : <span id="duree"></span>
+    </fieldset>
+    <fieldset>
+      <legend>Armée</legend>
+      Selectionnez les troupes que vous souhaitez envoyer conquérir de nouveaux terrains.
+      <textarea id="textAreaArmee" name="textAreaArmee"></textarea>
+      <input type="button" value="Importer" /><input type="button" value="Tout" /><input type="button" value="Rien" />
+      <table id="tabChoixArmee" style="border-collapse: collapse">
+        <tbody>
+          <tr>
+            <th>Unités</th>
+            <th>Terrain</th>
+            <th>Fourmilière</th>
+            <th>Loge</th>
+            <th><a href="#" onclick="remplirArmeeJoueur()">Armée</a></th>
+          </tr>
+          <tr>
+            <td>Jeune Soldate Naine</td>
+            <td></td>
+            <td>2 042</td>
+            <td>70</td>
+            <td><input type="tel" id="unite1" name="unite1" value="2 112" /></td>
+          </tr>
+          <tr>
+            <td>Soldate Naine</td>
+            <td>10</td>
+            <td>146</td>
+            <td></td>
+            <td><input type="tel" id="unite2" name="unite2" value="156" /></td>
+          </tr>
+          <tr>
+            <td>Naine d’Elite</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Tank</td>
+            <td></td>
+            <td>5</td>
+            <td></td>
+            <td><input type="tel" id="unite10" name="unite10" value="5" /></td>
+          </tr>
+          <input type="hidden" id="t" name="t" value="TOKEN" />
+        </tbody>
+      </table>
+      <input type="hidden" name="pseudoCible" value="" />
+      <input type="submit" name="ChoixArmee" value="Lancer la Chasse !" />
+    </fieldset>
+  </form>
+</div>
