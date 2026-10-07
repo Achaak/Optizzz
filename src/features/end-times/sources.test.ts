@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import commerceHtml from "../convoy/__fixtures__/commerce.html?raw";
 import constructionFullHtml from "../work-queue/__fixtures__/construction-full.html?raw";
 import laboratoryHtml from "../work-queue/__fixtures__/laboratory-one.html?raw";
 import noSessionHtml from "./__fixtures__/page-without-session.html?raw";
@@ -18,6 +19,7 @@ describe("sourceOf", () => {
     expect(sourceOf("/Reine.php")).toBe("laying");
     expect(sourceOf("/construction.php")).toBe("construction");
     expect(sourceOf("/laboratoire.php")).toBe("research");
+    expect(sourceOf("/commerce.php")).toBe("convoy");
     expect(sourceOf("/Armee.php")).toBeNull();
   });
 });
@@ -49,6 +51,13 @@ describe("readSection", () => {
     ]);
     expect(readSection(parse(withHeader(laboratoryHtml)), "research", now)?.items).toEqual([
       { label: "Architecture 1", endsAt: inSeconds(189) },
+    ]);
+  });
+
+  it("reads the convoys on their way", () => {
+    expect(readSection(parse(commerceHtml), "convoy", now)?.items.map((item) => item.label)).toEqual([
+      "Convoi → Osirus_jack",
+      "Convoi → Hardware",
     ]);
   });
 

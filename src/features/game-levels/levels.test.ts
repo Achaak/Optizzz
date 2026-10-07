@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import constructionHtml from "./__fixtures__/construction.html?raw";
 import laboratoryHtml from "./__fixtures__/laboratory.html?raw";
-import { loadLevels, readLevels, storeLevels } from "./levels";
+import { loadLevels, loadLevelsOf, readLevels, storeLevels } from "./levels";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const origin = "https://s5.fourmizzz.fr";
@@ -48,5 +48,14 @@ describe("loadLevels", () => {
     await storeLevels(origin, all);
     await storeLevels("https://s1.fourmizzz.fr", { ...all, weapons: 1 });
     expect((await loadLevels(origin, fakeGame())).weapons).toBe(9);
+  });
+
+  it("reads only the page of the levels asked for", async () => {
+    await storeLevels(origin, readLevels(parse(laboratoryHtml)));
+    const fetchFn = fakeGame();
+    expect(await loadLevelsOf(origin, ["attackSpeed"], fetchFn)).toEqual({ attackSpeed: 0 });
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(await loadLevelsOf(origin, ["attackSpeed", "aphids"], fetchFn)).toEqual({ attackSpeed: 0, aphids: 4 });
+    expect(fetchFn).toHaveBeenCalledWith(`${origin}/construction.php`);
   });
 });
