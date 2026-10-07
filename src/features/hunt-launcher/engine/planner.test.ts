@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { difficulty } from "./difficulty";
 import { planHunts, type PlanInput } from "./planner";
-import { armyAttack, armyFromKeys, UNITS } from "./units";
+import { armyAttack, armyFromKeys, UNITS } from "@/game/army/units";
 
 const levels = { weapons: 4, shield: 4, huntSpeed: 3, cochineal: 0 };
 const base: PlanInput = {

@@ -1,5 +1,5 @@
 // Reading game pages for the hunt launcher. Selectors: docs/research/fourmizzz-pages.md.
-import { UNITS } from "./engine/units";
+import { UNITS } from "@/game/army/units";
 
 const toInteger = (text: string | null | undefined) => Number((text ?? "").replace(/\D/g, "")) || 0;
 

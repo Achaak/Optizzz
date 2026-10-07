@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calysteneEstimate } from "./calystene";
 import { difficulty } from "./difficulty";
 import { evaluateHunt } from "./evaluate";
-import { armyFromKeys } from "./units";
+import { armyFromKeys } from "@/game/army/units";
 
 const levels = { weapons: 4, shield: 4, huntSpeed: 3, cochineal: 0 };
 // The army of the 07/10 11h08 report.

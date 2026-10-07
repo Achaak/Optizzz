@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compareWaiting, layingAdvice, lossCurve } from "./extras";
 import { planHunts, type PlanInput } from "./planner";
-import { armyFromKeys } from "./units";
+import { armyFromKeys } from "@/game/army/units";
 
 const input: PlanInput = {
   army: armyFromKeys({ JSN: 2112, SN: 146 }),
