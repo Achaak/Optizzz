@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" font-family="Verdana, Arial, sans-serif">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6efd9"/><stop offset="1" stop-color="#e2d0a2"/></linearGradient></defs>
+<rect width="1280" height="800" fill="url(#bg)"/>
+<svg x="80" y="70" width="120" height="120" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#5b3a1e"/>
+  <g stroke="#f6efd9" stroke-width="6" stroke-linecap="round" fill="none">
+    <!-- antennae -->
+    <path d="M58 30 Q50 16 40 14"/>
+    <path d="M70 30 Q78 16 88 14"/>
+    <!-- legs -->
+    <path d="M56 60 L34 50 L24 58"/>
+    <path d="M56 66 L30 70 L22 82"/>
+    <path d="M58 72 L38 90 L36 104"/>
+    <path d="M72 60 L94 50 L104 58"/>
+    <path d="M72 66 L98 70 L106 82"/>
+    <path d="M70 72 L90 90 L92 104"/>
+  </g>
+  <g fill="#f6efd9">
+    <ellipse cx="64" cy="38" rx="12" ry="11"/>
+    <ellipse cx="64" cy="64" rx="10" ry="14"/>
+    <ellipse cx="64" cy="96" rx="16" ry="21"/>
+  </g>
+</svg>
+<text x="226" y="142" font-size="64" font-weight="bold" fill="#5b3a1e">Optizzz</text>
+<text x="228" y="182" font-size="24" fill="#6b5d3a">Outils pour le jeu Fourmizzz</text>
+<text x="82" y="246" font-size="17" fill="#7a6a45">Gratuit · Code source ouvert · Aucune donnée collectée</text>
+<circle cx="96" cy="311" r="13" fill="#5b3a1e"/><path d="M90 311 l4 4 l8 -8" stroke="#f6efd9" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="124" y="318" font-size="24" font-weight="bold" fill="#3b2412">Chantiers en cours</text><text x="124" y="340" font-size="16" fill="#7a6a45">progression et heure de fin</text><circle cx="96" cy="363" r="13" fill="#5b3a1e"/><path d="M90 363 l4 4 l8 -8" stroke="#f6efd9" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="124" y="370" font-size="24" font-weight="bold" fill="#3b2412">Heures de fin</text><text x="124" y="392" font-size="16" fill="#7a6a45">chasses, pontes, chantiers</text><circle cx="96" cy="415" r="13" fill="#5b3a1e"/><path d="M90 415 l4 4 l8 -8" stroke="#f6efd9" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="124" y="422" font-size="24" font-weight="bold" fill="#3b2412">Prévisions de ressources</text><text x="124" y="444" font-size="16" fill="#7a6a45">paiement, famine, entrepôts</text><circle cx="96" cy="467" r="13" fill="#5b3a1e"/><path d="M90 467 l4 4 l8 -8" stroke="#f6efd9" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="124" y="474" font-size="24" font-weight="bold" fill="#3b2412">Planificateur de ponte</text><text x="124" y="496" font-size="16" fill="#7a6a45">fin, coût, entretien, « max »</text><circle cx="96" cy="519" r="13" fill="#5b3a1e"/><path d="M90 519 l4 4 l8 -8" stroke="#f6efd9" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="124" y="526" font-size="24" font-weight="bold" fill="#3b2412">Rapports de chasse</text><text x="124" y="548" font-size="16" fill="#7a6a45">combats et pertes prévues</text><circle cx="96" cy="571" r="13" fill="#5b3a1e"/><path d="M90 571 l4 4 l8 -8" stroke="#f6efd9" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="124" y="578" font-size="24" font-weight="bold" fill="#3b2412">Simulateur de combat</text><text x="124" y="600" font-size="16" fill="#7a6a45">depuis l'Armée ou l'extension</text><circle cx="96" cy="623" r="13" fill="#5b3a1e"/><path d="M90 623 l4 4 l8 -8" stroke="#f6efd9" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="124" y="630" font-size="24" font-weight="bold" fill="#3b2412">Lanceur de chasse</text><text x="124" y="652" font-size="16" fill="#7a6a45">combien chasser, en un clic</text><circle cx="96" cy="675" r="13" fill="#5b3a1e"/><path d="M90 675 l4 4 l8 -8" stroke="#f6efd9" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="124" y="682" font-size="24" font-weight="bold" fill="#3b2412">Carte de l'alliance</text><text x="124" y="704" font-size="16" fill="#7a6a45">voisins et temps de trajet</text>
+<rect x="700" y="80" width="500" height="640" rx="16" fill="#ffffff" stroke="#c8b88a" stroke-width="2"/>
+<text x="730" y="132" font-size="28" font-weight="bold" font-style="italic" fill="#c5130f">Carte de l'alliance</text>
+<line x1="760" y1="180" x2="760" y2="660" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="840" y1="180" x2="840" y2="660" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="920" y1="180" x2="920" y2="660" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="1000" y1="180" x2="1000" y2="660" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="1080" y1="180" x2="1080" y2="660" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="1160" y1="180" x2="1160" y2="660" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="740" y1="200" x2="1170" y2="200" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="740" y1="280" x2="1170" y2="280" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="740" y1="360" x2="1170" y2="360" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="740" y1="440" x2="1170" y2="440" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="740" y1="520" x2="1170" y2="520" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="740" y1="600" x2="1170" y2="600" stroke="#e3d8b8" stroke-dasharray="6 6"/><line x1="800" y1="530" x2="875" y2="405" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="800" y1="530" x2="905" y2="610" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="905" y1="610" x2="975" y2="470" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="1080" y1="575" x2="1035" y2="405" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="1080" y1="575" x2="975" y2="470" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="1040" y1="240" x2="1035" y2="405" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="1040" y1="240" x2="950" y2="330" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="800" y1="250" x2="875" y2="405" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="800" y1="250" x2="950" y2="330" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="875" y1="405" x2="975" y2="470" stroke="#9a9a9a" stroke-opacity="0.55" stroke-width="2"/><line x1="950" y1="330" x2="875" y2="405" stroke="#c0392b" stroke-width="4"/><line x1="950" y1="330" x2="975" y2="470" stroke="#c0392b" stroke-width="4"/><line x1="950" y1="330" x2="1035" y2="405" stroke="#c0392b" stroke-width="4"/><circle cx="950" cy="330" r="13" fill="#c0392b"/><text x="966" y="336" font-size="18" font-weight="bold" fill="#222">Formica</text><circle cx="875" cy="405" r="9" fill="#e67e22"/><text x="891" y="411" font-size="18" font-weight="normal" fill="#222">Lasius</text><circle cx="1035" cy="405" r="9" fill="#e67e22"/><text x="1051" y="411" font-size="18" font-weight="normal" fill="#222">Messor</text><circle cx="975" cy="470" r="9" fill="#e67e22"/><text x="991" y="476" font-size="18" font-weight="normal" fill="#222">Atta</text><circle cx="800" cy="530" r="9" fill="#2e6da4"/><text x="816" y="536" font-size="18" font-weight="normal" fill="#222">Myrmica</text><circle cx="1040" cy="240" r="9" fill="#2e6da4"/><text x="1056" y="246" font-size="18" font-weight="normal" fill="#222">Camponotus</text><circle cx="1080" cy="575" r="9" fill="#2e6da4"/><text x="1096" y="581" font-size="18" font-weight="normal" fill="#222">Pheidole</text><circle cx="800" cy="250" r="9" fill="#2e6da4"/><text x="816" y="256" font-size="18" font-weight="normal" fill="#222">Solenopsis</text><circle cx="905" cy="610" r="9" fill="#2e6da4"/><text x="921" y="616" font-size="18" font-weight="normal" fill="#222">Tetramorium</text>
+<text x="730" y="696" font-size="17" fill="#6b5d3a">Chaque membre relié à ses 3 plus proches voisins</text>
+</svg>

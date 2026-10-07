@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="280" viewBox="0 0 440 280" font-family="Verdana, Arial, sans-serif">
+<rect width="440" height="280" fill="#5b3a1e"/>
+<rect x="14" y="14" width="412" height="252" rx="18" fill="none" stroke="#f6efd9" stroke-opacity="0.25" stroke-width="2"/>
+<svg x="36" y="80" width="120" height="120" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#5b3a1e"/>
+  <g stroke="#f6efd9" stroke-width="6" stroke-linecap="round" fill="none">
+    <!-- antennae -->
+    <path d="M58 30 Q50 16 40 14"/>
+    <path d="M70 30 Q78 16 88 14"/>
+    <!-- legs -->
+    <path d="M56 60 L34 50 L24 58"/>
+    <path d="M56 66 L30 70 L22 82"/>
+    <path d="M58 72 L38 90 L36 104"/>
+    <path d="M72 60 L94 50 L104 58"/>
+    <path d="M72 66 L98 70 L106 82"/>
+    <path d="M70 72 L90 90 L92 104"/>
+  </g>
+  <g fill="#f6efd9">
+    <ellipse cx="64" cy="38" rx="12" ry="11"/>
+    <ellipse cx="64" cy="64" rx="10" ry="14"/>
+    <ellipse cx="64" cy="96" rx="16" ry="21"/>
+  </g>
+</svg>
+<text x="176" y="140" font-size="44" font-weight="bold" fill="#f6efd9">Optizzz</text>
+<text x="178" y="174" font-size="17" fill="#e9dcb4">Outils pour Fourmizzz</text>
+</svg>
