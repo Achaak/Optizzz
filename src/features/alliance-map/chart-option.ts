@@ -113,7 +113,7 @@ export function buildChartOption(
           const d = distance(selected, m);
           lines.push(
             `Distance depuis ${escapeHtml(selected.pseudo)} : ${d.toFixed(1)}`,
-            `Trajet : ${formatDuration(travelTime(d, selectedLevel.level))}`,
+            `Trajet ${escapeHtml(selected.pseudo)} → ${escapeHtml(m.pseudo)} : ${selectedLevel.estimated ? "≈ " : ""}${formatDuration(travelTime(d, selectedLevel.level))}`,
           );
         }
         return lines.filter(Boolean).join("<br>");
