@@ -1,5 +1,5 @@
 import type { Plan } from "./engine/planner";
-import { UNITS } from "./engine/units";
+import { UNITS } from "@/game/army/units";
 import type { LaunchStatus } from "./launch";
 import { formatChance } from "./view";
 import { formatNumber } from "@/utils/number-format";

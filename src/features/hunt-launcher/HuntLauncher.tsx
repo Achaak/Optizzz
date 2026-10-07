@@ -3,7 +3,7 @@ import { loadLevels, type HuntLevels } from "../game-levels/levels";
 import { createEngine } from "./engine/client";
 import { summarize, type Objective, type Plan, type PlanInput } from "./engine/planner";
 import type { Extras } from "./engine/requests";
-import { armyFromKeys, armyToKeys, UNITS } from "./engine/units";
+import { armyFromKeys, armyToKeys, UNITS } from "@/game/army/units";
 import { HuntTable } from "./HuntTable";
 import { launchHunts, type LaunchStatus } from "./launch";
 import { LossCurve } from "./LossCurve";

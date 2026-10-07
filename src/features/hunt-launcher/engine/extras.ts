@@ -1,6 +1,6 @@
 // What-ifs shown next to the plan: surface ↔ losses, laying more, waiting for the hunts away.
 import { equalDrafts, describeHunt, planHunts, type Plan, type PlanInput } from "./planner";
-import { UNITS, type Army } from "./units";
+import { UNITS, type Army } from "@/game/army/units";
 
 export interface CurvePoint {
   amount: number;

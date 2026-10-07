@@ -43,12 +43,12 @@ Dire au joueur **combien chasser, avec quoi, et lancer en un clic** : le plus de
 | ----------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `src/features/game-levels/`                                       | Feature légère : niveaux lus sur laboratoire / construction, mémorisés |
 | `src/entrypoints/hunt-launcher.content/index.tsx`                 | Script dédié à `Ressources.php` : monte l'encart après `#boite_tdc`    |
-| `src/features/hunt-launcher/engine/units.ts`, `prey.ts`           | Unités (ordre des dégâts, `uniteN`, poids XP) et proies                |
-| `engine/difficulty.ts`, `draw.ts`, `combat.ts`                    | Difficulté et durée, tirage des proies, combat et promotions           |
+| `src/game/army/units.ts`, `prey.ts`, `combat.ts` (partagés)       | Unités (ordre des dégâts, `uniteN`, poids XP), proies, combat          |
+| `src/features/hunt-launcher/engine/difficulty.ts`, `draw.ts`      | Difficulté et durée, tirage des proies                                 |
 | `engine/evaluate.ts`, `calystene.ts`                              | Monte Carlo d'une chasse, tables de pertes de Calystene                |
 | `engine/planner.ts`, `extras.ts`                                  | Choix du plan ; courbe, conseil de ponte, attente du retour            |
 | `engine/requests.ts`, `engine.worker.ts`, `client.ts`             | Requêtes au moteur, Web Worker (repli en ligne si refusé)              |
 | `pages.ts`, `launch.ts`, `settings.ts`, `view.ts`                 | Lecture des pages, lancement, réglages, textes                         |
 | `HuntLauncher.tsx`, `HuntTable.tsx`, `LossCurve.tsx`, `style.css` | Vue React                                                              |
 
-Tests vitest aux interfaces : combat rejoué sur les 35 rapports réels (`__fixtures__/hunt-reports.ts`), difficulté, tirage, évaluation, planificateur (propriétés : armée, créneaux, objectif, meilleur rendement horaire), extras, pages (fixtures), lancement (fetch simulé), niveaux et réglages (fakeBrowser), textes. La vue elle-même se vérifie dans le jeu.
+Tests vitest aux interfaces : combat rejoué sur les 35 rapports réels (`src/game/army/__fixtures__/hunt-reports.ts`), difficulté, tirage, évaluation, planificateur (propriétés : armée, créneaux, objectif, meilleur rendement horaire), extras, pages (fixtures), lancement (fetch simulé), niveaux et réglages (fakeBrowser), textes. La vue elle-même se vérifie dans le jeu.

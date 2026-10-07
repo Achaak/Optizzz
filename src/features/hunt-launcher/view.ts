@@ -1,6 +1,6 @@
 // Texts of the hunt launcher, kept out of the components to be tested.
 import { nextDifficultyStep } from "./engine/difficulty";
-import { UNITS } from "./engine/units";
+import { UNITS } from "@/game/army/units";
 import { formatNumber } from "@/utils/number-format";
 
 /** A chance as a player reads it: 100 % and 0 % only when certain. */
