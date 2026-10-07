@@ -42,6 +42,13 @@ export const featureCatalog = [
     ],
   },
   {
+    id: "hunt-reports",
+    label: "Rapports de chasse",
+    description:
+      "Dans la messagerie : un tableau des combats de chaque chasse, avec les pertes prévues par le simulateur.",
+    options: [],
+  },
+  {
     id: "alliance-map",
     label: "Carte de l'alliance",
     description: "Entrée « Carte » dans le menu d'alliance : où sont les membres et qui est proche de qui.",

@@ -172,6 +172,9 @@ Vos chasseuses ont conquis 118 cm², les carcasses des prédateurs vous rapporte
 ```
 
 - Le TDC au combat et les niveaux ne sont pas dans le rapport. Mécaniques et validation : `chasse.md`.
+- Détail ouvert (relevé le 2026-10-07) : juste après l'en-tête, un `tr` vide puis `tr.contenu_conversation > td[colspan=5] > table`. Une ligne `tr#message_<n>` par combat, du plus ancien au plus récent : `td.expe` (« 07/10/26 à 11h08 ») et `td.message > div.contenuJoueur` (texte ci-dessus, nombres en `<strong>`, la nourriture suivie d'une `img` pomme). Puis `tr#reactions_<n>`.
+- Seuls les **10 derniers** combats sont chargés ; une ligne `tr.message_affiche` en tête porte le lien « Voir les messages précédents », qui ajoute les précédents dans le même tableau.
+- Types de conversation vus (`data-type`) : `Chasses`, `Alliance`, `Conversations`. Aucun rapport d'attaque ni de défense sur le compte relevé (sous protection).
 
 ## simulateurDuree.php
 

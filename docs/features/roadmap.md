@@ -6,7 +6,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 
 1. **Activer / désactiver les fonctionnalités** : voir `feature-toggles.md`.
 2. **Heures de fin** : l'heure de fin à côté des décomptes du jeu et un encart « Prochaines fins » ; voir `end-times.md`.
-3. **Rapports lisibles** (`messagerie.php`) : tableau des pertes, gains, rendement ; sert aussi à recaler le moteur de chasse.
+3. **Rapports de chasse** (`messagerie.php`) : tableau des combats, pertes prévues par le moteur ; voir `hunt-reports.md`. Attaque et défense : [#1](https://github.com/Achaak/Optizzz/issues/1).
 4. **Simulateur de combat** (attaque / défense, Dôme et Loge).
 5. **Planificateur de ponte** : coût, durée, date à laquelle on pourra payer, entretien.
 6. **Calculateur de convoi** : trajet, arrivée, place libre chez le destinataire.
