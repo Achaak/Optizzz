@@ -30,7 +30,8 @@ export interface PredictedLosses {
 }
 
 const toInteger = (text: string | undefined) => Number((text ?? "").replace(/\D/g, ""));
-const NUMBER = "([\\d\\s]+?)";
+/** « 1 199 »: digits in groups of three, so that a lazy match cannot stop at « 1 ». */
+const NUMBER = "(\\d{1,3}(?:\\s\\d{3})*)";
 
 /** « 1 921 Jeunes Soldates Naines, 119 Soldates Naines » → name → count. */
 function readCounts(text: string): [string, number][] {
@@ -54,7 +55,9 @@ export function readFight(date: string, text: string): HuntFight | null {
   if (!sent || !prey || !dealt || !taken) return null;
 
   let promoted = 0;
-  for (const [, count] of flat.matchAll(/- ([\d\s]+?) \D+? sont devenues des/g)) promoted += toInteger(count);
+  for (const [, count] of flat.matchAll(new RegExp(`- ${NUMBER} \\D+? sont devenues des`, "g"))) {
+    promoted += toInteger(count);
+  }
   return {
     date,
     sent: Object.fromEntries(readCounts(sent).map(([name, count]) => [unitKey(name), count])),
@@ -66,8 +69,8 @@ export function readFight(date: string, text: string): HuntFight | null {
     antsKilled: toInteger(taken[2]),
     promoted,
     won: flat.includes("Vous avez gagné"),
-    fieldWon: toInteger(/conquis ([\d\s]+?) cm²/.exec(flat)?.[1]),
-    food: toInteger(/rapportent ([\d\s]+?)(?:\D|$)/.exec(flat)?.[1]),
+    fieldWon: toInteger(new RegExp(`conquis ${NUMBER} cm²`).exec(flat)?.[1]),
+    food: toInteger(new RegExp(`rapportent ${NUMBER}`).exec(flat)?.[1]),
   };
 }
 
