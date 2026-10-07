@@ -33,6 +33,7 @@ pnpm format         # Prettier (format:check en lecture seule)
 - `docs/research/` : ce qu'on sait du jeu (API des exports, sélecteurs des pages, formule du temps de trajet). À mettre à jour à chaque découverte.
 - `docs/features/` : une page par feature (décisions de cadrage, fichiers).
 - `docs/adr/` : décisions d'architecture.
+- `docs/publication.md` : publier une version (tag `vX.Y.Z` → workflow `release.yml`) et la première soumission manuelle ; `docs/store/fiche.md` : textes des fiches Chrome Web Store / AMO.
 - Notes plus larges sur le jeu : `/Users/achak/Development/bot-fourmizzz/research/`.
 
 ## Workflow
@@ -40,5 +41,7 @@ pnpm format         # Prettier (format:check en lecture seule)
 On avance feature par feature. Les skills de Matt Pocock sont dans `.claude/skills/` (voir `SOURCE.md`) : `/grill-me` pour cadrer une feature, `tdd` pour l'implémenter.
 
 Commits : Conventional Commits (`feat:`, `fix:`, `chore:`…). Le hook Husky `pre-commit` lance lint-staged (ESLint + Prettier sur les fichiers modifiés), `typecheck` et les tests : ne pas le contourner avec `--no-verify`.
+
+Publication : la version vient uniquement de `package.json`. L'identifiant Firefox `optizzz@achaak.github.io` (`wxt.config.ts`) ne doit jamais changer. Une nouvelle permission ou une donnée envoyée ailleurs que vers Fourmizzz impose de mettre à jour `PRIVACY.md`, `docs/store/fiche.md` et `data_collection_permissions`.
 
 TypeScript reste en 6.0 : TypeScript 7 (portage Go) n'a plus d'API JavaScript et casse typescript-eslint.
