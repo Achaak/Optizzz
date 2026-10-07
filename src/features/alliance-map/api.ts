@@ -1,28 +1,29 @@
 // Client for the public exports API — see docs/research/fourmizzz-api-exports.md.
 import { storage } from "wxt/utils/storage";
-import * as v from "valibot";
+import { z } from "zod";
 
-const integer = v.pipe(v.number(), v.integer());
+// No `new Function` probing: extension pages forbid eval, and store reviewers flag it.
+z.config({ jitless: true });
 
-const playerSchema = v.object({
-  id: integer,
-  pseudo: v.string(),
-  alliance: v.nullable(v.string()),
-  masterPlayerId: v.nullable(integer),
-  x: integer,
-  y: integer,
-  field: v.number(),
-  grade: v.nullable(v.string()),
-  buildingScore: v.number(),
-  technologyScore: v.number(),
-  trophyScore: v.number(),
-  onHoliday: v.boolean(),
-  isBanned: v.boolean(),
+const playerSchema = z.object({
+  id: z.number().int(),
+  pseudo: z.string(),
+  alliance: z.string().nullable(),
+  masterPlayerId: z.number().int().nullable(),
+  x: z.number().int(),
+  y: z.number().int(),
+  field: z.number(),
+  grade: z.string().nullable(),
+  buildingScore: z.number(),
+  technologyScore: z.number(),
+  trophyScore: z.number(),
+  onHoliday: z.boolean(),
+  isBanned: z.boolean(),
 });
 
-export type Player = v.InferOutput<typeof playerSchema>;
+export type Player = z.infer<typeof playerSchema>;
 
-const versionsSchema = v.object({ players: v.array(v.string()) });
+const versionsSchema = z.object({ players: z.array(z.string()) });
 
 export interface PlayersExport {
   /** UTC date of the export, AAAAMMJJHHmm. */
@@ -47,7 +48,7 @@ export async function loadPlayersExport(origin: string): Promise<PlayersExport> 
 
   let latest: string | undefined;
   try {
-    latest = v.parse(versionsSchema, await getJson(`${origin}/api/exports/`)).players[0];
+    latest = versionsSchema.parse(await getJson(`${origin}/api/exports/`)).players[0];
   } catch (error) {
     if (cached) return cached;
     throw error;
@@ -55,7 +56,7 @@ export async function loadPlayersExport(origin: string): Promise<PlayersExport> 
   if (!latest) throw new Error("Fourmizzz API: no players export available");
   if (cached?.version === latest) return cached;
 
-  const players = v.parse(v.array(playerSchema), await getJson(`${origin}/api/exports/players/?version=${latest}`));
+  const players = z.array(playerSchema).parse(await getJson(`${origin}/api/exports/players/?version=${latest}`));
   const playersExport = { version: latest, players };
   await storage.setItem(cacheKey(origin), playersExport);
   return playersExport;
