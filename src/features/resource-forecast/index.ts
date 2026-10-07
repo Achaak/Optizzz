@@ -1,4 +1,5 @@
 import type { Feature } from "../feature";
+import { isEnabled } from "../toggles";
 import { readWorkQueue } from "../work-queue/queue";
 import type { ColonyState } from "./forecast";
 import { INCOME_MAX_AGE, loadCapacities, loadIncome, storeCapacities, storeIncome } from "./income";
@@ -24,8 +25,9 @@ const page = (url: URL) => url.pathname.toLowerCase();
  */
 export const resourceForecast: Feature = {
   id: "resource-forecast",
+  toggle: "resource-forecast",
   matches: () => true,
-  async run(ctx) {
+  async run(ctx, toggles) {
     const stock = readStock(document);
     if (!stock) return;
     const url = new URL(location.href);
@@ -33,14 +35,20 @@ export const resourceForecast: Feature = {
     const path = page(url);
     const onConstruction = path === "/construction.php";
     const onLaboratory = path === "/laboratoire.php";
+    const onResources = path === "/ressources.php";
+    const showOutlook = isEnabled(toggles, "resource-forecast", "outlook");
+    const showCosts = isEnabled(toggles, "resource-forecast", "costs") && (onConstruction || onLaboratory);
+    const showSimulator = isEnabled(toggles, "resource-forecast", "simulator") && onResources;
+    // Nothing to show here: no background fetch. Ressources.php still stores its figures for other pages.
+    if (!showOutlook && !showCosts && !onResources) return;
 
     let income: Income | null;
-    if (path === "/ressources.php") {
+    if (onResources) {
       income = readIncome(document, readAt);
       if (income) await storeIncome(url.origin, income, readAt);
     } else {
       // Costs pages want fresh figures; elsewhere, the header can live with a few minutes old ones.
-      income = await loadIncome(url.origin, onConstruction || onLaboratory ? 0 : INCOME_MAX_AGE, readAt);
+      income = await loadIncome(url.origin, showCosts ? 0 : INCOME_MAX_AGE, readAt);
     }
     if (!income) return;
 
@@ -53,9 +61,9 @@ export const resourceForecast: Feature = {
     style.textContent = STYLE + SIMULATOR_STYLE;
     document.head.append(style);
 
-    const queue = onConstruction || onLaboratory ? readWorkQueue(document, readAt) : null;
+    const queue = showCosts ? readWorkQueue(document, readAt) : null;
     const render = (now: Date) => {
-      renderOutlook(document, state, readAt, now);
+      if (showOutlook) renderOutlook(document, state, readAt, now);
       if (queue) renderCostForecasts(document, state, queue, readAt, now);
     };
     render(readAt);
@@ -63,7 +71,7 @@ export const resourceForecast: Feature = {
       render(new Date());
     }, REFRESH_MS);
 
-    if (path === "/ressources.php") {
+    if (showSimulator) {
       mountSimulator(document, state, Math.min(stock.huntingField, stock.workers), () => readAt);
     }
   },

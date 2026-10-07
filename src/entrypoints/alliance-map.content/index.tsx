@@ -2,6 +2,7 @@
 import { createRoot, type Root } from "react-dom/client";
 import { AllianceMap } from "@/features/alliance-map/AllianceMap";
 import { readLoggedInPseudo, readMembersHuntingField } from "@/features/alliance-map/pages";
+import { isFeatureEnabled } from "@/features/toggles";
 import "@/features/alliance-map/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
@@ -15,6 +16,7 @@ export default defineContentScript({
   matches: ["*://*.fourmizzz.fr/alliance.php*"],
   cssInjectionMode: "ui",
   async main(ctx) {
+    if (!(await isFeatureEnabled("alliance-map"))) return;
     if (location.search !== "?Membres") return;
     const allianceContent = document.querySelector<HTMLElement>("#alliance");
     if (!allianceContent) return;
