@@ -1,11 +1,9 @@
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
 
-/**
- * Une fonctionnalité de l'extension, activée sur certaines pages du jeu.
- */
+/** A lightweight feature of the extension, enabled on some game pages. */
 export interface Feature {
   id: string;
-  /** Indique si la fonctionnalité s'applique à cette URL. */
+  /** Whether the feature applies to this URL. */
   matches: (url: URL) => boolean;
   run: (ctx: ContentScriptContext) => void | Promise<void>;
 }

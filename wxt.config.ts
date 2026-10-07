@@ -3,10 +3,12 @@ import { defineConfig } from "wxt";
 // https://wxt.dev/api/config.html
 export default defineConfig({
   srcDir: "src",
+  modules: ["@wxt-dev/module-react"],
   manifestVersion: 3,
   manifest: ({ browser }) => ({
     name: "Optizzz",
     description: "Outils d'aide pour Fourmizzz.",
+    permissions: ["storage"],
     host_permissions: ["*://*.fourmizzz.fr/*"],
     ...(browser === "firefox" && {
       browser_specific_settings: {
