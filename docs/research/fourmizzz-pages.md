@@ -21,7 +21,8 @@ Relevés en direct sur S5 le 2026-10-07 (compte connecté, via Claude in Chrome)
 
 ## alliance.php?Membres
 
-- Contenu : `div#centre > div#alliance > center > table.simulateur … table#tabMembresAlliance`. Présent dans le HTML initial.
+- Contenu : `div#centre > div#alliance > center > table.simulateur … table#tabMembresAlliance`.
+- **`#alliance` est vide dans le HTML initial** : le jeu le remplit en AJAX après le chargement (xajax, `xajax_membre`) en **remplaçant son contenu**. Conséquences : attendre `#tabMembresAlliance` (MutationObserver) avant de le lire, et ne jamais monter d'UI à l'intérieur de `#alliance` (elle serait écrasée) — la carte est montée juste avant.
 - Colonnes de `#tabMembresAlliance` (une ligne d'en-tête `tr.alt` de `th`) :
 
 | Index cellule | Contenu                                               |
