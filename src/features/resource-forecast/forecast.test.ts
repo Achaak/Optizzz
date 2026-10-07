@@ -85,6 +85,18 @@ describe("timeToAfford", () => {
     expect(timeToAfford(state, { food: 0, materials: 100, workers: 0 }, now)).toEqual({ kind: "never" });
   });
 
+  it("rolls harvests and hunts read a while ago forward to now", () => {
+    // Read 50 minutes ago: harvests at -50, -20, then 10 and 40 minutes from now.
+    const state = colony({
+      workers: 200,
+      materialWorkers: 100,
+      nextHarvestAt: at(-50),
+      newWorkersGoTo: "materials",
+      hunts: [{ returnsAt: at(-30), fieldGain: 100 }],
+    });
+    expect(timeToAfford(state, { food: 0, materials: 400, workers: 0 }, now)).toMatchObject({ at: at(40) });
+  });
+
   it("says when a warehouse is too small for the cost", () => {
     const state = colony({ materialWorkers: 100, capacities: { food: 5000, materials: 1000 } });
     expect(timeToAfford(state, { food: 0, materials: 2000, workers: 0 }, now)).toEqual({

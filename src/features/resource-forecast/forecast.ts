@@ -46,9 +46,20 @@ function* segments(state: ColonyState, now: Date): Generator<Segment> {
 
   let { food, materials, foodWorkers, materialWorkers } = state;
   let idle = Math.max(0, state.workers - foodWorkers - materialWorkers);
-  let harvestAt = state.nextHarvestAt.getTime();
   let t = now.getTime();
   const horizon = t + HORIZON;
+  // The stock is current but the income may have been read a while ago: harvests already gathered
+  // are in the stock, and hunts already back have put their workers to work.
+  let harvestAt = state.nextHarvestAt.getTime();
+  while (harvestAt < t) harvestAt += HARVEST_INTERVAL;
+  /** A hunt back home: idle workers start harvesting on the new land, where Compte+ sends them. */
+  const hire = (fieldGain: number) => {
+    const hired = Math.min(fieldGain, idle);
+    idle -= hired;
+    if (state.newWorkersGoTo === "food") foodWorkers += hired;
+    if (state.newWorkersGoTo === "materials") materialWorkers += hired;
+  };
+  while (hunts[0] && hunts[0].returnsAt.getTime() < t) hire(hunts.shift()?.fieldGain ?? 0);
 
   while (t < horizon) {
     const hunt = hunts[0];
@@ -57,13 +68,7 @@ function* segments(state: ColonyState, now: Date): Generator<Segment> {
 
     food = Math.min(foodCapacity, Math.max(0, food + foodRate * (end - t)));
     t = end;
-    if (hunt?.returnsAt.getTime() === t) {
-      hunts.shift();
-      const hired = Math.min(hunt.fieldGain, idle);
-      idle -= hired;
-      if (state.newWorkersGoTo === "food") foodWorkers += hired;
-      if (state.newWorkersGoTo === "materials") materialWorkers += hired;
-    }
+    if (hunt?.returnsAt.getTime() === t) hire(hunts.shift()?.fieldGain ?? 0);
     if (harvestAt === t) {
       food = Math.min(foodCapacity, food + foodWorkers * keep);
       materials = Math.min(materialCapacity, materials + materialWorkers * keep);
