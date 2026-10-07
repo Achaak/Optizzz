@@ -1,0 +1,42 @@
+<!-- Structure observed on s5.fourmizzz.fr/Ressources.php on 2026-10-07 (Compte+, one hunt running). Fictitious numbers. -->
+<div id="data" style="display: none">
+  <span id="pseudo">Me</span><span id="nb_ouvrieres">4170</span><span id="nb_materiaux">29508</span>
+  <span id="nb_nourriture">2883.1475837896</span><span id="quantite_tdc">4004</span><span id="tag_alliance">TAG</span>
+</div>
+<div id="centre">
+  <span class="titre">Chasse en cours</span><br />
+  <span>- Vos chasseuses vont conquérir 122 cm² dans <span id="chasse_139778">17 minutes 58 secondes</span></span>
+  <script>
+    reste(1090, "chasse_139778");
+  </script>
+  <br />
+  <small
+    ><em>Troupes en chasses : 1 975 Jeunes Soldates Naines, 124 Soldates Naines.<br />Arrivée à 12h39</em></small
+  >
+  <form method="post" action="Ressources.php">
+    <input type="radio" name="choixOuvriere" value="nourriture" />
+    <input type="radio" name="choixOuvriere" value="materiaux" checked="checked" />
+    <input type="radio" name="choixOuvriere" value="rien" />
+    <input type="tel" id="RecolteNourriture" name="RecolteNourriture" value="0" />
+    <input type="tel" id="RecolteMateriaux" name="RecolteMateriaux" value="4 004" />
+    <input type="submit" id="ChangeRessource" name="ChangeRessource" value="Valider" />
+  </form>
+  <p>Vous avez <span id="ouvrieresAuTravail">4 004</span> ouvrières qui travaillent sur 4 004 cm².</p>
+  <p>
+    Les ouvrières rentreront dans : <strong id="retour_ouvrieres">16 minutes 17 secondes</strong>
+    <script>
+      reste(977, "retour_ouvrieres");
+    </script>
+  </p>
+  <p>
+    Chaque jour, vous récoltez <strong id="nbNourriture">0 </strong><img title="Nourriture" /> et
+    <strong id="nbMateriaux">192 192 </strong><img title="Materiaux" /> sur votre terrain<br />et <strong>5 022</strong
+    ><img title="Nourriture" /> avec votre champignonnière.<br /><br />Pendant ce temps, votre armée consomme
+    <strong>1 704</strong><img title="Nourriture" />.
+  </p>
+  <script>
+    var terrain = 4004;
+    var nbOuvrieres = 4189;
+    var champi = 5022.4;
+  </script>
+</div>
