@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import ressourcesHtml from "./__fixtures__/ressources.html?raw";
-import { INCOME_MAX_AGE, loadIncome } from "./income";
+import constructionCostsHtml from "./__fixtures__/construction-costs.html?raw";
+import { INCOME_MAX_AGE, loadCapacities, loadIncome, storeCapacities } from "./income";
 
 const ORIGIN = "https://s5.fourmizzz.fr";
 const MINUTE = 60_000;
@@ -58,5 +59,35 @@ describe("loadIncome", () => {
       vi.fn(() => Promise.reject(new Error("offline"))),
     );
     expect(await loadIncome(ORIGIN, 0, later(30))).toMatchObject({ materialWorkers: 4004 });
+  });
+});
+
+describe("loadCapacities", () => {
+  beforeEach(() => {
+    fakeBrowser.reset();
+  });
+
+  it("remembers the capacities read on construction.php for the other pages", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    await storeCapacities(ORIGIN, { food: 38900, materials: 77300 });
+    expect(await loadCapacities(ORIGIN, false)).toEqual({ food: 38900, materials: 77300 });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reads construction.php in the background when asked to", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response(constructionCostsHtml, { headers: { "Content-Type": "text/html" } }))),
+    );
+    expect(await loadCapacities(ORIGIN, true)).toEqual({ food: 38900, materials: 77300 });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.reject(new Error("offline"))),
+    );
+    expect(await loadCapacities(ORIGIN, true)).toEqual({ food: 38900, materials: 77300 });
+  });
+
+  it("knows nothing before the first visit", async () => {
+    expect(await loadCapacities(ORIGIN, false)).toBeNull();
   });
 });
