@@ -73,12 +73,14 @@ function summaryNumber(summary: Element, label: string): number | null {
   return null;
 }
 
-/** The `<strong>` whose following text (icons skipped) contains `label`. */
+/** The `<strong>` whose following text, up to the next `<strong>`, contains `label`. */
 function numberFollowedBy(summary: Element, label: string): number | null {
   for (const strong of summary.querySelectorAll("strong")) {
-    let next = strong.nextSibling;
-    while (next?.nodeName === "IMG") next = next.nextSibling;
-    if (next?.textContent?.includes(label)) return toInteger(strong.textContent);
+    let text = "";
+    for (let next = strong.nextSibling; next && next.nodeName !== "STRONG"; next = next.nextSibling) {
+      text += next.textContent ?? "";
+    }
+    if (text.includes(label)) return toInteger(strong.textContent);
   }
   return null;
 }
@@ -127,8 +129,8 @@ export interface CostRow {
   cost: Cost;
   /** A requirement is missing (« Requis: … »): it cannot be started whatever the stock. */
   locked: boolean;
-  /** The row's cost table, where the forecast line goes. */
-  costTable: HTMLTableElement | null;
+  /** The row's wide description cell, where the forecast line goes. */
+  description: Element | null;
 }
 
 /** Every row of construction.php or laboratoire.php, with what its next level costs. */
@@ -143,7 +145,7 @@ export function readCosts(doc: Document): CostRow[] {
         name,
         cost: { food: amount(".nourriture"), materials: amount(".materiaux"), workers: amount(".ouvriere") },
         locked: !!row.querySelector(".verificationNonOK"),
-        costTable: costCell.querySelector("table"),
+        description: row.querySelector(".desciption_amelioration"),
       },
     ];
   });
@@ -158,7 +160,7 @@ export interface Capacities {
 export function readCapacities(doc: Document): Capacities | null {
   const capacity = (warehouse: string) => {
     const row = readCosts(doc).find((cost) => cost.name === warehouse);
-    const description = row?.costTable?.closest(".ligneAmelioration")?.textContent ?? "";
+    const description = row?.description?.textContent ?? "";
     const match = /Capacité actuelle\s*:\s*([\d\s]+)/.exec(description);
     return match?.[1] ? toInteger(match[1]) : null;
   };

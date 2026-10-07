@@ -25,14 +25,13 @@ const state: ColonyState = {
   capacities: { food: 38900, materials: 77300 },
 };
 
-/** Forecast line of each row, by name; rows without one are left out. */
+/** Forecast line of each row (in its wide description cell), by name; rows without one are left out. */
 function forecasts(doc: Document) {
   return Object.fromEntries(
     [...doc.querySelectorAll(".ligneAmelioration")].flatMap((row) => {
-      const line = row.querySelector(".optizzz-forecast");
+      const line = row.querySelector(".desciption_amelioration > .optizzz-forecast");
       const name = row.querySelector("h2")?.textContent ?? "";
-      const text = [...(line?.querySelector("td")?.childNodes ?? [])].map((node) => node.textContent).join(" ");
-      return line ? [[name, text.replace(/\s+/g, " ").trim()]] : [];
+      return line ? [[name, line.textContent.replace(/\s+/g, " ").trim()]] : [];
     }),
   );
 }
@@ -42,8 +41,8 @@ describe("renderCostForecasts", () => {
     const doc = parse(constructionCostsHtml);
     renderCostForecasts(doc, state, null, now);
     expect(forecasts(doc)).toEqual({
-      "Entrepôt de Nourriture": "dans 46 min (aujourd'hui 12 h 46) Manque 4 200 matériaux",
-      "Entrepôt de Matériaux": "dans 2 h 46 (aujourd'hui 14 h 46) Manque 23 400 matériaux",
+      "Entrepôt de Nourriture": "Disponible dans 46 min (aujourd'hui 12 h 46) · manque 4 200 matériaux",
+      "Entrepôt de Matériaux": "Disponible dans 2 h 46 (aujourd'hui 14 h 46) · manque 23 400 matériaux",
     });
   });
 
@@ -56,8 +55,8 @@ describe("renderCostForecasts", () => {
     const doc = parse(constructionCostsHtml);
     renderCostForecasts(doc, state, queue, now);
     expect(forecasts(doc)).toMatchObject({
-      Champignonnière: "dans 1 h 05 (aujourd'hui 13 h 05) · file pleine",
-      "Entrepôt de Nourriture": "dans 1 h 05 (aujourd'hui 13 h 05) · file pleine Manque 4 200 matériaux",
+      Champignonnière: "Disponible dans 1 h 05 (aujourd'hui 13 h 05) · file pleine",
+      "Entrepôt de Nourriture": "Disponible dans 1 h 05 (aujourd'hui 13 h 05) · file pleine · manque 4 200 matériaux",
     });
   });
 
@@ -65,7 +64,7 @@ describe("renderCostForecasts", () => {
     const doc = parse(laboratoryCostsHtml);
     renderCostForecasts(doc, { ...state, food: 100, armyPerDay: 1000, workers: 170 }, null, now);
     expect(forecasts(doc)).toEqual({
-      "Vitesse d'attaque": "Jamais au rythme actuel Manque 2 900 nourriture",
+      "Vitesse d'attaque": "Jamais au rythme actuel · manque 2 900 nourriture",
       Génétique: "Il manque 830 ouvrières",
     });
   });
@@ -79,7 +78,9 @@ describe("renderCostForecasts", () => {
   it("counts down from when the stock was read", () => {
     const doc = parse(constructionCostsHtml);
     renderCostForecasts(doc, state, null, now, at(30));
-    expect(forecasts(doc)["Entrepôt de Nourriture"]).toBe("dans 16 min (aujourd'hui 12 h 46) Manque 4 200 matériaux");
+    expect(forecasts(doc)["Entrepôt de Nourriture"]).toBe(
+      "Disponible dans 16 min (aujourd'hui 12 h 46) · manque 4 200 matériaux",
+    );
   });
 
   it("redraws without piling lines up", () => {

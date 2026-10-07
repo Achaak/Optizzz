@@ -92,9 +92,10 @@ Directement dans `div#centre`, avant `div.Bas` et le tableau, une ligne par él�
 ## Ressources.php
 
 - Ouvrières : `input#RecolteNourriture`, `input#RecolteMateriaux` (`type="tel"`, valeurs avec espaces « 4 004 »), bouton `#ChangeRessource` (`ChangeRessource=Valider`, `POST /Ressources.php`). Compte+ : radios `input[name=choixOuvriere]` (`nourriture` / `materiaux` / `rien`) = où vont les nouvelles ouvrières ; sans Compte+ elles restent sans travail.
+- Le `<form>` des ouvrières est mal imbriqué dans `table#boite_ouvriere` : `#ChangeRessource.form` le retrouve, mais `closest("form")` ne trouve rien. Ne rien placer par rapport au formulaire.
 - `#ouvrieresAuTravail` (« 4 004 »), `#pourcentageTdcUtil`. Récoltent : min(TDC, ouvrières).
 - Prochain retour des ouvrières : `#retour_ouvrieres` + `reste(977, "retour_ouvrieres")` (secondes).
-- Résumé **par jour**, dans le `p` contenant « Chaque jour » :
+- Résumé **par jour**, dans le `p` contenant « Chaque jour ». Entre un `<strong>` et son icône, il peut y avoir un nœud texte vide : lire le texte qui suit jusqu'au `<strong>` suivant. Avec Compte+, la page n'a pas de `var champi` :
 
 ```html
 Chaque jour, vous récoltez <strong id="nbNourriture">0 </strong> et <strong id="nbMateriaux">192 192 </strong> sur votre

@@ -41,6 +41,11 @@ function type(input: HTMLInputElement | null, value: string) {
 }
 
 describe("mountSimulator", () => {
+  it("sits right under the daily summary of the harvest", () => {
+    const { doc, panel } = setup();
+    expect(panel.previousElementSibling).toBe(doc.querySelector("#nbNourriture")?.closest("p"));
+  });
+
   it("starts from the current split and its outlook", () => {
     const { field, summary } = setup();
     expect(field("optizzz-food")?.value).toBe("0");
@@ -60,13 +65,30 @@ describe("mountSimulator", () => {
     expect(field("optizzz-materials")?.value).toBe("250");
   });
 
-  it("lets every assignable worker be placed, idle ones included", () => {
+  it("starts from the game's split and shows idle workers apart", () => {
     const doc = parse(ressourcesHtml);
     const panel = mountSimulator(doc, state, 400, () => now);
-    expect(panel.querySelector<HTMLInputElement>('[name="optizzz-materials"]')?.value).toBe("400");
+    const value = (name: string) => panel.querySelector<HTMLInputElement>(`[name="${name}"]`)?.value;
+    const idle = () => panel.querySelector(".optizzz-simulator-idle")?.textContent ?? "";
+    expect(value("optizzz-food")).toBe("0");
+    expect(value("optizzz-materials")).toBe("300");
+    expect(idle()).toBe("100 ouvrières sans travail");
+
+    // The balance point puts every idle worker to work.
     [...panel.querySelectorAll("button")].find((element) => element.textContent === "Équilibre nourriture")?.click();
-    expect(panel.querySelector<HTMLInputElement>('[name="optizzz-food"]')?.value).toBe("100");
-    expect(panel.querySelector<HTMLInputElement>('[name="optizzz-materials"]')?.value).toBe("300");
+    expect(value("optizzz-food")).toBe("100");
+    expect(value("optizzz-materials")).toBe("300");
+    expect(idle()).toBe("");
+  });
+
+  it("only takes from materials what food needs beyond the idle workers", () => {
+    const doc = parse(ressourcesHtml);
+    const panel = mountSimulator(doc, state, 400, () => now);
+    const input = (name: string) => panel.querySelector<HTMLInputElement>(`[name="${name}"]`);
+    type(input("optizzz-food"), "50");
+    expect(input("optizzz-materials")?.value).toBe("300");
+    type(input("optizzz-food"), "150");
+    expect(input("optizzz-materials")?.value).toBe("250");
   });
 
   it("finds the balance point", () => {
