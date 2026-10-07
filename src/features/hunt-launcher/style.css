@@ -1,0 +1,229 @@
+:host {
+  all: initial;
+  display: block;
+}
+
+.hunt-launcher {
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 12px;
+  color: #222;
+  background: #f6efd9;
+  border: 1px solid #c8b88a;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  box-sizing: border-box;
+}
+
+.hunt-launcher.closed {
+  padding: 4px 12px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  text-align: left;
+  color: inherit;
+}
+
+.toggle .title {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.toggle .title::after {
+  content: " ▾";
+  font-size: 11px;
+}
+
+.toggle[aria-expanded="false"] .title::after {
+  content: " ▸";
+}
+
+.toggle .summary {
+  color: #6b5d3a;
+}
+
+.inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+fieldset {
+  flex: 1 1 260px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  border: 1px solid #ddd2b0;
+  border-radius: 4px;
+  margin: 0;
+  padding: 4px 8px 8px;
+}
+
+legend {
+  font-weight: bold;
+  padding: 0 4px;
+}
+
+input[type="number"] {
+  width: 60px;
+  padding: 2px 4px;
+  font: inherit;
+}
+
+input.units {
+  width: 58px;
+}
+
+input.wide {
+  width: 80px;
+}
+
+select {
+  font: inherit;
+}
+
+.note,
+.meta {
+  color: #6b5d3a;
+  font-size: 11px;
+  margin: 4px 0;
+}
+
+.muted {
+  color: #8a7c58;
+}
+
+.warning {
+  color: #9a5800;
+  font-weight: bold;
+  margin: 6px 0;
+}
+
+.error,
+.danger {
+  color: #a02020;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table.hunts {
+  border-collapse: collapse;
+  width: 100%;
+  background: #fff;
+}
+
+.hunts th,
+.hunts td {
+  padding: 3px 6px;
+  border-bottom: 1px solid #e3d8b8;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.hunts td.xp {
+  white-space: normal;
+  min-width: 90px;
+}
+
+.hunts thead th {
+  background: #e9dcb4;
+  cursor: help;
+}
+
+.hunts tr.launched td {
+  background: #e4f2d5;
+}
+
+.hunts tr.failed td {
+  background: #f8dcdc;
+}
+
+.status.launched {
+  color: #2f6b1a;
+  font-weight: bold;
+}
+
+.status.failed {
+  color: #a02020;
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 8px 0 4px;
+}
+
+button.primary {
+  background: #6b8e23;
+  color: #fff;
+  border: 1px solid #4f6b17;
+  border-radius: 4px;
+  padding: 5px 14px;
+  font-weight: bold;
+}
+
+button.primary:disabled {
+  background: #b9c49c;
+  border-color: #a3ad86;
+  cursor: default;
+}
+
+button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1d4f85;
+  text-decoration: underline;
+}
+
+.totals {
+  font-weight: bold;
+  margin: 4px 0;
+}
+
+.curve {
+  background: #fff;
+  border: 1px solid #ddd2b0;
+  border-radius: 4px;
+  padding: 6px;
+  margin: 8px 0;
+}
+
+.slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider input {
+  flex: 1;
+}
+
+.advice,
+.ongoing ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.ongoing {
+  margin-top: 8px;
+}
