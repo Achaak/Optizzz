@@ -8,7 +8,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 2. **Heures de fin** : l'heure de fin à côté des décomptes du jeu et un encart « Prochaines fins » ; voir `end-times.md`.
 3. **Rapports de chasse** (`messagerie.php`) : tableau des combats, pertes prévues par le moteur ; voir `hunt-reports.md`. Attaque et défense : [#1](https://github.com/Achaak/Optizzz/issues/1).
 4. **Simulateur de combat** (attaque / défense, Dôme et Loge) ; voir `combat-simulator.md`.
-5. **Planificateur de ponte** : coût, durée, date à laquelle on pourra payer, entretien.
+5. **Planificateur de ponte** : fin, date à laquelle on pourra payer, entretien, « max » ; voir `laying-planner.md`.
 6. **Calculateur de convoi** : trajet, arrivée, place libre chez le destinataire.
 7. **Cibles à portée** : joueurs entre 50 % et 300 % de son TDC, triés par distance.
 8. **Renforts** : qui peut arriver avant une attaque entrante.

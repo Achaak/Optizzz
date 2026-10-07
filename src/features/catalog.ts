@@ -42,6 +42,12 @@ export const featureCatalog = [
     ],
   },
   {
+    id: "laying-planner",
+    label: "Planificateur de ponte",
+    description: "Sur la Reine : fin de la ponte, quand elle sera payable, son entretien, et un bouton « max ».",
+    options: [],
+  },
+  {
     id: "hunt-reports",
     label: "Rapports de chasse",
     description:
