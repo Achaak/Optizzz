@@ -122,6 +122,7 @@ Relevé le 2026-10-07 sur s5 (sans Compte+).
 - Unités : texte de la première case (« 100 ouvrières », « 65 Jeunes Soldates Naines ») ; pour la première ponte, `span#unites_restantes_premiere_ponte`, décompté par `reste_unite(<s>, "unites_restantes_premiere_ponte", "<nom>", "<nombre>")`.
 - Temps total restant : `span#ponte_<n>` + `reste(<s>, "ponte_<n>")`, **cumulé le long de la file**. La première ligne a aussi `span#temps_restant_premiere_ponte` (même valeur) dans « Temps requis » ; les suivantes y ont un texte fixe.
 - Les scripts `reste()` sont regroupés après le tableau.
+- Ponte (relevé le 2026-10-07) : un `form[action="Reine.php"]` par unité pondable, dans `td.cout_amelioration` ; le champ est dans un tableau imbriqué (`form > table > td.cout_ponte > div > input`). Suffixe des identifiants : vide pour l'ouvrière, `N` pour `uniteN`. Champs : `input#input_cout_nombreN` (`type="tel"`, accepte « 2k », « 0.1M »), cachés `typeUnite` (`ouvriere` / `uniteN`), `nombre_de_ponteN` (le nombre lu par le jeu), `destinationN` (1 Terrain, 2 Dôme, 3 Loge ; `span#texte_destinationN` la fait tourner au clic). À chaque frappe, `maj_cout_ponte(N)` (`onkeyup`) met à jour `#cout_nombreN`, `#cout_tempsN` (« 1J 3h », bonus compris) et `#cout_nourritureN` ; champ vide = coût d'une unité. Une unité verrouillée n'a pas de formulaire, seulement son coût et « Requis ».
 
 ## Colonne de gauche (toutes les pages)
 
