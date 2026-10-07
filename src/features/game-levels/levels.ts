@@ -59,24 +59,36 @@ export interface HuntLevels {
 
 type FetchFn = (url: string) => Promise<Response>;
 
-/** Levels a hunt needs; a page never visited yet is read once in the background. */
-export async function loadLevels(origin: string, fetchFn: FetchFn = (url) => fetch(url)): Promise<HuntLevels> {
+/** The page each level is read on. */
+const PAGE_OF: Record<keyof StoredLevels, string> = {
+  weapons: "laboratoire.php",
+  shield: "laboratoire.php",
+  huntSpeed: "laboratoire.php",
+  attackSpeed: "laboratoire.php",
+  cochineal: "construction.php",
+  dome: "construction.php",
+  lodge: "construction.php",
+  aphids: "construction.php",
+};
+
+/** The asked levels, 0 when unknown; a page never visited yet is read once in the background. */
+export async function loadLevelsOf<K extends keyof StoredLevels>(
+  origin: string,
+  keys: readonly K[],
+  fetchFn: FetchFn = (url) => fetch(url),
+): Promise<Record<K, number>> {
   let stored = (await storage.getItem<StoredLevels>(storageKey(origin))) ?? {};
-  const missingResearch = stored.weapons === undefined || stored.shield === undefined || stored.huntSpeed === undefined;
-  const pages = [
-    ...(missingResearch ? ["laboratoire.php"] : []),
-    ...(stored.cochineal === undefined ? ["construction.php"] : []),
-  ];
+  const pages = new Set(keys.filter((key) => stored[key] === undefined).map((key) => PAGE_OF[key]));
   for (const page of pages) {
     const html = await fetchFn(`${origin}/${page}`).then((response) => response.text());
     const read = readLevels(new DOMParser().parseFromString(html, "text/html"));
     await storeLevels(origin, read);
     stored = { ...stored, ...read };
   }
-  return {
-    weapons: stored.weapons ?? 0,
-    shield: stored.shield ?? 0,
-    huntSpeed: stored.huntSpeed ?? 0,
-    cochineal: stored.cochineal ?? 0,
-  };
+  return Object.fromEntries(keys.map((key) => [key, stored[key] ?? 0])) as Record<K, number>;
+}
+
+/** Levels a hunt needs. */
+export function loadLevels(origin: string, fetchFn?: FetchFn): Promise<HuntLevels> {
+  return loadLevelsOf(origin, ["weapons", "shield", "huntSpeed", "cochineal"], fetchFn);
 }

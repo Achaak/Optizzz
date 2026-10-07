@@ -21,7 +21,7 @@ Savoir à quelle heure finit une chasse, une ponte ou un chantier sans faire le 
 
 ## Hors v1
 
-- Attaques et convois : à vérifier dès qu'il y en aura en cours (`Armee.php`, `commerce.php`) ; s'ils utilisent `reste()`, la partie 1 les couvre déjà.
+- Attaques : à vérifier dès qu'il y en aura en cours (`Armee.php`). Les convois n'ont pas de `reste()` : leur heure d'arrivée vient du calculateur de convoi, et ils entrent dans l'encart (source `commerce.php`).
 
 ## Code
 

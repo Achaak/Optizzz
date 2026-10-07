@@ -15,9 +15,17 @@ d = √((x₁ − x₂)² + (y₁ − y₂)²)
 - Forum : la distance est pythagoricienne et la Vitesse d'attaque réduit le temps, mais la constante n'y est pas donnée (`bot-fourmizzz/research/fourmizzz-forum-strats.md` §11.4).
 - Le niveau de recherche −10 %/niveau : `bot-fourmizzz/research/fourmizzz-game-brief.md`.
 
+## Mesures
+
+| Date       | Trajet                                               | VA  | Formule         | Jeu                                                                                                               |
+| ---------- | ---------------------------------------------------- | --- | --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 2026-10-07 | convoi Achak (95;48) → Osirus_jack (94;51), d = 3,16 | 0   | 1 h 35 min 32 s | message de départ à 20 h 15, arrivée à 21 h 54 min 35 s : ≈ 1 h 39 (le joueur pensait l'avoir lancé vers 20 h 19) |
+
+L'écart possible (≈ 4 %) n'est pas tranché : l'heure du message n'a que la minute, et le simulateur de durée du jeu demande le Compte+. Le calculateur de convoi affiche donc « ≈ » pour un convoi à venir, et le temps du jeu pour un convoi en cours.
+
 ## À vérifier
 
-Comparer avec le simulateur du jeu (`simulateurDuree.php`, calcul côté serveur) pour deux ou trois couples distance / niveau, puis ajouter ces valeurs comme cas de test dans `travel.test.ts`.
+Comparer avec le simulateur du jeu (`simulateurDuree.php`, calcul côté serveur) pour deux ou trois couples distance / niveau, puis ajouter ces valeurs comme cas de test dans `src/game/travel.test.ts`.
 
 ## Ce qu'on peut savoir des niveaux
 

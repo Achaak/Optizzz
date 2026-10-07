@@ -1,5 +1,5 @@
 import { membersByDistance, type Position } from "./neighbors";
-import { travelTime } from "./travel";
+import { travelTime } from "@/game/travel";
 
 export interface KnownLevels {
   myId: number | null;

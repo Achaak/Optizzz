@@ -1,0 +1,56 @@
+<!-- Structure observed on s5.fourmizzz.fr/commerce.php on 2026-10-07, one convoy on its way (sent at 20h15, 1 food).
+     Help text, scripts and token trimmed; the second convoy is made up to cover thousands and materials. -->
+<div id="data" style="display: none">
+  <span id="pseudo">Achak</span><span id="nb_ouvrieres">4995</span><span id="nb_nourriture">3532.36</span>
+  <span id="nb_materiaux">42830</span><span id="quantite_tdc">4679</span>
+</div>
+<div id="centre">
+  <table class="simulateur">
+    <tr>
+      <td>
+        <h2>Convois</h2>
+        <form method="post" action="commerce.php">
+          <table>
+            <tr>
+              <td>Destinataire du convoi</td>
+              <td><input type="text" id="pseudo_convoi" name="pseudo_convoi" value="" /></td>
+            </tr>
+            <tr>
+              <td>Nourriture donnée</td>
+              <td>
+                <input type="tel" id="input_nbNourriture" name="input_nbNourriture" value="" />
+                <input type="hidden" id="nbNourriture" name="nbNourriture" value="" />
+              </td>
+            </tr>
+            <tr>
+              <td>Matériaux donnés</td>
+              <td>
+                <input type="tel" id="input_nbMateriaux" name="input_nbMateriaux" value="" />
+                <input type="hidden" id="nbMateriaux" name="nbMateriaux" value="" />
+              </td>
+            </tr>
+            <tr>
+              <td>Ouvrières requises</td>
+              <td>
+                <input type="tel" id="input_nbOuvriere" name="input_nbOuvriere" value="" />
+                <input type="hidden" id="nbOuvriere" name="nbOuvriere" value="" />
+                <input type="hidden" id="ratio_nourriture" name="ratio_nourriture" value="0.5" />
+              </td>
+            </tr>
+          </table>
+          <input type="submit" name="convoi" value="Lancer le convoi" />
+        </form>
+      </td>
+    </tr>
+  </table>
+  <h3>Convois en cours:</h3>
+  <strong
+    >- Vous allez livrer 1<img src="images/icone/icone_pomme.png" /> et 0<img src="images/icone/icone_bois.png" /> à
+    <a href="Membre.php?Pseudo=Osirus_jack">Osirus_jack</a> dans 1H 22m 22s</strong
+  ><br />
+  <strong
+    >- Vous allez livrer 0<img src="images/icone/icone_pomme.png" /> et 12 500<img src="images/icone/icone_bois.png" />
+    à <a href="Membre.php?Pseudo=Hardware">Hardware</a> dans 1J 2H 3m 4s</strong
+  ><br />
+  <div class="Bas"></div>
+</div>

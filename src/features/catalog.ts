@@ -48,6 +48,12 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "convoy",
+    label: "Calculateur de convoi",
+    description: "Sur les Convois : trajet et heure d'arrivée, ouvrières prises, destinataires suggérés.",
+    options: [],
+  },
+  {
     id: "hunt-reports",
     label: "Rapports de chasse",
     description:
