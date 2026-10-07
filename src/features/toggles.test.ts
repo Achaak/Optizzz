@@ -40,6 +40,11 @@ describe("toggle storage", () => {
     expect(await isFeatureEnabled("hunt-launcher")).toBe(true);
   });
 
+  it("keeps both changes of two quick clicks", async () => {
+    await Promise.all([setToggle("work-queue", undefined, false), setToggle("resource-forecast", undefined, false)]);
+    expect(await loadToggles()).toEqual({ "work-queue": false, "resource-forecast": false });
+  });
+
   it("keeps an option's state while its feature is off", async () => {
     await setToggle("resource-forecast", "simulator", false);
     await setToggle("resource-forecast", undefined, false);
