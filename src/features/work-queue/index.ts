@@ -18,6 +18,7 @@ const STYLE = `
 /** Table of the buildings / research in progress, on construction.php and laboratoire.php. */
 export const workQueue: Feature = {
   id: "work-queue",
+  toggle: "work-queue",
   matches: (url) => /^\/(construction|laboratoire)\.php$/i.test(url.pathname),
   run(ctx) {
     if (document.querySelector(".optizzz-work-queue")) return;
