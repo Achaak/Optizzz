@@ -27,6 +27,7 @@ describe("buildFeaturesSection", () => {
       "resource-forecast.outlook",
       "resource-forecast.simulator",
       "laying-planner",
+      "convoy",
       "hunt-reports",
       "combat-simulator",
       "alliance-map",

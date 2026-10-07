@@ -1,10 +1,11 @@
 // What ends when, read on the pages that list it. Structures in docs/research/fourmizzz-pages.md.
 import { formatNumber } from "@/utils/number-format";
+import { readConvoysOnWay } from "../convoy/convoy";
 import { readHunts } from "../resource-forecast/pages";
 import { readWorkQueue } from "../work-queue/queue";
 import { readCountdowns } from "./countdowns";
 
-export type EndKind = "hunt" | "laying" | "construction" | "research";
+export type EndKind = "hunt" | "laying" | "construction" | "research" | "convoy";
 
 export interface EndItem {
   label: string;
@@ -23,6 +24,7 @@ export const SOURCE_PAGES: Record<EndKind, string> = {
   laying: "/Reine.php",
   construction: "/construction.php",
   research: "/laboratoire.php",
+  convoy: "/commerce.php",
 };
 
 export function sourceOf(pathname: string): EndKind | null {
@@ -45,6 +47,11 @@ function readItems(doc: Document, kind: EndKind, now: Date): EndItem[] {
       }));
     case "laying":
       return readLayings(doc, now);
+    case "convoy":
+      return readConvoysOnWay(doc, now).map((convoy) => ({
+        label: `Convoi → ${convoy.recipient}`,
+        endsAt: convoy.arrivesAt,
+      }));
     case "construction":
     case "research":
       return readWorkQueue(doc, now).items.map((item) => ({

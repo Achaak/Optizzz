@@ -2,7 +2,8 @@ import type { EChartsCoreOption } from "echarts/core";
 import type { Player } from "./api";
 import { levelOf, type KnownLevels } from "./neighbor-table";
 import { distance, kNearestLinks, membersByDistance } from "./neighbors";
-import { formatDuration, travelTime } from "./travel";
+import { travelTime } from "@/game/travel";
+import { formatDuration } from "./travel";
 
 export interface MapMember extends Player {
   /** Hunting field read live on the members page, otherwise the export's. */

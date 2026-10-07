@@ -105,6 +105,21 @@ describe("kindsToRefresh", () => {
         { hunt: section("hunt", [], 16), laying: section("laying", [], 14), research: section("research", [], 0) },
         now,
       ),
-    ).toEqual(["hunt", "construction"]);
+    ).toEqual(["hunt", "construction", "convoy"]);
+  });
+});
+
+describe("convoys", () => {
+  it("lists every convoy on its way, like hunts", () => {
+    const rows = recapRows(
+      {
+        convoy: section("convoy", [
+          ["Convoi → Messor", 80],
+          ["Convoi → Tetramorium", 20],
+        ]),
+      },
+      now,
+    );
+    expect(summary(rows)).toEqual(["Convoi → Tetramorium", "Convoi → Messor"]);
   });
 });
