@@ -1,7 +1,7 @@
 // Hunt fights of an opened « Chasses » conversation (messagerie.php). Structure: docs/research/fourmizzz-pages.md.
 import { fight as replayFight } from "@/game/army/combat";
 import { PREYS } from "@/game/army/prey";
-import { armyFromKeys, UNITS, type Levels } from "@/game/army/units";
+import { armyFromKeys, parseCounts, unitKeyOf, type Levels } from "@/game/army/units";
 
 export interface HuntFight {
   /** « 07/10/26 11h08 ». */
@@ -33,16 +33,6 @@ const toInteger = (text: string | undefined) => Number((text ?? "").replace(/\D/
 /** « 1 199 »: digits in groups of three, so that a lazy match cannot stop at « 1 ». */
 const NUMBER = "(\\d{1,3}(?:\\s\\d{3})*)";
 
-/** « 1 921 Jeunes Soldates Naines, 119 Soldates Naines » → name → count. */
-function readCounts(text: string): [string, number][] {
-  return text.split(",").flatMap((part) => {
-    const match = /^\s*([\d\s]+?)\s+(\D.*?)\s*$/.exec(part);
-    return match?.[1] && match[2] ? [[match[2], toInteger(match[1])] as [string, number]] : [];
-  });
-}
-
-const unitKey = (name: string) => UNITS.find((unit) => unit.plural === name || unit.name === name)?.key ?? name;
-
 /** One fight from the text of its `.contenuJoueur`; null when it is not a hunt fight. */
 export function readFight(date: string, text: string): HuntFight | null {
   const flat = text.replace(/\s+/g, " ");
@@ -60,8 +50,8 @@ export function readFight(date: string, text: string): HuntFight | null {
   }
   return {
     date,
-    sent: Object.fromEntries(readCounts(sent).map(([name, count]) => [unitKey(name), count])),
-    prey: Object.fromEntries(readCounts(prey)),
+    sent: Object.fromEntries(parseCounts(sent).map(([name, count]) => [unitKeyOf(name) ?? name, count])),
+    prey: Object.fromEntries(parseCounts(prey)),
     attackBase: toInteger(dealt[1]),
     attackBonus: toInteger(dealt[2]),
     preyKilled: toInteger(dealt[3]),
