@@ -1,0 +1,70 @@
+<!-- Structure observed on s5.fourmizzz.fr/Reine.php on 2026-10-07: the workers' row and the young dwarves' row (each field in a table inside its form), as the
+     game shows them after typing a number (maj_cout_ponte updates the time and food). Descriptions and token trimmed. -->
+<div id="data" style="display: none"><span id="quantite_tdc">4496</span></div>
+<table>
+  <tr>
+    <td><div id="photo_unite_0"></div></td>
+    <td class="desciption_amelioration"><h2>Ouvrière</h2></td>
+    <td class="cout_amelioration">
+      <form method="post" action="Reine.php">
+        <input type="hidden" name="unePonte" value="oui" />
+        <input type="hidden" name="typeUnite" value="ouvriere" />
+        <span id="bouton_cout_nombre"><span id="cout_nombre">200</span></span>
+        <table>
+          <tr>
+            <td class="cout_ponte">
+              <div>
+                <input
+                  type="tel"
+                  id="input_cout_nombre"
+                  name="input_cout_nombre"
+                  value="200"
+                  onkeyup="maj_cout_ponte('')"
+                />
+              </div>
+            </td>
+          </tr>
+        </table>
+        <input type="hidden" id="nombre_de_ponte" name="nombre_de_ponte" value="200" />
+        <span id="bouton_cout_temps"><span id="cout_temps">33m 20s</span></span>
+        <span id="bouton_cout_nourriture"><span id="cout_nourriture">1 000</span></span>
+      </form>
+    </td>
+  </tr>
+  <tr>
+    <td><div id="photo1"></div></td>
+    <td class="desciption_amelioration"><h2>Jeune Soldate Naine</h2></td>
+    <td class="cout_amelioration">
+      <form method="post" action="Reine.php">
+        <input type="hidden" name="unePonte" value="oui" />
+        <input type="hidden" name="typeUnite" value="unite1" />
+        <span id="bouton_cout_nombre1"><span id="cout_nombre1">1</span></span>
+        <table>
+          <tr>
+            <td class="cout_ponte">
+              <div>
+                <input
+                  type="tel"
+                  id="input_cout_nombre1"
+                  name="input_cout_nombre1"
+                  value=""
+                  onkeyup="maj_cout_ponte(1)"
+                />
+              </div>
+            </td>
+          </tr>
+        </table>
+        <input type="hidden" id="nombre_de_ponte1" name="nombre_de_ponte" value="1" />
+        <span id="bouton_cout_temps1"><span id="cout_temps1">50s</span></span>
+        <span id="bouton_cout_nourriture1"><span id="cout_nourriture1">16</span></span>
+        <span id="texte_destination1" onclick="destination_suivante(1)">Loge</span>
+        <input type="hidden" id="destination1" name="destination" value="3" />
+      </form>
+    </td>
+  </tr>
+  <tr>
+    <td><div id="photo2"></div></td>
+    <td class="desciption_amelioration"><h2>Soldate Naine</h2></td>
+    <td class="cout_amelioration">Requis : Salle de combat niveau 3</td>
+  </tr>
+</table>
