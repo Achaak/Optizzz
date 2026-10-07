@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HUNT_REPORTS, type HuntReport } from "../__fixtures__/hunt-reports";
+import { HUNT_REPORTS, type HuntReport } from "./__fixtures__/hunt-reports";
 import { fight } from "./combat";
 import { PREYS } from "./prey";
 import { armyFromKeys, UNITS } from "./units";

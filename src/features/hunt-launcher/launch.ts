@@ -1,5 +1,5 @@
 // Launching hunts, only ever on the player's click. Form: docs/research/fourmizzz-pages.md (AcquerirTerrain.php).
-import { UNITS } from "./engine/units";
+import { UNITS } from "@/game/army/units";
 import { readHuntForm } from "./pages";
 
 export type LaunchStatus = "pending" | "launching" | "launched" | "failed";

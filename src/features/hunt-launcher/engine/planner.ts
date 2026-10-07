@@ -2,7 +2,7 @@
 import { calysteneEstimate, type CalysteneEstimate } from "./calystene";
 import { difficulty, huntDurationSeconds } from "./difficulty";
 import { evaluateHunt, type HuntOutcome } from "./evaluate";
-import { armyAttack, armyFood, type Army, type Levels } from "./units";
+import { armyAttack, armyFood, type Army, type Levels } from "@/game/army/units";
 
 // No « zero loss » objective: young dwarves take the hits first, and the fixed 0.01 × field part of the
 // difficulty wounds one past half its hp at any sizeable field. See docs/research/chasse.md.
