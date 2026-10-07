@@ -1,4 +1,6 @@
+import { withToggle, type Toggles } from "../toggles";
 import { ABOUT_STYLE, buildAboutSection } from "./about-section";
+import { buildFeaturesSection, FEATURES_STYLE, type ToggleChange } from "./features-section";
 
 export interface SettingsTab {
   id: string;
@@ -6,12 +8,45 @@ export interface SettingsTab {
   render: (doc: Document) => HTMLElement;
 }
 
-/** Tabs of the dialog, in order. Settings and themes will get their own tabs here. */
-export function settingsTabs(version: string, userAgent: string): SettingsTab[] {
-  return [{ id: "about", label: "À propos", render: (doc) => buildAboutSection(doc, version, userAgent) }];
+export interface FeaturesTabInput {
+  toggles: Toggles;
+  /** Saves a change; the tab keeps its own copy up to date for when it is shown again. */
+  onChange: ToggleChange;
+  /** Reloads the game page; absent in the toolbar popup. */
+  reload?: () => void;
 }
 
-// Close to the game's panels: parchment background, olive title, small bold tabs.
+/** Tabs of the dialog and the popup, in order. Settings and themes will get their own tabs here. */
+export function settingsTabs(version: string, userAgent: string, features: FeaturesTabInput): SettingsTab[] {
+  let toggles = features.toggles;
+  const onChange: ToggleChange = (feature, option, enabled) => {
+    toggles = withToggle(toggles, feature, option, enabled);
+    features.onChange(feature, option, enabled);
+  };
+  return [
+    {
+      id: "features",
+      label: "Fonctionnalités",
+      render: (doc) => buildFeaturesSection(doc, toggles, onChange, features.reload),
+    },
+    { id: "about", label: "À propos", render: (doc) => buildAboutSection(doc, version, userAgent) },
+  ];
+}
+
+// Small bold tabs, the selected one joined to the panel below. Shared with the toolbar popup.
+export const TABS_STYLE = `
+.tabs { display: flex; flex-direction: column; min-height: 0; }
+.tab-list { display: flex; gap: 2px; padding: 0 8px; border-bottom: 1px solid #a8894a; }
+.tab {
+  padding: 6px 12px; border: 1px solid transparent; border-bottom: none; border-radius: 3px 3px 0 0;
+  background: #dcc78a; color: #4a4320; font: inherit; font-weight: bold; cursor: pointer;
+}
+.tab[aria-selected="true"] { background: #f7ecc6; border-color: #a8894a; margin-bottom: -1px; }
+.tab-panel { overflow: auto; padding: 16px 20px; background: #f7ecc6; }
+${FEATURES_STYLE}
+${ABOUT_STYLE}`;
+
+// Close to the game's panels: parchment background, olive title.
 export const DIALOG_STYLE = `
 .dialog {
   position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
@@ -28,14 +63,40 @@ export const DIALOG_STYLE = `
   border: none; background: none; color: #b49a55; font-size: 26px; line-height: 1; cursor: pointer;
 }
 .dialog-close:hover { color: #6f6a1f; }
-.dialog-tabs { display: flex; gap: 2px; padding: 0 8px; border-bottom: 1px solid #a8894a; }
-.dialog-tab {
-  padding: 6px 12px; border: 1px solid transparent; border-bottom: none; border-radius: 3px 3px 0 0;
-  background: #dcc78a; color: #4a4320; font: inherit; font-weight: bold; cursor: pointer;
+${TABS_STYLE}`;
+
+/** Tab list and panel, the first tab shown. */
+export function buildTabs(doc: Document, tabs: SettingsTab[]): HTMLElement {
+  const container = doc.createElement("div");
+  container.className = "tabs";
+  const tabList = doc.createElement("div");
+  tabList.className = "tab-list";
+  tabList.setAttribute("role", "tablist");
+  const panel = doc.createElement("div");
+  panel.className = "tab-panel";
+  panel.setAttribute("role", "tabpanel");
+
+  const buttons = tabs.map((tab) => {
+    const button = doc.createElement("button");
+    button.type = "button";
+    button.className = "tab";
+    button.setAttribute("role", "tab");
+    button.textContent = tab.label;
+    button.addEventListener("click", () => select(tab));
+    tabList.append(button);
+    return button;
+  });
+
+  function select(selected: SettingsTab) {
+    tabs.forEach((tab, index) => buttons[index]?.setAttribute("aria-selected", String(tab === selected)));
+    panel.replaceChildren(selected.render(doc));
+  }
+  const first = tabs[0];
+  if (first) select(first);
+
+  container.append(tabList, panel);
+  return container;
 }
-.dialog-tab[aria-selected="true"] { background: #f7ecc6; border-color: #a8894a; margin-bottom: -1px; }
-.dialog-body { overflow: auto; padding: 16px 20px; background: #f7ecc6; }
-${ABOUT_STYLE}`;
 
 /** Builds the settings dialog: title, close button, one tab per section. */
 export function buildSettingsDialog(doc: Document, tabs: SettingsTab[], onClose: () => void): HTMLElement {
@@ -59,31 +120,6 @@ export function buildSettingsDialog(doc: Document, tabs: SettingsTab[], onClose:
   close.addEventListener("click", onClose);
   header.append(title, close);
 
-  const tabList = doc.createElement("div");
-  tabList.className = "dialog-tabs";
-  tabList.setAttribute("role", "tablist");
-  const body = doc.createElement("div");
-  body.className = "dialog-body";
-  body.setAttribute("role", "tabpanel");
-
-  const buttons = tabs.map((tab) => {
-    const button = doc.createElement("button");
-    button.type = "button";
-    button.className = "dialog-tab";
-    button.setAttribute("role", "tab");
-    button.textContent = tab.label;
-    button.addEventListener("click", () => select(tab));
-    tabList.append(button);
-    return button;
-  });
-
-  function select(selected: SettingsTab) {
-    tabs.forEach((tab, index) => buttons[index]?.setAttribute("aria-selected", String(tab === selected)));
-    body.replaceChildren(selected.render(doc));
-  }
-  const first = tabs[0];
-  if (first) select(first);
-
-  dialog.append(header, tabList, body);
+  dialog.append(header, buildTabs(doc, tabs));
   return dialog;
 }

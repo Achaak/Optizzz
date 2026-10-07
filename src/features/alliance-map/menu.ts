@@ -10,6 +10,7 @@ const MAP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
 /** Adds a « Carte » entry to the alliance menu (present on every page), after « Membres ». */
 export const allianceMapMenu: Feature = {
   id: "alliance-map-menu",
+  toggle: "alliance-map",
   matches: () => true,
   run() {
     const membersItem = document.querySelector("#menuAlliance a.boutonMembres")?.closest("li");

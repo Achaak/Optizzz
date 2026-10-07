@@ -1,0 +1,28 @@
+# Feuille de route
+
+Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feature a son propre `/grill-me` court juste avant d'être codée ; cette page ne garde que l'ordre et les décisions qui touchent plusieurs features.
+
+## Ordre
+
+1. **Activer / désactiver les fonctionnalités** : voir `feature-toggles.md`.
+2. **Compteurs « fin dans » partout** : chasses, convois, attaques avec leur heure de fin, comme les Chantiers en cours.
+3. **Rapports lisibles** (`messagerie.php`) : tableau des pertes, gains, rendement ; sert aussi à recaler le moteur de chasse.
+4. **Simulateur de combat** (attaque / défense, Dôme et Loge).
+5. **Planificateur de ponte** : coût, durée, date à laquelle on pourra payer, entretien.
+6. **Calculateur de convoi** : trajet, arrivée, place libre chez le destinataire.
+7. **Cibles à portée** : joueurs entre 50 % et 300 % de son TDC, triés par distance.
+8. **Renforts** : qui peut arriver avant une attaque entrante.
+9. **Chaîne de TDC** : qui peut prendre à qui, ordre de passage.
+10. **Historique de progression** : TDC et scores en courbes.
+11. **Alertes** : badge de l'icône, puis notifications.
+
+## Décisions transverses
+
+- **Modèle d'armée partagé** : `units.ts` et `combat.ts` sortent de `hunt-launcher/engine/` vers un module commun dès la feature « Rapports lisibles » ; combat, ponte, rapports et chasse s'en servent.
+- **Placement** : chaque outil s'insère sur la page du jeu où il sert (ADR 0001). Un accès depuis la roue seulement pour un outil sans page naturelle (simulateur de combat, peut-être).
+- **Historique** : export public nocturne pour le passé (jamais purgé, tous les joueurs), plus un point « maintenant » lu en direct.
+- **Actions de jeu** : liens pré-remplis vers les formulaires d'attaque ou de convoi du jeu, que le joueur valide lui-même. Jamais d'automatisation.
+- **Alertes** :
+  - étape 1, badge : background script + permission `alarms`, calculé depuis les données mémorisées, sans jamais interroger le jeu. Délai avant le premier problème (rouge < 2 h, orange < 12 h, rien sinon), « ? » gris si les données ont plus de 24 h, pire des serveurs avec le détail par serveur au survol ;
+  - étape 2, notifications : permission `notifications` **optionnelle**, demandée à l'activation. Types activables un par un, tous coupés par défaut : famine, entrepôt plein, chantier terminé, chasse rentrée. Le serveur est nommé (« S5 : … »). Pas d'attaque entrante ;
+  - mettre à jour `PRIVACY.md` et `docs/store/fiche.md` avant de publier.
