@@ -1,0 +1,28 @@
+name: Proposer une fonctionnalité
+description: Une idée pour améliorer Optizzz.
+title: "[Idée] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci pour ta proposition ! Pense à vérifier qu'une idée proche n'a pas déjà été proposée.
+  - type: textarea
+    id: what
+    attributes:
+      label: Ce que la fonctionnalité ferait
+      description: Décris ce que tu aimerais voir, et sur quelle page du jeu.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Pourquoi ce serait utile
+      description: Le problème que ça résout ou le temps que ça fait gagner en jeu.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Comment tu fais aujourd'hui
+      description: Calculs à la main, autre outil, tableur… (facultatif)
