@@ -12,8 +12,8 @@ describe("readLevels", () => {
     expect(readLevels(parse(laboratoryHtml))).toEqual({ shield: 4, weapons: 4, huntSpeed: 3, attackSpeed: 0 });
   });
 
-  it("reads the cochineal farm on construction.php", () => {
-    expect(readLevels(parse(constructionHtml))).toEqual({ cochineal: 2 });
+  it("reads the dome, lodge, aphid and cochineal farms on construction.php", () => {
+    expect(readLevels(parse(constructionHtml))).toEqual({ dome: 3, lodge: 1, aphids: 4, cochineal: 2 });
   });
 });
 

@@ -1,6 +1,7 @@
 import { withToggle, type Toggles } from "../toggles";
 import { ABOUT_STYLE, buildAboutSection } from "./about-section";
 import { buildFeaturesSection, FEATURES_STYLE, type ToggleChange } from "./features-section";
+import { buildToolsSection, TOOLS_STYLE, type ToolsInput } from "./tools-section";
 
 export interface SettingsTab {
   id: string;
@@ -17,7 +18,12 @@ export interface FeaturesTabInput {
 }
 
 /** Tabs of the dialog and the popup, in order. Settings and themes will get their own tabs here. */
-export function settingsTabs(version: string, userAgent: string, features: FeaturesTabInput): SettingsTab[] {
+export function settingsTabs(
+  version: string,
+  userAgent: string,
+  features: FeaturesTabInput,
+  tools: ToolsInput,
+): SettingsTab[] {
   let toggles = features.toggles;
   const onChange: ToggleChange = (feature, option, enabled) => {
     toggles = withToggle(toggles, feature, option, enabled);
@@ -29,6 +35,7 @@ export function settingsTabs(version: string, userAgent: string, features: Featu
       label: "Fonctionnalités",
       render: (doc) => buildFeaturesSection(doc, toggles, onChange, features.reload),
     },
+    { id: "tools", label: "Outils", render: (doc) => buildToolsSection(doc, tools) },
     { id: "about", label: "À propos", render: (doc) => buildAboutSection(doc, version, userAgent) },
   ];
 }
@@ -44,6 +51,7 @@ export const TABS_STYLE = `
 .tab[aria-selected="true"] { background: #f7ecc6; border-color: #a8894a; margin-bottom: -1px; }
 .tab-panel { overflow: auto; padding: 16px 20px; background: #f7ecc6; }
 ${FEATURES_STYLE}
+${TOOLS_STYLE}
 ${ABOUT_STYLE}`;
 
 // Close to the game's panels: parchment background, olive title.

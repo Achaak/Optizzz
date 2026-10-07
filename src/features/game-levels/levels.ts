@@ -7,6 +7,11 @@ export interface StoredLevels {
   huntSpeed?: number;
   attackSpeed?: number;
   cochineal?: number;
+  dome?: number;
+  /** Loge Impériale. */
+  lodge?: number;
+  /** Étable à pucerons. */
+  aphids?: number;
 }
 
 /** Row titles of laboratoire.php and construction.php (see docs/research/fourmizzz-pages.md). */
@@ -16,6 +21,9 @@ const ROWS: Record<string, keyof StoredLevels> = {
   "vitesse de chasse": "huntSpeed",
   "vitesse d’attaque": "attackSpeed",
   "etable à cochenilles": "cochineal",
+  dôme: "dome",
+  "loge impériale": "lodge",
+  "etable à pucerons": "aphids",
 };
 
 const normalize = (text: string) => text.replace(/['’]/g, "’").trim().toLowerCase();
@@ -31,6 +39,11 @@ export function readLevels(doc: Document): StoredLevels {
 }
 
 const storageKey = (origin: string) => `local:gameLevels:${new URL(origin).host}` as const;
+
+/** What was remembered, without reading any page. */
+export async function loadStoredLevels(origin: string): Promise<StoredLevels> {
+  return (await storage.getItem<StoredLevels>(storageKey(origin))) ?? {};
+}
 
 export async function storeLevels(origin: string, levels: StoredLevels): Promise<void> {
   const stored = (await storage.getItem<StoredLevels>(storageKey(origin))) ?? {};

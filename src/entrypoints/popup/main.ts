@@ -1,4 +1,5 @@
 import { buildTabs, settingsTabs, TABS_STYLE } from "@/features/settings/dialog";
+import { simulatorUrl } from "@/features/combat-simulator/open";
 import { loadToggles, setToggle } from "@/features/toggles";
 
 const style = document.createElement("style");
@@ -9,14 +10,26 @@ body { margin: 0; background: #efe0ad; }
 ${TABS_STYLE}`;
 document.head.append(style);
 
-const tabs = settingsTabs(browser.runtime.getManifest().version, navigator.userAgent, {
-  toggles: await loadToggles(),
-  onChange: (feature, option, enabled) => {
-    setToggle(feature, option, enabled).catch((error: unknown) => {
-      console.error("[Optizzz] saving a feature toggle failed", error);
-    });
+const tabs = settingsTabs(
+  browser.runtime.getManifest().version,
+  navigator.userAgent,
+  {
+    toggles: await loadToggles(),
+    onChange: (feature, option, enabled) => {
+      setToggle(feature, option, enabled).catch((error: unknown) => {
+        console.error("[Optizzz] saving a feature toggle failed", error);
+      });
+    },
   },
-});
+  {
+    openSimulator: () => {
+      // No server here: the page takes the one whose army was read last.
+      void browser.tabs.create({ url: simulatorUrl(null, "attack") }).then(() => {
+        window.close();
+      });
+    },
+  },
+);
 
 const popup = document.createElement("main");
 popup.className = "popup";

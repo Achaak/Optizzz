@@ -49,6 +49,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "combat-simulator",
+    label: "Simulateur de combat",
+    description:
+      "Bouton « Simuler un combat » sur la page Armée ; le simulateur reste ouvrable depuis l'onglet Outils.",
+    options: [],
+  },
+  {
     id: "alliance-map",
     label: "Carte de l'alliance",
     description: "Entrée « Carte » dans le menu d'alliance : où sont les membres et qui est proche de qui.",
