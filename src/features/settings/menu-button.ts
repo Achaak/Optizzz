@@ -1,3 +1,5 @@
+import { svgElement } from "@/utils/html";
+
 export const BUTTON_CLASS = "optizzz-settings-button";
 const BUTTON_WIDTH_PX = 45;
 
@@ -22,7 +24,7 @@ export function insertSettingsButton(doc: Document, onClick: () => void): HTMLBu
   button.className = BUTTON_CLASS;
   button.title = "Optizzz";
   button.setAttribute("aria-label", "Optizzz : à propos et paramètres");
-  button.innerHTML = GEAR_ICON;
+  button.append(svgElement(doc, GEAR_ICON));
   Object.assign(button.style, {
     position: "absolute",
     top: "0",

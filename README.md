@@ -6,16 +6,18 @@ Extension Chrome et Firefox qui ajoute des outils au jeu [Fourmizzz](http://www.
 
 ## Fonctionnalités
 
-### Carte de l'alliance
+Chaque outil se désactive dans les paramètres (roue dentée dans la barre du jeu, ou icône de l'extension).
 
-Une entrée **Carte** dans le menu Alliance affiche tous les membres sur la carte du serveur :
+- **Chantiers en cours** : tableau des constructions et recherches, avec progression et heure de fin.
+- **Heures de fin** : l'heure de fin des chasses, pontes et chantiers à côté des décomptes, et un encart « Prochaines fins ».
+- **Prévisions de ressources** : quand tu pourras payer, famine, entrepôts pleins, et un simulateur de répartition des ouvrières.
+- **Planificateur de ponte** : fin de la ponte, date de paiement possible, entretien et bouton « max » sur la Reine.
+- **Rapports de chasse** : tableau des combats de chaque chasse dans la messagerie, avec les pertes prévues.
+- **Simulateur de combat** : depuis la page Armée ou le popup de l'extension.
+- **Lanceur de chasse** : combien chasser et avec quoi, puis lancer en un clic.
+- **Carte de l'alliance** : les membres reliés à leurs plus proches voisins, avec les temps de trajet. Les positions viennent de l'[API publique des exports](https://s5.fourmizzz.fr/developer.php).
 
-- chaque membre est relié à ses **k plus proches voisins** (3 par défaut, réglable) ;
-- zoom à la molette ou au pincement, déplacement à la souris, double-clic pour zoomer sur un joueur ;
-- un tableau des **temps de trajet** entre le joueur sélectionné et chaque membre, dans les deux sens ;
-- la **Vitesse d'attaque** de chaque membre se saisit dans le tableau et se partage par copier-coller (forum, Discord).
-
-Les positions viennent de l'[API publique des exports](https://s5.fourmizzz.fr/developer.php) de Fourmizzz, le TDC est lu en direct sur la page Membres.
+Optizzz n'agit jamais seul : les formulaires du jeu ne sont envoyés que lorsque tu cliques.
 
 ## Confidentialité
 
