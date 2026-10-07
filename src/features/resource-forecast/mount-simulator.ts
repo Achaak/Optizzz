@@ -1,51 +1,129 @@
 // Worker split simulator on Ressources.php: try a split, see the outlook, apply it through the game's form.
+import { formatNumber } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
-import { balancedFoodWorkers, outlook, withSplit, type ColonyState } from "./forecast";
+import { balancedFoodWorkers, dailyBalance, outlook, withSplit, type ColonyState } from "./forecast";
 
 const PANEL_CLASS = "optizzz-simulator";
+const HOUR = 60 * 60_000;
+// The game's own icons (same origin).
+const FOOD_ICON = "/images/icone/icone_pomme.png";
+const MATERIALS_ICON = "/images/icone/icone_bois.png";
+
+/** Close to the game's boxes: brown border, red italic title, Verdana inherited. */
+export const SIMULATOR_STYLE = `
+.${PANEL_CLASS} { margin: 14px 0 6px; padding: 10px 12px; border: 1px solid rgb(102, 88, 50); background: rgba(255, 255, 255, 0.18); }
+.${PANEL_CLASS}-title { display: block; margin-bottom: 6px; color: rgb(197, 19, 15); font-size: 17px; font-style: italic; font-weight: bold; }
+.${PANEL_CLASS}-split { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px; }
+.${PANEL_CLASS}-split label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.${PANEL_CLASS}-split img { width: 18px; height: 18px; }
+.${PANEL_CLASS}-split input[type="number"] { width: 80px; }
+.${PANEL_CLASS}-split input[type="range"] { width: 100%; accent-color: rgb(139, 90, 43); }
+.${PANEL_CLASS}-bar { grid-column: 2; display: flex; height: 8px; border: 1px solid rgb(102, 88, 50); background: #fff; }
+.${PANEL_CLASS}-bar-food { background: rgb(197, 19, 15); }
+.${PANEL_CLASS}-bar-materials { background: rgb(139, 90, 43); }
+.${PANEL_CLASS}-bar-idle { background: repeating-linear-gradient(45deg, #bbb 0 3px, #eee 3px 6px); }
+.${PANEL_CLASS}-idle { grid-column: 2; text-align: center; font-size: 0.85em; font-style: italic; }
+.${PANEL_CLASS}-idle:empty { display: none; }
+.${PANEL_CLASS}-daily { margin: 10px 0 6px; border-collapse: collapse; }
+.${PANEL_CLASS}-daily th, .${PANEL_CLASS}-daily td { padding: 1px 10px 1px 0; text-align: right; }
+.${PANEL_CLASS}-daily th:first-child { text-align: left; font-weight: normal; }
+.${PANEL_CLASS}-daily thead th { font-size: 0.85em; font-weight: normal; font-style: italic; }
+.${PANEL_CLASS}-up { color: rgb(0, 120, 0); font-weight: bold; }
+.${PANEL_CLASS}-down { color: rgb(197, 19, 15); font-weight: bold; }
+.${PANEL_CLASS}-outlook { margin: 4px 0 8px; font-weight: bold; }
+.${PANEL_CLASS}-ok { color: rgb(0, 120, 0); }
+.${PANEL_CLASS}-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.${PANEL_CLASS}-actions button:last-child { margin-left: auto; font-weight: bold; }`;
+
+const signed = (value: number) => `${value < 0 ? "−" : "+"}${formatNumber(Math.abs(value))}`;
 
 /**
- * Mounts the simulator under the harvest summary of Ressources.php, starting from the game's split. `assignable` is
- * how many workers can harvest (one per cm² of hunting field); `clock` gives the current time.
+ * Mounts the simulator under the harvest summary of Ressources.php, starting from the game's split.
+ * `assignable` is how many workers can harvest (one per cm² of hunting field); `clock` gives the time.
  */
 export function mountSimulator(doc: Document, state: ColonyState, assignable: number, clock: () => Date): HTMLElement {
   const working = assignable;
+  const max = String(working);
 
   const panel = doc.createElement("div");
   panel.className = PANEL_CLASS;
   panel.innerHTML = `
-    <strong>Simuler une répartition</strong>
+    <span class="${PANEL_CLASS}-title">Simulation de répartition</span>
     <div class="${PANEL_CLASS}-split">
-      <label>Nourriture <input type="number" name="optizzz-food" min="0" max="${String(working)}" /></label>
-      <input type="range" name="optizzz-split" min="0" max="${String(working)}" aria-label="Répartition" />
-      <label>Matériaux <input type="number" name="optizzz-materials" min="0" max="${String(working)}" /></label>
+      <label><img src="${FOOD_ICON}" alt="" />Nourriture
+        <input type="number" name="optizzz-food" min="0" max="${max}" /></label>
+      <input type="range" name="optizzz-split" min="0" max="${max}" aria-label="Répartition" />
+      <label><input type="number" name="optizzz-materials" min="0" max="${max}" />
+        Matériaux<img src="${MATERIALS_ICON}" alt="" /></label>
+      <div class="${PANEL_CLASS}-bar" aria-hidden="true">
+        <div class="${PANEL_CLASS}-bar-food"></div>
+        <div class="${PANEL_CLASS}-bar-materials"></div>
+        <div class="${PANEL_CLASS}-bar-idle"></div>
+      </div>
+      <div class="${PANEL_CLASS}-idle"></div>
     </div>
-    <div class="${PANEL_CLASS}-idle"></div>
+    <table class="${PANEL_CLASS}-daily">
+      <thead><tr><th>Par jour</th><th>Actuel</th><th>Simulé</th><th></th></tr></thead>
+      <tbody>
+        <tr><th>Nourriture</th><td></td><td></td><td></td></tr>
+        <tr><th>Matériaux</th><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
     <div class="${PANEL_CLASS}-outlook"></div>
-    <button type="button">Équilibre nourriture</button>
-    <button type="button">Appliquer</button>`;
+    <div class="${PANEL_CLASS}-actions">
+      <button type="button">Équilibre nourriture</button>
+      <button type="button">Revenir à l'actuel</button>
+      <button type="button">Appliquer</button>
+    </div>`;
 
   const input = (name: string) => panel.querySelector<HTMLInputElement>(`[name="${name}"]`);
   const food = input("optizzz-food");
   const split = input("optizzz-split");
   const materials = input("optizzz-materials");
   const summary = panel.querySelector(`.${PANEL_CLASS}-outlook`);
-  const [balanceButton, applyButton] = panel.querySelectorAll("button");
-  if (!food || !split || !materials || !summary || !balanceButton || !applyButton) return panel;
-
   const idle = panel.querySelector(`.${PANEL_CLASS}-idle`);
+  const dailyRows = [...panel.querySelectorAll(`.${PANEL_CLASS}-daily tbody tr`)];
+  const [balanceButton, resetButton, applyButton] = panel.querySelectorAll("button");
+  if (!food || !split || !materials || !summary || !balanceButton || !resetButton || !applyButton) return panel;
+
+  const bar = (part: string) => panel.querySelector<HTMLElement>(`.${PANEL_CLASS}-bar-${part}`);
+  const percent = (count: number) => `${String(working ? Math.round((count / working) * 100) : 0)}%`;
+  const current = dailyBalance(state);
+
   let foodWorkers = state.foodWorkers;
   let materialWorkers = state.materialWorkers;
   const count = (value: string) => Math.max(0, Math.round(Number(value)) || 0);
+
   const show = (foodValue: number, materialsValue: number) => {
     foodWorkers = Math.min(working, foodValue);
     materialWorkers = Math.min(working - foodWorkers, materialsValue);
+    const idleWorkers = working - foodWorkers - materialWorkers;
     food.value = String(foodWorkers);
     split.value = String(foodWorkers);
     materials.value = String(materialWorkers);
-    const idleWorkers = working - foodWorkers - materialWorkers;
-    if (idle) idle.textContent = idleWorkers > 0 ? `${String(idleWorkers)} ouvrières sans travail` : "";
-    summary.textContent = describeOutlook(withSplit(state, foodWorkers, materialWorkers), clock());
+
+    const foodBar = bar("food");
+    const materialsBar = bar("materials");
+    const idleBar = bar("idle");
+    if (foodBar) foodBar.style.width = percent(foodWorkers);
+    if (materialsBar) materialsBar.style.width = percent(materialWorkers);
+    if (idleBar) idleBar.style.width = percent(idleWorkers);
+    if (idle) idle.textContent = idleWorkers > 0 ? `${formatNumber(idleWorkers)} ouvrières sans travail` : "";
+
+    const simulated = withSplit(state, foodWorkers, materialWorkers);
+    const daily = dailyBalance(simulated);
+    (["food", "materials"] as const).forEach((resource, index) => {
+      const [now, then, change] = dailyRows[index]?.querySelectorAll("td") ?? [];
+      if (!now || !then || !change) return;
+      const difference = Math.round(daily[resource] - current[resource]);
+      now.textContent = signed(current[resource]);
+      then.textContent = signed(daily[resource]);
+      change.textContent = difference === 0 ? "" : signed(difference);
+      change.className = difference > 0 ? `${PANEL_CLASS}-up` : difference < 0 ? `${PANEL_CLASS}-down` : "";
+    });
+
+    summary.replaceChildren(...outlookLines(doc, simulated, clock()));
+    applyButton.disabled = foodWorkers === state.foodWorkers && materialWorkers === state.materialWorkers;
   };
 
   // Food takes idle workers first, then materials; the slider moves workers between the two.
@@ -64,6 +142,9 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
   balanceButton.addEventListener("click", () => {
     const balance = balancedFoodWorkers(state, clock(), working);
     if (balance !== null) show(balance, working - balance);
+  });
+  resetButton.addEventListener("click", () => {
+    show(state.foodWorkers, state.materialWorkers);
   });
   applyButton.addEventListener("click", () => {
     const gameFood = doc.querySelector<HTMLInputElement>("#RecolteNourriture");
@@ -84,11 +165,28 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
   return panel;
 }
 
-function describeOutlook(state: ColonyState, now: Date): string {
+/** One line per event to come, coloured by urgency. */
+function outlookLines(doc: Document, state: ColonyState, now: Date): HTMLElement[] {
   const { famineAt, foodFullAt, materialsFullAt } = outlook(state, now);
-  const until = (date: Date) => formatDuration(date.getTime() - now.getTime());
-  const lines = [famineAt ? `Famine dans ${until(famineAt)}` : "Pas de famine"];
-  if (foodFullAt) lines.push(`Entrepôt de nourriture plein dans ${until(foodFullAt)}`);
-  if (materialsFullAt) lines.push(`Entrepôt de matériaux plein dans ${until(materialsFullAt)}`);
-  return lines.join(" · ");
+  const line = (text: string, className: string) => {
+    const element = doc.createElement("div");
+    element.className = className;
+    element.textContent = text;
+    return element;
+  };
+  const timed = (label: string, at: Date, urgent: boolean) => {
+    const remaining = at.getTime() - now.getTime();
+    const className =
+      urgent && remaining < 6 * HOUR
+        ? "optizzz-outlook-danger"
+        : remaining < 24 * HOUR
+          ? "optizzz-outlook-warning"
+          : "";
+    return line(`${label} ${formatDuration(remaining)}`, className);
+  };
+
+  const lines = [famineAt ? timed("Famine dans", famineAt, true) : line("Pas de famine", `${PANEL_CLASS}-ok`)];
+  if (foodFullAt) lines.push(timed("Entrepôt de nourriture plein dans", foodFullAt, false));
+  if (materialsFullAt) lines.push(timed("Entrepôt de matériaux plein dans", materialsFullAt, false));
+  return lines;
 }

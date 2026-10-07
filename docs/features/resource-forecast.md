@@ -39,7 +39,11 @@ Savoir quand on pourra payer un bâtiment ou une recherche, quand on tombera en 
 - Part de la répartition du jeu ; les ouvrières qui pourraient récolter (min(TDC, ouvrières)) sans être affectées sont affichées à part (« 100 ouvrières sans travail »).
 - Deux nombres modifiables : la nourriture prend d'abord les ouvrières sans travail, puis sur les matériaux. Un curseur fait passer des ouvrières de l'un à l'autre.
 - Bouton « équilibre nourriture » : le minimum d'ouvrières sur la nourriture pour que le stock ne tombe jamais à zéro (retours de chasse compris), toutes les autres sur les matériaux (plus aucune sans travail).
-- La famine et l'entrepôt plein se recalculent en direct.
+- Boîte dans le style du jeu (titre rouge en italique, bordure brune, icônes pomme et bois du jeu).
+- Une barre sous le curseur montre la part nourriture / matériaux / sans travail.
+- Tableau « Par jour » : nourriture et matériaux, actuel → simulé, écart en vert ou en rouge.
+- La famine et les entrepôts pleins se recalculent en direct, une ligne chacun, colorée selon l'urgence.
+- « Revenir à l'actuel » remet la répartition du jeu ; « Appliquer » reste grisé tant qu'elle n'a pas changé.
 - « Appliquer » : remplit `#RecolteNourriture` / `#RecolteMateriaux` et déclenche `#ChangeRessource`. Première action de jeu d'Optizzz, toujours sur un clic du joueur.
 
 ## Format

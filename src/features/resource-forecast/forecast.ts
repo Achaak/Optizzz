@@ -20,6 +20,7 @@ export type Affordability =
   | { kind: "workers"; missing: number };
 
 const HARVEST_INTERVAL = 30 * 60_000;
+export const HARVESTS_PER_DAY = 48;
 const DAY = 24 * 60 * 60_000;
 /** Far enough that « plus de 30 j » covers everything left; beyond, the forecast says « never ». */
 const HORIZON = 365 * DAY;
@@ -192,4 +193,13 @@ export function forecastFor(state: ColonyState, cost: Cost, queue: WorkQueue | n
     return { affordability, readyAt: slotFreeAt, blockedBy: "queue" };
   }
   return { affordability, readyAt: affordability.at, blockedBy: "resources" };
+}
+
+/** Resources gained per day with the current split: after the colony tax, food minus army upkeep. */
+export function dailyBalance(state: ColonyState): Record<Resource, number> {
+  const keep = 1 - state.taxRate;
+  return {
+    food: (state.foodWorkers * HARVESTS_PER_DAY + state.mushroomPerDay) * keep - state.armyPerDay,
+    materials: state.materialWorkers * HARVESTS_PER_DAY * keep,
+  };
 }

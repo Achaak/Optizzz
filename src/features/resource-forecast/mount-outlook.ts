@@ -1,11 +1,10 @@
 // Famine and full warehouse warnings under the header gauges (#boiteInfo), on every page.
 import { formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
-import { balancedFoodWorkers, outlook, type ColonyState } from "./forecast";
+import { balancedFoodWorkers, dailyBalance, HARVESTS_PER_DAY, outlook, type ColonyState } from "./forecast";
 
 const BADGE_CLASS = "optizzz-outlook";
 const HOUR = 60 * 60_000;
-const HARVESTS_PER_DAY = 48;
 
 /**
  * Adds (or redraws) the warnings under the food and materials gauges.
@@ -44,14 +43,8 @@ function badge(doc: Document, label: string, at: Date, now: Date): HTMLElement {
 function balanceBadge(doc: Document, state: ColonyState): HTMLElement {
   const element = doc.createElement("div");
   element.className = BADGE_CLASS;
-  element.textContent = `Solde : ${signed(dailyFoodBalance(state))} / jour`;
+  element.textContent = `Solde : ${signed(dailyBalance(state).food)} / jour`;
   return element;
-}
-
-/** Food gained per day: harvest and mushrooms after the colony tax, minus army upkeep. */
-function dailyFoodBalance(state: ColonyState): number {
-  const gross = state.foodWorkers * HARVESTS_PER_DAY + state.mushroomPerDay;
-  return gross * (1 - state.taxRate) - state.armyPerDay;
 }
 
 const signed = (value: number) => `${value < 0 ? "−" : "+"}${formatNumber(Math.abs(value))}`;
@@ -69,7 +62,7 @@ function foodTooltip(state: ColonyState, readAt: Date, now: Date): string {
 
   const balance = balancedFoodWorkers(state, readAt);
   const lines = [
-    `Nourriture par jour : ${signed(dailyFoodBalance(state))}`,
+    `Nourriture par jour : ${signed(dailyBalance(state).food)}`,
     parts.join(", "),
     balance === null
       ? "Équilibre impossible même avec toutes les ouvrières sur la nourriture"
