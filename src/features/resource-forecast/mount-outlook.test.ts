@@ -64,10 +64,14 @@ describe("renderOutlook", () => {
     expect(badge(doc, "nourriture")?.textContent).toBe("Famine dans 40 min");
   });
 
-  it("shows nothing when nothing is coming", () => {
+  it("shows the daily food balance, with its details, when nothing is coming", () => {
     const doc = parse(headerHtml);
-    renderOutlook(doc, colony(), now);
-    expect(doc.querySelector(".optizzz-outlook")).toBeNull();
+    renderOutlook(doc, colony({ mushroomPerDay: 2400, armyPerDay: 1000 }), now);
+    const balance = badge(doc, "nourriture");
+    expect(balance?.textContent).toBe("Solde : +1 400 / jour");
+    expect(balance?.className).toBe("optizzz-outlook");
+    expect(balance?.getAttribute("title")).toContain("Équilibre : 0 ouvrières sur la nourriture");
+    expect(badge(doc, "materiaux")).toBeNull();
   });
 
   it("details the daily food balance and the balance point in the tooltip", () => {
