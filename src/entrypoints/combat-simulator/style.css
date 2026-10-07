@@ -1,0 +1,179 @@
+/* Close to the game: parchment background, olive titles, thin dark table borders. */
+body {
+  margin: 0;
+  background: #efe0ad;
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 12px;
+  color: #222;
+}
+
+.simulator {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1,
+h2,
+h3 {
+  color: #6f6a1f;
+  font-weight: normal;
+  margin: 0 0 8px;
+}
+
+h1 {
+  font-size: 22px;
+}
+
+h2 {
+  font-size: 16px;
+}
+
+h3 {
+  font-size: 14px;
+}
+
+.note {
+  color: #6b5d3a;
+  margin: 4px 0;
+}
+
+.warning {
+  background: #f7d9a8;
+  border: 1px solid #c76b00;
+  border-radius: 3px;
+  padding: 6px 10px;
+  margin: 8px 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+fieldset {
+  border: 1px solid #a8894a;
+  border-radius: 3px;
+  display: flex;
+  gap: 12px;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.sides {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 16px;
+}
+
+@media (max-width: 800px) {
+  .sides {
+    grid-template-columns: 1fr;
+  }
+}
+
+.side,
+.results {
+  background: #f7ecc6;
+  border: 1px solid #a8894a;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.results {
+  margin-top: 16px;
+}
+
+.levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.levels label {
+  display: grid;
+  gap: 2px;
+}
+
+.levels input {
+  width: 80px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  border: 1px solid #000;
+  padding: 2px 6px;
+  text-align: left;
+}
+
+.army input {
+  width: 90px;
+  box-sizing: border-box;
+}
+
+.results td:nth-child(n + 2) {
+  text-align: right;
+}
+
+.paste {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.paste textarea {
+  flex: 1;
+  min-width: 200px;
+}
+
+.paste .note {
+  flex-basis: 100%;
+}
+
+.paste-place {
+  display: block;
+  margin-top: 8px;
+}
+
+.verdict {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.won h3,
+.verdict.won {
+  color: #2f6b12;
+}
+
+.lost h3,
+.verdict.lost {
+  color: #a01010;
+}
+
+.stage {
+  margin-top: 12px;
+}
+
+.reply {
+  color: #4a4320;
+}
