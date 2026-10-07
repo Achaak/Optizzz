@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatEndTime } from "./time-format";
+import { formatDuration, formatEndTime, formatEndTimeShort } from "./time-format";
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -49,5 +49,14 @@ describe("formatEndTime", () => {
     expect(formatEndTime(new Date(2026, 9, 9, 9, 5), now)).toBe("ven. 9 h 05");
     expect(formatEndTime(new Date(2026, 9, 13, 18, 40), now)).toBe("mar. 18 h 40");
     expect(formatEndTime(new Date(2026, 9, 14, 18, 40), now)).toBe("14/10 18 h 40");
+  });
+});
+
+describe("formatEndTimeShort", () => {
+  const now = new Date(2026, 9, 7, 13, 0);
+
+  it("drops « aujourd'hui » only", () => {
+    expect(formatEndTimeShort(new Date(2026, 9, 7, 14, 23), now)).toBe("14 h 23");
+    expect(formatEndTimeShort(new Date(2026, 9, 8, 2, 10), now)).toBe("demain 2 h 10");
   });
 });

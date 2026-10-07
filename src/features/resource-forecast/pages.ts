@@ -85,6 +85,19 @@ function numberFollowedBy(summary: Element, label: string): number | null {
   return null;
 }
 
+/** Hunts in progress on Ressources.php, in the game's order. */
+export function readHunts(doc: Document, now: Date): Hunt[] {
+  const hunts: Hunt[] = [];
+  for (const countdown of doc.querySelectorAll('span[id^="chasse_"]')) {
+    const gain = /conquérir\s+([\d\s]+)\s*cm/.exec(countdown.parentElement?.textContent ?? "");
+    const seconds = remainingSeconds(doc, countdown.id);
+    if (gain?.[1] && seconds !== null) {
+      hunts.push({ returnsAt: new Date(now.getTime() + seconds * 1000), fieldGain: toInteger(gain[1]) });
+    }
+  }
+  return hunts;
+}
+
 /** Income figures of Ressources.php (all per day, before the colony tax). */
 export function readIncome(doc: Document, now: Date): Income | null {
   const summary = doc.querySelector("#nbNourriture")?.closest("p");
@@ -97,14 +110,6 @@ export function readIncome(doc: Document, now: Date): Income | null {
   const armyPerDay = summaryNumber(summary, "consomme");
   if (mushroomPerDay === null || armyPerDay === null) return null;
 
-  const inSeconds = (seconds: number) => new Date(now.getTime() + seconds * 1000);
-  const hunts: Hunt[] = [];
-  for (const countdown of doc.querySelectorAll('span[id^="chasse_"]')) {
-    const gain = /conquérir\s+([\d\s]+)\s*cm/.exec(countdown.parentElement?.textContent ?? "");
-    const seconds = remainingSeconds(doc, countdown.id);
-    if (gain?.[1] && seconds !== null) hunts.push({ returnsAt: inSeconds(seconds), fieldGain: toInteger(gain[1]) });
-  }
-
   const choice = doc.querySelector<HTMLInputElement>('input[name="choixOuvriere"]:checked')?.value;
   return {
     foodWorkers: toInteger(foodInput.defaultValue),
@@ -112,8 +117,8 @@ export function readIncome(doc: Document, now: Date): Income | null {
     mushroomPerDay,
     armyPerDay,
     taxRate: (scriptNumber(doc, "pourcentagePillage") ?? 0) / 100,
-    nextHarvestAt: inSeconds(harvestSeconds),
-    hunts,
+    nextHarvestAt: new Date(now.getTime() + harvestSeconds * 1000),
+    hunts: readHunts(doc, now),
     newWorkersGoTo: choice === "nourriture" ? "food" : choice === "materiaux" ? "materials" : "none",
   };
 }
