@@ -1,6 +1,6 @@
 // Income figures of Ressources.php, read in the background and cached per server.
 import { storage } from "wxt/utils/storage";
-import { readIncome, type Income } from "./pages";
+import { readCapacities, readIncome, type Capacities, type Income } from "./pages";
 
 /** Beyond this, the figures read on Ressources.php are read again. */
 export const INCOME_MAX_AGE = 15 * 60_000;
@@ -58,4 +58,32 @@ export async function loadIncome(origin: string, maxAge: number, now: Date): Pro
     if (cached) return restore(cached);
     throw error;
   }
+}
+
+const capacitiesKey = (origin: string) => `local:resourceForecast:${new URL(origin).host}:capacities` as const;
+
+export async function storeCapacities(origin: string, capacities: Capacities): Promise<void> {
+  await storage.setItem(capacitiesKey(origin), capacities);
+}
+
+/**
+ * Warehouse capacities, as last read on construction.php. With `refresh`, construction.php is read
+ * again in the background first (the Laboratory needs them for research costs).
+ */
+export async function loadCapacities(origin: string, refresh: boolean): Promise<Capacities | null> {
+  if (refresh) {
+    try {
+      const response = await fetch(`${origin}/construction.php`);
+      const capacities = response.ok
+        ? readCapacities(new DOMParser().parseFromString(await response.text(), "text/html"))
+        : null;
+      if (capacities) {
+        await storeCapacities(origin, capacities);
+        return capacities;
+      }
+    } catch {
+      // Fall back on the last capacities read.
+    }
+  }
+  return storage.getItem<Capacities>(capacitiesKey(origin));
 }
