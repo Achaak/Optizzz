@@ -8,10 +8,10 @@ function TripTime({ trip }: { trip: Trip }) {
   return (
     <span
       className={trip.estimated ? "estimated" : undefined}
-      title={`Vitesse d'attaque niveau ${trip.level}${trip.estimated ? " (niveau global, estimation)" : ""}`}
+      title={`Calculé avec Vitesse d'attaque niveau ${trip.level}${trip.estimated ? " (niveau par défaut)" : ""}`}
     >
+      {trip.estimated && "≈ "}
       {formatDuration(trip.seconds)}
-      {trip.estimated && "*"}
     </span>
   );
 }
@@ -20,19 +20,19 @@ interface Props {
   selected: MapMember;
   rows: Row<MapMember>[];
   playerLevels: Record<string, number>;
-  globalLevel: number;
+  defaultLevel: number;
   onSelect: (playerId: number) => void;
   onLevelChange: (playerId: number, level: number | null) => void;
 }
 
-export function NeighborTable({ selected, rows, playerLevels, globalLevel, onSelect, onLevelChange }: Props) {
+export function NeighborTable({ selected, rows, playerLevels, defaultLevel, onSelect, onLevelChange }: Props) {
   const levelInput = (member: MapMember) => (
     <input
       type="number"
       min={0}
       max={30}
       className="level"
-      placeholder={String(globalLevel)}
+      placeholder={String(defaultLevel)}
       value={playerLevels[member.id] ?? ""}
       aria-label={`Vitesse d'attaque de ${member.pseudo}`}
       onChange={(e) => onLevelChange(member.id, e.target.value === "" ? null : Number(e.target.value))}
@@ -42,19 +42,22 @@ export function NeighborTable({ selected, rows, playerLevels, globalLevel, onSel
   return (
     <div className="neighbor-table">
       <p>
-        Depuis <b>{selected.pseudo}</b> (Vit. att. {levelInput(selected)}) — <b>Aller</b> : de {selected.pseudo} vers le
-        membre · <b>Retour</b> : du membre vers {selected.pseudo}.
+        Temps de trajet entre <b>{selected.pseudo}</b> et chaque membre. Un trajet (attaque ou convoi) dépend de la
+        Vitesse d'attaque de <b>celui qui envoie</b>.
+      </p>
+      <p>
+        Vitesse d'attaque ({selected.pseudo}) : {levelInput(selected)}
       </p>
       <table>
         <thead>
           <tr>
             <th>#</th>
-            <th>Pseudo</th>
+            <th>Membre</th>
             <th>Distance</th>
             <th>TDC</th>
-            <th>Aller</th>
-            <th>Retour</th>
-            <th>Vit. att.</th>
+            <th title={`Envoyé par ${selected.pseudo}, avec sa Vitesse d'attaque`}>{selected.pseudo} → membre</th>
+            <th title="Envoyé par le membre, avec sa Vitesse d'attaque">Membre → {selected.pseudo}</th>
+            <th>Vitesse d'attaque du membre</th>
           </tr>
         </thead>
         <tbody>
@@ -62,7 +65,12 @@ export function NeighborTable({ selected, rows, playerLevels, globalLevel, onSel
             <tr key={row.player.id} className={row.withinK ? "within-k" : undefined}>
               <td>{index + 1}</td>
               <td>
-                <button type="button" className="link" onClick={() => onSelect(row.player.id)} title="Sélectionner">
+                <button
+                  type="button"
+                  className="link"
+                  onClick={() => onSelect(row.player.id)}
+                  title="Afficher les trajets depuis ce membre"
+                >
                   {row.player.masterPlayerId !== null && "⛓ "}
                   {row.player.pseudo}
                 </button>{" "}
@@ -84,7 +92,10 @@ export function NeighborTable({ selected, rows, playerLevels, globalLevel, onSel
           ))}
         </tbody>
       </table>
-      <p className="note">* temps estimé avec le niveau global (niveau du joueur inconnu).</p>
+      <p className="note">
+        En gras : les membres reliés à {selected.pseudo} sur la carte. ≈ : Vitesse d'attaque inconnue, temps estimé avec
+        le niveau par défaut ({defaultLevel}). Renseigne-la dans la dernière colonne pour un temps exact.
+      </p>
     </div>
   );
 }

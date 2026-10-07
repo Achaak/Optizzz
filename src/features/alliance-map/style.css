@@ -48,6 +48,13 @@ input[type="number"] {
 
 input.level {
   width: 44px;
+  font-weight: normal;
+}
+
+/* Suggested (default) level: must not look like an entered value. */
+input::placeholder {
+  color: #b5ab8e;
+  font-weight: normal;
 }
 
 button {

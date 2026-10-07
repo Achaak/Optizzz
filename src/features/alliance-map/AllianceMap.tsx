@@ -100,7 +100,7 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
 
       <div className="settings">
         <label>
-          Voisins reliés (k){" "}
+          Voisins reliés à chaque membre sur la carte :{" "}
           <input
             type="number"
             min={1}
@@ -110,7 +110,7 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
           />
         </label>
         <label>
-          Vitesse d'attaque globale{" "}
+          Vitesse d'attaque par défaut :{" "}
           <input
             type="number"
             min={0}
@@ -121,8 +121,9 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
           />
         </label>
         <span className="note">
-          Temps calculés avec Vitesse d'attaque niveau {globalLevel(levels)} pour les membres sans niveau saisi
-          {settings.labLevel !== null && ` (ton niveau Laboratoire : ${settings.labLevel})`}.
+          Utilisée pour les membres dont on ne connaît pas la Vitesse d'attaque (actuellement niveau{" "}
+          {globalLevel(levels)}). Vide = ton niveau du Laboratoire
+          {settings.labLevel !== null && ` (${settings.labLevel})`}.
         </span>
       </div>
 
@@ -132,7 +133,7 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
         selected={selected}
         rows={neighborRows(selected, members, k, levels)}
         playerLevels={settings.playerLevels}
-        globalLevel={globalLevel(levels)}
+        defaultLevel={globalLevel(levels)}
         onSelect={setSelectedId}
         onLevelChange={(playerId, level) =>
           updateSettings((s) => ({
