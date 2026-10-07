@@ -1,5 +1,6 @@
-// One hunt fight, round by round. Rules and their checks against real reports: docs/research/chasse.md.
+// One hunt fight (rounds: ./rounds.ts). Rules and their checks against real reports: docs/research/chasse.md.
 import { PREYS, type Pack } from "./prey";
+import { EPSILON, resolveRounds } from "./rounds";
 import { UNITS, type Army, type Levels } from "./units";
 
 export interface FightResult {
@@ -14,17 +15,6 @@ export interface FightResult {
   lost: number[];
   /** Units promoted, by the type they were (JSN → SN counts in the JSN slot). */
   promoted: number[];
-}
-
-const MAX_ROUNDS = 500;
-const EPSILON = 1e-9;
-
-/** First round only: crushing the prey cuts their damage. */
-function overkillFactor(ratio: number): number {
-  if (ratio > 3) return 0.1;
-  if (ratio > 2) return 0.3;
-  if (ratio > 1.5) return 0.5;
-  return 1;
 }
 
 export function fight(army: Army, pack: Pack, levels: Omit<Levels, "huntSpeed">): FightResult {
@@ -43,29 +33,7 @@ export function fight(army: Army, pack: Pack, levels: Omit<Levels, "huntSpeed">)
     return count > 0 ? [{ hp: prey.hp, attack: prey.damage, pool: count * prey.hp }] : [];
   });
 
-  let damageDealt = 0;
-  let damageTaken = 0;
-  for (let round = 1; round <= MAX_ROUNDS; round++) {
-    let ourDamage = 0;
-    let theirDamage = 0;
-    let theirHp = 0;
-    for (const stack of ours) ourDamage += (stack.pool / stack.hp) * stack.attack;
-    for (const stack of theirs) {
-      theirDamage += (stack.pool / stack.hp) * stack.attack;
-      theirHp += stack.pool;
-    }
-    if (ourDamage <= EPSILON || theirHp <= EPSILON) break;
-    if (round === 1) {
-      damageDealt = ourDamage;
-      if (ourDamage >= theirHp) theirDamage *= overkillFactor(ourDamage / theirHp);
-    }
-    damageTaken += Math.min(
-      theirDamage,
-      ours.reduce((sum, stack) => sum + stack.pool, 0),
-    );
-    applyDamage(theirs, ourDamage);
-    applyDamage(ours, theirDamage);
-  }
+  const { damageDealt, damageTaken } = resolveRounds(ours, theirs);
 
   const win = theirs.every((stack) => stack.pool <= EPSILON) && ours.some((stack) => stack.pool > EPSILON);
   const reportedDead = UNITS.map(() => 0);
@@ -79,17 +47,6 @@ export function fight(army: Army, pack: Pack, levels: Omit<Levels, "huntSpeed">)
   }
   const promoted = win ? promotions(army, pack, levels, survivors) : UNITS.map(() => 0);
   return { win, damageDealt, damageTaken, reportedDead, lost, promoted };
-}
-
-/** Damage goes to the first stack of the list until it is dead, then to the next. */
-function applyDamage(stacks: { pool: number }[], damage: number) {
-  let left = damage;
-  for (const stack of stacks) {
-    if (left <= 0) break;
-    const taken = Math.min(stack.pool, left);
-    stack.pool -= taken;
-    left -= taken;
-  }
 }
 
 function promotions(army: Army, pack: Pack, levels: Omit<Levels, "huntSpeed">, survivors: number[]): number[] {
