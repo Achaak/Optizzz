@@ -4,7 +4,7 @@ import type { ColonyState } from "./forecast";
 import { INCOME_MAX_AGE, loadCapacities, loadIncome, storeCapacities, storeIncome } from "./income";
 import { renderCostForecasts } from "./mount-costs";
 import { renderOutlook } from "./mount-outlook";
-import { mountSimulator } from "./mount-simulator";
+import { mountSimulator, SIMULATOR_STYLE } from "./mount-simulator";
 import { readCapacities, readIncome, readStock, type Income } from "./pages";
 
 const REFRESH_MS = 60_000;
@@ -14,15 +14,7 @@ const STYLE = `
 .optizzz-forecast::before { content: "⏳ "; }
 .optizzz-outlook { font-size: 0.8em; line-height: 1.2; padding: 1px 0 2px; }
 .optizzz-outlook-warning { color: #c76b00; font-weight: bold; }
-.optizzz-outlook-danger { color: #c00; font-weight: bold; }
-.optizzz-simulator { margin: 12px 0; padding: 8px; border: 1px solid #000; }
-.optizzz-simulator-split { display: flex; align-items: center; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
-.optizzz-simulator-split input[type="number"] { width: 80px; }
-.optizzz-simulator-split input[type="range"] { flex: 1; min-width: 120px; }
-.optizzz-simulator-idle { font-style: italic; }
-.optizzz-simulator-idle:empty { display: none; }
-.optizzz-simulator-outlook { margin: 6px 0; font-weight: bold; }
-.optizzz-simulator button { margin-right: 6px; }`;
+.optizzz-outlook-danger { color: #c00; font-weight: bold; }`;
 
 const page = (url: URL) => url.pathname.toLowerCase();
 
@@ -58,7 +50,7 @@ export const resourceForecast: Feature = {
 
     const state: ColonyState = { ...stock, ...income, capacities };
     const style = document.createElement("style");
-    style.textContent = STYLE;
+    style.textContent = STYLE + SIMULATOR_STYLE;
     document.head.append(style);
 
     const queue = onConstruction || onLaboratory ? readWorkQueue(document, readAt) : null;

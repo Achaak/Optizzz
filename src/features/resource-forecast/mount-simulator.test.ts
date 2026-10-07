@@ -113,4 +113,48 @@ describe("mountSimulator", () => {
     expect(doc.querySelector<HTMLInputElement>("#RecolteMateriaux")?.value).toBe("180");
     expect(click).toHaveBeenCalledOnce();
   });
+
+  it("compares daily food and materials, current against simulated", () => {
+    const { panel, field } = setup();
+    const daily = () =>
+      [...panel.querySelectorAll(".optizzz-simulator-daily tbody tr")].map((row) =>
+        [...row.querySelectorAll("th, td")].map((cell) => cell.textContent.trim()),
+      );
+    expect(daily()).toEqual([
+      ["Nourriture", "−4 800", "−4 800", ""],
+      ["Matériaux", "+14 400", "+14 400", ""],
+    ]);
+    type(field("optizzz-food"), "150");
+    expect(daily()).toEqual([
+      ["Nourriture", "−4 800", "+2 400", "+7 200"],
+      ["Matériaux", "+14 400", "+7 200", "−7 200"],
+    ]);
+  });
+
+  it("only applies a split that differs from the game's, and can go back to it", () => {
+    const { field, button } = setup();
+    expect(button("Appliquer")?.disabled).toBe(true);
+    type(field("optizzz-food"), "120");
+    expect(button("Appliquer")?.disabled).toBe(false);
+    button("Revenir à l'actuel")?.click();
+    expect(field("optizzz-food")?.value).toBe("0");
+    expect(field("optizzz-materials")?.value).toBe("300");
+    expect(button("Appliquer")?.disabled).toBe(true);
+  });
+
+  it("colours each outlook line by urgency", () => {
+    const { panel, field } = setup();
+    const lines = () =>
+      [...panel.querySelectorAll(".optizzz-simulator-outlook > div")].map((line) => [line.className, line.textContent]);
+    expect(lines()).toEqual([["optizzz-outlook-danger", "Famine dans 5 h 00"]]);
+    type(field("optizzz-food"), "100");
+    expect(lines()).toEqual([["optizzz-simulator-ok", "Pas de famine"]]);
+  });
+
+  it("draws the split as a bar, idle workers included", () => {
+    const doc = parse(ressourcesHtml);
+    const panel = mountSimulator(doc, state, 400, () => now);
+    const width = (part: string) => panel.querySelector<HTMLElement>(`.optizzz-simulator-bar-${part}`)?.style.width;
+    expect([width("food"), width("materials"), width("idle")]).toEqual(["0%", "75%", "25%"]);
+  });
 });
