@@ -38,6 +38,13 @@ export function withToggle(
   return enabled ? others : { ...others, [key]: false };
 }
 
-export async function setToggle(feature: FeatureId, option: string | undefined, enabled: boolean): Promise<void> {
-  await storage.setItem(STORAGE_KEY, withToggle(await loadToggles(), feature, option, enabled));
+// Read-modify-write: two quick clicks must not both read the old state, or the second write drops the first.
+let pendingWrite: Promise<void> = Promise.resolve();
+
+export function setToggle(feature: FeatureId, option: string | undefined, enabled: boolean): Promise<void> {
+  const write = pendingWrite.then(async () => {
+    await storage.setItem(STORAGE_KEY, withToggle(await loadToggles(), feature, option, enabled));
+  });
+  pendingWrite = write.catch(() => undefined);
+  return write;
 }
