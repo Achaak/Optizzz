@@ -1,3 +1,4 @@
+import { svgElement } from "@/utils/html";
 import type { Feature } from "../feature";
 
 export const MAP_LINK = "alliance.php?Membres#carte";
@@ -18,7 +19,7 @@ export const allianceMapMenu: Feature = {
 
     // Same structure as the game's entries: <a><span>icon</span>Label</a>.
     const icon = document.createElement("span");
-    icon.innerHTML = MAP_ICON;
+    icon.append(svgElement(document, MAP_ICON));
     icon.style.background = "none";
     icon.style.display = "flex";
     icon.style.alignItems = "center";

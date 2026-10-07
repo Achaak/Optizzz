@@ -1,6 +1,7 @@
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import type { RecapRow } from "./recap";
 import { SOURCE_PAGES, type EndKind } from "./sources";
+import { htmlElement } from "@/utils/html";
 
 const ICONS: Record<EndKind, string> = { hunt: "🏹", laying: "🥚", construction: "🔨", research: "🔬" };
 
@@ -30,12 +31,14 @@ export function mountRecap(doc: Document) {
   const gameTop = comptePlus.style.top;
   const top = Number.parseFloat(gameTop || getComputedStyle(comptePlus).top) || 200;
 
-  const box = doc.createElement("div");
-  box.className = "optizzz-recap";
+  const box = htmlElement(
+    doc,
+    "div",
+    `<div class="optizzz-recap"><div class="titre_colonne_cliquable"><a>Prochaines fins</a></div>
+    <div class="contenu_boite_compte_plus"><ul></ul></div></div>`,
+  );
   box.style.top = `${String(top)}px`;
   box.hidden = true;
-  box.innerHTML = `<div class="titre_colonne_cliquable"><a>Prochaines fins</a></div>
-    <div class="contenu_boite_compte_plus"><ul></ul></div>`;
   column.append(box);
   const list = box.querySelector("ul");
   const content = box.querySelector<HTMLElement>(".contenu_boite_compte_plus");

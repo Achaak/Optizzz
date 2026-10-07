@@ -1,6 +1,7 @@
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import { progressOf } from "./progress";
 import { readWorkQueue, type WorkQueue } from "./queue";
+import { htmlElement } from "@/utils/html";
 
 const EMPTY: Record<WorkQueue["kind"], string> = {
   construction: "Aucune construction en cours",
@@ -21,11 +22,13 @@ export function mountWorkQueue(doc: Document, loadedAt: Date): MountedWorkQueue 
   const queue = readWorkQueue(doc, loadedAt);
   const anchor = hideGameLines(doc);
 
-  const table = doc.createElement("table");
-  table.className = "optizzz-work-queue";
-  table.innerHTML = `<thead><tr><th>${queue.kind === "construction" ? "Construction" : "Recherche"}</th>
+  const table = htmlElement(
+    doc,
+    "table",
+    `<table class="optizzz-work-queue"><thead><tr><th>${queue.kind === "construction" ? "Construction" : "Recherche"}</th>
     <th>État</th><th>Progression</th><th>Temps restant</th><th>Fin</th><th></th></tr></thead>
-    <tbody></tbody><tfoot><tr><td colspan="6"></td></tr></tfoot>`;
+    <tbody></tbody><tfoot><tr><td colspan="6"></td></tr></tfoot></table>`,
+  );
   if (anchor) anchor.before(table);
   else doc.querySelector("#centre")?.prepend(table);
 

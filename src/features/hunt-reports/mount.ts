@@ -9,6 +9,7 @@ import {
   type HuntFight,
   type PredictedLosses,
 } from "./report";
+import { htmlElement } from "@/utils/html";
 
 export const HUNT_REPORT_STYLE = `
 .optizzz-hunt-report { margin: 6px 0 10px; }
@@ -63,12 +64,15 @@ export function mountHuntReport(
 
   const block = doc.createElement("div");
   block.className = "optizzz-hunt-report";
-  const table = doc.createElement("table");
   const lossesHeader = levels
     ? `Pertes (prévu avec Bouclier ${String(levels.shield)})`
     : "Pertes (Bouclier inconnu : passez au Laboratoire)";
-  table.innerHTML = `<thead><tr><th>Heure</th><th>Armée envoyée</th><th>Proies</th><th></th>
-    <th>Promues</th><th>cm²</th><th>Nourriture</th></tr></thead><tbody></tbody><tfoot></tfoot>`;
+  const table = htmlElement(
+    doc,
+    "table",
+    `<table><thead><tr><th>Heure</th><th>Armée envoyée</th><th>Proies</th><th></th>
+    <th>Promues</th><th>cm²</th><th>Nourriture</th></tr></thead><tbody></tbody><tfoot></tfoot></table>`,
+  );
   const lossesCell = table.querySelector("th:nth-child(4)");
   if (lossesCell) lossesCell.textContent = lossesHeader;
   const yieldLine = doc.createElement("p");

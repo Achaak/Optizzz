@@ -22,7 +22,26 @@ export default defineConfig(
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
       // Short arrow event handlers returning a void call are idiomatic in React.
       "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
+      // Store reviewers (AMO) flag HTML injection: build DOM with src/utils/html.ts or textContent.
+      "no-restricted-properties": [
+        "error",
+        { property: "innerHTML", message: "Use htmlElement/svgElement (src/utils/html.ts) or textContent." },
+        { property: "outerHTML", message: "Use htmlElement/svgElement (src/utils/html.ts) or textContent." },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
+          message: "Use htmlElement/svgElement (src/utils/html.ts).",
+        },
+        { selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']", message: "Render React elements instead." },
+      ],
     },
+  },
+  {
+    // Tests are not shipped: building fixtures with innerHTML is fine there.
+    files: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: { "no-restricted-properties": "off" },
   },
   {
     files: ["**/*.js"],
