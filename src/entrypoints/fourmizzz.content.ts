@@ -9,7 +9,7 @@ export default defineContentScript({
       try {
         await feature.run(ctx);
       } catch (error) {
-        console.error(`[Optizzz] échec de la feature "${feature.id}"`, error);
+        console.error(`[Optizzz] feature "${feature.id}" failed`, error);
       }
     }
   },
