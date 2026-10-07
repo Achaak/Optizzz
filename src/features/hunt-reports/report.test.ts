@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { HUNT_REPORT_LINES } from "@/game/army/__fixtures__/hunt-reports";
 import conversationHtml from "./__fixtures__/conversation.html?raw";
-import { predictLosses, readConversation, summarize, toReportLine, type HuntFight } from "./report";
+import { predictLosses, readConversation, readFight, summarize, toReportLine, type HuntFight } from "./report";
 
 const conversation = () =>
   new DOMParser().parseFromString(conversationHtml, "text/html").querySelector(".contenu_conversation");
@@ -36,6 +36,25 @@ describe("readConversation", () => {
       food: 794,
     } satisfies HuntFight);
     expect(second?.prey).toEqual({ "Petites araignées": 18, Guèpes: 8 });
+  });
+});
+
+describe("readFight", () => {
+  it("reads numbers of a thousand and more, written with a space", () => {
+    // 07/10/26 17h46 on s5: the game wrote « 1 199 » food and « 1 » was read. Other figures made up to cover thousands.
+    const text = `Troupes en attaque : 2 135 Jeunes Soldates Naines, 146 Soldates Naines.
+      Troupes en défense : 30 Petites araignées, 1 Mante religieuse.
+      Vous infligez 7 104 (+ 2 842) dégâts et tuez 31 ennemies.
+      L’ennemie inflige 1 230 (+ 0) dégâts à vos fourmis et en tue 14.
+      Vous avez gagné cette bataille !
+      Vos chasseuses ont conquis 1 183 cm², les carcasses des prédateurs vous rapportent 1 199 `;
+    expect(readFight("07/10/26 17h46", text)).toMatchObject({
+      sent: { JSN: 2135, SN: 146 },
+      attackBase: 7104,
+      damageTaken: 1230,
+      fieldWon: 1183,
+      food: 1199,
+    });
   });
 });
 
