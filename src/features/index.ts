@@ -1,4 +1,5 @@
 import { allianceMapMenu } from "./alliance-map/menu";
+import { combatSimulator } from "./combat-simulator";
 import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
 import { gameLevels } from "./game-levels";
@@ -15,5 +16,6 @@ export const features: Feature[] = [
   endTimes,
   resourceForecast,
   huntReports,
+  combatSimulator,
   gameLevels,
 ];

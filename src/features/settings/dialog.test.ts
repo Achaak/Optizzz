@@ -33,7 +33,11 @@ describe("buildSettingsDialog", () => {
   });
 
   it("shows the version and the issue links in « À propos »", () => {
-    const dialog = buildSettingsDialog(document, settingsTabs("1.2.3", "Firefox/142", features()), vi.fn());
+    const dialog = buildSettingsDialog(
+      document,
+      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator: vi.fn() }),
+      vi.fn(),
+    );
     tabButton(dialog, "À propos")?.click();
     expect(dialog.textContent).toContain("Version 1.2.3");
     const labels = [...dialog.querySelectorAll(".about-links a")].map((link) => link.textContent);
@@ -42,7 +46,11 @@ describe("buildSettingsDialog", () => {
 
   it("opens on « Fonctionnalités » and keeps a change when coming back to it", () => {
     const input = features();
-    const dialog = buildSettingsDialog(document, settingsTabs("1.2.3", "Firefox/142", input), vi.fn());
+    const dialog = buildSettingsDialog(
+      document,
+      settingsTabs("1.2.3", "Firefox/142", input, { openSimulator: vi.fn() }),
+      vi.fn(),
+    );
     const box = () => dialog.querySelector<HTMLInputElement>('input[data-toggle="work-queue"]');
 
     const workQueue = box();
@@ -54,5 +62,17 @@ describe("buildSettingsDialog", () => {
     tabButton(dialog, "À propos")?.click();
     tabButton(dialog, "Fonctionnalités")?.click();
     expect(box()?.checked).toBe(false);
+  });
+
+  it("opens the combat simulator from « Outils »", () => {
+    const openSimulator = vi.fn();
+    const dialog = buildSettingsDialog(
+      document,
+      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator }),
+      vi.fn(),
+    );
+    tabButton(dialog, "Outils")?.click();
+    dialog.querySelector<HTMLButtonElement>(".tools button")?.click();
+    expect(openSimulator).toHaveBeenCalledOnce();
   });
 });
