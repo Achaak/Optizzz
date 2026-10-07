@@ -21,11 +21,11 @@ describe("readStock", () => {
 });
 
 describe("readIncome", () => {
-  it("reads workers, daily production and upkeep, next harvest and hunts", () => {
+  it("reads workers, daily production and upkeep, next harvest and hunts (no `var champi` here)", () => {
     expect(readIncome(parse(ressourcesHtml), now)).toEqual({
       foodWorkers: 0,
       materialWorkers: 4004,
-      mushroomPerDay: 5022.4,
+      mushroomPerDay: 5022,
       armyPerDay: 1704,
       taxRate: 0,
       nextHarvestAt: inSeconds(977),
