@@ -1,5 +1,6 @@
 import iconSvg from "@/assets/icon.svg?raw";
 import { bugReportUrl, featureRequestUrl, REPOSITORY_URL } from "./links";
+import { svgElement } from "@/utils/html";
 
 /** Styles of the « À propos » section, shared by the in-game dialog and the toolbar popup. */
 export const ABOUT_STYLE = `
@@ -19,7 +20,7 @@ export function buildAboutSection(doc: Document, version: string, userAgent: str
   const header = doc.createElement("div");
   header.className = "about-header";
   const icon = doc.createElement("span");
-  icon.innerHTML = iconSvg;
+  icon.append(svgElement(doc, iconSvg));
   const name = doc.createElement("p");
   name.className = "about-name";
   name.textContent = "Optizzz";

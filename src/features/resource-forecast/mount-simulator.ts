@@ -2,6 +2,7 @@
 import { formatNumber } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
 import { balancedFoodWorkers, dailyBalance, outlook, withSplit, type ColonyState } from "./forecast";
+import { htmlElement } from "@/utils/html";
 
 const PANEL_CLASS = "optizzz-simulator";
 const HOUR = 60 * 60_000;
@@ -45,9 +46,10 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
   const working = assignable;
   const max = String(working);
 
-  const panel = doc.createElement("div");
-  panel.className = PANEL_CLASS;
-  panel.innerHTML = `
+  const panel = htmlElement(
+    doc,
+    "div",
+    `<div class="${PANEL_CLASS}">
     <span class="${PANEL_CLASS}-title">Simulation de répartition</span>
     <div class="${PANEL_CLASS}-split">
       <label><img src="${FOOD_ICON}" alt="" />Nourriture
@@ -74,7 +76,9 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
       <button type="button">Équilibre nourriture</button>
       <button type="button">Revenir à l'actuel</button>
       <button type="button">Appliquer</button>
-    </div>`;
+    </div>
+  </div>`,
+  );
 
   const input = (name: string) => panel.querySelector<HTMLInputElement>(`[name="${name}"]`);
   const food = input("optizzz-food");

@@ -2,6 +2,9 @@
 import { storage } from "wxt/utils/storage";
 import { z } from "zod";
 
+// No `new Function` probing: extension pages forbid eval, and store reviewers flag it.
+z.config({ jitless: true });
+
 const playerSchema = z.object({
   id: z.number().int(),
   pseudo: z.string(),
