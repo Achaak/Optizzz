@@ -49,6 +49,23 @@ Savoir quand on pourra payer un bâtiment ou une recherche, quand on tombera en 
 
 Achats planifiés (stock réservé), délai des ouvrières via la ponte, optimisation « payable au plus tôt », armée au Dôme ou en Loge, butin d'attaque et convois entrants, répartition automatique sans clic, tribut côté colonisateur, simulation sur Construction et Laboratoire.
 
+## Code
+
+| Fichier                                                  | Rôle                                                                    |
+| -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `src/features/resource-forecast/pages.ts`                | Lecture : `#data`, Ressources, coûts, capacités des entrepôts           |
+| `src/features/resource-forecast/forecast.ts`             | Moteur : payable quand, famine, entrepôts pleins, équilibre, file       |
+| `src/features/resource-forecast/income.ts`               | Revenus et capacités lus en arrière-plan, cache par serveur             |
+| `src/features/resource-forecast/mount-costs.ts`          | Ligne de délai dans les tableaux de coûts                               |
+| `src/features/resource-forecast/mount-outlook.ts`        | Famine et entrepôt plein sous les jauges de l'en-tête                   |
+| `src/features/resource-forecast/mount-simulator.ts`      | Simulateur de répartition sur Ressources                                |
+| `src/features/resource-forecast/index.ts`                | Feature du registre (script léger), style, rafraîchissement à la minute |
+| `src/utils/number-format.ts`, `src/utils/time-format.ts` | Nombres « 12 348 », durées et heures                                    |
+
+Les prévisions partent de l'instant où la page a été chargée (le stock de `#data` ne bouge pas ensuite) ; le rafraîchissement ne fait qu'avancer les décomptes. La page Ressources avec Compte+ n'a pas de `var champi` (la page colonisée en a une) : la production de la champignonnière se lit alors dans le résumé.
+
+Tests vitest aux interfaces : `pages` (fixtures), `forecast`, `income` (fetch simulé + fakeBrowser), `mount-costs`, `mount-outlook`, `mount-simulator` (fixtures, happy-dom).
+
 ## À vérifier
 
 Récolte taxée paquet par paquet ou en continu ; nombre de places de la file Compte+.
