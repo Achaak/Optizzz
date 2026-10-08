@@ -9,6 +9,7 @@ import { huntReports } from "./hunt-reports";
 import { layingPlanner } from "./laying-planner";
 import { resourceForecast } from "./resource-forecast";
 import { settingsMenu } from "./settings";
+import { tdcChainMenu } from "./tdc-chain/menu";
 import { targets } from "./targets";
 import { workQueue } from "./work-queue";
 
@@ -16,6 +17,7 @@ import { workQueue } from "./work-queue";
 export const features: Feature[] = [
   settingsMenu,
   allianceMapMenu,
+  tdcChainMenu,
   workQueue,
   endTimes,
   resourceForecast,

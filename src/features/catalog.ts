@@ -88,6 +88,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "tdc-chain",
+    label: "Chaîne de TDC",
+    description:
+      "Entrée « Chaîne » dans le menu d'alliance : qui peut prendre à qui, rôles, et l'ordre des floods pour faire monter le TDC.",
+    options: [],
+  },
+  {
     id: "hunt-launcher",
     label: "Lanceur de chasse",
     description: "Sur Ressources : combien chasser, avec quoi, et lancer en un clic.",
