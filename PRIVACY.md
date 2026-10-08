@@ -28,6 +28,7 @@ Dans le stockage local de ton navigateur (`storage.local`), et nulle part ailleu
 - tes paramètres (outils activés, réglages de chaque outil) ;
 - les niveaux et heures de fin lus dans le jeu, pour les afficher sur les autres pages ;
 - les derniers exports publics des joueurs et des alliances téléchargés, un par serveur (pour ne pas les retélécharger), et les niveaux de Vitesse d'attaque que tu saisis ou importes ;
+- pour l'Historique de progression : les scores de tous les joueurs (TDC, Fourmilière, Technologie, Combat) de l'export de chaque nuit déjà téléchargé, pour tracer les courbes sans le retélécharger ;
 - pour le Plan de flood : tes attaques envoyées en cours de route et les armées adverses que tu colles.
 
 Une attaque que tu envoies avec le Plan de flood est notée un instant dans le stockage de session de l'onglet du jeu (`sessionStorage`), le temps que la page change, puis déplacée dans le stockage local ci-dessus.
