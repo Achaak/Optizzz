@@ -29,6 +29,7 @@ describe("buildFeaturesSection", () => {
       "laying-planner",
       "convoy",
       "targets",
+      "flood",
       "hunt-reports",
       "combat-simulator",
       "alliance-map",

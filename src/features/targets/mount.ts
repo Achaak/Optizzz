@@ -1,3 +1,5 @@
+import type { Army } from "@/game/army/units";
+import { planAttacks } from "@/game/flood";
 import { formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import { listTargets, type Target, type TargetsInput } from "./targets";
@@ -26,26 +28,34 @@ export interface TargetsContext extends TargetsInput {
   open: boolean;
   /** Called when the player folds or unfolds the box, to remember it. */
   onOpenChange: (open: boolean) => void;
+  /** My army and free attack slots, when known (plan de flood switched on, army read on Armee.php). */
+  flood?: FloodSettings | null;
+}
+
+export interface FloodSettings {
+  available: Army;
+  slots: number;
+  /** Armies pasted on the attack form, by target id. */
+  defenses: Map<number, Army>;
+  weapons: number;
+  shield: number;
+  margin: number;
 }
 
 const PAGE_SIZE = 50;
 
-type SortKey = "distance" | "field";
+type SortKey = "distance" | "field" | "flood";
 
-const SORTS: Record<SortKey, (a: Target, b: Target) => number> = {
-  distance: (a, b) => a.distance - b.distance,
-  field: (a, b) => b.field - a.field,
-};
-
-const COLUMNS: { title: string; sort?: SortKey; number?: boolean }[] = [
+const COLUMNS: { title: string; sort?: SortKey; flood?: boolean }[] = [
   { title: "Pseudo" },
   { title: "Alliance" },
-  { title: "TDC", sort: "field", number: true },
-  { title: "%", number: true },
-  { title: "Prise max", number: true },
-  { title: "Distance", sort: "distance", number: true },
+  { title: "TDC", sort: "field" },
+  { title: "%" },
+  { title: "Prise max" },
+  { title: "Flood max", sort: "flood", flood: true },
+  { title: "Distance", sort: "distance" },
   // The trip grows with the distance: same order.
-  { title: "Trajet", sort: "distance", number: true },
+  { title: "Trajet", sort: "distance" },
   { title: "Arrivée" },
   { title: "État" },
   { title: "" },
@@ -124,7 +134,42 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
   let sort: SortKey = "distance";
   let shown = PAGE_SIZE;
 
+  const { flood } = context;
+  /** What a flood takes from each target, null when my army cannot beat its known defense; per render. */
+  let floods = new Map<number, number | null>();
+  const floodOf = (target: Target): number | null => {
+    if (!flood) return null;
+    if (!floods.has(target.id)) {
+      const defense = flood.defenses.get(target.id);
+      const plan = planAttacks({
+        attackerField: context.me.field,
+        targetField: target.field,
+        slots: flood.slots,
+        margin: flood.margin,
+        available: flood.available,
+        defender: defense
+          ? {
+              armies: { field: defense, nest: [], lodge: [] },
+              weapons: flood.weapons,
+              shield: flood.shield,
+              dome: 0,
+              lodge: 0,
+            }
+          : null,
+        levels: { weapons: flood.weapons, shield: flood.shield },
+      });
+      floods.set(target.id, plan.blocked ? null : plan.attacks.reduce((sum, attack) => sum + attack.take, 0));
+    }
+    return floods.get(target.id) ?? null;
+  };
+  const sorts: Record<SortKey, (a: Target, b: Target) => number> = {
+    distance: (a, b) => a.distance - b.distance,
+    field: (a, b) => b.field - a.field,
+    flood: (a, b) => (floodOf(b) ?? -1) - (floodOf(a) ?? -1),
+  };
+
   for (const column of COLUMNS) {
+    if (column.flood && !flood) continue;
     const th = doc.createElement("th");
     th.textContent = column.title;
     const key = column.sort;
@@ -179,6 +224,13 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     cell(row, `${String(Math.round(target.ratio * 100))} %`, true);
     cell(row, formatNumber(target.takeMax), true).title =
       `20 % de son TDC, 1 cm² par fourmi au plus : il faut au moins ${formatNumber(target.takeMax)} fourmis pour tout prendre.`;
+    if (flood) {
+      const taken = floodOf(target);
+      cell(row, taken === null ? "—" : formatNumber(taken), true).title =
+        taken === null
+          ? "Votre armée ne suffit pas à écraser sa défense connue."
+          : `Avec vos ${String(flood.slots)} attaques possibles et votre armée${flood.defenses.has(target.id) ? ", sa défense connue comprise" : ", sans défense en face"}.`;
+    }
     cell(row, target.distance.toLocaleString("fr-FR", { maximumFractionDigits: 1 }), true);
     cell(row, formatDuration(target.travelSeconds * 1000), true);
     cell(row, formatEndTimeShort(target.arrival, now));
@@ -197,10 +249,11 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
 
   const render = () => {
     const now = clock();
+    floods = new Map();
     const targets = listTargets(context, now)
       .filter((target) => !(hidePacts.input.checked && target.diplomacy?.kind === "pact"))
       .filter((target) => !attackableOnly.input.checked || target.attackableNow)
-      .sort(SORTS[sort]);
+      .sort(sorts[sort]);
     summary.textContent = `Cibles à portée (${String(targets.length)})`;
     tbody.replaceChildren(...targets.slice(0, shown).map((target) => buildRow(target, now)));
     table.hidden = targets.length === 0;

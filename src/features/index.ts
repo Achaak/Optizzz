@@ -3,6 +3,7 @@ import { combatSimulator } from "./combat-simulator";
 import { convoyPlanner } from "./convoy";
 import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
+import { floodPlanner } from "./flood";
 import { gameLevels } from "./game-levels";
 import { huntReports } from "./hunt-reports";
 import { layingPlanner } from "./laying-planner";
@@ -22,6 +23,7 @@ export const features: Feature[] = [
   layingPlanner,
   convoyPlanner,
   targets,
+  floodPlanner,
   combatSimulator,
   gameLevels,
 ];
