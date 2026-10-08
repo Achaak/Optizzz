@@ -1,38 +1,38 @@
 // Worker split simulator on Ressources.php: try a split, see the outlook, apply it through the game's form.
 import { formatNumber } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
-import { balancedFoodWorkers, dailyBalance, outlook, withSplit, type ColonyState } from "./forecast";
+import { balancedFoodWorkers, dailyBalance, outlook, withSplit, type ColonyState } from "@/game/forecast";
 import { htmlElement } from "@/utils/html";
+import { urgencyOf } from "@/utils/urgency";
 
 const PANEL_CLASS = "optizzz-simulator";
-const HOUR = 60 * 60_000;
 // The game's own icons (same origin).
 const FOOD_ICON = "/images/icone/icone_pomme.png";
 const MATERIALS_ICON = "/images/icone/icone_bois.png";
 
 /** Close to the game's boxes: brown border, red italic title, Verdana inherited. */
 export const SIMULATOR_STYLE = `
-.${PANEL_CLASS} { margin: 14px 0 6px; padding: 10px 12px; border: 1px solid rgb(102, 88, 50); background: rgba(255, 255, 255, 0.18); }
-.${PANEL_CLASS}-title { display: block; margin-bottom: 6px; color: rgb(197, 19, 15); font-size: 17px; font-style: italic; font-weight: bold; }
+.${PANEL_CLASS} { margin: 14px 0 6px; padding: 10px 12px; border: 1px solid var(--optizzz-border); background: var(--optizzz-surface-tint); }
+.${PANEL_CLASS}-title { display: block; margin-bottom: 6px; color: var(--optizzz-title); font-size: 17px; font-style: italic; font-weight: bold; }
 .${PANEL_CLASS}-split { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px; }
 .${PANEL_CLASS}-split label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .${PANEL_CLASS}-split img { width: 18px; height: 18px; }
 .${PANEL_CLASS}-split input[type="number"] { width: 80px; }
-.${PANEL_CLASS}-split input[type="range"] { width: 100%; accent-color: rgb(139, 90, 43); }
-.${PANEL_CLASS}-bar { grid-column: 2; display: flex; height: 8px; border: 1px solid rgb(102, 88, 50); background: #fff; }
-.${PANEL_CLASS}-bar-food { background: rgb(197, 19, 15); }
-.${PANEL_CLASS}-bar-materials { background: rgb(139, 90, 43); }
-.${PANEL_CLASS}-bar-idle { background: repeating-linear-gradient(45deg, #bbb 0 3px, #eee 3px 6px); }
+.${PANEL_CLASS}-split input[type="range"] { width: 100%; accent-color: var(--optizzz-materials); }
+.${PANEL_CLASS}-bar { grid-column: 2; display: flex; height: 8px; border: 1px solid var(--optizzz-border); background: var(--optizzz-surface-raised); }
+.${PANEL_CLASS}-bar-food { background: var(--optizzz-title); }
+.${PANEL_CLASS}-bar-materials { background: var(--optizzz-materials); }
+.${PANEL_CLASS}-bar-idle { background: repeating-linear-gradient(45deg, var(--optizzz-idle) 0 3px, var(--optizzz-idle-alt) 3px 6px); }
 .${PANEL_CLASS}-idle { grid-column: 2; text-align: center; font-size: 0.85em; font-style: italic; }
 .${PANEL_CLASS}-idle:empty { display: none; }
 .${PANEL_CLASS}-daily { margin: 10px 0 6px; border-collapse: collapse; }
 .${PANEL_CLASS}-daily th, .${PANEL_CLASS}-daily td { padding: 1px 10px 1px 0; text-align: right; }
 .${PANEL_CLASS}-daily th:first-child { text-align: left; font-weight: normal; }
 .${PANEL_CLASS}-daily thead th { font-size: 0.85em; font-weight: normal; font-style: italic; }
-.${PANEL_CLASS}-up { color: rgb(0, 120, 0); font-weight: bold; }
-.${PANEL_CLASS}-down { color: rgb(197, 19, 15); font-weight: bold; }
+.${PANEL_CLASS}-up { color: var(--optizzz-food); font-weight: bold; }
+.${PANEL_CLASS}-down { color: var(--optizzz-danger); font-weight: bold; }
 .${PANEL_CLASS}-outlook { margin: 4px 0 8px; font-weight: bold; }
-.${PANEL_CLASS}-ok { color: rgb(0, 120, 0); }
+.${PANEL_CLASS}-ok { color: var(--optizzz-success); }
 .${PANEL_CLASS}-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .${PANEL_CLASS}-actions button:last-child { margin-left: auto; font-weight: bold; }`;
 
@@ -143,6 +143,11 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
     const value = count(split.value);
     show(value, Math.max(0, foodWorkers + materialWorkers - value));
   });
+  // When no split avoids famine, the button says so rather than doing nothing.
+  if (balancedFoodWorkers(state, clock(), working) === null) {
+    balanceButton.disabled = true;
+    balanceButton.title = "Impossible : même toutes les ouvrières sur la nourriture ne suffisent pas.";
+  }
   balanceButton.addEventListener("click", () => {
     const balance = balancedFoodWorkers(state, clock(), working);
     if (balance !== null) show(balance, working - balance);
@@ -178,19 +183,15 @@ function outlookLines(doc: Document, state: ColonyState, now: Date): HTMLElement
     element.textContent = text;
     return element;
   };
-  const timed = (label: string, at: Date, urgent: boolean) => {
+  const timed = (label: string, at: Date) => {
     const remaining = at.getTime() - now.getTime();
-    const className =
-      urgent && remaining < 6 * HOUR
-        ? "optizzz-outlook-danger"
-        : remaining < 24 * HOUR
-          ? "optizzz-outlook-warning"
-          : "";
+    const urgency = urgencyOf(remaining);
+    const className = urgency ? `optizzz-outlook-${urgency}` : "";
     return line(`${label} ${formatDuration(remaining)}`, className);
   };
 
-  const lines = [famineAt ? timed("Famine dans", famineAt, true) : line("Pas de famine", `${PANEL_CLASS}-ok`)];
-  if (foodFullAt) lines.push(timed("Entrepôt de nourriture plein dans", foodFullAt, false));
-  if (materialsFullAt) lines.push(timed("Entrepôt de matériaux plein dans", materialsFullAt, false));
+  const lines = [famineAt ? timed("Famine dans", famineAt) : line("Pas de famine", `${PANEL_CLASS}-ok`)];
+  if (foodFullAt) lines.push(timed("Entrepôt de nourriture plein dans", foodFullAt));
+  if (materialsFullAt) lines.push(timed("Entrepôt de matériaux plein dans", materialsFullAt));
   return lines;
 }

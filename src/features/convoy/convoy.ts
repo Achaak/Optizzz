@@ -1,7 +1,11 @@
 // Convoys on commerce.php: their trip, the workers they take, those on their way. Structure of the page and game
 // rules: docs/research/fourmizzz-pages.md (« commerce.php »), docs/research/temps-de-trajet.md.
 import { distance, travelTime } from "@/game/travel";
-import { parseGameDuration } from "../work-queue/queue";
+import { parseGameDuration } from "@/game/pages/work-queue";
+import { HARVESTS_PER_DAY } from "@/game/forecast";
+import { parseGameInteger } from "@/utils/game-number";
+
+const DAY = 24 * 60 * 60_000;
 
 export interface MapPlayer {
   pseudo: string;
@@ -19,8 +23,6 @@ export interface ConvoyOnWay {
   element: Element;
 }
 
-const toInteger = (text: string | undefined) => Number((text ?? "").replace(/\D/g, ""));
-
 // « - Vous allez livrer 1 et 0 à Osirus_jack dans 1H 22m 22s »: the time left is written once, with no countdown.
 const ON_WAY = /livrer\s+([\d\s]+?)\s+et\s+([\d\s]+?)\s+à\s+(.+?)\s+dans\s+(.+)$/;
 
@@ -35,8 +37,8 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
     if (!match || left === null) break;
     convoys.push({
       recipient: match[3] ?? "",
-      food: toInteger(match[1]),
-      materials: toInteger(match[2]),
+      food: parseGameInteger(match[1]),
+      materials: parseGameInteger(match[2]),
       arrivesAt: new Date(now.getTime() + left),
       element,
     });
@@ -62,6 +64,8 @@ export interface ConvoyInput {
   idleWorkers: number;
   /** The game's own count (« Ouvrières requises »), when it shows one. */
   workers?: number;
+  /** Share of the harvest a colonizer takes, between 0 and 1. */
+  taxRate?: number;
 }
 
 export interface ConvoyPlan {
@@ -72,7 +76,7 @@ export interface ConvoyPlan {
   workers: number;
   /** Harvesting workers taken once the idle ones are used up. */
   workingTaken: number;
-  /** What they would have harvested during the trip: 1 resource per worker every 30 minutes. */
+  /** What they would have harvested during the trip, as the resource forecast counts it (tax taken off). */
   harvestLost: number;
 }
 
@@ -87,7 +91,7 @@ export function planConvoy(input: ConvoyInput, now: Date): ConvoyPlan {
     arrivesAt: new Date(now.getTime() + duration),
     workers,
     workingTaken,
-    harvestLost: Math.round((workingTaken * 2 * duration) / 3_600_000),
+    harvestLost: Math.round(((workingTaken * HARVESTS_PER_DAY * duration) / DAY) * (1 - (input.taxRate ?? 0))),
   };
 }
 

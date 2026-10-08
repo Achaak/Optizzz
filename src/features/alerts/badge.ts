@@ -1,13 +1,14 @@
 // The toolbar badge: time left before the first problem (famine, full warehouse) of the worst server.
 // Computed from stored data only, never from the game. See docs/features/alertes.md.
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
-import { outlook } from "../resource-forecast/forecast";
-import type { Capacities, Income } from "../resource-forecast/pages";
+import { DANGER_UNDER, WARNING_UNDER } from "@/utils/urgency";
+import { outlook } from "@/game/forecast";
+import type { Capacities, Income } from "@/game/pages/resources";
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
-const RED_UNDER = 2 * HOUR;
-const ORANGE_UNDER = 12 * HOUR;
+/** Hours and minutes below this, whole hours above: the badge has room for four characters. */
+const MINUTES_SHOWN_UNDER = 2 * HOUR;
 const DAY = 24 * HOUR;
 /** Older data says « ? »: the player's situation may have changed. */
 export const STALE_AFTER = DAY;
@@ -72,7 +73,7 @@ function badgeText(left: number): string {
   const minutes = Math.floor(left / MINUTE);
   if (minutes < 60) return `${String(minutes)}m`;
   const hours = Math.floor(minutes / 60);
-  if (left < RED_UNDER) return `${String(hours)}h${String(minutes % 60).padStart(2, "0")}`;
+  if (left < MINUTES_SHOWN_UNDER) return `${String(hours)}h${String(minutes % 60).padStart(2, "0")}`;
   return `${String(hours)}h`;
 }
 
@@ -96,9 +97,9 @@ function status(data: ServerData, now: Date): Status | null {
   return { kind: "problem", left, line: `${name} : ${describeProblem(problem.kind, problem.at, now)}` };
 }
 
-/** Hover order: problems under 12 h, soonest first, then stale servers, later problems, nothing coming. */
+/** Hover order: problems under 24 h, soonest first, then stale servers, later problems, nothing coming. */
 function urgency(s: Status): [rank: number, left: number] {
-  if (s.kind === "problem") return [s.left < ORANGE_UNDER ? 0 : 2, s.left];
+  if (s.kind === "problem") return [s.left < WARNING_UNDER ? 0 : 2, s.left];
   return [s.kind === "stale" ? 1 : 3, 0];
 }
 
@@ -114,11 +115,11 @@ export function badge(servers: ServerData[], now: Date): Badge {
   const title = ["Optizzz", ...statuses.map((s) => s.line)].join("\n");
   let worst: number | null = null;
   for (const s of statuses) {
-    if (s.kind === "problem" && s.left < ORANGE_UNDER && (worst === null || s.left < worst)) worst = s.left;
+    if (s.kind === "problem" && s.left < WARNING_UNDER && (worst === null || s.left < worst)) worst = s.left;
   }
   if (worst === null) {
     const stale = statuses.some((s) => s.kind === "stale");
     return stale ? { text: "?", color: "gray", title } : { text: "", color: null, title };
   }
-  return { text: badgeText(worst), color: worst < RED_UNDER ? "red" : "orange", title };
+  return { text: badgeText(worst), color: worst < DANGER_UNDER ? "red" : "orange", title };
 }

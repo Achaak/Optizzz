@@ -21,7 +21,7 @@ describe("unitsText", () => {
 describe("stepNotice", () => {
   it("warns when the hunts cross a difficulty step", () => {
     expect(stepNotice(4400, 100)).toBe(
-      "Ces chasses font passer ton terrain au palier de 4 457 cm² : les suivantes seront 4 % plus difficiles.",
+      "Ces chasses font passer votre terrain au palier de 4 457 cm² : les suivantes seront 4 % plus difficiles.",
     );
   });
 

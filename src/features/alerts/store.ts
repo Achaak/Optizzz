@@ -1,6 +1,6 @@
 // The stock of each server, kept for the background script: it never reads the game itself.
 import { storage } from "wxt/utils/storage";
-import { loadCapacities, loadStoredIncome } from "../resource-forecast/income";
+import { loadCapacities, loadStoredIncome } from "@/data/income";
 import type { ServerData } from "./badge";
 
 type Stock = Omit<ServerData["stock"], "readAt">;

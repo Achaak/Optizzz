@@ -1,4 +1,5 @@
 import { alerts } from "./alerts";
+import { collect } from "./collect";
 import { allianceMapMenu } from "./alliance-map/menu";
 import { combatSimulator } from "./combat-simulator";
 import { convoyPlanner } from "./convoy";
@@ -18,6 +19,8 @@ import { workQueue } from "./work-queue";
 /** Registry of lightweight features, loaded on every page: register each new feature here. */
 export const features: Feature[] = [
   settingsMenu,
+  // First: the others may read what it keeps.
+  collect,
   allianceMapMenu,
   tdcChainMenu,
   historyMenu,

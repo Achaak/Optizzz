@@ -1,0 +1,56 @@
+/*
+ * Optizzz's design tokens. The classic theme copies the game's own boxes (parchment, brown border, red titles):
+ * every Optizzz style reads these variables, so a « modern » theme only has to redefine them.
+ * Injected on the game's pages (:root), in each Shadow DOM (:host) and on the extension's pages.
+ */
+:root,
+:host {
+  /* Text */
+  --optizzz-font: Verdana, Arial, sans-serif;
+  --optizzz-font-size: 12px;
+  --optizzz-font-size-small: 11px;
+  --optizzz-text: #000;
+  --optizzz-text-muted: #6b5d3a;
+  --optizzz-title: rgb(197, 19, 15);
+  --optizzz-link: #1d4f85;
+  /* The game's dark menus (top bar, left column) */
+  --optizzz-menu-text: rgb(211, 217, 184);
+
+  /* Boxes, as the game's (table.simulateur, .boite_membre) */
+  --optizzz-surface: rgb(215, 195, 132);
+  --optizzz-surface-alt: rgb(201, 174, 99);
+  --optizzz-surface-raised: rgb(240, 230, 190);
+  --optizzz-border: rgb(102, 88, 50);
+  --optizzz-border-soft: rgba(102, 88, 50, 0.35);
+  /* The game's own tables: thin black borders */
+  --optizzz-table-border: #000;
+  /* A lighter area inside a game box (the resource simulator) */
+  --optizzz-surface-tint: rgba(255, 255, 255, 0.18);
+  /* Workers with no work, in the split bar */
+  --optizzz-idle: #bbb;
+  --optizzz-idle-alt: #eee;
+  --optizzz-radius: 0;
+  --optizzz-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --optizzz-overlay: rgba(0, 0, 0, 0.5);
+
+  /* States: the same red and orange as the urgency scale (src/utils/urgency.ts) */
+  --optizzz-danger: #cc0000;
+  --optizzz-warning: #c76b00;
+  --optizzz-success: #2f6b1a;
+  --optizzz-danger-bg: rgba(204, 0, 0, 0.15);
+  --optizzz-warning-bg: rgba(199, 107, 0, 0.18);
+  --optizzz-success-bg: rgba(47, 107, 26, 0.15);
+  --optizzz-war-bg: rgba(200, 40, 40, 0.25);
+  --optizzz-pact-bg: rgba(40, 90, 200, 0.2);
+
+  /* Main action (launch hunts) */
+  --optizzz-action: #6b8e23;
+  --optizzz-action-border: #4f6b17;
+  --optizzz-action-text: #fff;
+  --optizzz-action-disabled: #b9c49c;
+  --optizzz-action-disabled-border: #a3ad86;
+
+  /* Resources, as the game's apple and wood */
+  --optizzz-food: rgb(0, 120, 0);
+  --optizzz-materials: rgb(139, 90, 43);
+}

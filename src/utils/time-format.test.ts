@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatEndTime, formatEndTimeShort } from "./time-format";
+import {
+  formatDateTime,
+  formatDuration,
+  formatEndTime,
+  formatEndTimeShort,
+  formatPastTime,
+  fromParisParts,
+} from "./time-format";
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -58,5 +65,32 @@ describe("formatEndTimeShort", () => {
   it("drops « aujourd'hui » only", () => {
     expect(formatEndTimeShort(new Date(2026, 9, 7, 14, 23), now)).toBe("14 h 23");
     expect(formatEndTimeShort(new Date(2026, 9, 8, 2, 10), now)).toBe("demain 2 h 10");
+  });
+});
+
+describe("Paris time", () => {
+  it("shows the game's time, whatever the computer's time zone", () => {
+    // 22:30 UTC on 7 October is 0:30 on 8 October in Paris (summer time).
+    const end = new Date(Date.UTC(2026, 9, 7, 22, 30));
+    expect(formatEndTime(end, new Date(Date.UTC(2026, 9, 7, 20, 0)))).toBe("demain 0 h 30");
+    expect(formatDateTime(new Date(Date.UTC(2026, 0, 14, 23, 0)))).toBe("15/01 à 0 h 00");
+  });
+
+  it("finds the instant of a Paris date and time, summer and winter", () => {
+    expect(fromParisParts({ year: 2026, month: 10, day: 9, hours: 11, minutes: 30 })).toEqual(
+      new Date(Date.UTC(2026, 9, 9, 9, 30)),
+    );
+    expect(fromParisParts({ year: 2026, month: 12, day: 1, hours: 11, minutes: 30 })).toEqual(
+      new Date(Date.UTC(2026, 11, 1, 10, 30)),
+    );
+  });
+});
+
+describe("formatPastTime", () => {
+  const now = new Date(2026, 9, 8, 13, 0);
+  it("says when something was read", () => {
+    expect(formatPastTime(new Date(2026, 9, 8, 12, 51), now)).toBe("aujourd'hui 12 h 51");
+    expect(formatPastTime(new Date(2026, 9, 7, 12, 51), now)).toBe("hier 12 h 51");
+    expect(formatPastTime(new Date(2026, 9, 5, 12, 51), now)).toBe("05/10 12 h 51");
   });
 });

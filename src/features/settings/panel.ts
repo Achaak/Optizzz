@@ -5,14 +5,20 @@ import { askGrantPage, askNotificationsPermitted } from "../alerts/permission";
 import { requestSimulator } from "../combat-simulator/open";
 import { loadToggles, setToggle } from "../toggles";
 import { buildSettingsDialog, DIALOG_STYLE, settingsTabs } from "./dialog";
+import { BUTTON_CLASS } from "./menu-button";
+import { THEME_CSS } from "@/theme";
 
 /** Opens the settings dialog over the game, or closes it when it is already open. */
 export function createSettingsPanel(ctx: ContentScriptContext) {
   let ui: ShadowRootContentScriptUi<() => void> | undefined;
+  /** Set while the dialog is being opened: a second quick click must not open a second one. */
+  let opening: Promise<void> | undefined;
 
   const close = () => {
     ui?.remove();
     ui = undefined;
+    // Back to the gear, for the keyboard.
+    document.querySelector<HTMLElement>(`.${BUTTON_CLASS}`)?.focus();
   };
 
   async function open() {
@@ -22,7 +28,7 @@ export function createSettingsPanel(ctx: ContentScriptContext) {
       position: "inline",
       anchor: "body",
       append: "last",
-      css: `${DIALOG_STYLE}\n:host { position: relative; z-index: 30000; }`,
+      css: `${THEME_CSS}\n${DIALOG_STYLE}\n:host { position: relative !important; z-index: 30000 !important; }`,
       onMount(container) {
         const tabs = settingsTabs(
           browser.runtime.getManifest().version,
@@ -68,12 +74,18 @@ export function createSettingsPanel(ctx: ContentScriptContext) {
       onRemove: (removeListener) => removeListener?.(),
     });
     ui.mount();
+    ui.uiContainer.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus();
   }
 
   return {
     toggle: async () => {
       if (ui) close();
-      else await open();
+      else if (!opening) {
+        opening = open().finally(() => {
+          opening = undefined;
+        });
+        await opening;
+      }
     },
   };
 }

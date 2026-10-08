@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { HUNT_REPORT_LINES } from "@/game/army/__fixtures__/hunt-reports";
 import conversationHtml from "./__fixtures__/conversation.html?raw";
-import { predictLosses, readConversation, readFight, summarize, toReportLine, type HuntFight } from "./report";
+import {
+  expeditionCount,
+  predictLosses,
+  readConversation,
+  readFight,
+  summarize,
+  toReportLine,
+  unknownEntries,
+  type HuntFight,
+} from "./report";
 
 const conversation = () =>
   new DOMParser().parseFromString(conversationHtml, "text/html").querySelector(".contenu_conversation");
@@ -86,8 +95,27 @@ describe("summarize", () => {
       antsKilled: 9,
       fieldWon: 240,
       food: 1614,
-      fieldPerAntLost: 240 / 9,
+      fieldPerAntKilled: 240 / 9,
       offPrediction: 1,
     });
+  });
+});
+
+describe("unknownEntries", () => {
+  it("names the units and prey the engine does not know, to give no prediction", () => {
+    const fight = readConversation(conversation() ?? document.body)[0];
+    if (!fight) throw new Error("fixture");
+    expect(unknownEntries(fight)).toEqual([]);
+    expect(
+      unknownEntries({ ...fight, sent: { ...fight.sent, Dragons: 3 }, prey: { ...fight.prey, Licornes: 1 } }),
+    ).toEqual(["Dragons", "Licornes"]);
+  });
+});
+
+describe("expeditionCount", () => {
+  it("reads the number of fights in the conversation's title", () => {
+    expect(expeditionCount("Vos chasseuses ont conquis 978 cm² en 191 expéditions")).toBe(191);
+    expect(expeditionCount("Vos chasseuses ont conquis 23 cm² en 1 expédition")).toBe(1);
+    expect(expeditionCount("Message")).toBeNull();
   });
 });

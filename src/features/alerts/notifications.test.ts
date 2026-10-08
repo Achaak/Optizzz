@@ -60,6 +60,14 @@ describe("dueNotifications", () => {
     expect(dueNotifications({ ...input([later]), sent }, at(1))).toEqual([]);
   });
 
+  it("does not say again a famine whose forecast crossed a quarter-hour boundary", () => {
+    const [notice] = dueNotifications(input([server(520, 600)]), now);
+    const slot = Number(notice?.id.split(":")[2]);
+    // Same famine, foreseen in the next quarter hour.
+    const sent = { [`s5.fourmizzz.fr:famine:${String(slot - 1)}`]: { at: now.getTime(), url: "" } };
+    expect(dueNotifications({ ...input([server(520, 600)]), sent }, now)).toEqual([]);
+  });
+
   it("says a famine that has just come, not one missed for more than 15 minutes", () => {
     // Read 1 h ago with 50 min of food: starving for 10 min.
     const recent = server(500, 600, { stock: { food: 500, materials: 0, workers: 1000, readAt: at(-60) } });

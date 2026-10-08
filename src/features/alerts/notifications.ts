@@ -1,5 +1,5 @@
 // Which notifications to send now, from stored data only. See docs/features/alertes.md.
-import { SOURCE_PAGES, type EndKind } from "../end-times/sources";
+import { SOURCE_PAGES, type EndKind } from "@/game/pages/end-times";
 import type { Sections } from "../end-times/recap";
 import { describeProblem, problems, serverName, STALE_AFTER, type ProblemKind, type ServerData } from "./badge";
 
@@ -38,7 +38,23 @@ const PROBLEM_SETTING: Record<ProblemKind, NotificationKind> = {
   materialsFull: "full",
 };
 
-function problemNotices(data: ServerData, settings: NotificationSettings, now: Date): Notice[] {
+const SLOT = 15 * MINUTE;
+/** The same problem moved by less than this is the same event: it is not announced again. */
+const SAME_EVENT_SLOTS = 2;
+
+/** Whether a problem of this kind, foreseen within half an hour of `slot`, was already announced. */
+const alreadySent = (sent: SentNotifications, host: string, kind: ProblemKind, slot: number) =>
+  Object.keys(sent).some((id) => {
+    const [sentHost, sentKind, sentSlot] = id.split(":");
+    return sentHost === host && sentKind === kind && Math.abs(Number(sentSlot) - slot) <= SAME_EVENT_SLOTS;
+  });
+
+function problemNotices(
+  data: ServerData,
+  settings: NotificationSettings,
+  sent: SentNotifications,
+  now: Date,
+): Notice[] {
   const { income } = data;
   if (!income) return [];
   const age = (date: Date) => now.getTime() - date.getTime();
@@ -47,7 +63,8 @@ function problemNotices(data: ServerData, settings: NotificationSettings, now: D
     const left = at.getTime() - now.getTime();
     if (!settings[PROBLEM_SETTING[kind]] || left > NOTICE_BEFORE || left < -MISSED_AFTER) return [];
     // Rounded: the forecast moves a little from one page to the next.
-    const slot = Math.round(at.getTime() / (15 * MINUTE));
+    const slot = Math.round(at.getTime() / SLOT);
+    if (alreadySent(sent, data.host, kind, slot)) return [];
     return [
       {
         id: `${data.host}:${kind}:${String(slot)}`,
@@ -82,7 +99,7 @@ function endNotices(host: string, sections: Sections, settings: NotificationSett
 
 export function dueNotifications(input: NotificationInput, now: Date): Notice[] {
   const notices = [
-    ...input.servers.flatMap((data) => problemNotices(data, input.settings, now)),
+    ...input.servers.flatMap((data) => problemNotices(data, input.settings, input.sent, now)),
     ...Object.entries(input.ends).flatMap(([host, sections]) =>
       sections ? endNotices(host, sections, input.settings, now) : [],
     ),

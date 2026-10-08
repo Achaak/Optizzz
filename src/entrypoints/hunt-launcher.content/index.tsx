@@ -2,12 +2,14 @@
 import { createRoot, type Root } from "react-dom/client";
 import { HuntLauncher } from "@/features/hunt-launcher/HuntLauncher";
 import { readOngoingHunts } from "@/features/hunt-launcher/pages";
+import "@/theme/theme.css";
 import "@/features/hunt-launcher/style.css";
-import { readStock } from "@/features/resource-forecast/pages";
+import { readStock } from "@/game/pages/resources";
 import { isFeatureEnabled } from "@/features/toggles";
 
 export default defineContentScript({
-  matches: ["*://*.fourmizzz.fr/Ressources.php*"],
+  // Match patterns are case-sensitive, the game's links are not always written the same way.
+  matches: ["*://*.fourmizzz.fr/Ressources.php*", "*://*.fourmizzz.fr/ressources.php*"],
   cssInjectionMode: "ui",
   async main(ctx) {
     if (!(await isFeatureEnabled("hunt-launcher"))) return;

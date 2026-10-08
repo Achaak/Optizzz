@@ -1,12 +1,15 @@
 // The forecast line added to each row of construction.php and laboratoire.php, under its description.
 import { formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
-import type { WorkQueue } from "../work-queue/queue";
-import { forecastFor, type ColonyState, type Forecast, type Resource } from "./forecast";
-import { readCosts, type Cost } from "./pages";
+import type { WorkQueue } from "@/game/pages/work-queue";
+import { forecastFor, type ColonyState, type Forecast, type Resource } from "@/game/forecast";
+import { readCosts, type Cost } from "@/game/pages/resources";
 
 const LINE_CLASS = "optizzz-forecast";
 const RESOURCE_NAMES: Record<Resource, string> = { food: "nourriture", materials: "matériaux" };
+
+/** Forecasts of each row, computed once per state: only the countdowns move afterwards. */
+const computed = new WeakMap<ColonyState, Map<Element, Forecast>>();
 
 /**
  * Adds (or redraws) a forecast line under the cost of every row that cannot be started right now.
@@ -20,22 +23,27 @@ export function renderCostForecasts(
   now = readAt,
 ): void {
   for (const old of doc.querySelectorAll(`.${LINE_CLASS}`)) old.remove();
+  const forecasts = computed.get(state) ?? new Map<Element, Forecast>();
+  computed.set(state, forecasts);
 
   for (const { cost, locked, description } of readCosts(doc)) {
     if (locked || !description) continue;
-    const forecast = forecastFor(state, cost, queue, readAt);
-    const parts = [describe(forecast, now), describeMissing(state, cost, forecast)].filter(Boolean);
+    const forecast = forecasts.get(description) ?? forecastFor(state, cost, queue, readAt);
+    forecasts.set(description, forecast);
+    // With Compte+, the game shows the time left before paying (clock icon): only the hour is added.
+    const gameShowsDelay = description.closest("tr")?.querySelector('.cout_amelioration img[src$="horloge.png"]');
+    const parts = [describe(forecast, now, !!gameShowsDelay), describeMissing(state, cost, forecast)].filter(Boolean);
     if (!parts[0]) continue;
 
     const line = doc.createElement("div");
     line.className = LINE_CLASS;
-    line.title = "Optizzz : estimation d'après tes récoltes, ta champignonnière et ton armée";
+    line.title = "Optizzz : estimation d'après les récoltes, la champignonnière et l'armée";
     line.textContent = parts.join(" · ");
     description.append(line);
   }
 }
 
-function describe({ affordability, readyAt, blockedBy }: Forecast, now: Date): string | null {
+function describe({ affordability, readyAt, blockedBy }: Forecast, now: Date, hourOnly: boolean): string | null {
   switch (affordability.kind) {
     case "workers":
       return `Il manque ${formatNumber(affordability.missing)} ouvrières`;
@@ -47,7 +55,9 @@ function describe({ affordability, readyAt, blockedBy }: Forecast, now: Date): s
     case "at": {
       if (!readyAt) return null;
       const remaining = Math.max(0, readyAt.getTime() - now.getTime());
-      const when = `dans ${formatDuration(remaining)} (${formatEndTime(readyAt, now)})`;
+      const when = hourOnly
+        ? formatEndTime(readyAt, now)
+        : `dans ${formatDuration(remaining)} (${formatEndTime(readyAt, now)})`;
       return blockedBy === "queue" ? `Disponible ${when} · file pleine` : `Disponible ${when}`;
     }
   }

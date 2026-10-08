@@ -46,6 +46,15 @@ describe("loadHistory", () => {
     expect(history[1]?.players.has(2)).toBe(false);
   });
 
+  it("stops downloading once aborted", async () => {
+    const fetch = fakeApi();
+    vi.stubGlobal("fetch", fetch);
+    const run = new AbortController();
+    const history = await loadHistory(ORIGIN, ["202610052200", "202610062200"], () => run.abort(), run.signal);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(history.map((snapshot) => snapshot.version)).toEqual(["202610062200"]);
+  });
+
   it("downloads a version only once", async () => {
     const fetch = fakeApi();
     vi.stubGlobal("fetch", fetch);

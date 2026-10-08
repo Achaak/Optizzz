@@ -9,9 +9,9 @@ export const FEATURES_STYLE = `
 .features label { display: flex; gap: 6px; align-items: baseline; cursor: pointer; }
 .features input { margin: 0; }
 .feature-name { font-weight: bold; }
-.feature-description { margin: 2px 0 0 19px; color: #6b5d3a; font-size: 11px; }
+.feature-description { margin: 2px 0 0 19px; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
 .feature-options { list-style: none; padding: 0; margin: 4px 0 0 19px; display: grid; gap: 3px; }
-.feature-options input:disabled + span { color: #9a8e6c; }
+.feature-options input:disabled + span { color: var(--optizzz-text-muted); opacity: 0.7; }
 .features-reload { margin: 12px 0 0; font-style: italic; }
 .features-reload button { margin-left: 6px; font: inherit; font-style: normal; cursor: pointer; }`;
 

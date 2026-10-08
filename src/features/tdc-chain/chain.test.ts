@@ -5,11 +5,16 @@ import type { Role } from "./roles";
 describe("takeMatrix", () => {
   it("gives, attacker by target, 20 % of the target's field when it is from 50 % (included) to 300 % (excluded)", () => {
     const fields = [{ field: 1000 }, { field: 600 }, { field: 200 }];
-    expect(takeMatrix(fields)).toEqual([
+    expect(takeMatrix(fields, 0)).toEqual([
       [null, 120, null],
       [200, null, null], // 200 is exactly a third of 600: out of range
       [null, null, null],
     ]);
+  });
+
+  it("keeps the plan's margin: a target just above 50 % is not counted in range", () => {
+    expect(takeMatrix([{ field: 1000 }, { field: 503 }], 0.01)[0]?.[1]).toBeNull();
+    expect(takeMatrix([{ field: 1000 }, { field: 505 }], 0.01)[0]?.[1]).toBe(101);
   });
 });
 

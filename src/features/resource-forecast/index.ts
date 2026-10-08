@@ -1,21 +1,22 @@
 import type { Feature } from "../feature";
 import { isEnabled } from "../toggles";
-import { readWorkQueue } from "../work-queue/queue";
-import type { ColonyState } from "./forecast";
-import { INCOME_MAX_AGE, loadCapacities, loadIncome, storeCapacities, storeIncome } from "./income";
+import { readWorkQueue } from "@/game/pages/work-queue";
+import type { ColonyState } from "@/game/forecast";
+import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
 import { renderCostForecasts } from "./mount-costs";
-import { renderOutlook } from "./mount-outlook";
+import { OUTLOOK_TIP_STYLE, renderOutlook } from "./mount-outlook";
 import { mountSimulator, SIMULATOR_STYLE } from "./mount-simulator";
-import { readCapacities, readIncome, readStock, type Income } from "./pages";
+import { readCapacities, readIncome, readStock, type Income } from "@/game/pages/resources";
 
 const REFRESH_MS = 60_000;
 
 const STYLE = `
-.optizzz-forecast { margin-top: 4px; font-weight: bold; }
+.optizzz-forecast { margin-top: 4px; }
 .optizzz-forecast::before { content: "⏳ "; }
 .optizzz-outlook { font-size: 0.8em; line-height: 1.2; padding: 1px 0 2px; }
-.optizzz-outlook-warning { color: #c76b00; font-weight: bold; }
-.optizzz-outlook-danger { color: #c00; font-weight: bold; }`;
+.optizzz-outlook-warning { color: var(--optizzz-warning); font-weight: bold; }
+.optizzz-outlook-danger { color: var(--optizzz-danger); font-weight: bold; }
+${OUTLOOK_TIP_STYLE}`;
 
 const page = (url: URL) => url.pathname.toLowerCase();
 
@@ -39,21 +40,23 @@ export const resourceForecast: Feature = {
     const showOutlook = isEnabled(toggles, "resource-forecast", "outlook");
     const showCosts = isEnabled(toggles, "resource-forecast", "costs") && (onConstruction || onLaboratory);
     const showSimulator = isEnabled(toggles, "resource-forecast", "simulator") && onResources;
-    // Nothing to show here: no background fetch. Ressources.php still stores its figures for other pages.
-    if (!showOutlook && !showCosts && !onResources) return;
+    // Nothing to show here: no background fetch. What the page shows is kept by the collect feature.
+    if (!showOutlook && !showCosts && !showSimulator) return;
 
     let income: Income | null;
     if (onResources) {
       income = readIncome(document, readAt);
-      if (income) await storeIncome(url.origin, income, readAt);
     } else {
-      // Costs pages want fresh figures; elsewhere, the header can live with a few minutes old ones.
-      income = await loadIncome(url.origin, showCosts ? 0 : INCOME_MAX_AGE, readAt);
+      // Costs pages want fresh figures; elsewhere, the header can live with a few minutes old ones. Without them
+      // (session expired, game in maintenance, nothing remembered yet), nothing is shown.
+      income = await loadIncome(url.origin, showCosts ? 0 : INCOME_MAX_AGE, readAt).catch((error: unknown) => {
+        console.warn("[Optizzz] resource forecast: income unreadable", error);
+        return null;
+      });
     }
     if (!income) return;
 
     const pageCapacities = readCapacities(document);
-    if (pageCapacities) await storeCapacities(url.origin, pageCapacities);
     const capacities = pageCapacities ?? (await loadCapacities(url.origin, onLaboratory));
 
     const state: ColonyState = { ...stock, ...income, capacities };

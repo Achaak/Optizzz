@@ -2,7 +2,11 @@
 import EngineWorker from "./engine.worker?worker&inline";
 import { answer, type EngineAnswer, type EngineRequest } from "./requests";
 
-export type Engine = <R extends EngineRequest>(request: R) => Promise<EngineAnswer<R>>;
+export interface Engine {
+  <R extends EngineRequest>(request: R): Promise<EngineAnswer<R>>;
+  /** Stops the worker: requests still waiting never answer. */
+  dispose: () => void;
+}
 
 interface Pending {
   request: EngineRequest;
@@ -34,7 +38,7 @@ export function createEngine(): Engine {
     worker = null;
   }
 
-  return <R extends EngineRequest>(request: R) =>
+  const engine = <R extends EngineRequest>(request: R) =>
     new Promise<EngineAnswer<R>>((resolve) => {
       const done = (value: unknown) => resolve(value as EngineAnswer<R>);
       if (!worker) {
@@ -45,4 +49,11 @@ export function createEngine(): Engine {
       pending.set(id, { request, resolve: done });
       worker.postMessage({ id, request });
     });
+  return Object.assign(engine, {
+    dispose: () => {
+      worker?.terminate();
+      worker = null;
+      pending.clear();
+    },
+  });
 }

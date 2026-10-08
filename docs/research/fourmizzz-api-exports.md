@@ -49,6 +49,6 @@ Ressources, armée, recherches (dont la Vitesse d'attaque), dernière connexion,
 
 ## Utilisation dans Optizzz
 
-`src/features/alliance-map/api.ts` : on demande la liste des versions, et on ne télécharge le fichier des joueurs (`loadPlayersExport`) ou des alliances (`loadAlliancesExport`) que si sa version a changé. Cache par serveur dans `browser.storage.local`. Si l'API est injoignable, on se rabat sur le cache. Le fichier est validé avec zod.
+`src/data/exports.ts` : on demande la liste des versions, et on ne télécharge le fichier des joueurs (`loadPlayersExport`) ou des alliances (`loadAlliancesExport`) que si sa version a changé. Cache par serveur dans `browser.storage.local`. Si l'API est injoignable, on se rabat sur le cache. Le fichier est validé avec zod.
 
 `src/features/history/api.ts` (Historique de progression) : une version par jour de Paris (la première, celle de minuit : 22:00 UTC l'été, 23:00 UTC l'hiver), gardée en cache sous forme compacte (scores de tous les joueurs en colonnes, ~25 Ko par version sur S5, ~500 Ko sur S2). Historique disponible : depuis le 2026-09-30 (S2) / 2026-10-01 (S5).

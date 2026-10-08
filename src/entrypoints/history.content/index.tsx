@@ -1,14 +1,15 @@
 // Separate script: the history bundles React + ECharts, so it only loads on alliance.php and Membre.php.
 import { createRoot, type Root } from "react-dom/client";
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
-import { readLoggedInPseudo } from "@/features/alliance-map/pages";
+import { readLoggedInPseudo } from "@/game/pages/alliance";
 import type { Scores } from "@/features/history/api";
 import { AllianceHistory } from "@/features/history/AllianceHistory";
 import { HISTORY_HASH } from "@/features/history/menu";
-import { readMembersScores, readProfile } from "@/features/history/pages";
+import { readMembersScores, readProfile } from "@/game/pages/scores";
 import { ProfileHistory } from "@/features/history/ProfileHistory";
-import { isEnabled, loadToggles } from "@/features/toggles";
-import { showsAllianceView } from "@/utils/alliance-views";
+import { isEnabled, loadToggles, type Toggles } from "@/features/toggles";
+import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
+import "@/theme/theme.css";
 import "@/features/history/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
@@ -18,7 +19,7 @@ const isHistoryPage = () => location.search === "?Membres" && location.hash === 
 // and the members table is awaited before reading live scores.
 const MEMBERS_TABLE_TIMEOUT_MS = 15_000;
 
-async function mountAllianceView(ctx: ContentScriptContext) {
+async function mountAllianceView(ctx: ContentScriptContext, toggles: Toggles) {
   if (location.search !== "?Membres") return;
   const allianceContent = document.querySelector<HTMLElement>("#alliance");
   if (!allianceContent) return;
@@ -57,8 +58,8 @@ async function mountAllianceView(ctx: ContentScriptContext) {
   const update = () => {
     const visible = isHistoryPage();
     if (visible && !ui.mounted) ui.mount();
-    if (ui.mounted) ui.shadowHost.style.display = visible ? "" : "none";
-    allianceContent.style.display = showsAllianceView() ? "none" : "";
+    if (ui.mounted) ui.shadowHost.hidden = !visible;
+    allianceContent.style.display = showsAllianceView(allianceViewHashes(toggles)) ? "none" : "";
   };
   update();
   ctx.addEventListener(window, "hashchange", update);
@@ -100,13 +101,13 @@ async function mountProfileBox(ctx: ContentScriptContext, allianceView: boolean)
 }
 
 export default defineContentScript({
-  matches: ["*://*.fourmizzz.fr/alliance.php*", "*://*.fourmizzz.fr/Membre.php*"],
+  matches: ["*://*.fourmizzz.fr/alliance.php*", "*://*.fourmizzz.fr/Membre.php*", "*://*.fourmizzz.fr/membre.php*"],
   cssInjectionMode: "ui",
   async main(ctx) {
     const toggles = await loadToggles();
     const allianceView = isEnabled(toggles, "history", "alliance");
     if (location.pathname === "/alliance.php") {
-      if (allianceView) await mountAllianceView(ctx);
+      if (allianceView) await mountAllianceView(ctx, toggles);
     } else if (isEnabled(toggles, "history", "profile")) {
       await mountProfileBox(ctx, allianceView);
     }

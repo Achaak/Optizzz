@@ -1,7 +1,8 @@
-import { svgElement } from "@/utils/html";
+import { addAllianceMenuEntry } from "@/utils/alliance-menu";
 import type { Feature } from "../feature";
 
-export const MAP_LINK = "alliance.php?Membres#carte";
+export const MAP_HASH = "#carte";
+export const MAP_LINK = `alliance.php?Membres${MAP_HASH}`;
 
 // Folded map icon, drawn in the link colour like the game's sprite icons (24×26 box).
 const MAP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -14,24 +15,11 @@ export const allianceMapMenu: Feature = {
   toggle: "alliance-map",
   matches: () => true,
   run() {
-    const membersItem = document.querySelector("#menuAlliance a.boutonMembres")?.closest("li");
-    if (!membersItem || document.querySelector("#menuAlliance .optizzz-alliance-map")) return;
-
-    // Same structure as the game's entries: <a><span>icon</span>Label</a>.
-    const icon = document.createElement("span");
-    icon.append(svgElement(document, MAP_ICON));
-    icon.style.background = "none";
-    icon.style.display = "flex";
-    icon.style.alignItems = "center";
-    icon.style.justifyContent = "center";
-
-    const link = document.createElement("a");
-    link.className = "optizzz-alliance-map";
-    link.href = MAP_LINK;
-    link.append(icon, "Carte");
-
-    const item = document.createElement("li");
-    item.append(link);
-    membersItem.after(item);
+    addAllianceMenuEntry(document, {
+      className: "optizzz-alliance-map",
+      href: MAP_LINK,
+      label: "Carte",
+      icon: MAP_ICON,
+    });
   },
 };

@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { loadPlayersExport, type PlayersExport } from "./api";
+import { useEffect, useMemo, useState } from "react";
+import { loadPlayersExport, type PlayersExport } from "@/data/exports";
 import type { MapMember } from "./chart-option";
-import { formatExportVersion } from "./dates";
+import { formatExportVersion } from "@/utils/export-date";
 import { LevelSharing } from "./LevelSharing";
 import { MapChart } from "./MapChart";
 import { globalLevel, neighborRows, type KnownLevels } from "./neighbor-table";
 import { NeighborTable } from "./NeighborTable";
-import { readAttackSpeedLevel } from "./pages";
-import { readSettings, writeSettings, type Settings } from "./settings";
+import { readSettings, writeSettings } from "./settings";
+import { refreshLevels } from "@/data/levels";
+import { NumberField } from "@/utils/NumberField";
+import { useStoredSettings } from "@/utils/useStoredSettings";
 
 interface Props {
   origin: string;
@@ -16,42 +18,34 @@ interface Props {
   liveHuntingFields: ReadonlyMap<string, number>;
 }
 
+/** Read fresh at each opening: a research may have ended since the levels were remembered. */
 async function fetchLabLevel(origin: string): Promise<number | null> {
-  const html = await fetch(`${origin}/laboratoire.php`).then((response) => response.text());
-  return readAttackSpeedLevel(new DOMParser().parseFromString(html, "text/html"));
+  return (await refreshLevels(origin, "laboratoire.php")).attackSpeed ?? null;
 }
-
-const parseLevel = (value: string) => (value === "" ? null : Number(value));
 
 export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props) {
   const host = new URL(origin).host;
   const [playersExport, setPlayersExport] = useState<PlayersExport | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, updateSettings] = useStoredSettings(host, readSettings, writeSettings);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const updateSettings = useCallback(
-    (update: (current: Settings) => Settings) =>
-      setSettings((current) => {
-        if (!current) return current;
-        const next = update(current);
-        void writeSettings(host, next);
-        return next;
-      }),
-    [host],
-  );
-
   useEffect(() => {
-    loadPlayersExport(origin).then(setPlayersExport, (e: unknown) => setError(String(e)));
+    loadPlayersExport(origin).then(setPlayersExport, (e: unknown) => {
+      console.error("[Optizzz] alliance map: loading the public export failed", e);
+      setError("l'export public de Fourmizzz ne répond pas. Réessayez dans quelques minutes.");
+    });
   }, [origin]);
 
+  const settingsRead = settings !== null;
   useEffect(() => {
-    void readSettings(host).then(async (stored) => {
-      setSettings(stored);
-      const labLevel = await fetchLabLevel(origin).catch(() => null); // keep the last known level
-      if (labLevel !== null) updateSettings((current) => ({ ...current, labLevel }));
-    });
-  }, [origin, host, updateSettings]);
+    if (!settingsRead) return;
+    void fetchLabLevel(origin)
+      .catch(() => null) // keep the last known level
+      .then((labLevel) => {
+        if (labLevel !== null) updateSettings((current) => ({ ...current, labLevel }));
+      });
+  }, [origin, settingsRead, updateSettings]);
 
   const me = playersExport?.players.find((p) => p.pseudo === loggedInPseudo) ?? null;
   const allianceTag = me?.alliance ?? null;
@@ -81,8 +75,8 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
   if (!myMember || !allianceTag) {
     return (
       <div className="alliance-map">
-        Ton alliance n'apparaît pas dans l'export du {formatExportVersion(playersExport.version)}. Si tu viens de la
-        rejoindre, elle apparaîtra après la prochaine mise à jour (chaque nuit à minuit).
+        Votre alliance n'apparaît pas dans l'export du {formatExportVersion(playersExport.version)}. Si vous venez de la
+        rejoindre, elle apparaîtra à la prochaine mise à jour de l'export, dans l'heure.
       </div>
     );
   }
@@ -101,28 +95,33 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
       <div className="settings">
         <label>
           Voisins reliés à chaque membre sur la carte :{" "}
-          <input
-            type="number"
+          <NumberField
             min={1}
             max={Math.max(1, members.length - 1)}
-            value={settings.k}
-            onChange={(e) => updateSettings((s) => ({ ...s, k: Math.max(1, Number(e.target.value) || 1) }))}
+            integer
+            value={k}
+            onCommit={(value) => {
+              if (value !== null) updateSettings((s) => ({ ...s, k: value }));
+            }}
           />
         </label>
         <label>
           Vitesse d'attaque par défaut :{" "}
-          <input
-            type="number"
+          <NumberField
             min={0}
             max={30}
+            integer
+            allowEmpty
             placeholder={String(settings.labLevel ?? 0)}
-            value={settings.manualLevel ?? ""}
-            onChange={(e) => updateSettings((s) => ({ ...s, manualLevel: parseLevel(e.target.value) }))}
+            value={settings.manualLevel}
+            onCommit={(manualLevel) => {
+              updateSettings((s) => ({ ...s, manualLevel }));
+            }}
           />
         </label>
         <span className="note">
           Utilisée pour les membres dont on ne connaît pas la Vitesse d'attaque (actuellement niveau{" "}
-          {globalLevel(levels)}). Vide = ton niveau du Laboratoire
+          {globalLevel(levels)}). Vide = votre niveau du Laboratoire
           {settings.labLevel !== null && ` (${settings.labLevel})`}.
         </span>
       </div>
@@ -134,6 +133,7 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
         rows={neighborRows(selected, members, k, levels)}
         playerLevels={settings.playerLevels}
         defaultLevel={globalLevel(levels)}
+        levels={levels}
         onSelect={setSelectedId}
         onLevelChange={(playerId, level) =>
           updateSettings((s) => ({

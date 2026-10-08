@@ -3,8 +3,7 @@ import { isEnabled } from "../toggles";
 import { annotateCountdowns } from "./countdowns";
 import { mountRecap, RECAP_STYLE } from "./mount-recap";
 import { kindsToRefresh, recapRows } from "./recap";
-import { readSection, sourceOf } from "./sources";
-import { loadSections, refreshSections, storeSection } from "./store";
+import { loadSections, refreshSections } from "@/data/end-times";
 
 const WORDING_REFRESH_MS = 60_000;
 const RECAP_REFRESH_MS = 30_000;
@@ -23,13 +22,9 @@ export const endTimes: Feature = {
   matches: () => true,
   async run(ctx, toggles) {
     const loadedAt = new Date();
-    const { origin, pathname } = new URL(location.href);
+    const { origin } = new URL(location.href);
 
-    // Kept even with the box switched off: it is what the game page shows right now.
-    const kind = sourceOf(pathname);
-    const section = kind ? readSection(document, kind, loadedAt) : null;
-    if (section) await storeSection(origin, section);
-
+    // What the page lists is kept by the collect feature, the box being on or not.
     const style = document.createElement("style");
     style.textContent = STYLE;
     document.head.append(style);
@@ -54,7 +49,7 @@ export const endTimes: Feature = {
 
     const stale = kindsToRefresh(sections, loadedAt);
     if (stale.length > 0) {
-      sections = await refreshSections(origin, stale, loadedAt);
+      sections = await refreshSections(origin, stale);
       draw();
     }
   },

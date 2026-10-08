@@ -47,7 +47,17 @@ describe("buildNotificationsSection", () => {
       expect(section.dataset.permitted).toBe("false");
     });
     click(checkbox(section, "famine"));
-    expect(input.grant).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(input.grant).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("waits for the browser's answer before asking, when a kind is switched on at once", async () => {
+    const { input, section } = build({ permitted: () => Promise.resolve(false) });
+    click(checkbox(section, "famine"));
+    await vi.waitFor(() => {
+      expect(input.grant).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("does not ask again once permitted", async () => {
@@ -62,7 +72,7 @@ describe("buildNotificationsSection", () => {
   it("says when the browser blocks the kinds switched on, with a way to allow them", async () => {
     const { input, section } = build({ settings: { famine: true }, permitted: () => Promise.resolve(false) });
     await vi.waitFor(() => {
-      expect(section.textContent).toContain("Notifications bloquées par le navigateur");
+      expect(section.textContent).toContain("Notifications pas encore autorisées par le navigateur");
     });
     section.querySelector<HTMLButtonElement>("button")?.click();
     expect(input.grant).toHaveBeenCalledTimes(1);
@@ -73,6 +83,18 @@ describe("buildNotificationsSection", () => {
     await vi.waitFor(() => {
       expect(section.dataset.permitted).toBe("false");
     });
-    expect(section.textContent).not.toContain("bloquées");
+    expect(section.textContent).not.toContain("pas encore autorisées");
+  });
+
+  it("says the notifications are switched off in « Fonctionnalités », and greys the boxes", () => {
+    const { section } = build({ toggles: { "alerts.notifications": false } });
+    expect(section.textContent).toContain("Notifications coupées dans « Fonctionnalités »");
+    expect(checkbox(section, "famine").disabled).toBe(true);
+  });
+
+  it("says the end notifications need « Heures de fin »", () => {
+    const { section } = build({ toggles: { "end-times": false } });
+    expect(section.textContent).toContain("ont besoin de « Heures de fin »");
+    expect(checkbox(section, "hunt").disabled).toBe(false);
   });
 });

@@ -6,13 +6,14 @@ const REFRESH_MS = 15_000;
 // Close to the game's own tables: thin dark borders, bold headers, inherited font and colours.
 const STYLE = `
 .optizzz-work-queue { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
-.optizzz-work-queue th, .optizzz-work-queue td { border: 1px solid #000; padding: 3px 8px; text-align: left; }
+.optizzz-work-queue th, .optizzz-work-queue td { border: 1px solid var(--optizzz-table-border); padding: 3px 8px; text-align: left; }
 .optizzz-work-queue tfoot td { border: none; padding-top: 6px; font-style: italic; }
 .optizzz-work-queue tfoot td:empty { display: none; }
 .optizzz-work-queue td:nth-child(3) { white-space: nowrap; }
 .optizzz-work-queue-bar {
   display: inline-block; vertical-align: middle; width: 80px; height: 8px; margin-right: 6px;
-  border: 1px solid #000; background: linear-gradient(to right, #6b8e23 var(--progress, 0%), transparent 0);
+  border: 1px solid var(--optizzz-table-border);
+  background: linear-gradient(to right, var(--optizzz-action) var(--progress, 0%), transparent 0);
 }`;
 
 /** Table of the buildings / research in progress, on construction.php and laboratoire.php. */
