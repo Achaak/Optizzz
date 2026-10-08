@@ -28,6 +28,7 @@ describe("buildFeaturesSection", () => {
       "resource-forecast.simulator",
       "alerts",
       "alerts.badge",
+      "alerts.notifications",
       "laying-planner",
       "convoy",
       "targets",

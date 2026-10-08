@@ -1,6 +1,7 @@
 import { withToggle, type Toggles } from "../toggles";
 import { ABOUT_STYLE, buildAboutSection } from "./about-section";
 import { buildFeaturesSection, FEATURES_STYLE, type ToggleChange } from "./features-section";
+import { buildNotificationsSection, NOTIFICATIONS_STYLE, type NotificationsTabInput } from "./notifications-section";
 import { buildToolsSection, TOOLS_STYLE, type ToolsInput } from "./tools-section";
 
 export interface SettingsTab {
@@ -23,8 +24,18 @@ export function settingsTabs(
   userAgent: string,
   features: FeaturesTabInput,
   tools: ToolsInput,
+  notifications: NotificationsTabInput,
 ): SettingsTab[] {
   let toggles = features.toggles;
+  // Kept up to date, like the toggles, for when the tab is shown again.
+  let notificationSettings = notifications.settings;
+  const notificationsInput: NotificationsTabInput = {
+    ...notifications,
+    onChange: (kind, enabled) => {
+      notificationSettings = { ...notificationSettings, [kind]: enabled };
+      notifications.onChange(kind, enabled);
+    },
+  };
   const onChange: ToggleChange = (feature, option, enabled) => {
     toggles = withToggle(toggles, feature, option, enabled);
     features.onChange(feature, option, enabled);
@@ -34,6 +45,11 @@ export function settingsTabs(
       id: "features",
       label: "Fonctionnalités",
       render: (doc) => buildFeaturesSection(doc, toggles, onChange, features.reload),
+    },
+    {
+      id: "notifications",
+      label: "Notifications",
+      render: (doc) => buildNotificationsSection(doc, { ...notificationsInput, settings: notificationSettings }),
     },
     { id: "tools", label: "Outils", render: (doc) => buildToolsSection(doc, tools) },
     { id: "about", label: "À propos", render: (doc) => buildAboutSection(doc, version, userAgent) },
@@ -51,6 +67,7 @@ export const TABS_STYLE = `
 .tab[aria-selected="true"] { background: #f7ecc6; border-color: #a8894a; margin-bottom: -1px; }
 .tab-panel { overflow: auto; padding: 16px 20px; background: #f7ecc6; }
 ${FEATURES_STYLE}
+${NOTIFICATIONS_STYLE}
 ${TOOLS_STYLE}
 ${ABOUT_STYLE}`;
 

@@ -16,6 +16,8 @@ export default defineConfig({
     // unlimitedStorage: the cached exports of a big server (S2: 4 MB of players) fill the 10 MB of storage.local.
     // alarms: the toolbar badge counts down to famine or a full warehouse (Alertes).
     permissions: ["storage", "unlimitedStorage", "alarms"],
+    // Asked only when the player switches a notification on (Alertes).
+    optional_permissions: ["notifications"],
     host_permissions: ["*://*.fourmizzz.fr/*"],
     ...(browser === "firefox" && {
       browser_specific_settings: {
