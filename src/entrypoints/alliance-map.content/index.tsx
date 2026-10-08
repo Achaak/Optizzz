@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { AllianceMap } from "@/features/alliance-map/AllianceMap";
 import { readLoggedInPseudo, readMembersHuntingField } from "@/features/alliance-map/pages";
 import { isFeatureEnabled } from "@/features/toggles";
+import { showsAllianceView } from "@/utils/alliance-views";
 import "@/features/alliance-map/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
@@ -54,7 +55,7 @@ export default defineContentScript({
       const visible = isMapPage();
       if (visible && !ui.mounted) ui.mount();
       ui.shadowHost.style.display = visible ? "" : "none";
-      allianceContent.style.display = visible ? "none" : "";
+      allianceContent.style.display = showsAllianceView() ? "none" : "";
     };
     update();
     ctx.addEventListener(window, "hashchange", update);
