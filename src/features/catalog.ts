@@ -95,6 +95,16 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "history",
+    label: "Historique de progression",
+    description:
+      "Courbes du TDC et des scores dans le temps, d'après les exports publics de chaque nuit, pour comparer avec votre alliance.",
+    options: [
+      { id: "alliance", label: "Entrée « Historique » dans le menu d'alliance" },
+      { id: "profile", label: "Encart « Progression » sur les profils" },
+    ],
+  },
+  {
     id: "hunt-launcher",
     label: "Lanceur de chasse",
     description: "Sur Ressources : combien chasser, avec quoi, et lancer en un clic.",
