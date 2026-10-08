@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
-import { loadPlayersExport } from "./api";
+import { storage } from "wxt/utils/storage";
+import { loadAlliancesExport, loadPlayersExport } from "./api";
 
 const ORIGIN = "https://s5.fourmizzz.fr";
 
@@ -79,5 +80,61 @@ describe("loadPlayersExport", () => {
   it("rejects a file that breaks the contract", async () => {
     vi.stubGlobal("fetch", fakeApi(["202610062200"], [{ id: "not a number" }]));
     await expect(loadPlayersExport(ORIGIN)).rejects.toThrow();
+  });
+});
+
+const alliance = {
+  tag: "UPTEP",
+  name: "Un P'tit Truc En Plus",
+  playersCount: 15,
+  totalField: 63211,
+  totalBuildingScore: 497,
+  totalTechnologyScore: 236,
+  totalTrophyScore: 0,
+  diplomacy: { pacts: [{ tag: "LHDM", name: "PNA ", description: "PNA de 1 mois " }], wars: [] },
+};
+
+function fakeAlliancesApi(versions: string[], alliances: unknown = [alliance]) {
+  return vi.fn((url: string) => {
+    if (url === `${ORIGIN}/api/exports/`) {
+      return Promise.resolve(Response.json({ players: versions, alliances: versions }));
+    }
+    if (url === `${ORIGIN}/api/exports/alliances/?version=${versions[0] ?? ""}`) {
+      return Promise.resolve(Response.json(alliances));
+    }
+    return Promise.resolve(Response.json({ error: "unknown" }, { status: 404 }));
+  });
+}
+
+describe("loadAlliancesExport", () => {
+  beforeEach(() => fakeBrowser.reset());
+
+  it("downloads the latest alliances version once", async () => {
+    const fetch = fakeAlliancesApi(["202610071900"]);
+    vi.stubGlobal("fetch", fetch);
+    await loadAlliancesExport(ORIGIN);
+    const alliancesExport = await loadAlliancesExport(ORIGIN);
+    expect(alliancesExport).toEqual({ version: "202610071900", alliances: [alliance] });
+    expect(fetch.mock.calls.filter(([url]) => url.includes("/alliances/"))).toHaveLength(1);
+  });
+
+  it("falls back to the cache when the API is unreachable", async () => {
+    vi.stubGlobal("fetch", fakeAlliancesApi(["202610071900"]));
+    await loadAlliancesExport(ORIGIN);
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ error: "outage" }, { status: 503 })));
+    expect((await loadAlliancesExport(ORIGIN)).version).toBe("202610071900");
+  });
+
+  it("still answers when the cache cannot be written (storage quota)", async () => {
+    vi.stubGlobal("fetch", fakeAlliancesApi(["202610071900"]));
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const setItem = vi.spyOn(storage, "setItem").mockRejectedValue(new Error("Resource::kQuotaBytes quota exceeded"));
+    expect((await loadAlliancesExport(ORIGIN)).alliances).toEqual([alliance]);
+    setItem.mockRestore();
+  });
+
+  it("rejects a file that breaks the contract", async () => {
+    vi.stubGlobal("fetch", fakeAlliancesApi(["202610071900"], [{ tag: 3 }]));
+    await expect(loadAlliancesExport(ORIGIN)).rejects.toThrow();
   });
 });

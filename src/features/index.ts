@@ -8,6 +8,7 @@ import { huntReports } from "./hunt-reports";
 import { layingPlanner } from "./laying-planner";
 import { resourceForecast } from "./resource-forecast";
 import { settingsMenu } from "./settings";
+import { targets } from "./targets";
 import { workQueue } from "./work-queue";
 
 /** Registry of lightweight features, loaded on every page: register each new feature here. */
@@ -20,6 +21,7 @@ export const features: Feature[] = [
   huntReports,
   layingPlanner,
   convoyPlanner,
+  targets,
   combatSimulator,
   gameLevels,
 ];

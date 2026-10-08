@@ -54,6 +54,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "targets",
+    label: "Cibles à portée",
+    description:
+      "Sur Ennemies : les joueurs attaquables triés par distance, avec le trajet, leur état, les pactes et les guerres.",
+    options: [],
+  },
+  {
     id: "hunt-reports",
     label: "Rapports de chasse",
     description:

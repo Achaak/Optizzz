@@ -10,7 +10,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 4. **Simulateur de combat** (attaque / défense, Dôme et Loge) ; voir `combat-simulator.md`.
 5. **Planificateur de ponte** : fin, date à laquelle on pourra payer, entretien, « max » ; voir `laying-planner.md`.
 6. **Calculateur de convoi** : trajet, arrivée, ouvrières prises, destinataires suggérés ; voir `convoy.md`.
-7. **Cibles à portée** : joueurs entre 50 % et 300 % de son TDC, triés par distance.
+7. **Cibles à portée** (`ennemie.php`) : joueurs entre 50 % et 300 % de son TDC, triés par distance, avec trajet, état, pactes et guerres ; voir `cibles.md`.
 8. **Renforts** : qui peut arriver avant une attaque entrante.
 9. **Chaîne de TDC** : qui peut prendre à qui, ordre de passage.
 10. **Historique de progression** : TDC et scores en courbes.
