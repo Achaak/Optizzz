@@ -1,0 +1,190 @@
+:host {
+  all: initial;
+  display: block;
+}
+
+.tdc-chain {
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 12px;
+  color: #222;
+  background: #f6efd9;
+  border: 1px solid #c8b88a;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 8px auto;
+  max-width: 900px;
+  box-sizing: border-box;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 0 0 4px;
+}
+
+h3 {
+  font-size: 13px;
+  margin: 16px 0 6px;
+}
+
+.meta,
+.note {
+  color: #6b5d3a;
+  font-size: 11px;
+  margin: 4px 0;
+}
+
+.rules {
+  background: #fdf6e0;
+  border-left: 3px solid #c8a24a;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.error {
+  color: #a02020;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1d4f85;
+  text-decoration: underline;
+}
+
+input.keep {
+  width: 70px;
+  padding: 2px 4px;
+}
+
+input::placeholder {
+  color: #b5ab8e;
+}
+
+a {
+  color: #1d4f85;
+  text-decoration: none;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #e3d8b8;
+  text-align: right;
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+thead th {
+  background: #e9dcb4;
+}
+
+tr.out td {
+  color: #888;
+}
+
+.estimated {
+  color: #6b5d3a;
+}
+
+.matrix {
+  overflow-x: auto;
+}
+
+.matrix th,
+.matrix td {
+  padding: 2px 4px;
+  border: 1px solid #e3d8b8;
+  font-size: 11px;
+}
+
+.matrix tbody th {
+  background: #efe4c4;
+  font-weight: normal;
+}
+
+.matrix th.vertical {
+  vertical-align: bottom;
+  text-align: center;
+}
+
+.matrix th.vertical span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.matrix td.none {
+  background: #ece6d6;
+}
+
+.matrix td.used {
+  background: #f7c98a;
+  font-weight: bold;
+}
+
+.plan th:first-child,
+.plan td:first-child {
+  text-align: right;
+}
+
+.plan td:nth-child(3),
+.plan td:nth-child(4) {
+  text-align: left;
+}
+
+tr.mine td {
+  background: #fde9d3;
+  font-weight: bold;
+}
+
+td.late {
+  color: #a02020;
+}
+
+.summary {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.sharing {
+  margin-top: 8px;
+}
+
+.sharing summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.sharing textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: monospace;
+  margin: 6px 0;
+}

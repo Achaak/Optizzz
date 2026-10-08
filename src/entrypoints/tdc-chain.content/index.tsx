@@ -1,32 +1,33 @@
-// Separate script: the map bundles React + ECharts, so it only loads on alliance.php.
+// Separate script: the chain bundles React, so it only loads on alliance.php.
 import { createRoot, type Root } from "react-dom/client";
-import { AllianceMap } from "@/features/alliance-map/AllianceMap";
 import { readLoggedInPseudo, readMembersHuntingField } from "@/features/alliance-map/pages";
+import { CHAIN_HASH } from "@/features/tdc-chain/menu";
+import { TdcChain } from "@/features/tdc-chain/TdcChain";
 import { isFeatureEnabled } from "@/features/toggles";
 import { showsAllianceView } from "@/utils/alliance-views";
-import "@/features/alliance-map/style.css";
+import "@/features/tdc-chain/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
-const isMapPage = () => location.search === "?Membres" && location.hash === "#carte";
+const isChainPage = () => location.search === "?Membres" && location.hash === CHAIN_HASH;
 
-// The game fills #alliance over AJAX after load, replacing its content: the map is mounted
-// next to it (never inside) and the members table is awaited before reading live fields.
+// The game fills #alliance over AJAX after load: the view is mounted next to it (never inside)
+// and the members table is awaited before reading live fields.
 const MEMBERS_TABLE_TIMEOUT_MS = 15_000;
 
 export default defineContentScript({
   matches: ["*://*.fourmizzz.fr/alliance.php*"],
   cssInjectionMode: "ui",
   async main(ctx) {
-    if (!(await isFeatureEnabled("alliance-map"))) return;
+    if (!(await isFeatureEnabled("tdc-chain"))) return;
     if (location.search !== "?Membres") return;
     const allianceContent = document.querySelector<HTMLElement>("#alliance");
     if (!allianceContent) return;
 
     let liveHuntingFields = new Map<string, number>();
     let root: Root | undefined;
-    const renderMap = () =>
+    const render = () =>
       root?.render(
-        <AllianceMap
+        <TdcChain
           origin={location.origin}
           loggedInPseudo={readLoggedInPseudo(document)}
           liveHuntingFields={liveHuntingFields}
@@ -34,13 +35,13 @@ export default defineContentScript({
       );
 
     const ui = await createShadowRootUi<Root>(ctx, {
-      name: "optizzz-alliance-map",
+      name: "optizzz-tdc-chain",
       position: "inline",
       anchor: allianceContent,
       append: "before",
       onMount(container) {
         root = createRoot(container);
-        renderMap();
+        render();
         return root;
       },
       onRemove: (mounted) => {
@@ -49,12 +50,10 @@ export default defineContentScript({
       },
     });
 
-    // Mounted once, then only shown or hidden: remounting re-creates the chart while
-    // its host is not laid out yet, and ECharts then draws nothing.
     const update = () => {
-      const visible = isMapPage();
+      const visible = isChainPage();
       if (visible && !ui.mounted) ui.mount();
-      ui.shadowHost.style.display = visible ? "" : "none";
+      if (ui.mounted) ui.shadowHost.style.display = visible ? "" : "none";
       allianceContent.style.display = showsAllianceView() ? "none" : "";
     };
     update();
@@ -62,7 +61,7 @@ export default defineContentScript({
 
     if (await waitForElement("#tabMembresAlliance", MEMBERS_TABLE_TIMEOUT_MS, allianceContent)) {
       liveHuntingFields = readMembersHuntingField(document);
-      renderMap();
+      render();
     }
   },
 });

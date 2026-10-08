@@ -33,6 +33,7 @@ describe("buildFeaturesSection", () => {
       "hunt-reports",
       "combat-simulator",
       "alliance-map",
+      "tdc-chain",
       "hunt-launcher",
     ]);
     expect(boxes.every((box) => box.checked && !box.disabled)).toBe(true);
