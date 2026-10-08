@@ -28,8 +28,10 @@ export interface FloodContext {
   attackSpeed: number;
   /** Trip to the target; null when one of us is missing from the export. */
   travelSeconds: number | null;
-  /** Attacks sent through the form and still on their way, all targets. */
+  /** Attacks sent through the form and still on their way, all targets, matched with the game's list. */
   launches: Launch[];
+  /** Attacks on their way sent without this plan: they take a slot, their take is unknown. */
+  unknownOnWay: number;
   /** The target's army on its hunting field, when pasted. */
   defense: { army: Army; readAt: Date } | null;
   countLodge: boolean;
@@ -116,7 +118,7 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     const takenOnWay = context.launches.reduce((sum, launch) => sum + launch.take, 0);
     const myField = context.me.field + takenOnWay;
     targetLeft = context.target.field - onWay.reduce((sum, launch) => sum + launch.take, 0);
-    const slots = Math.max(0, context.attackSpeed + 1 - context.launches.length);
+    const slots = Math.max(0, context.attackSpeed + 1 - context.launches.length - context.unknownOnWay);
     const places: Place[] = countLodge ? ["field", "nest", "lodge"] : ["field", "nest"];
     const available = UNITS.map((_, i) => places.reduce((sum, place) => sum + (context.available[place][i] ?? 0), 0));
     const { travelSeconds } = context;
@@ -125,6 +127,9 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
       `${context.target.pseudo} : ${formatNumber(targetLeft)} cm², vous ${formatNumber(myField)}`,
       onWay.length > 0 ? ` (après les ${String(onWay.length)} attaques en route)` : "",
       ` · ${String(slots)} attaque${slots > 1 ? "s" : ""} possible${slots > 1 ? "s" : ""}`,
+      context.unknownOnWay > 0
+        ? ` (${String(context.unknownOnWay)} attaque${context.unknownOnWay > 1 ? "s" : ""} lancée${context.unknownOnWay > 1 ? "s" : ""} sans ce plan : leur prise n'est pas comptée)`
+        : "",
       travelSeconds === null
         ? " · trajet inconnu (absent de l'export)"
         : ` · trajet ${formatDuration(travelSeconds * 1000)}, arrivée ≈ ${formatEndTimeShort(new Date(now.getTime() + travelSeconds * 1000), now)}`,
