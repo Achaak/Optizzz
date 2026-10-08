@@ -7,7 +7,7 @@ import type { FeatureId } from "./catalog";
  */
 export type Toggles = Partial<Record<string, boolean>>;
 
-const STORAGE_KEY = "sync:featureToggles";
+export const TOGGLES_KEY = "sync:featureToggles";
 
 const toggleKey = (feature: FeatureId, option?: string) => (option ? `${feature}.${option}` : feature);
 
@@ -18,7 +18,7 @@ export function isEnabled(toggles: Toggles, feature: FeatureId, option?: string)
 }
 
 export async function loadToggles(): Promise<Toggles> {
-  return (await storage.getItem<Toggles>(STORAGE_KEY)) ?? {};
+  return (await storage.getItem<Toggles>(TOGGLES_KEY)) ?? {};
 }
 
 /** For heavy content scripts, before they do anything. */
@@ -43,7 +43,7 @@ let pendingWrite: Promise<void> = Promise.resolve();
 
 export function setToggle(feature: FeatureId, option: string | undefined, enabled: boolean): Promise<void> {
   const write = pendingWrite.then(async () => {
-    await storage.setItem(STORAGE_KEY, withToggle(await loadToggles(), feature, option, enabled));
+    await storage.setItem(TOGGLES_KEY, withToggle(await loadToggles(), feature, option, enabled));
   });
   pendingWrite = write.catch(() => undefined);
   return write;

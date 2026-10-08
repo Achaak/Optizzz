@@ -98,6 +98,9 @@ Enregistrer localement les paramètres (outils activés, réglages), les niveaux
 **Justification — `unlimitedStorage`**
 Les exports publics mis en cache (dont l'historique des scores, une version par nuit) dépassent la limite de 10 Mo de `storage.local` dès qu'on joue sur plusieurs serveurs (l'export des joueurs d'un gros serveur pèse 4 Mo). Ces données restent dans le navigateur ; rien n'est envoyé ailleurs.
 
+**Justification — `alarms`**
+Recalculer chaque minute le badge de l'icône de l'extension (temps avant une famine ou un entrepôt plein dans le jeu) à partir des données déjà enregistrées localement. Aucune requête n'est faite en arrière-plan et rien n'est envoyé ailleurs.
+
 **Justification — autorisation d'accès à l'hôte `*://*.fourmizzz.fr/*`**
 L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les pages du jeu, lit les pages du jeu et l'API publique des exports du serveur, et envoie les formulaires du jeu (lancer une chasse, appliquer une répartition) uniquement quand le joueur clique.
 

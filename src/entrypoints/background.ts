@@ -1,6 +1,9 @@
+import { setUpBadge } from "@/features/alerts/background";
 import { isOpenSimulatorMessage, simulatorUrl } from "@/features/combat-simulator/open";
 
 export default defineBackground(() => {
+  setUpBadge();
+
   // No answer is sent: the content script only asks for the tab.
   browser.runtime.onMessage.addListener((message: unknown) => {
     if (!isOpenSimulatorMessage(message)) return;

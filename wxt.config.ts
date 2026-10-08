@@ -14,7 +14,8 @@ export default defineConfig({
     author: "Axel Lavoie",
     homepage_url: "https://github.com/Achaak/Optizzz",
     // unlimitedStorage: the cached exports of a big server (S2: 4 MB of players) fill the 10 MB of storage.local.
-    permissions: ["storage", "unlimitedStorage"],
+    // alarms: the toolbar badge counts down to famine or a full warehouse (Alertes).
+    permissions: ["storage", "unlimitedStorage", "alarms"],
     host_permissions: ["*://*.fourmizzz.fr/*"],
     ...(browser === "firefox" && {
       browser_specific_settings: {

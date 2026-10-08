@@ -42,6 +42,12 @@ export const featureCatalog = [
     ],
   },
   {
+    id: "alerts",
+    label: "Alertes",
+    description: "Sur l'icône de l'extension : le temps avant une famine ou un entrepôt plein, pour tous vos serveurs.",
+    options: [{ id: "badge", label: "Badge de l'icône" }],
+  },
+  {
     id: "laying-planner",
     label: "Planificateur de ponte",
     description: "Sur la Reine : fin de la ponte, quand elle sera payable, son entretien, et un bouton « max ».",

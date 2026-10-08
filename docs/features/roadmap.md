@@ -14,7 +14,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 8. **Renforts** : qui peut arriver avant une attaque entrante.
 9. **Chaîne de TDC** (`alliance.php?Membres#chaine`) : rôles (chasseur, passeurs, grenier), qui peut prendre à qui, ordre de passage avec horaires et texte à partager ; voir `chaine-tdc.md`.
 10. **Historique de progression** : TDC et scores en courbes, sur une vue du menu d'alliance et sur les profils ; voir `historique.md`.
-11. **Alertes** : badge de l'icône, puis notifications.
+11. **Alertes** : badge de l'icône, puis notifications ; voir `alertes.md`.
 
 ## Décisions transverses
 

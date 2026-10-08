@@ -1,3 +1,4 @@
+import { alerts } from "./alerts";
 import { allianceMapMenu } from "./alliance-map/menu";
 import { combatSimulator } from "./combat-simulator";
 import { convoyPlanner } from "./convoy";
@@ -23,6 +24,7 @@ export const features: Feature[] = [
   workQueue,
   endTimes,
   resourceForecast,
+  alerts,
   huntReports,
   layingPlanner,
   convoyPlanner,
