@@ -28,6 +28,7 @@ describe("buildFeaturesSection", () => {
       "resource-forecast.simulator",
       "laying-planner",
       "convoy",
+      "targets",
       "hunt-reports",
       "combat-simulator",
       "alliance-map",

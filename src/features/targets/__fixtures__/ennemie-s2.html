@@ -1,0 +1,204 @@
+<!-- Relevé sur ennemie.php (S2, 2026-10-08, Compte+), pseudos et tags fictifs, liens sans jeton. -->
+<div id="data" style="display: none">
+  <span id="nb_ouvrieres">1000</span><span id="nb_nourriture">100</span><span id="nb_materiaux">100</span
+  ><span id="quantite_tdc">234202</span><span id="tag_alliance">MOI</span><span id="pseudo">Moi</span>
+</div>
+<div id="centre">
+  <center>
+    <table class="simulateur">
+      <tbody>
+        <tr>
+          <td colspan="2">
+            <h2 style="text-align: left; margin-top: 0px">Fourmilières à portée de Phéromones</h2>
+            Grâce aux phéromones, vous pouvez retrouver n'importe quelle fourmilière.<br />
+          </td>
+        </tr>
+        <tr>
+          <td style="vertical-align: top">
+            <form action="ennemie.php" method="post" id="formulairePageEnnemie">
+              <fieldset>
+                <legend><h2 style="display: inline">Cibles</h2></legend>
+                <table>
+                  <tbody>
+                    <tr title="0 pour Supprimer la limite du Terrain Max">
+                      <td><label for="terrain_max">Terrain Max</label></td>
+                      <td>
+                        <input id="terrain_max" name="terrain_max" type="tel" size="15" value="702 605" />
+                        <input type="checkbox" name="fourmiliere_attaquable" id="fourmiliere_attaquable" checked="" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><label for="distance_max">Distance Max</label></td>
+                      <td><input id="distance_max" type="tel" size="15" name="distance_max" value="0" /></td>
+                    </tr>
+                    <tr>
+                      <td><label for="tri">Trier par</label></td>
+                      <td>
+                        <select name="tri" id="tri" style="width: 100px">
+                          <option value="tri_terrain_max" selected="">Terrain Max</option>
+                          <option value="tri_distance">Distance</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <input type="hidden" id="page" name="page" value="1" />
+                    <input type="hidden" id="inverser_tri" name="inverser_tri" value="0" />
+                  </tbody>
+                </table>
+              </fieldset>
+            </form>
+          </td>
+          <td style="vertical-align: top">
+            <center>
+              <input
+                type="submit"
+                name="boutonRecherchePageEnnemie"
+                value="Rechercher"
+                style="margin-top: 10px; width: 200px; text-align: center"
+              />
+            </center>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2" style="text-align: center">
+            <center>
+              <table id="tabEnnemie" style="text-align: left" cellspacing="0">
+                <tbody>
+                  <tr>
+                    <th onclick="trierPage('tri_alliance')" class="cliquable2">Alliance</th>
+                    <th onclick="trierPage('tri_pseudo')" class="cliquable2">Pseudo</th>
+                    <th></th>
+                    <th onclick="trierPage('tri_terrain')" class="cliquable2">Terrain</th>
+                    <th></th>
+                    <th onclick="trierPage('tri_distance')" class="cliquable2">Distance</th>
+                    <th>Etat</th>
+                  </tr>
+                  <tr class="neutre">
+                    <td><a href="classementAlliance.php?alliance=ALPHA">ALPHA</a></td>
+                    <td><a href="Membre.php?Pseudo=Joueur_1">Joueur_1</a></td>
+                    <td></td>
+                    <td>700 180</td>
+                    <td>
+                      <a href="ennemie.php?Attaquer=101&amp;lieu=1"
+                        ><img
+                          src="images/icone/icone_degat_attaque.gif"
+                          title="Attaquer cette Fourmilière"
+                          alt="Attaquer"
+                          width="18"
+                          height="18"
+                      /></a>
+                    </td>
+                    <td>675</td>
+                    <td>Fourmilière Libre</td>
+                  </tr>
+                  <tr class="neutre">
+                    <td><a href="classementAlliance.php?alliance=GAMMA">GAMMA</a></td>
+                    <td><a href="Membre.php?Pseudo=Joueur_3">Joueur_3</a></td>
+                    <td></td>
+                    <td>682 149</td>
+                    <td>
+                      <a href="ennemie.php?Attaquer=103&amp;lieu=1"
+                        ><img
+                          src="images/icone/icone_degat_attaque.gif"
+                          title="Attaquer cette Fourmilière"
+                          alt="Attaquer"
+                          width="18"
+                          height="18"
+                      /></a>
+                    </td>
+                    <td>136</td>
+                    <td>Soumis à Maitre_1</td>
+                  </tr>
+                  <tr class="neutre">
+                    <td><a href="classementAlliance.php?alliance=EPSI">EPSI</a></td>
+                    <td><a href="Membre.php?Pseudo=Joueur_5">Joueur_5</a></td>
+                    <td></td>
+                    <td>525 414</td>
+                    <td>
+                      <a href="ennemie.php?Attaquer=105&amp;lieu=1"
+                        ><img
+                          src="images/icone/icone_degat_attaque.gif"
+                          title="Attaquer cette Fourmilière"
+                          alt="Attaquer"
+                          width="18"
+                          height="18"
+                      /></a>
+                    </td>
+                    <td>820</td>
+                    <td>Bannie</td>
+                  </tr>
+                  <tr class="neutre">
+                    <td><a href="classementAlliance.php?alliance=ETA">ETA</a></td>
+                    <td><a href="Membre.php?Pseudo=Joueur_7">Joueur_7</a></td>
+                    <td>
+                      <img
+                        src="images/icone/icone_degat_defense.gif"
+                        title="Fourmilières pouvant m'attaquer"
+                        alt="Attaqueur"
+                        width="18"
+                        height="18"
+                      />
+                    </td>
+                    <td>468 167</td>
+                    <td>
+                      <a href="ennemie.php?Attaquer=107&amp;lieu=1"
+                        ><img
+                          src="images/icone/icone_degat_attaque.gif"
+                          title="Attaquer cette Fourmilière"
+                          alt="Attaquer"
+                          width="18"
+                          height="18"
+                      /></a>
+                    </td>
+                    <td>131</td>
+                    <td>Fourmilière Libre</td>
+                  </tr>
+                  <tr class="monAlliance">
+                    <td><a href="classementAlliance.php?alliance=MOI">MOI</a></td>
+                    <td><a href="Membre.php?Pseudo=Joueur_11">Joueur_11</a></td>
+                    <td>
+                      <img
+                        src="images/icone/icone_degat_defense.gif"
+                        title="Fourmilières pouvant m'attaquer"
+                        alt="Attaqueur"
+                        width="18"
+                        height="18"
+                      />
+                    </td>
+                    <td>421 070</td>
+                    <td>
+                      <a href="ennemie.php?Attaquer=111&amp;lieu=1"
+                        ><img
+                          src="images/icone/icone_degat_attaque.gif"
+                          title="Attaquer cette Fourmilière"
+                          alt="Attaquer"
+                          width="18"
+                          height="18"
+                      /></a>
+                    </td>
+                    <td>73</td>
+                    <td>Soumis à Maitre_5</td>
+                  </tr>
+                  <tr class="neutre">
+                    <td></td>
+                    <td><a href="Membre.php?Pseudo=Joueur_14">Joueur_14</a></td>
+                    <td></td>
+                    <td>336 654</td>
+                    <td></td>
+                    <td>171</td>
+                    <td>En vacances</td>
+                  </tr>
+                </tbody>
+              </table>
+            </center>
+            <br /><input
+              type="button"
+              value="Page Suivante"
+              onclick="changerPage(1)"
+              style="width: 200px; text-align: center"
+            /><br /><br />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </center>
+</div>

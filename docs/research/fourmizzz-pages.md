@@ -196,3 +196,28 @@ Relevé le 2026-10-07 sur s5 (convoi de 1 nourriture vers Osirus_jack, envoyé �
 - Réservé au Compte+ (« Le simulateur est réservé aux joueurs possédant un compte + »).
 
 Formulaire (`departX/Y`, `departPseudo`, `arriveX/Y`, `arrivePseudo`, `vitesseAttaque`, variante par `Distance`) ; le calcul est fait **côté serveur** à la soumission, la formule n'est pas dans le JS de la page.
+
+## ennemie.php (Ennemies)
+
+Relevé le 2026-10-07 sur S5 (serveur neuf, sans puis avec Compte+) et le 2026-10-08 sur S2 (Compte+), en lecture seule (GET).
+
+- Formulaire `form#formulairePageEnnemie` (**POST** `ennemie.php`), dans `#centre > center > table.simulateur` : Etat (`select#etat` : tous, libre, soumise + `#pseudoMaitre`, vacance, bannie, debutante), `#terrain_max` / `#terrain_min` (`type="tel"`, « 15 164 ») avec les cases `#fourmiliere_attaquable` (cochée par défaut) et `#fourmiliere_attaquante`, `#distance_max` (0 = sans limite), `select#tri` (tri_terrain_max, tri_terrain_min, tri_distance, tri_alliance, tri_pseudo), cachés `page` et `inverser_tri`. Avec Compte+, fieldsets repliés en plus : Ma Fourmilière (calculer depuis un autre pseudo / terrain / alliance), Alliances (mon alliance, alliées, en guerre, une alliance précise), Interactions (attaques / convois, vers moi / vers la cible, depuis 24 h / 1 semaine / 1 mois).
+- Portée préremplie : Terrain Min = ⌈TDC / 2⌉, Terrain Max = 3 × TDC − 1 (5 055 → 2 528 et 15 164 ; 234 202 → 117 101 et 702 605). **50 % inclus, 300 % exclu.** « Pouvant m'attaquer » : 33 % à 200 %.
+- Tableau `table#tabEnnemie`, une ligne d'en-tête de `th` puis 7 `td` par joueur :
+
+| Index | Contenu                                                                                                                         |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Alliance : `a[href="classementAlliance.php?alliance=TAG"]`, vide sans alliance                                                  |
+| 1     | Pseudo : `a[href="Membre.php?Pseudo=…"]`                                                                                        |
+| 2     | `img[title="Fourmilières pouvant m'attaquer"]` (`icone_degat_defense.gif`) ou vide                                              |
+| 3     | Terrain (TDC **en direct**), « 13 511 »                                                                                         |
+| 4     | Lien d'attaque `a[href="ennemie.php?Attaquer=<id>&lieu=1"] > img[title="Attaquer cette Fourmilière"]`, ou vide                  |
+| 5     | Distance = distance euclidienne **arrondie au supérieur** (37,74 → 38 ; vérifié sur 7 joueurs avec les coordonnées de l'export) |
+| 6     | Etat : « Fourmilière Libre », « Soumis à <pseudo> », « En vacances », « Bannie », « Nouveau » (protection débutant des 7 jours) |
+
+- `tr.neutre` ou `tr.monAlliance`. D'après le tutoriel, mon alliance est en vert, ses ennemis en rouge, ses alliés en bleu (classes des deux derniers pas encore vues).
+- Le lien d'attaque est là **aussi pour mon alliance et les bannis**, mais pas pour les joueurs en vacances ni sous protection débutant.
+- **200 lignes au plus.** S2 (Compte+) : bouton « Page Suivante » (`changerPage(1)`) sous le tableau ; S5 sans Compte+ : pas de bouton (722 joueurs à portée, 200 affichés).
+- Bandeau quand on est soi-même protégé : « Vous profitez de la protection débutant des 7 premiers jours. Si vous attaquez, vous ne serez plus protégés... ».
+- `ennemie.php?Attaquer=<id>&lieu=1` (GET) affiche le formulaire « Vous allez attaquer X ! » : `select[name=lieu]` (1 Terrain de Chasse, 2 Fourmilière, 3 Loge Impériale), import d'armée (`textAreaArmee`), un champ par unité, jeton caché `t`, `pseudoCible` ; l'attaque ne part qu'au POST (`ChoixArmee`). `<id>` = `id` de l'export des joueurs.
+- `Membre.php` d'un joueur protégé : « Ce joueur bénéficie de la protection débutant et ne peut être attaqué pendant ses 7 premiers jours ». Actions : convoi (`commerce.php?ID=<id>`), message.

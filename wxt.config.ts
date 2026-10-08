@@ -13,7 +13,8 @@ export default defineConfig({
     // String form: AMO rejects the { email } object form.
     author: "Axel Lavoie",
     homepage_url: "https://github.com/Achaak/Optizzz",
-    permissions: ["storage"],
+    // unlimitedStorage: the cached exports of a big server (S2: 4 MB of players) fill the 10 MB of storage.local.
+    permissions: ["storage", "unlimitedStorage"],
     host_permissions: ["*://*.fourmizzz.fr/*"],
     ...(browser === "firefox" && {
       browser_specific_settings: {
