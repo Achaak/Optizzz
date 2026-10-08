@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { armyFromKeys } from "@/game/army/units";
 import type { Alliance, Player } from "../alliance-map/api";
 import s2Html from "./__fixtures__/ennemie-s2.html?raw";
 import { mountTargets, type TargetsContext } from "./mount";
@@ -172,5 +173,35 @@ describe("mountTargets", () => {
     details.open = true;
     await new Promise((resolve) => setTimeout(resolve));
     expect(changes).toEqual([true]);
+  });
+
+  it("tells, when my army is known, the most a flood takes from each target, and sorts by it", () => {
+    const flood = {
+      available: armyFromKeys({ JSN: 10_000 }),
+      slots: 3,
+      defenses: new Map(),
+      weapons: 0,
+      shield: 0,
+      margin: 0,
+    };
+    const { doc, rows, header } = setup(
+      [player("Loin", { x: 5, y: 12, field: 2900 }), player("Proche", { x: 3, y: 4, field: 2345 })],
+      { flood },
+    );
+    const headers = [...doc.querySelectorAll(".optizzz-targets th")].map((th) => th.textContent);
+    expect(headers).toContain("Flood max");
+    // 2 345: 469, 375, 300. 2 900: 580, 464, 371.
+    expect(rows().map((cells) => [cells[0], cells[5]])).toEqual([
+      ["Proche", "1 144"],
+      ["Loin", "1 415"],
+    ]);
+    header("Flood max");
+    expect(rows().map((cells) => cells[0])).toEqual(["Loin", "Proche"]);
+  });
+
+  it("leaves the flood column out when my army is unknown", () => {
+    const { doc } = setup([player("Cible", { x: 1 })]);
+    const headers = [...doc.querySelectorAll(".optizzz-targets th")].map((th) => th.textContent);
+    expect(headers).not.toContain("Flood max");
   });
 });

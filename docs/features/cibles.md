@@ -20,6 +20,7 @@ Elle filtre 50 à 300 % de mon TDC et trie (TDC, distance, alliance, pseudo), ma
   - Alliance : avec « · Pacte (PNA) » (la description du pacte en infobulle) ou « · Guerre » ;
   - TDC, puis % de mon TDC ;
   - Prise max : `floor(20 % de son TDC)` ; l'infobulle rappelle qu'il faut au moins autant de fourmis ;
+  - Flood max (si « Plan de flood » est activé et mon armée connue par `Armee.php`) : le total d'un flood avec mes attaques possibles et mon armée, sa défense collée comprise (« — » si mon armée ne suffit pas) ; triable ; voir `flood.md` ;
   - Distance en cases, puis Trajet et Arrivée si l'attaque part maintenant ;
   - État : libre, colonisé par X, en vacances, protection débutant ;
   - Attaquer : lien vers `ennemie.php?Attaquer=<id>&lieu=1`, le formulaire du jeu, où le joueur choisit son armée et valide lui-même. Seulement pour les cibles attaquables maintenant : libres ou colonisées, hors pacte.
@@ -27,7 +28,7 @@ Elle filtre 50 à 300 % de mon TDC et trie (TDC, distance, alliance, pseudo), ma
 - **Filtres** :
   - « Masquer les pactes », cochée par défaut ;
   - « Seulement les attaquables maintenant », décochée par défaut.
-- **Tri** : par distance ; un clic sur « TDC » trie du plus gros au plus petit, un clic sur « Distance » ou « Trajet » revient à la distance. On voit les 50 premiers, puis « Voir plus (N restants) ».
+- **Tri** : par distance ; un clic sur « TDC » ou « Flood max » trie du plus gros au plus petit, un clic sur « Distance » ou « Trajet » revient à la distance. On voit les 50 premiers, puis « Voir plus (N restants) ».
 - Les séries d'attaques (flood) relèvent de l'étape 9 (« Chaîne de TDC »).
 
 ## Code
