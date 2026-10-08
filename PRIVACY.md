@@ -27,13 +27,14 @@ Dans le stockage local de ton navigateur (`storage.local`), et nulle part ailleu
 
 - tes paramètres (outils activés, réglages de chaque outil) ;
 - les niveaux et heures de fin lus dans le jeu, pour les afficher sur les autres pages ;
-- le dernier export des joueurs téléchargé (pour ne pas le retélécharger) et les niveaux de Vitesse d'attaque que tu saisis ou importes.
+- les derniers exports publics des joueurs et des alliances téléchargés, un par serveur (pour ne pas les retélécharger), et les niveaux de Vitesse d'attaque que tu saisis ou importes.
 
 Désinstaller l'extension efface ces données.
 
 ## Permissions
 
 - `storage` : enregistrer les paramètres et le cache décrits ci-dessus.
+- `unlimitedStorage` : lever la limite de 10 Mo de ce stockage, que les exports d'un gros serveur (4 Mo pour les joueurs de S2) suffisent à remplir quand on joue sur plusieurs serveurs. Rien d'autre n'est stocké, et rien ne sort de ton navigateur.
 - Accès à `*.fourmizzz.fr` : afficher les outils dans les pages du jeu et lire l'API publique du serveur.
 
 ## Contact
