@@ -30,7 +30,10 @@ L'encart les rappelle dans un bandeau, comme le simulateur de combat.
   - le total ;
   - la case « Compter les troupes de la Loge » (décochée, mémorisée par serveur) ;
   - la zone pour coller sa défense, mémorisée pour cette cible avec sa date, effaçable.
-- **Suivi** : à l'envoi du formulaire par le joueur, l'attaque (cible, fourmis, prise prévue, arrivée) est notée tout de suite dans le `sessionStorage` de l'onglet (le jeu change de page aussitôt), puis versée au chargement suivant dans le stockage de l'extension. Le plan suivant en déduit les prises et les créneaux ; une attaque arrivée est oubliée. Les attaques lancées sans passer par ce formulaire ne sont pas connues.
+- **Suivi** : à l'envoi du formulaire par le joueur, l'attaque (cible, fourmis, prise prévue, arrivée) est notée tout de suite dans le `sessionStorage` de l'onglet (le jeu change de page aussitôt), puis versée au chargement suivant dans le stockage de l'extension. Sur le formulaire d'attaque (lecture d'`Armee.php` en arrière-plan) et à chaque passage sur `Armee.php`, ces attaques sont rapprochées de la liste « Attaque(s) en cours » du jeu, cible par cible, à l'arrivée la plus proche :
+  - une attaque notée que le jeu ne liste plus a été **annulée** : oubliée ;
+  - une attaque listée mais pas notée a été lancée sans le plan : elle prend un créneau, sa prise n'est pas comptée (l'encart le dit) ;
+  - l'heure d'arrivée du jeu remplace celle estimée.
 - **Cibles à portée** : colonne « Flood max », triable, d'après l'armée mémorisée sur `Armee.php` (Terrain + Dôme, + Loge si la case est cochée), les créneaux libres et les défenses collées.
 - Interrupteur « Plan de flood » : coupé, rien sur le formulaire, pas de colonne, aucune lecture.
 

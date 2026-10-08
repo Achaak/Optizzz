@@ -6,6 +6,7 @@ import { loadLevelsOf } from "../game-levels/levels";
 import { readStock } from "../resource-forecast/pages";
 import { distance, travelTime } from "@/game/travel";
 import { FLOOD_STYLE, mountFloodPlanner } from "./mount";
+import { readAttacksOnWay, reconcileLaunches } from "./attacks";
 import { readAttackForm, readProfileField } from "./page";
 import {
   clearDefense,
@@ -15,11 +16,31 @@ import {
   loadLaunches,
   queueLaunch,
   saveCountLodge,
+  saveLaunches,
   saveDefense,
 } from "./store";
 
 /** Kept above the 50 % limit: other attacks and hunts may move the fields before arrival. */
 export const FLOOD_MARGIN = 0.01;
+
+/**
+ * The launches still on their way, checked against the game's list on Armee.php (`doc`, or read in the
+ * background): a cancelled attack is forgotten, one sent without this plan is counted in `unknown`.
+ */
+async function checkLaunches(origin: string, now: Date, doc?: Document) {
+  const launches = await loadLaunches(origin, now);
+  try {
+    const page =
+      doc ??
+      new DOMParser().parseFromString(await fetch("/Armee.php").then((response) => response.text()), "text/html");
+    const checked = reconcileLaunches(launches, readAttacksOnWay(page, now));
+    await saveLaunches(origin, checked.launches);
+    return checked;
+  } catch (error) {
+    console.warn("[Optizzz] could not check the attacks on their way", error);
+    return { launches, unknown: 0 };
+  }
+}
 
 async function liveField(pseudo: string): Promise<number | null> {
   try {
@@ -46,6 +67,7 @@ export const floodPlanner: Feature = {
     if (path === "/armee.php") {
       const garrison = readGarrison(document);
       if (garrison) await storeGarrison(origin, garrison, new Date());
+      await checkLaunches(origin, new Date(), document);
       return;
     }
 
@@ -58,7 +80,7 @@ export const floodPlanner: Feature = {
     const [playersExport, levels, launches, defense, countLodge] = await Promise.all([
       loadPlayersExport(origin),
       loadLevelsOf(origin, ["attackSpeed", "weapons", "shield"]),
-      loadLaunches(origin, now),
+      checkLaunches(origin, now),
       loadDefense(origin, form.targetId),
       loadCountLodge(origin),
     ]);
@@ -78,7 +100,8 @@ export const floodPlanner: Feature = {
         available: form.available,
         attackSpeed: levels.attackSpeed,
         travelSeconds: sender && target ? travelTime(distance(sender, target), levels.attackSpeed) : null,
-        launches,
+        launches: launches.launches,
+        unknownOnWay: launches.unknown,
         defense,
         countLodge,
         margin: FLOOD_MARGIN,

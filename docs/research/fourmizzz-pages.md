@@ -144,7 +144,7 @@ Relevé le 2026-10-07 sur s5 (sans Compte+).
 ## Armee.php
 
 - La ligne « Consommation Journalière » vue sur certains comptes est ajoutée par Toolzzz, pas par le jeu ; elle ne compte que la garnison.
-- Attaques en cours (Toolzzz, non relevé) : `span[id^="attaque_"]` + `reste()`.
+- Attaques en cours (relevé le 2026-10-08 sur S2) : après la garnison, `<h3>Attaque(s) en cours</h3>` puis une ligne par attaque, sans conteneur : `- Vous allez attaquer <span class="gras"><a href="Membre.php?Pseudo=X">X</a>(<a …>TAG</a>)</span> dans <span class="gras" id="attaque_<n>">9 minutes 7 secondes</span><script>reste(559, "attaque_<n>");</script><br>`. Pas de lien « Annuler » sur cette page ; une attaque annulée disparaît de la liste.
 - « Troupes en Garnison » : `.simulateur` avec en-tête Unités | Terrain de Chasse | Dôme (niveau) | Loge (niveau), chaque lieu sur 3 colonnes (`colspan=3`) ; une ligne par unité (nom + abréviation), une case vide quand l'effectif est nul. Lignes Vie / Dégâts en Attaque / en Défense avec les bonus Bouclier, Arme, Lieu. Relevé le 2026-10-07 (s5).
 - Effectif présent : les 3 colonnes du lieu deviennent `td` (boutons de déplacement) | `td > span[id="(<nombre>,'unite<N>',<lieu>)"]` | `td` ; nombre sans espace dans l'`id`, `uniteN` comme sur `AcquerirTerrain.php`, lieu 1 = TDC, 2 = Fourmilière (colonne « Dôme »), 3 = Loge. Les niveaux sont dans l'en-tête : « Dôme (3) », « Loge (1) ». Abréviations de la page : T / TE pour les Tueuses (Tu / TuE dans Optizzz). Relevé le 2026-10-07 (s5).
 - Les troupes en chasse n'y figurent pas. Un second `table.simulateur` sert à « Déplacer son armée ».

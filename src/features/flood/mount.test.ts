@@ -19,6 +19,7 @@ const setup = (options: Partial<FloodContext> = {}) => {
     attackSpeed: 2,
     travelSeconds: 1800,
     launches: [],
+    unknownOnWay: 0,
     defense: null,
     countLodge: false,
     margin: 0,
@@ -64,6 +65,12 @@ describe("mountFloodPlanner", () => {
     });
     // 2 slots left; it will have 1 600, me 1 400.
     expect(rows().map((cells) => cells[2])).toEqual(["320", "256"]);
+  });
+
+  it("counts the attacks sent without Optizzz as taken slots, their take unknown", () => {
+    const { rows, text } = setup({ unknownOnWay: 2 });
+    expect(rows()).toHaveLength(1);
+    expect(text()).toContain("2 attaques lancées sans ce plan : leur prise n'est pas comptée");
   });
 
   it("can count the lodge, and remembers it", () => {

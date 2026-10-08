@@ -31,6 +31,14 @@ export async function loadLaunches(origin: string, now: Date): Promise<Launch[]>
   return pending.map(fromStored);
 }
 
+/** Replaces the launches on their way, once matched with the game's list. */
+export async function saveLaunches(origin: string, launches: Launch[]): Promise<void> {
+  await storage.setItem(
+    launchesKey(origin),
+    launches.map((launch) => ({ ...launch, arrivesAt: launch.arrivesAt.getTime() })),
+  );
+}
+
 export async function recordLaunch(origin: string, launch: Launch): Promise<void> {
   const stored = (await storage.getItem<StoredLaunch[]>(launchesKey(origin))) ?? [];
   await storage.setItem(launchesKey(origin), [...stored, { ...launch, arrivesAt: launch.arrivesAt.getTime() }]);
