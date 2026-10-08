@@ -10,7 +10,7 @@ const RED_UNDER = 2 * HOUR;
 const ORANGE_UNDER = 12 * HOUR;
 const DAY = 24 * HOUR;
 /** Older data says « ? »: the player's situation may have changed. */
-const STALE_AFTER = DAY;
+export const STALE_AFTER = DAY;
 /** Older still, the server is forgotten: the player no longer plays there. */
 const FORGOTTEN_AFTER = 7 * DAY;
 /** Further away, a forecast means nothing: the player's situation will have changed. */
@@ -30,31 +30,41 @@ export interface Badge {
   title: string;
 }
 
-type ProblemKind = "famine" | "foodFull" | "materialsFull";
+export type ProblemKind = "famine" | "foodFull" | "materialsFull";
 
-const PROBLEM_LABELS: Record<ProblemKind, string> = {
+export const PROBLEM_LABELS: Record<ProblemKind, string> = {
   famine: "famine",
   foodFull: "entrepôt de nourriture plein",
   materialsFull: "entrepôt de matériaux plein",
 };
 
 /** « s5.fourmizzz.fr » → « S5 ». */
-const serverName = (host: string) => (host.split(".")[0] ?? host).toUpperCase();
+export const serverName = (host: string) => (host.split(".")[0] ?? host).toUpperCase();
 
-/** The first problem of a server, if any. */
-function firstProblem({ stock, capacities }: ServerData, income: Income) {
+/** Famine and full warehouses of a server, those that will come. */
+export function problems({ stock, capacities }: ServerData, income: Income): { kind: ProblemKind; at: Date }[] {
   // From when the stock was read: the forecast starts there.
   const result = outlook({ ...stock, ...income, capacities }, stock.readAt);
-  const problems: [ProblemKind, Date | null][] = [
+  const all: [ProblemKind, Date | null][] = [
     ["famine", result.famineAt],
     ["foodFull", result.foodFullAt],
     ["materialsFull", result.materialsFullAt],
   ];
-  let first: { kind: ProblemKind; at: Date } | null = null;
-  for (const [kind, at] of problems) {
-    if (at && (!first || at < first.at)) first = { kind, at };
-  }
-  return first;
+  return all.flatMap(([kind, at]) => (at ? [{ kind, at }] : []));
+}
+
+function firstProblem(data: ServerData, income: Income) {
+  return problems(data, income).sort((a, b) => a.at.getTime() - b.at.getTime())[0];
+}
+
+/** « famine dans 52 min (17 h 32) », or « famine depuis 16 h 20 » once it has come. */
+export function describeProblem(kind: ProblemKind, at: Date, now: Date): string {
+  const left = at.getTime() - now.getTime();
+  const when =
+    left <= 0
+      ? `depuis ${formatEndTimeShort(at, now)}`
+      : `dans ${formatDuration(left)} (${formatEndTimeShort(at, now)})`;
+  return `${PROBLEM_LABELS[kind]} ${when}`;
 }
 
 function badgeText(left: number): string {
@@ -83,11 +93,7 @@ function status(data: ServerData, now: Date): Status | null {
   if (!problem || problem.at.getTime() - now.getTime() > HORIZON)
     return { kind: "none", line: `${name} : rien de prévu` };
   const left = problem.at.getTime() - now.getTime();
-  const when =
-    left <= 0
-      ? `depuis ${formatEndTimeShort(problem.at, now)}`
-      : `dans ${formatDuration(left)} (${formatEndTimeShort(problem.at, now)})`;
-  return { kind: "problem", left, line: `${name} : ${PROBLEM_LABELS[problem.kind]} ${when}` };
+  return { kind: "problem", left, line: `${name} : ${describeProblem(problem.kind, problem.at, now)}` };
 }
 
 /** Hover order: problems under 12 h, soonest first, then stale servers, later problems, nothing coming. */

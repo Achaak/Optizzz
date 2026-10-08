@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { NotificationsTabInput } from "./notifications-section";
 import { buildSettingsDialog, settingsTabs, type FeaturesTabInput, type SettingsTab } from "./dialog";
 
 const tab = (id: string): SettingsTab => ({
@@ -8,6 +9,13 @@ const tab = (id: string): SettingsTab => ({
 });
 
 const features = (): FeaturesTabInput => ({ toggles: {}, onChange: vi.fn() });
+
+const notifications = (): NotificationsTabInput => ({
+  settings: {},
+  permitted: () => Promise.resolve(true),
+  onChange: vi.fn(),
+  grant: vi.fn(),
+});
 
 const tabButton = (dialog: HTMLElement, label: string) =>
   [...dialog.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === label);
@@ -35,7 +43,7 @@ describe("buildSettingsDialog", () => {
   it("shows the version and the issue links in « À propos »", () => {
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator: vi.fn() }),
+      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator: vi.fn() }, notifications()),
       vi.fn(),
     );
     tabButton(dialog, "À propos")?.click();
@@ -48,7 +56,7 @@ describe("buildSettingsDialog", () => {
     const input = features();
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", input, { openSimulator: vi.fn() }),
+      settingsTabs("1.2.3", "Firefox/142", input, { openSimulator: vi.fn() }, notifications()),
       vi.fn(),
     );
     const box = () => dialog.querySelector<HTMLInputElement>('input[data-toggle="work-queue"]');
@@ -68,11 +76,31 @@ describe("buildSettingsDialog", () => {
     const openSimulator = vi.fn();
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator }),
+      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator }, notifications()),
       vi.fn(),
     );
     tabButton(dialog, "Outils")?.click();
     dialog.querySelector<HTMLButtonElement>(".tools button")?.click();
     expect(openSimulator).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a notification change when coming back to « Notifications »", () => {
+    const input = notifications();
+    const dialog = buildSettingsDialog(
+      document,
+      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator: vi.fn() }, input),
+      vi.fn(),
+    );
+    tabButton(dialog, "Notifications")?.click();
+    const box = () => dialog.querySelector<HTMLInputElement>('input[data-notification="hunt"]');
+    const hunt = box();
+    if (!hunt) throw new Error("checkbox not found");
+    hunt.checked = true;
+    hunt.dispatchEvent(new Event("change"));
+    expect(input.onChange).toHaveBeenCalledWith("hunt", true);
+
+    tabButton(dialog, "À propos")?.click();
+    tabButton(dialog, "Notifications")?.click();
+    expect(box()?.checked).toBe(true);
   });
 });

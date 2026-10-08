@@ -36,15 +36,19 @@ Voir sans ouvrir le jeu que la famine approche ou qu'un entrepôt va être plein
 - **Stock** (`#data`) : mémorisé sur chaque page du jeu par la feature `alerts` quand le badge est actif, dans une seule clé pour tous les serveurs (`local:alerts:stocks`, par host), pour que le background sache quels serveurs lire.
 - **Revenus et capacités** : ceux des Prévisions de ressources (`local:resourceForecast:<host>:income` / `:capacities`), lus tels quels (`loadStoredIncome`, `loadCapacities(origin, false)`).
 
-## 2. Notifications (à venir)
+## 2. Notifications (option « Notifications »)
 
-Permission `notifications` **optionnelle**, demandée quand le joueur coche une première case dans une section « Notifications » de la fenêtre Paramètres (réglages `sync:`, globaux). Si elle est refusée, la case se décoche avec un message. Types activables un par un, tous coupés par défaut :
+- Onglet « Notifications » de la fenêtre Paramètres et de la popup : quatre cases, toutes décochées par défaut (`sync:alertNotifications`, global à tous les serveurs) :
+  - **Famine dans moins d'1 h** et **Entrepôt plein dans moins d'1 h** : une fois par événement (clé : serveur, type, heure prévue arrondie à 15 min, pour qu'un léger glissement de la prévision ne la renvoie pas). Pas de notification sur des données de plus de 24 h ;
+  - **Chantier terminé** (construction ou recherche) et **Chasse rentrée** : à l'heure de fin mémorisée par Heures de fin, avec jusqu'à 1 min de retard (l'alarme). Ni pontes ni convois ;
+  - rien pour ce qui est arrivé il y a plus de 15 min (navigateur fermé entre-temps).
+- Texte : « S5 : famine dans 52 min (17 h 32) », « S5 : chantier terminé · Couveuse 12 », « S5 : chasse rentrée · 183 cm² ». Un clic ouvre la page du jeu concernée (Ressources, Construction ou Laboratoire).
+- Les notifications envoyées sont mémorisées 2 jours (`local:alerts:sentNotifications`, avec l'URL du clic).
+- Pas d'attaque entrante.
 
-- famine et entrepôt plein : une notification quand le délai passe sous 1 h, une seule fois par événement (clé : type et heure prévue arrondie à 15 min) ;
-- chantier terminé et chasse rentrée : à l'heure de fin mémorisée par Heures de fin (jusqu'à 1 min de retard) ;
-- rien pour ce qui a fini il y a plus de 15 min (navigateur fermé entre-temps) ;
-- le serveur est nommé (« S5 : … ») ; un clic ouvre la page du jeu concernée ;
-- pas d'attaque entrante.
+### Permission `notifications` (optionnelle)
+
+Un content script n'a pas l'API `permissions` : la fenêtre Paramètres demande au background si la permission est accordée (message `notifications-permitted`). Cocher une case sans la permission ouvre un onglet de l'extension (`notifications-permission.html`, message `grant-notifications`) avec un bouton « Autoriser les notifications » : seule une page de l'extension peut la demander, et seulement sur un clic. La popup ouvre aussi cet onglet plutôt que de demander elle-même : sur Firefox, la demande ferme la popup et sa réponse se perd. Tant qu'une case est cochée sans la permission, l'onglet affiche « Notifications bloquées par le navigateur · Autoriser ».
 
 ## Code
 
