@@ -140,6 +140,7 @@ Relevé le 2026-10-07 sur s5 (sans Compte+).
 
 - Colonisé : `div.simulateur` avec `<h2>Vous êtes colonisés par …</h2>`, la force d'occupation, un lien « Déclencher une rebellion ».
 - `Membre.php` : ligne « Etat : » → « Fourmilière libre » ou « Fourmilière soumise par … ».
+- `Membre.php` (relevé le 2026-10-08 sur S5) : `div#centre > center > h2` = pseudo du joueur affiché, puis `div.boite_membre` « Informations » contenant `table.tableau_score` : une ligne par score, `<td>Terrain|Fourmilière|Technologie|Combat</td><td>valeur</td><td>classement</td>`. Fourmilière et Technologie = `buildingScore` et `technologyScore` de l'export, plus frais que lui ; Combat = sans doute `trophyScore`. Deuxième `div.boite_membre` : « Action ».
 
 ## Armee.php
 

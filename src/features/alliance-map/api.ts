@@ -5,7 +5,7 @@ import { z } from "zod";
 // No `new Function` probing: extension pages forbid eval, and store reviewers flag it.
 z.config({ jitless: true });
 
-const playerSchema = z.object({
+export const playerSchema = z.object({
   id: z.number().int(),
   pseudo: z.string(),
   alliance: z.string().nullable(),
@@ -58,7 +58,7 @@ type Kind = "players" | "alliances";
 
 const cacheKey = (origin: string, kind: Kind) => `local:allianceMap:${new URL(origin).host}:${kind}Export` as const;
 
-async function getJson(url: string): Promise<unknown> {
+export async function getJson(url: string): Promise<unknown> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Fourmizzz API: ${response.status} on ${url}`);
   return response.json();
@@ -96,6 +96,11 @@ async function loadExport<K extends Kind, T>(
     console.warn(`[Optizzz] could not cache the ${kind} export`, error);
   }
   return fresh;
+}
+
+/** Published versions of the players export, latest first. */
+export async function loadPlayersVersions(origin: string): Promise<string[]> {
+  return versionsSchema.parse(await getJson(`${origin}/api/exports/`)).players;
 }
 
 /** Latest players export of the `origin` server (e.g. "https://s5.fourmizzz.fr"). */

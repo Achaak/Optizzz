@@ -34,6 +34,9 @@ describe("buildFeaturesSection", () => {
       "combat-simulator",
       "alliance-map",
       "tdc-chain",
+      "history",
+      "history.alliance",
+      "history.profile",
       "hunt-launcher",
     ]);
     expect(boxes.every((box) => box.checked && !box.disabled)).toBe(true);

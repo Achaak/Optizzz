@@ -5,6 +5,7 @@ import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
 import { floodPlanner } from "./flood";
 import { gameLevels } from "./game-levels";
+import { historyMenu } from "./history/menu";
 import { huntReports } from "./hunt-reports";
 import { layingPlanner } from "./laying-planner";
 import { resourceForecast } from "./resource-forecast";
@@ -18,6 +19,7 @@ export const features: Feature[] = [
   settingsMenu,
   allianceMapMenu,
   tdcChainMenu,
+  historyMenu,
   workQueue,
   endTimes,
   resourceForecast,
