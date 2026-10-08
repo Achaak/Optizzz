@@ -38,6 +38,12 @@ function restore(stored: StoredIncome): Income {
   };
 }
 
+/** The figures last read on `origin`, never reading the game (for the background script). */
+export async function loadStoredIncome(origin: string): Promise<(Income & { readAt: Date }) | null> {
+  const cached = await storage.getItem<StoredIncome>(cacheKey(origin));
+  return cached && { ...restore(cached), readAt: new Date(cached.readAt) };
+}
+
 /**
  * Income of the logged-in player on `origin` (e.g. "https://s5.fourmizzz.fr"): the cached figures when
  * younger than `maxAge`, otherwise Ressources.php read again (the session cookie goes with the request).
