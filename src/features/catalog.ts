@@ -44,8 +44,12 @@ export const featureCatalog = [
   {
     id: "alerts",
     label: "Alertes",
-    description: "Sur l'icône de l'extension : le temps avant une famine ou un entrepôt plein, pour tous vos serveurs.",
-    options: [{ id: "badge", label: "Badge de l'icône" }],
+    description:
+      "Sur l'icône de l'extension : le temps avant une famine ou un entrepôt plein, pour tous vos serveurs. Les notifications se choisissent dans l'onglet « Notifications ».",
+    options: [
+      { id: "badge", label: "Badge de l'icône" },
+      { id: "notifications", label: "Notifications" },
+    ],
   },
   {
     id: "laying-planner",

@@ -1,5 +1,7 @@
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
 import type { ShadowRootContentScriptUi } from "wxt/utils/content-script-ui/shadow-root";
+import { loadNotificationSettings, setNotification } from "../alerts/notification-settings";
+import { askGrantPage, askNotificationsPermitted } from "../alerts/permission";
 import { requestSimulator } from "../combat-simulator/open";
 import { loadToggles, setToggle } from "../toggles";
 import { buildSettingsDialog, DIALOG_STYLE, settingsTabs } from "./dialog";
@@ -14,7 +16,7 @@ export function createSettingsPanel(ctx: ContentScriptContext) {
   };
 
   async function open() {
-    const toggles = await loadToggles();
+    const [toggles, notificationSettings] = await Promise.all([loadToggles(), loadNotificationSettings()]);
     ui = await createShadowRootUi(ctx, {
       name: "optizzz-settings",
       position: "inline",
@@ -38,6 +40,20 @@ export function createSettingsPanel(ctx: ContentScriptContext) {
             openSimulator: () => {
               requestSimulator(location.host, "attack").catch((error: unknown) => {
                 console.error("[Optizzz] could not open the combat simulator", error);
+              });
+            },
+          },
+          {
+            settings: notificationSettings,
+            permitted: askNotificationsPermitted,
+            onChange: (kind, enabled) => {
+              setNotification(kind, enabled).catch((error: unknown) => {
+                console.error("[Optizzz] saving a notification setting failed", error);
+              });
+            },
+            grant: () => {
+              askGrantPage().catch((error: unknown) => {
+                console.error("[Optizzz] could not open the notifications permission page", error);
               });
             },
           },
