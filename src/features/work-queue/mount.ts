@@ -1,6 +1,6 @@
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import { progressOf } from "./progress";
-import { readWorkQueue, type WorkQueue } from "./queue";
+import { readWorkQueue, type WorkQueue } from "@/game/pages/work-queue";
 import { htmlElement } from "@/utils/html";
 
 const EMPTY: Record<WorkQueue["kind"], string> = {
@@ -47,13 +47,16 @@ function render(table: HTMLTableElement, queue: WorkQueue, now: Date) {
   body.replaceChildren(
     ...queue.items.map((item, index) => {
       const previousEnd = queue.items[index - 1]?.endsAt ?? null;
-      const progress = progressOf(item, previousEnd, queue.kind, now);
+      const sameLater = queue.items.slice(index + 1).filter((other) => other.name === item.name).length;
+      const progress = progressOf(item, previousEnd, queue.kind, now, sameLater);
+      // The page is not reloaded by the game: the queue moves on by itself.
+      const state = item.endsAt <= now ? "terminé" : !previousEnd || previousEnd <= now ? "en cours" : "en attente";
       const percent = progress ? `${String(Math.round(progress.progress * 100))} %` : "";
 
       const row = table.ownerDocument.createElement("tr");
       const cells = [
         `${item.name} ${String(item.targetLevel - 1)} → ${String(item.targetLevel)}`,
-        index === 0 ? "en cours" : "en attente",
+        state,
         percent,
         formatDuration(Math.max(0, item.endsAt.getTime() - now.getTime())),
         formatEndTime(item.endsAt, now),
@@ -85,22 +88,24 @@ function render(table: HTMLTableElement, queue: WorkQueue, now: Date) {
   const header = table.querySelector("thead");
   if (header) header.hidden = !first;
   if (!first) footer.textContent = EMPTY[queue.kind];
-  else if (queue.full) footer.textContent = `File pleine : prochaine place libre ${formatEndTime(first.endsAt, now)}`;
+  else if (queue.full && first.endsAt <= now) {
+    footer.textContent = "Une place s'est libérée : rechargez la page pour lancer un autre chantier.";
+  } else if (queue.full) footer.textContent = `File pleine : prochaine place libre ${formatEndTime(first.endsAt, now)}`;
   else footer.textContent = "";
 }
 
-/** Hides each work line and what follows it (end time, line breaks); returns the element after them. */
+/** Hides each work line and what follows it (end time, line breaks); returns the first line, where the table goes. */
 function hideGameLines(doc: Document): Element | null {
-  let last: Element | null = null;
+  let first: Element | null = null;
   for (const line of doc.querySelectorAll("strong")) {
     if (!line.querySelector('span[id^="batiment_"], span[id^="recherche_"]')) continue;
+    first ??= line;
     line.hidden = true;
     let next = line.nextElementSibling;
     while (next instanceof HTMLElement && (next.tagName === "BR" || next.tagName === "SMALL")) {
       next.hidden = true;
       next = next.nextElementSibling;
     }
-    last = next;
   }
-  return last ?? doc.querySelector("#centre .Bas");
+  return first ?? doc.querySelector("#centre .Bas");
 }

@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { battle, PLACES, placeHpBonus, requiredAttack, spoils, type Place, type Stage } from "@/game/army/battle";
-import { UNITS } from "@/game/army/units";
+import { armyAttack, UNITS } from "@/game/army/units";
+import { inRange } from "@/game/attack";
 import { formatNumber } from "@/utils/number-format";
-import { loadStoredLevels } from "../game-levels/levels";
-import { emptyForm, prefill, readArmyText, toBattle, type Counts, type SimulatorForm } from "./form";
-import { loadGarrison } from "./garrison";
+import { loadStoredLevels } from "@/data/levels";
+import { emptyForm, leaveSide, prefill, readArmyText, toBattle, type Counts, type SimulatorForm } from "./form";
+import { isEmptyGarrison, loadGarrison } from "@/data/garrison";
 import type { SimulatorSide } from "./open";
+import { formatPastTime } from "@/utils/time-format";
 
 const PLACE_LABELS: Record<Place, string> = {
   field: "Terrain de chasse",
@@ -91,9 +93,10 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
     defender.shield,
     placeHpBonus(stage.place, defender),
   );
-  const attack =
-    UNITS.reduce((sum, unit, i) => sum + (stage.attackerBefore[i] ?? 0) * unit.attack, 0) *
-    (1 + 0.1 * attacker.weapons);
+  const attack = armyAttack(
+    UNITS.map((_, i) => stage.attackerBefore[i] ?? 0),
+    attacker,
+  );
   const fought = rows.some((row) => row.present > 0);
   return (
     <section className={stage.won ? "stage won" : "stage lost"}>
@@ -131,8 +134,8 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
             </tbody>
           </table>
           <p className="note">
-            Attaque {formatNumber(attack)} ; pour une riposte à 50 % : {formatNumber(needed.half)}, à 30 % :{" "}
-            {formatNumber(needed.thirty)}, à 10 % : {formatNumber(needed.ten)}.
+            Attaque {formatNumber(attack)} ; pour une riposte à 50 % : plus de {formatNumber(needed.half)}, à 30 % :
+            plus de {formatNumber(needed.thirty)}, à 10 % : plus de {formatNumber(needed.ten)}.
           </p>
         </>
       ) : (
@@ -145,15 +148,33 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
 export function CombatSimulator({ server, side: initialSide }: Props) {
   const [side, setSide] = useState<SimulatorSide>(initialSide);
   const [form, setForm] = useState<SimulatorForm>(emptyForm);
-  const [readAt, setReadAt] = useState<Date | null>(null);
+  const [armyNote, setArmyNote] = useState<string | null>(null);
+  const [levelsUnknown, setLevelsUnknown] = useState(false);
+  // The form as filled in for the player: what they did not change is emptied when they change side.
+  const filled = useRef<SimulatorForm | null>(null);
   const [pastePlace, setPastePlace] = useState<Place>("field");
   const origin = server ? `https://${server}` : null;
 
   useEffect(() => {
     if (!origin) return;
     void Promise.all([loadGarrison(origin), loadStoredLevels(origin)]).then(([garrison, levels]) => {
-      setForm((current) => prefill(current, side, garrison, levels));
-      setReadAt(garrison?.readAt ?? null);
+      // Army out hunting: the garrison was read empty, the last army seen is used instead.
+      const away = garrison && isEmptyGarrison(garrison) ? garrison.previous : null;
+      const usable = garrison && away ? { ...garrison, armies: away.armies } : garrison;
+      setForm((current) => {
+        const next = prefill(current, side, usable, levels);
+        filled.current = next;
+        return next;
+      });
+      const date = (at: Date) => formatPastTime(at, new Date());
+      setArmyNote(
+        !garrison
+          ? null
+          : away
+            ? `armée lue ${date(away.readAt)} (garnison vide ${date(garrison.readAt)} : armée en chasse ?)`
+            : `armée lue ${date(garrison.readAt)}`,
+      );
+      setLevelsUnknown(levels.weapons === undefined || levels.shield === undefined);
     });
   }, [origin, side]);
 
@@ -190,7 +211,7 @@ export function CombatSimulator({ server, side: initialSide }: Props) {
 
   const { attacker, defender } = form;
   const ratio = attacker.field > 0 && defender.field > 0 ? defender.field / attacker.field : null;
-  const outOfRange = ratio !== null && (ratio < 0.5 || ratio > 3);
+  const outOfRange = ratio !== null && !inRange(attacker.field, defender.field);
   const attackSent = total(attacker.army) > 0;
 
   return (
@@ -199,8 +220,13 @@ export function CombatSimulator({ server, side: initialSide }: Props) {
         <h1>Simulateur de combat</h1>
         <p className="note">
           {server ? `Serveur ${server}` : "Aucun serveur connu : passez sur la page Armée du jeu pour pré-remplir."}
-          {readAt && ` · armée lue le ${readAt.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}`}
+          {armyNote && ` · ${armyNote}`}
         </p>
+        {levelsUnknown && (
+          <p className="warning">
+            Armes et Bouclier inconnus : passez par le Laboratoire du jeu pour qu'Optizzz les lise (comptés à 0).
+          </p>
+        )}
         <p className="warning">
           Règles non vérifiées sur un vrai combat entre joueurs (tutoriel officiel, Outiiil, Calystene) : à prendre
           comme une estimation.
@@ -228,7 +254,7 @@ export function CombatSimulator({ server, side: initialSide }: Props) {
           <button
             type="button"
             onClick={() => {
-              setForm(emptyForm());
+              setForm((current) => leaveSide(current, side, filled.current));
               setSide(side === "attack" ? "defend" : "attack");
             }}
           >

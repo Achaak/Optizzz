@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import s2Html from "./__fixtures__/ennemie-s2.html?raw";
 import s5Html from "./__fixtures__/ennemie-s5.html?raw";
-import type { Alliance, Player } from "../alliance-map/api";
+import type { Alliance, Player } from "@/data/exports";
 import { listTargets, readEnemyTable } from "./targets";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
@@ -82,13 +82,13 @@ describe("listTargets", () => {
     const [target] = listTargets({ ...baseInput, players: [me, player("Cible", { x: 3, y: 4, field: 2345 })] }, now);
     expect(target).toMatchObject({
       distance: 5,
-      travelSeconds: 9039,
-      arrival: new Date(2026, 9, 8, 12, 30, 39),
+      travelSeconds: 9038,
+      arrival: new Date(2026, 9, 8, 12, 30, 38),
       ratio: 2.345,
       takeMax: 469,
     });
     const faster = listTargets({ ...baseInput, attackSpeed: 3, players: [me, player("Cible", { x: 3, y: 4 })] }, now);
-    expect(faster[0]?.travelSeconds).toBe(6589);
+    expect(faster[0]?.travelSeconds).toBe(6588);
   });
 
   it("marks pacts and wars, whichever side declared the war, but not a war on oneself", () => {

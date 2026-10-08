@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import ressourcesHtml from "./__fixtures__/ressources.html?raw";
-import type { ColonyState } from "./forecast";
+import type { ColonyState } from "@/game/forecast";
 import { mountSimulator } from "./mount-simulator";
 
 const MINUTE = 60_000;

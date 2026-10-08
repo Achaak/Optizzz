@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { kindsToRefresh, recapRows } from "./recap";
-import type { EndKind, Section } from "./sources";
+import type { EndKind, Section } from "@/game/pages/end-times";
 
 const now = new Date(2026, 9, 7, 12, 0, 0);
 const minutes = (count: number) => new Date(now.getTime() + count * 60_000);

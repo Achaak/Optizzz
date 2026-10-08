@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { ColonyState } from "../resource-forecast/forecast";
+import type { ColonyState } from "@/game/forecast";
 import reineHtml from "./__fixtures__/reine-form.html?raw";
-import { maxAffordable, planLaying, readLayingRows, readOrder } from "./laying";
+import { maxAffordable, planLaying, readLayingRows, readOrder, queuedWorkers } from "./laying";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const now = new Date(2026, 9, 7, 12, 0, 0);
@@ -56,19 +56,24 @@ describe("planLaying", () => {
 
   it("ends after the layings already queued, and can be paid now", () => {
     const queueEnd = new Date(now.getTime() + HOUR);
-    const plan = planLaying(order, state, { queueEnd, huntingField: 4496 }, now);
+    const plan = planLaying(order, state, { queueEnd, huntingField: 4496, queuedWorkers: 0 }, now);
     expect(plan.affordability).toEqual({ kind: "now" });
     expect(plan.endsAt).toEqual(new Date(queueEnd.getTime() + 5000 * 1000));
   });
 
   it("adds the upkeep of the lodge (15 % of the cost a day) to the food balance", () => {
-    const plan = planLaying(order, state, { queueEnd: now, huntingField: 4496 }, now);
+    const plan = planLaying(order, state, { queueEnd: now, huntingField: 4496, queuedWorkers: 0 }, now);
     expect(plan.upkeepPerDay).toBeCloseTo(240);
     expect(plan.balanceAfter).toBeCloseTo(2400 - 240);
   });
 
   it("waits for the food when it cannot be paid yet, then lays", () => {
-    const plan = planLaying({ ...order, food: 3000 }, state, { queueEnd: now, huntingField: 4496 }, now);
+    const plan = planLaying(
+      { ...order, food: 3000 },
+      state,
+      { queueEnd: now, huntingField: 4496, queuedWorkers: 0 },
+      now,
+    );
     expect(plan.affordability.kind).toBe("at");
     if (plan.affordability.kind !== "at") return;
     expect(plan.endsAt).toEqual(new Date(plan.affordability.at.getTime() + 5000 * 1000));
@@ -78,7 +83,7 @@ describe("planLaying", () => {
     const plan = planLaying(
       { count: 200, food: 1000, duration: 1000, destination: null },
       state,
-      { queueEnd: now, huntingField: 4496 },
+      { queueEnd: now, huntingField: 4496, queuedWorkers: 0 },
       now,
     );
     expect(plan.idleWorkers).toBe(104);
@@ -96,5 +101,11 @@ describe("maxAffordable", () => {
 
   it("is capped by the food warehouse", () => {
     expect(maxAffordable(16, { ...state, food: 49_990 }, new Date(now.getTime() + 24 * HOUR), now)).toBe(3125);
+  });
+});
+
+describe("queuedWorkers", () => {
+  it("adds up the workers of the laying queue, not the other units", () => {
+    expect(queuedWorkers(["6 Jeunes Soldates Naines", "1 224 ouvrières", "1 ouvrière"])).toBe(1225);
   });
 });

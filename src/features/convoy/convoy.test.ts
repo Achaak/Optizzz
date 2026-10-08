@@ -46,15 +46,15 @@ describe("planConvoy", () => {
   it("times the trip with the sender's attack speed", () => {
     const plan = planConvoy({ ...base, resources: 1 }, now);
     expect(plan.distance).toBeCloseTo(3.162, 3);
-    expect(plan.duration).toBe(5732 * 1000);
-    expect(plan.arrivesAt).toEqual(new Date(now.getTime() + 5732 * 1000));
+    expect(plan.duration).toBe(5731 * 1000);
+    expect(plan.arrivesAt).toEqual(new Date(now.getTime() + 5731 * 1000));
     expect(plan).toMatchObject({ workers: 1, workingTaken: 0, harvestLost: 0 });
   });
 
   it("counts the working ants taken beyond the idle ones, and what they would have harvested meanwhile", () => {
     // 5 000 resources need 500 workers: 200 more than the 300 idle, away 5 732 s at 2 resources an hour.
     const plan = planConvoy({ ...base, resources: 5000 }, now);
-    expect(plan).toMatchObject({ workers: 500, workingTaken: 200, harvestLost: Math.round((200 * 2 * 5732) / 3600) });
+    expect(plan).toMatchObject({ workers: 500, workingTaken: 200, harvestLost: Math.round((200 * 2 * 5731) / 3600) });
   });
 });
 

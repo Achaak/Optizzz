@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { armyFromKeys } from "@/game/army/units";
-import type { Alliance, Player } from "../alliance-map/api";
+import type { Alliance, Player } from "@/data/exports";
 import s2Html from "./__fixtures__/ennemie-s2.html?raw";
 import { mountTargets, type TargetsContext } from "./mount";
 
@@ -67,7 +67,7 @@ const setup = (players: Player[], options: Partial<TargetsContext> = {}) => {
     const th = [...doc.querySelectorAll(".optizzz-targets th")].find((cell) =>
       cell.textContent.trim().startsWith(text),
     );
-    (th as HTMLElement).click();
+    (th?.querySelector("button") ?? (th as HTMLElement)).click();
   };
   return { doc, box, rows, pseudos, click, header };
 };
@@ -81,8 +81,8 @@ describe("mountTargets", () => {
     expect(box()?.nextElementSibling?.querySelector("#formulairePageEnnemie")).not.toBeNull();
     expect(doc.querySelector(".optizzz-targets summary")?.textContent).toBe("Cibles à portée (2)");
     expect(rows()).toEqual([
-      ["Proche", "RIVAL · Guerre", "2 345", "235 %", "469", "5", "2 h 31", "12 h 30", "libre", "Attaquer"],
-      ["Loin", "", "2 000", "200 %", "400", "13", "6 h 28", "16 h 27", "libre", "Attaquer"],
+      ["Proche", "RIVAL · Guerre", "2 345", "235 %", "469", "5", "2 h 31", "12 h 30", "libre ?", "Attaquer"],
+      ["Loin", "", "2 000", "200 %", "400", "13", "6 h 28", "16 h 27", "libre ?", "Attaquer"],
     ]);
   });
 
@@ -114,7 +114,7 @@ describe("mountTargets", () => {
       "1",
       "31 min",
       "10 h 30",
-      "libre",
+      "libre ?",
       "",
     ]);
   });
@@ -178,7 +178,8 @@ describe("mountTargets", () => {
   it("tells, when my army is known, the most a flood takes from each target, and sorts by it", () => {
     const flood = {
       available: armyFromKeys({ JSN: 10_000 }),
-      slots: 3,
+      attackSpeed: 2,
+      onWay: { launches: [], unknown: 0 },
       defenses: new Map(),
       weapons: 0,
       shield: 0,
@@ -203,5 +204,42 @@ describe("mountTargets", () => {
     const { doc } = setup([player("Cible", { x: 1 })]);
     const headers = [...doc.querySelectorAll(".optizzz-targets th")].map((th) => th.textContent);
     expect(headers).not.toContain("Flood max");
+  });
+
+  it("says « libre » only when the game's table shows the player, « libre ? » from the export", () => {
+    const { pseudos, rows } = setup([player("Vu", { x: 1 }), player("Export", { x: 2 })], {
+      live: [{ pseudo: "Vu", field: 1000, state: "free", master: null }],
+    });
+    expect(pseudos()).toEqual(["Vu", "Export"]);
+    expect(rows().map((cells) => cells[8])).toEqual(["libre", "libre ?"]);
+  });
+
+  it("reminds a protected player that attacking ends the protection", () => {
+    const { box } = setup([player("Cible", { x: 1 })], { protectedMe: true });
+    expect(box()?.textContent).toContain("Vous êtes sous protection débutant : attaquer y met fin");
+  });
+
+  it("tells why the flood column is missing", () => {
+    const { box } = setup([player("Cible", { x: 1 })], { floodMissing: "« Flood max » : aucune unité en garnison." });
+    expect(box()?.textContent).toContain("aucune unité en garnison");
+  });
+
+  it("counts the attacks on their way in « Flood max », as the flood plan", () => {
+    const target = player("Cible", { x: 1, field: 2000 });
+    const flood = {
+      available: armyFromKeys({ JSN: 10_000 }),
+      attackSpeed: 2,
+      onWay: {
+        launches: [{ targetId: target.id, target: "Cible", ants: 400, take: 400, arrivesAt: new Date(2026, 9, 8, 11) }],
+        unknown: 0,
+      },
+      defenses: new Map(),
+      weapons: 0,
+      shield: 0,
+      margin: 0,
+    };
+    const { rows } = setup([target], { flood });
+    // 2 slots left; it will have 1 600, me 1 400: 320 then 256.
+    expect(rows()[0]?.[5]).toBe("576");
   });
 });

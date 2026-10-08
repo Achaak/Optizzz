@@ -1,5 +1,6 @@
 import { battle, type Defender } from "./army/battle";
 import { UNITS, type Army } from "./army/units";
+import { inRange, maxTake, takeAtLimit } from "./attack";
 
 // A flood: several attacks on the same hunting field, each taking 20 % of what is left.
 // Rules (tutorial « Attaque », Toolzzz): a won attack takes min(ants, floor(20 % of the target's field)); the
@@ -24,14 +25,6 @@ export interface Wave {
   targetAfter: number;
 }
 
-/** Whether `attacker` may attack `defender`: from 50 % (included) to 300 % (excluded) of its field. */
-export const inRange = (attackerField: number, defenderField: number) =>
-  defenderField * 2 >= attackerField && defenderField < attackerField * 3;
-
-/** Whether a next attack would still be allowed after this one, with the margin. */
-const nextInRange = (attacker: number, target: number, margin: number) =>
-  target * 2 >= attacker * (1 + margin) && target < attacker * 3;
-
 /**
  * The waves that take the most: 20 % each while the target stays in range for the next one; when a full take
  * would put it out of range and a slot is left, the largest take that keeps it at the limit, then a last 20 %.
@@ -43,12 +36,13 @@ export function planFlood(input: FloodInput): Wave[] {
   let ants = input.ants;
   let slots = input.slots;
 
-  while (slots > 0 && ants > 0 && inRange(attacker, target)) {
-    const full = Math.floor(target * 0.2);
+  // Every wave keeps the margin, the first one too: the fields may move before it lands.
+  while (slots > 0 && ants > 0 && inRange(attacker, target, input.margin)) {
+    const full = maxTake(target);
     let take = full;
     let last = false;
-    if (slots > 1 && !nextInRange(attacker + full, target - full, input.margin)) {
-      const limit = Math.floor((2 * target - (1 + input.margin) * attacker) / (3 + input.margin));
+    if (slots > 1 && !inRange(attacker + full, target - full, input.margin)) {
+      const limit = takeAtLimit(attacker, target, input.margin);
       if (limit > 0) take = limit;
       else last = true;
     }
@@ -165,10 +159,10 @@ export function planAttacks(input: AttacksInput): { attacks: PlannedAttack[]; bl
   let target = input.targetField;
   let slots = input.slots;
 
-  if (input.defender && sum(input.defender.armies.field) > 0 && slots > 0 && inRange(attacker, target)) {
+  if (input.defender && sum(input.defender.armies.field) > 0 && slots > 0 && inRange(attacker, target, input.margin)) {
     const opening = firstWave(pool, input.defender, input.levels);
     if (!opening) return { attacks: [], blocked: true };
-    const take = Math.min(opening.survivors, Math.floor(target * 0.2));
+    const take = Math.min(opening.survivors, maxTake(target));
     attacker += take;
     target -= take;
     slots -= 1;

@@ -3,25 +3,35 @@
   display: block;
 }
 
+/* WXT resets the host with `all: initial !important`, which beats an inline `display: none`. */
+:host([hidden]) {
+  display: none !important;
+}
+
 .history {
-  font-family: Verdana, Arial, sans-serif;
-  font-size: 12px;
-  color: #222;
-  background: #f6efd9;
-  border: 1px solid #c8b88a;
-  border-radius: 6px;
+  font-family: var(--optizzz-font);
+  font-size: var(--optizzz-font-size);
+  color: var(--optizzz-text);
+  background: var(--optizzz-surface);
+  border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius);
   padding: 12px 16px;
   margin: 8px auto;
   max-width: 900px;
   box-sizing: border-box;
 }
 
+/* On a profile, as wide as the game's boxes around it (« Informations », « Action »). */
 .history.compact {
+  max-width: none;
+  margin: 8px 0;
   padding: 8px 12px;
 }
 
 h2 {
   font-size: 16px;
+  font-style: italic;
+  color: var(--optizzz-title);
   margin: 0 0 4px;
 }
 
@@ -32,13 +42,15 @@ h3 {
 
 h4 {
   font-size: 13px;
+  font-style: italic;
+  color: var(--optizzz-title);
   margin: 0 0 4px;
   text-align: center;
 }
 
 .meta,
 .note {
-  color: #6b5d3a;
+  color: var(--optizzz-text-muted);
   font-size: 11px;
   margin: 4px 0;
 }
@@ -49,7 +61,7 @@ h4 {
 }
 
 .error {
-  color: #a02020;
+  color: var(--optizzz-danger);
 }
 
 .toolbar {
@@ -75,31 +87,31 @@ button {
 }
 
 .tabs button {
-  background: #fdf6e0;
-  border: 1px solid #c8b88a;
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border);
   padding: 2px 10px;
   margin-left: -1px;
 }
 
 .tabs button:first-child {
-  border-radius: 4px 0 0 4px;
+  border-radius: var(--optizzz-radius) 0 0 var(--optizzz-radius);
 }
 
 .tabs button:last-child {
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 var(--optizzz-radius) var(--optizzz-radius) 0;
 }
 
 .tabs button.active {
-  background: #8a6d2f;
-  border-color: #8a6d2f;
-  color: #fff;
+  background: var(--optizzz-border);
+  border-color: var(--optizzz-border);
+  color: var(--optizzz-action-text);
 }
 
 button.link {
   background: none;
   border: none;
   padding: 0;
-  color: #1d4f85;
+  color: var(--optizzz-link);
   text-decoration: underline;
 }
 
@@ -121,14 +133,19 @@ table.progress {
 
 table.progress th,
 table.progress td {
-  border-bottom: 1px solid #e2d6b0;
+  border-bottom: 1px solid var(--optizzz-border-soft);
   padding: 3px 6px;
   text-align: left;
 }
 
-table.progress th.sortable {
+table.progress th button.sort {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: bold;
+  color: inherit;
   cursor: pointer;
-  user-select: none;
 }
 
 table.progress .num {
@@ -141,9 +158,9 @@ table.progress tr.me td {
 }
 
 a {
-  color: #1d4f85;
+  color: var(--optizzz-link);
 }
 
 .down {
-  color: #a02020;
+  color: var(--optizzz-danger);
 }

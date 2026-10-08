@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { formatExportVersion } from "../alliance-map/dates";
+import { useCallback, useMemo, useState } from "react";
+import { formatExportVersion } from "@/utils/export-date";
 import type { Scores } from "./api";
 import type { Curve } from "./chart-option";
 import { Controls, LoadingNote, METRICS } from "./controls";
 import { formatGain, formatPercent } from "./format";
 import { HistoryChart } from "./HistoryChart";
 import { averageSeries, periodProgress, playerSeries, type Progress } from "./series";
-import { readHistorySettings, writeHistorySettings, type HistorySettings } from "./settings";
+import { readHistorySettings, writeHistorySettings } from "./settings";
 import { useHistory } from "./useHistory";
 import { formatNumber } from "@/utils/number-format";
+import { useStoredSettings } from "@/utils/useStoredSettings";
 
 interface Props {
   origin: string;
@@ -18,7 +19,7 @@ interface Props {
   liveTime: Date;
 }
 
-type SortKey = "pseudo" | "last" | "gain" | "percent";
+type SortKey = "pseudo" | "first" | "last" | "gain" | "percent";
 
 interface Row {
   id: number;
@@ -31,24 +32,9 @@ const sortValue = (row: Row, key: SortKey): number | string =>
 
 export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime }: Props) {
   const host = new URL(origin).host;
-  const [settings, setSettings] = useState<HistorySettings | null>(null);
+  const [settings, updateSettings] = useStoredSettings(host, readHistorySettings, writeHistorySettings);
   const [sort, setSort] = useState<{ key: SortKey; descending: boolean }>({ key: "gain", descending: true });
   const { playersExport, snapshots, total, loading, error } = useHistory(origin, settings?.days);
-
-  useEffect(() => {
-    void readHistorySettings(host).then(setSettings);
-  }, [host]);
-
-  const updateSettings = useCallback(
-    (update: (current: HistorySettings) => HistorySettings) =>
-      setSettings((current) => {
-        if (!current) return current;
-        const next = update(current);
-        void writeHistorySettings(host, next);
-        return next;
-      }),
-    [host],
-  );
 
   const me = playersExport?.players.find((p) => p.pseudo === loggedInPseudo) ?? null;
   const allianceTag = me?.alliance ?? null;
@@ -107,22 +93,34 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime }
 
   const sortBy = (key: SortKey) =>
     setSort((current) => ({ key, descending: current.key === key ? !current.descending : key !== "pseudo" }));
-  const arrow = (key: SortKey) => (sort.key === key ? (sort.descending ? " ▼" : " ▲") : "");
+  const sortHeader = (key: SortKey, label: string, numeric = true) => (
+    <th
+      className={numeric ? "num" : undefined}
+      aria-sort={sort.key === key ? (sort.descending ? "descending" : "ascending") : undefined}
+    >
+      <button type="button" className="sort" onClick={() => sortBy(key)}>
+        {label}
+        {sort.key === key ? (sort.descending ? " ▼" : " ▲") : ""}
+      </button>
+    </th>
+  );
 
   if (error) return <div className="history error">Historique indisponible : {error}</div>;
+  // The period starts where the curves shown start, not at the first export (a member may join later).
+  const shownIds = settings?.showAverage ? [...memberIds] : selected;
+  const firstShown = snapshots.find((snapshot) => shownIds.some((id) => snapshot.players.has(id)));
   if (!settings || !playersExport) return <div className="history">Chargement de l'historique…</div>;
   if (!me?.alliance) return <div className="history">Vous n'êtes dans aucune alliance d'après le dernier export.</div>;
 
   const metricLabel = METRICS.find((m) => m.id === metric)?.label ?? "";
-  const first = snapshots[0];
 
   return (
     <div className="history">
-      <h2>Historique de progression — {me.alliance}</h2>
+      <h2>Historique de progression {me.alliance}</h2>
       <p className="meta">
         Un point par jour (l'export de minuit), puis un point creux « en direct » lu sur cette page
         {metric === "trophy" ? " (le Combat n'y figure pas : il s'arrête au dernier export)" : ""}.
-        {first ? ` Depuis le ${formatExportVersion(first.version)}.` : ""}
+        {firstShown ? ` Depuis le ${formatExportVersion(firstShown.version)}.` : ""}
       </p>
       <Controls
         metric={metric}
@@ -150,19 +148,12 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime }
         <thead>
           <tr>
             <th />
-            <th className="sortable" onClick={() => sortBy("pseudo")}>
-              Membre{arrow("pseudo")}
-            </th>
-            <th>Début</th>
-            <th className="sortable num" onClick={() => sortBy("last")}>
-              Maintenant{arrow("last")}
-            </th>
-            <th className="sortable num" onClick={() => sortBy("gain")}>
-              Gain{arrow("gain")}
-            </th>
-            <th className="sortable num" onClick={() => sortBy("percent")}>
-              %{arrow("percent")}
-            </th>
+            {sortHeader("pseudo", "Membre", false)}
+            {sortHeader("first", "Début")}
+            {/* The members table has no trophies: the last value is the last export's. */}
+            {sortHeader("last", metric === "trophy" ? "Dernier export" : "Maintenant")}
+            {sortHeader("gain", "Gain")}
+            {sortHeader("percent", "%")}
           </tr>
         </thead>
         <tbody>

@@ -1,7 +1,8 @@
 // Hunt fights of an opened « Chasses » conversation (messagerie.php). Structure: docs/research/fourmizzz-pages.md.
 import { fight as replayFight } from "@/game/army/combat";
 import { PREYS } from "@/game/army/prey";
-import { armyFromKeys, parseCounts, unitKeyOf, type Levels } from "@/game/army/units";
+import { armyFromKeys, parseCounts, unitKeyOf, UNITS, type Levels } from "@/game/army/units";
+import { parseGameInteger } from "@/utils/game-number";
 
 export interface HuntFight {
   /** « 07/10/26 11h08 ». */
@@ -29,7 +30,6 @@ export interface PredictedLosses {
   wounded: number;
 }
 
-const toInteger = (text: string | undefined) => Number((text ?? "").replace(/\D/g, ""));
 /** « 1 199 »: digits in groups of three, so that a lazy match cannot stop at « 1 ». */
 const NUMBER = "(\\d{1,3}(?:\\s\\d{3})*)";
 
@@ -46,21 +46,21 @@ export function readFight(date: string, text: string): HuntFight | null {
 
   let promoted = 0;
   for (const [, count] of flat.matchAll(new RegExp(`- ${NUMBER} \\D+? sont devenues des`, "g"))) {
-    promoted += toInteger(count);
+    promoted += parseGameInteger(count);
   }
   return {
     date,
     sent: Object.fromEntries(parseCounts(sent).map(([name, count]) => [unitKeyOf(name) ?? name, count])),
     prey: Object.fromEntries(parseCounts(prey)),
-    attackBase: toInteger(dealt[1]),
-    attackBonus: toInteger(dealt[2]),
-    preyKilled: toInteger(dealt[3]),
-    damageTaken: toInteger(taken[1]),
-    antsKilled: toInteger(taken[2]),
+    attackBase: parseGameInteger(dealt[1]),
+    attackBonus: parseGameInteger(dealt[2]),
+    preyKilled: parseGameInteger(dealt[3]),
+    damageTaken: parseGameInteger(taken[1]),
+    antsKilled: parseGameInteger(taken[2]),
     promoted,
     won: flat.includes("Vous avez gagné"),
-    fieldWon: toInteger(new RegExp(`conquis ${NUMBER} cm²`).exec(flat)?.[1]),
-    food: toInteger(new RegExp(`rapportent ${NUMBER}`).exec(flat)?.[1]),
+    fieldWon: parseGameInteger(new RegExp(`conquis ${NUMBER} cm²`).exec(flat)?.[1]),
+    food: parseGameInteger(new RegExp(`rapportent ${NUMBER}`).exec(flat)?.[1]),
   };
 }
 
@@ -72,6 +72,21 @@ export function readConversation(conversation: Element): HuntFight[] {
     return parsed ? [parsed] : [];
   });
 }
+
+/** Units and prey of the report the engine does not know: replaying the fight without them would be wrong. */
+export function unknownEntries(huntFight: HuntFight): string[] {
+  const units = Object.keys(huntFight.sent).filter((key) => !UNITS.some((unit) => unit.key === key));
+  const prey = Object.keys(huntFight.prey).filter(
+    (name) => !PREYS.some((candidate) => candidate.plural === name || candidate.name === name),
+  );
+  return [...units, ...prey];
+}
+
+/** « 20 combats affichés sur 191 »: the number of fights in the conversation's title, « … en 191 expéditions ». */
+export const expeditionCount = (title: string): number | null => {
+  const count = /([\d\s]+)\s+expéditions?/.exec(title)?.[1];
+  return count ? Number(count.replace(/\s/g, "")) : null;
+};
 
 /** The fight replayed by the engine. Weapons come from the report's bonus; the shield is the one remembered now. */
 export function predictLosses(huntFight: HuntFight, levels: Pick<Levels, "shield" | "cochineal">): PredictedLosses {
@@ -115,8 +130,8 @@ export interface Summary {
   antsKilled: number;
   fieldWon: number;
   food: number;
-  /** Null without losses. */
-  fieldPerAntLost: number | null;
+  /** cm² per ant killed in the reports (the wounded the engine predicts are not in the reports); null without. */
+  fieldPerAntKilled: number | null;
   offPrediction: number;
 }
 
@@ -129,7 +144,7 @@ export function summarize(rows: { fight: HuntFight; predicted: PredictedLosses |
     antsKilled,
     fieldWon,
     food: total((row) => row.food),
-    fieldPerAntLost: antsKilled > 0 ? fieldWon / antsKilled : null,
+    fieldPerAntKilled: antsKilled > 0 ? fieldWon / antsKilled : null,
     offPrediction: rows.filter((row) => row.predicted && isOffPrediction(row.fight, row.predicted)).length,
   };
 }

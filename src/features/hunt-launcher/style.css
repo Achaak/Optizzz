@@ -4,14 +4,16 @@
 }
 
 .hunt-launcher {
-  font-family: Verdana, Arial, sans-serif;
-  font-size: 12px;
-  color: #222;
-  background: #f6efd9;
-  border: 1px solid #c8b88a;
-  border-radius: 6px;
+  font-family: var(--optizzz-font);
+  font-size: var(--optizzz-font-size);
+  color: var(--optizzz-text);
+  background: var(--optizzz-surface);
+  border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius);
   padding: 8px 12px;
-  margin: 8px 0;
+  /* As wide as the game's boxes around it (#boite_tdc), not the whole column. */
+  max-width: 728px;
+  margin: 8px auto;
   box-sizing: border-box;
 }
 
@@ -39,6 +41,8 @@ button {
 
 .toggle .title {
   font-weight: bold;
+  font-style: italic;
+  color: var(--optizzz-title);
   font-size: 14px;
 }
 
@@ -52,7 +56,7 @@ button {
 }
 
 .toggle .summary {
-  color: #6b5d3a;
+  color: var(--optizzz-text-muted);
 }
 
 .inputs {
@@ -68,8 +72,8 @@ fieldset {
   flex-wrap: wrap;
   gap: 4px 12px;
   align-items: center;
-  border: 1px solid #ddd2b0;
-  border-radius: 4px;
+  border: 1px solid var(--optizzz-border-soft);
+  border-radius: var(--optizzz-radius);
   margin: 0;
   padding: 4px 8px 8px;
 }
@@ -99,24 +103,24 @@ select {
 
 .note,
 .meta {
-  color: #6b5d3a;
+  color: var(--optizzz-text-muted);
   font-size: 11px;
   margin: 4px 0;
 }
 
 .muted {
-  color: #8a7c58;
+  color: var(--optizzz-text-muted);
 }
 
 .warning {
-  color: #9a5800;
+  color: var(--optizzz-warning);
   font-weight: bold;
   margin: 6px 0;
 }
 
 .error,
 .danger {
-  color: #a02020;
+  color: var(--optizzz-danger);
 }
 
 .table-wrap {
@@ -126,15 +130,21 @@ select {
 table.hunts {
   border-collapse: collapse;
   width: 100%;
-  background: #fff;
+  background: var(--optizzz-surface-raised);
 }
 
 .hunts th,
 .hunts td {
   padding: 3px 6px;
-  border-bottom: 1px solid #e3d8b8;
+  border-bottom: 1px solid var(--optizzz-border-soft);
   text-align: right;
   white-space: nowrap;
+}
+
+.hunts th .legend {
+  display: block;
+  font-weight: normal;
+  font-size: 10px;
 }
 
 .hunts td.xp {
@@ -143,25 +153,25 @@ table.hunts {
 }
 
 .hunts thead th {
-  background: #e9dcb4;
+  background: var(--optizzz-surface-alt);
   cursor: help;
 }
 
 .hunts tr.launched td {
-  background: #e4f2d5;
+  background: var(--optizzz-success-bg);
 }
 
 .hunts tr.failed td {
-  background: #f8dcdc;
+  background: var(--optizzz-danger-bg);
 }
 
 .status.launched {
-  color: #2f6b1a;
+  color: var(--optizzz-success);
   font-weight: bold;
 }
 
 .status.failed {
-  color: #a02020;
+  color: var(--optizzz-danger);
   font-weight: bold;
 }
 
@@ -173,17 +183,17 @@ table.hunts {
 }
 
 button.primary {
-  background: #6b8e23;
-  color: #fff;
-  border: 1px solid #4f6b17;
-  border-radius: 4px;
+  background: var(--optizzz-action);
+  color: var(--optizzz-action-text);
+  border: 1px solid var(--optizzz-action-border);
+  border-radius: var(--optizzz-radius);
   padding: 5px 14px;
   font-weight: bold;
 }
 
 button.primary:disabled {
-  background: #b9c49c;
-  border-color: #a3ad86;
+  background: var(--optizzz-action-disabled);
+  border-color: var(--optizzz-action-disabled-border);
   cursor: default;
 }
 
@@ -191,7 +201,7 @@ button.link {
   background: none;
   border: none;
   padding: 0;
-  color: #1d4f85;
+  color: var(--optizzz-link);
   text-decoration: underline;
 }
 
@@ -201,9 +211,9 @@ button.link {
 }
 
 .curve {
-  background: #fff;
-  border: 1px solid #ddd2b0;
-  border-radius: 4px;
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border-soft);
+  border-radius: var(--optizzz-radius);
   padding: 6px;
   margin: 8px 0;
 }

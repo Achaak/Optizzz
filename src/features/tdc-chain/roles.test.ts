@@ -98,6 +98,7 @@ describe("sharing roles", () => {
       ]),
     );
     expect(result.ignored).toEqual(["Inconnu: Grenier", "Solenopsis sans rôle"]);
+    expect(importRoles("ÀTTA: Grenier", members).roles).toEqual(new Map([[2, { kind: "granary" }]]));
   });
 
   it("reads a passer without a number as the first passer", () => {

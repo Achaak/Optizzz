@@ -25,13 +25,10 @@ describe("readCountdowns", () => {
 });
 
 describe("annotateCountdowns", () => {
-  it("adds the end time right after each countdown", () => {
+  it("adds the end time right after each countdown, not after the workers' return", () => {
     const doc = parse(ressourcesHtml);
     annotateCountdowns(doc, now);
-    expect(endTimes(doc)).toEqual([
-      ["retour_ouvrieres", " · fin aujourd'hui 12 h 54"],
-      ["chasse_143264", " · fin aujourd'hui 13 h 16"],
-    ]);
+    expect(endTimes(doc)).toEqual([["chasse_143264", " · fin aujourd'hui 13 h 16"]]);
   });
 
   it("skips a countdown the game already gives an end time for", () => {
@@ -46,12 +43,22 @@ describe("annotateCountdowns", () => {
     expect(endTimes(doc).map(([id]) => id)).toEqual(["ponte_162199", "ponte_162200", "ponte_162201"]);
   });
 
+  it("skips a laying whose row already has the Compte+ « Ponte finie » time", () => {
+    const doc = parse(reineHtml);
+    const row = doc.getElementById("ponte_162200")?.closest("tr");
+    const finished = doc.createElement("td");
+    finished.textContent = "13h11";
+    row?.append(finished);
+    annotateCountdowns(doc, now);
+    expect(endTimes(doc).map(([id]) => id)).toEqual(["ponte_162199", "ponte_162201"]);
+  });
+
   it("does not annotate twice, and refreshes the wording", () => {
     const doc = parse(ressourcesHtml);
     const { update } = annotateCountdowns(doc, now);
     update(new Date(2026, 9, 6, 12, 0, 0));
-    expect(endTimes(doc)[0]).toEqual(["retour_ouvrieres", " · fin demain 12 h 54"]);
+    expect(endTimes(doc)[0]).toEqual(["chasse_143264", " · fin demain 13 h 16"]);
     annotateCountdowns(doc, now);
-    expect(endTimes(doc)).toHaveLength(2);
+    expect(endTimes(doc)).toHaveLength(1);
   });
 });
