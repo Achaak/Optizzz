@@ -61,6 +61,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "flood",
+    label: "Plan de flood",
+    description:
+      "Sur le formulaire d'attaque : les attaques qui prennent le plus de TDC, avec votre armée, et la colonne « Flood max » des Cibles à portée.",
+    options: [],
+  },
+  {
     id: "hunt-reports",
     label: "Rapports de chasse",
     description:

@@ -37,6 +37,7 @@ Ce que le simulateur de combat (`src/game/army/battle.ts`) suppose, d'où ça vi
 - Lieux : attaquer la Fourmilière passe d'abord par le TDC ; la Loge, par le TDC puis la Fourmilière (tutoriel). Les survivants passent d'un lieu au suivant.
 - Gains : TDC, 20 % du TDC adverse, 1 cm² par fourmi au plus ; Fourmilière, 30 % + 1 % par niveau d'étable à pucerons de la nourriture et des matériaux, 1 ressource par point d'attaque survivant au plus, plus le TDC ; Loge, la colonie (tutoriel).
 - Portée : TDC adverse entre 50 % et 300 % du sien (tutoriel) ; 50 % inclus, 300 % exclu d'après les bornes préremplies d'`ennemie.php` (5 055 → 2 528 à 15 164). Revérifiée avant chaque attaque d'une série, les deux TDC bougeant (Toolzzz).
+- Attaques simultanées : Vitesse d'attaque + 1, moins les attaques en route (Toolzzz, `Attaquer.js` : `niveau + 2 − lignes « Vous allez attaquer »`). **Non vérifié en jeu.**
 - Prise sur le TDC : Toolzzz calcule `min(fourmis envoyées, floor(TDC adverse × 0,2))` ; « par fourmi » = fourmis envoyées ou survivantes, non tranché. Le forum officiel est privé (connexion requise), non consulté.
 
 ## Supposé, à vérifier sur un vrai rapport ([#1](https://github.com/Achaak/Optizzz/issues/1))

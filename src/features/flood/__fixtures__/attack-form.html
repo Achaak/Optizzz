@@ -1,0 +1,84 @@
+<!-- Relevé sur ennemie.php?Attaquer=<id>&lieu=1 (S2, 2026-10-08, GET seulement) : structure du jeu, effectifs et pseudo fictifs, sans jeton. -->
+<div id="data" style="display: none"><span id="quantite_tdc">1000</span><span id="pseudo">Moi</span></div>
+<div id="centre">
+  <center>
+    <h2>Vous allez attaquer Cible_1 !</h2>
+    <form action="ennemie.php?Attaquer=101" method="post" id="formulaireChoixArmee">
+      <fieldset>
+        <legend><h2 style="display: inline">Lieu</h2></legend>
+        Choisissez la partie de sa fourmilière où votre armée s’arrêtera
+        <select id="lieu" name="lieu">
+          <option value="1">Terrain de Chasse</option>
+          <option value="2">Fourmilière</option>
+          <option value="3">Loge Impériale</option>
+        </select>
+      </fieldset>
+      <fieldset>
+        <legend><h2 style="display: inline">Armée</h2></legend>
+        <table id="tabChoixArmee">
+          <tr>
+            <th>Unités</th>
+            <th>Terrain</th>
+            <th>Fourmilière</th>
+            <th>Loge</th>
+            <th>Armée</th>
+          </tr>
+          <tr>
+            <td
+              onclick="remplirChamps('unite1', 6200)"
+              title="Placer ou retirer mon armée de Jeune Soldate Naine"
+              style="cursor: pointer"
+            >
+              Jeune Soldate Naine
+            </td>
+            <td>1 000</td>
+            <td>200</td>
+            <td>5 000</td>
+            <td>
+              <input
+                type="tel"
+                id="unite1"
+                name="unite1"
+                size="15"
+                value="6 200"
+                onkeyup="lireEtReecrireChamps('unite1')"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>Soldate Naine</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td
+              onclick="remplirChamps('unite5', 50)"
+              title="Placer ou retirer mon armée de Soldate"
+              style="cursor: pointer"
+            >
+              Soldate
+            </td>
+            <td>50</td>
+            <td></td>
+            <td></td>
+            <td>
+              <input
+                type="tel"
+                id="unite5"
+                name="unite5"
+                size="15"
+                value="50"
+                onkeyup="lireEtReecrireChamps('unite5')"
+              />
+            </td>
+          </tr>
+        </table>
+        <input type="hidden" name="t" value="TOKEN" />
+        <input type="hidden" name="pseudoCible" value="Cible_1" />
+        <input type="submit" name="ChoixArmee" value="Attaquer" />
+      </fieldset>
+    </form>
+  </center>
+</div>

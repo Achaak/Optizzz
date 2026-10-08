@@ -1,4 +1,5 @@
 // Players one can attack, read from ennemie.php and the public exports. See docs/features/cibles.md.
+import { inRange } from "@/game/flood";
 import { distance, travelTime } from "@/game/travel";
 import type { Alliance, Player } from "../alliance-map/api";
 
@@ -44,10 +45,6 @@ export function readEnemyTable(doc: Document): EnemyRow[] {
     ];
   });
 }
-
-/** Whether `attacker` may attack `defender`: from 50 % (included) to 300 % (excluded) of its field, as ennemie.php. */
-export const inRange = (attackerField: number, defenderField: number) =>
-  defenderField * 2 >= attackerField && defenderField < attackerField * 3;
 
 /** On the hunting field, a win takes 20 % of the defender's field, 1 cm² per ant at most (tutorial « Attaque »). */
 export const takeMax = (defenderField: number) => Math.floor(defenderField * 0.2);
