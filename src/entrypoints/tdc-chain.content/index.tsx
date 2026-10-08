@@ -1,10 +1,11 @@
 // Separate script: the chain bundles React, so it only loads on alliance.php.
 import { createRoot, type Root } from "react-dom/client";
-import { readLoggedInPseudo, readMembersHuntingField } from "@/features/alliance-map/pages";
+import { readLoggedInPseudo, readMembersHuntingField } from "@/game/pages/alliance";
 import { CHAIN_HASH } from "@/features/tdc-chain/menu";
 import { TdcChain } from "@/features/tdc-chain/TdcChain";
-import { isFeatureEnabled } from "@/features/toggles";
-import { showsAllianceView } from "@/utils/alliance-views";
+import { isEnabled, loadToggles } from "@/features/toggles";
+import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
+import "@/theme/theme.css";
 import "@/features/tdc-chain/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
@@ -18,7 +19,8 @@ export default defineContentScript({
   matches: ["*://*.fourmizzz.fr/alliance.php*"],
   cssInjectionMode: "ui",
   async main(ctx) {
-    if (!(await isFeatureEnabled("tdc-chain"))) return;
+    const toggles = await loadToggles();
+    if (!isEnabled(toggles, "tdc-chain")) return;
     if (location.search !== "?Membres") return;
     const allianceContent = document.querySelector<HTMLElement>("#alliance");
     if (!allianceContent) return;
@@ -53,8 +55,8 @@ export default defineContentScript({
     const update = () => {
       const visible = isChainPage();
       if (visible && !ui.mounted) ui.mount();
-      if (ui.mounted) ui.shadowHost.style.display = visible ? "" : "none";
-      allianceContent.style.display = showsAllianceView() ? "none" : "";
+      if (ui.mounted) ui.shadowHost.hidden = !visible;
+      allianceContent.style.display = showsAllianceView(allianceViewHashes(toggles)) ? "none" : "";
     };
     update();
     ctx.addEventListener(window, "hashchange", update);

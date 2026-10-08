@@ -1,7 +1,7 @@
 // History of the players' scores, from the public exports — see docs/features/historique.md.
 import { storage } from "wxt/utils/storage";
 import { z } from "zod";
-import { getJson, playerSchema } from "@/features/alliance-map/api";
+import { getJson, playerSchema } from "@/data/exports";
 
 export interface Scores {
   /** Hunting field (TDC), cm². */
@@ -83,15 +83,18 @@ async function loadSnapshot(origin: string, version: string): Promise<Snapshot> 
 /**
  * The scores of every player at each of `versions`, in the same order. Loaded latest first,
  * one at a time, with `onProgress` called after each; a version the API cannot give is skipped.
+ * Stops downloading once `signal` is aborted (another period chosen, view closed).
  */
 export async function loadHistory(
   origin: string,
   versions: readonly string[],
   onProgress?: (snapshots: Snapshot[]) => void,
+  signal?: AbortSignal,
 ): Promise<Snapshot[]> {
   const loaded = new Map<string, Snapshot>();
   const inOrder = () => versions.flatMap((version) => loaded.get(version) ?? []);
   for (const version of [...versions].reverse()) {
+    if (signal?.aborted) break;
     try {
       loaded.set(version, await loadSnapshot(origin, version));
     } catch (error) {

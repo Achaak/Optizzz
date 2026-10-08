@@ -18,8 +18,7 @@ const setup = (options: Partial<FloodContext> = {}) => {
     },
     attackSpeed: 2,
     travelSeconds: 1800,
-    launches: [],
-    unknownOnWay: 0,
+    onWay: { launches: [], unknown: 0 },
     defense: null,
     countLodge: false,
     margin: 0,
@@ -61,14 +60,17 @@ describe("mountFloodPlanner", () => {
 
   it("counts the attacks already on their way", () => {
     const { rows } = setup({
-      launches: [{ targetId: 101, target: "Cible_1", ants: 400, take: 400, arrivesAt: new Date(2026, 9, 8, 10, 20) }],
+      onWay: {
+        launches: [{ targetId: 101, target: "Cible_1", ants: 400, take: 400, arrivesAt: new Date(2026, 9, 8, 10, 20) }],
+        unknown: 0,
+      },
     });
     // 2 slots left; it will have 1 600, me 1 400.
     expect(rows().map((cells) => cells[2])).toEqual(["320", "256"]);
   });
 
   it("counts the attacks sent without Optizzz as taken slots, their take unknown", () => {
-    const { rows, text } = setup({ unknownOnWay: 2 });
+    const { rows, text } = setup({ onWay: { launches: [], unknown: 2 } });
     expect(rows()).toHaveLength(1);
     expect(text()).toContain("2 attaques lancées sans ce plan : leur prise n'est pas comptée");
   });
@@ -91,6 +93,7 @@ describe("mountFloodPlanner", () => {
     const { doc, rows } = setup({ onDefenseChange });
     const area = doc.querySelector<HTMLTextAreaElement>(".optizzz-flood-defense textarea");
     if (area) area.value = "Troupes en défense : 100 Jeunes Soldates Naines.";
+    area?.dispatchEvent(new Event("input"));
     doc.querySelector<HTMLButtonElement>(".optizzz-flood-defense-use")?.click();
     expect(onDefenseChange).toHaveBeenCalledWith(armyFromKeys({ JSN: 100 }));
     // Strongest first: 50 S + 551 JSN deal 750 + 1 653 > 3 × 800 hp; 649 JSN left: 320, then 256.
@@ -124,5 +127,51 @@ describe("mountFloodPlanner", () => {
       take: 400,
       arrivesAt: new Date(2026, 9, 8, 10, 30),
     });
+  });
+
+  it("counts the cm² of an attack on the nest too: the hunting field is fought first", () => {
+    const onSend = vi.fn();
+    const { doc } = setup({ onSend });
+    doc.querySelector<HTMLButtonElement>(".optizzz-flood tbody button")?.click();
+    const place = doc.querySelector<HTMLSelectElement>("#formulaireChoixArmee select#lieu");
+    if (place) place.value = "2";
+    const form = doc.getElementById("formulaireChoixArmee") as HTMLFormElement;
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(onSend).toHaveBeenCalledWith(expect.objectContaining({ ants: 400, take: 400 }));
+  });
+
+  it("takes what the plan expected for a filled attack against a defense", () => {
+    const onSend = vi.fn<(launch: unknown) => void>();
+    const { doc } = setup({ onSend, defense: { army: armyFromKeys({ JSN: 10 }), readAt: now } });
+    doc.querySelector<HTMLButtonElement>(".optizzz-flood tbody button")?.click();
+    const planned = doc.querySelector(".optizzz-flood tbody tr td:nth-child(3)")?.textContent;
+    const form = doc.getElementById("formulaireChoixArmee") as HTMLFormElement;
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(onSend).toHaveBeenCalledWith(expect.objectContaining({ take: Number(planned?.replace(/\s/g, "")) }));
+  });
+
+  it("does not take an unreadable text for « no defense »", () => {
+    const onDefenseChange = vi.fn();
+    const { doc, text } = setup({ onDefenseChange });
+    const area = doc.querySelector<HTMLTextAreaElement>(".optizzz-flood-defense textarea");
+    const use = doc.querySelector<HTMLButtonElement>(".optizzz-flood-defense-use");
+    expect(use?.disabled).toBe(true);
+    if (area) area.value = "bonjour";
+    area?.dispatchEvent(new Event("input"));
+    use?.click();
+    expect(onDefenseChange).not.toHaveBeenCalled();
+    expect(text()).toContain("Aucune unité reconnue");
+  });
+
+  it("plans nothing on a target within the margin above 50 %, and says why", () => {
+    const { rows, text } = setup({ target: { id: 101, pseudo: "Cible_1", field: 503 }, margin: 0.01 });
+    expect(rows()).toEqual([]);
+    expect(text()).toContain("trop juste");
   });
 });

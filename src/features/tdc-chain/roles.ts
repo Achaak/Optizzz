@@ -1,4 +1,5 @@
 // Roles in a TDC chain (chasseur → passeurs → grenier). See docs/features/chaine-tdc.md.
+import { inRange } from "@/game/attack";
 
 export type Role = { kind: "hunter" } | { kind: "passer"; rank: number } | { kind: "granary" } | { kind: "out" };
 
@@ -14,7 +15,7 @@ const GRANARY_SHARE = 0.8;
  * Roles deduced from the fields: granaries are the biggest, then each rung holds the members the smallest of the
  * rung above can attack (half its field or more), and the last rung is the hunters.
  */
-export function proposeRoles(members: readonly Member[]): Map<number, Role> {
+export function proposeRoles(members: readonly Member[], margin = 0): Map<number, Role> {
   const sorted = [...members].sort((a, b) => b.field - a.field);
   const biggest = sorted[0]?.field ?? 0;
   const rungs: Member[][] = [];
@@ -24,7 +25,7 @@ export function proposeRoles(members: readonly Member[]): Map<number, Role> {
   rest = rest.slice(rungs[0]?.length ?? 0);
   while (rest.length > 0) {
     const smallestAbove = rungs.at(-1)?.at(-1)?.field ?? 0;
-    const rung = rest.filter((member) => member.field * 2 >= smallestAbove);
+    const rung = rest.filter((member) => inRange(smallestAbove, member.field, margin));
     // Out of reach of the rung above: still the next rung, the chain will show the gap.
     const next = rung.length > 0 ? rung : rest.slice(0, 1);
     rungs.push(next);
@@ -95,14 +96,15 @@ export interface RolesImport {
 }
 
 export function importRoles(text: string, members: readonly Named[]): RolesImport {
-  const idByPseudo = new Map(members.map((member) => [member.pseudo.toLowerCase(), member.id]));
+  // Accents and case are ignored, in the nickname as in the role: « Cèdre » matches « cedre ».
+  const idByPseudo = new Map(members.map((member) => [plain(member.pseudo), member.id]));
   const roles = new Map<number, Role>();
   const ignored: string[] = [];
   for (const rawLine of text.split("\n")) {
     const line = rawLine.trim();
     if (!line) continue;
     const [, pseudo, label] = /^(.+?)\s*:\s*(.+)$/.exec(line) ?? [];
-    const id = pseudo === undefined ? undefined : idByPseudo.get(pseudo.toLowerCase());
+    const id = pseudo === undefined ? undefined : idByPseudo.get(plain(pseudo));
     const role = label === undefined ? null : parseRole(label);
     if (id !== undefined && role) roles.set(id, role);
     else ignored.push(line);

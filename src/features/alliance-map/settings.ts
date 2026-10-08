@@ -27,3 +27,10 @@ export async function readSettings(host: string): Promise<Settings> {
 export async function writeSettings(host: string, settings: Settings): Promise<void> {
   await storage.setItem(key(host), settings);
 }
+
+/** Calls `onChange` when the map's settings change (levels entered on the map, read by the chain). */
+export function watchSettings(host: string, onChange: (settings: Settings) => void): () => void {
+  return storage.watch<Partial<Settings>>(key(host), (stored) => {
+    onChange({ ...DEFAULT_SETTINGS, ...stored });
+  });
+}

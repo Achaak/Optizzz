@@ -1,6 +1,6 @@
 // The attacks on their way, as the game lists them on Armee.php (docs/research/fourmizzz-pages.md, « Armee.php »),
 // matched with the ones Optizzz noted when the player sent them.
-import type { Launch } from "./store";
+import type { Launch } from "@/data/launches";
 
 export interface AttackOnWay {
   target: string;

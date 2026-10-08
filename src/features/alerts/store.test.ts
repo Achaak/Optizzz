@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
-import { storeCapacities, storeIncome } from "../resource-forecast/income";
-import type { Income } from "../resource-forecast/pages";
+import { storeCapacities, storeIncome } from "@/data/income";
+import type { Income } from "@/game/pages/resources";
 import { loadServers, storeStock } from "./store";
 
 const now = new Date(2026, 9, 8, 16, 40);

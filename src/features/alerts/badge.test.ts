@@ -45,9 +45,11 @@ describe("badge", () => {
     });
   });
 
-  it("is orange with whole hours between 2 and 12 hours", () => {
+  it("is red with whole hours from 2 to 6 hours, orange from 6 to 24 hours, as the header", () => {
     // 5 h 50, rounded down.
-    expect(badge([starving(3500, 600)], now)).toMatchObject({ text: "5h", color: "orange" });
+    expect(badge([starving(3500, 600)], now)).toMatchObject({ text: "5h", color: "red" });
+    // 15 h.
+    expect(badge([starving(9000, 600)], now)).toMatchObject({ text: "15h", color: "orange" });
   });
 
   it("shows minutes under an hour", () => {
@@ -64,7 +66,7 @@ describe("badge", () => {
     });
   });
 
-  it("shows nothing beyond 12 hours, but the hover still tells", () => {
+  it("shows nothing beyond 24 hours, but the hover still tells", () => {
     // 52 h of food.
     expect(badge([starving(5200, 100)], now)).toEqual({
       text: "",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { loadPlayersExport, loadPlayersVersions, type PlayersExport } from "../alliance-map/api";
+import { loadPlayersExport, loadPlayersVersions, type PlayersExport } from "@/data/exports";
 import { loadHistory, type Snapshot } from "./api";
 import { dailyVersions } from "./versions";
 
@@ -21,6 +21,8 @@ interface Loaded {
   done: boolean;
 }
 
+const EXPORT_ERROR = "l'export public de Fourmizzz ne répond pas. Réessayez dans quelques minutes.";
+
 /** The exports of the last `days` days (null: all; undefined: not known yet), filled in as they are downloaded. */
 export function useHistory(origin: string, days: number | null | undefined): HistoryState {
   const [playersExport, setPlayersExport] = useState<PlayersExport | null>(null);
@@ -28,27 +30,30 @@ export function useHistory(origin: string, days: number | null | undefined): His
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPlayersExport(origin).then(setPlayersExport, (e: unknown) => setError(String(e)));
+    loadPlayersExport(origin).then(setPlayersExport, (e: unknown) => {
+      console.error("[Optizzz] history: loading the public export failed", e);
+      setError(EXPORT_ERROR);
+    });
   }, [origin]);
 
   useEffect(() => {
     if (days === undefined) return;
-    // An object, not a let: TypeScript would narrow a boolean across the awaits.
-    const run = { cancelled: false };
+    const run = new AbortController();
     void (async () => {
       try {
         const versions = dailyVersions(await loadPlayersVersions(origin), days, new Date());
         const progress = (snapshots: Snapshot[], done: boolean) => {
-          if (!run.cancelled) setLoaded({ days, snapshots, total: versions.length, done });
+          if (!run.signal.aborted) setLoaded({ days, snapshots, total: versions.length, done });
         };
         progress([], versions.length === 0);
-        progress(await loadHistory(origin, versions, (partial) => progress(partial, false)), true);
+        progress(await loadHistory(origin, versions, (partial) => progress(partial, false), run.signal), true);
       } catch (e) {
-        if (!run.cancelled) setError(String(e));
+        console.error("[Optizzz] history: loading the exports failed", e);
+        if (!run.signal.aborted) setError(EXPORT_ERROR);
       }
     })();
     return () => {
-      run.cancelled = true;
+      run.abort();
     };
   }, [origin, days]);
 

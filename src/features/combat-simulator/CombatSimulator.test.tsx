@@ -3,9 +3,9 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import { armyFromKeys } from "@/game/army/units";
-import { storeLevels } from "../game-levels/levels";
+import { storeLevels } from "@/data/levels";
 import { CombatSimulator } from "./CombatSimulator";
-import { storeGarrison } from "./garrison";
+import { storeGarrison } from "@/data/garrison";
 
 // Smoke test of the page: it fills itself from what was remembered and shows a result. The look is checked by hand.
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

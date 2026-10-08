@@ -1,10 +1,13 @@
 import { NOTIFICATIONS_PERMISSION } from "@/features/alerts/permission";
+import { PAGE_BASE_CSS, THEME_CSS } from "@/theme";
 
 const style = document.createElement("style");
 style.textContent = `
-body { margin: 0; background: #efe0ad; font-family: Verdana, Arial, sans-serif; font-size: 13px; color: #222; }
-.grant { max-width: 520px; margin: 60px auto; padding: 16px 24px; background: #f7ecc6; border: 2px solid #a8894a; border-radius: 4px; }
-h1 { margin: 0 0 12px; font-size: 18px; font-weight: normal; color: #6f6a1f; }
+${THEME_CSS}
+${PAGE_BASE_CSS}
+.grant { max-width: 520px; margin: 60px auto; padding: 16px 24px; background: var(--optizzz-surface-raised);
+  border: 2px solid var(--optizzz-border); border-radius: var(--optizzz-radius); }
+h1 { margin: 0 0 12px; font-size: 18px; font-style: italic; color: var(--optizzz-title); }
 button { font: inherit; font-weight: bold; cursor: pointer; }`;
 document.head.append(style);
 

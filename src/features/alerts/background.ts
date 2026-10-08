@@ -1,12 +1,13 @@
 // The toolbar badge and the notifications, kept up to date by the background script from stored data only.
 import { storage } from "wxt/utils/storage";
-import { loadSections } from "../end-times/store";
+import { loadSections } from "@/data/end-times";
 import { isEnabled, loadToggles, TOGGLES_KEY, type Toggles } from "../toggles";
 import { badge, type Badge, type ServerData } from "./badge";
 import { loadNotificationSettings } from "./notification-settings";
 import { dueNotifications, type SentNotifications } from "./notifications";
 import { isPermissionMessage, NOTIFICATIONS_PERMISSION, openGrantPage } from "./permission";
 import { loadServers, STOCKS_KEY } from "./store";
+import { URGENCY_COLORS } from "@/utils/urgency";
 
 const ALARM = "alerts-badge";
 const SENT_KEY = "local:alerts:sentNotifications";
@@ -14,8 +15,8 @@ const SENT_KEY = "local:alerts:sentNotifications";
 const SENT_KEPT = 2 * 24 * 60 * 60_000;
 
 const COLORS: Record<NonNullable<Badge["color"]>, string> = {
-  red: "#c00000",
-  orange: "#e07000",
+  red: URGENCY_COLORS.danger,
+  orange: URGENCY_COLORS.warning,
   gray: "#808080",
 };
 
@@ -61,9 +62,18 @@ async function update(): Promise<void> {
   await sendNotifications(toggles, servers, now);
 }
 
+// One update at a time: two at once would read the same « sent » list and notify the same event twice.
+let running: Promise<void> = Promise.resolve();
+let queued = false;
+
 function refresh() {
-  update().catch((error: unknown) => {
-    console.error("[Optizzz] could not update the alerts", error);
+  if (queued) return;
+  queued = true;
+  running = running.then(async () => {
+    queued = false;
+    await update().catch((error: unknown) => {
+      console.error("[Optizzz] could not update the alerts", error);
+    });
   });
 }
 

@@ -1,4 +1,4 @@
-import { svgElement } from "@/utils/html";
+import { addAllianceMenuEntry } from "@/utils/alliance-menu";
 import type { Feature } from "../feature";
 import { isEnabled } from "../toggles";
 
@@ -17,28 +17,11 @@ export const historyMenu: Feature = {
   matches: () => true,
   run(_ctx, toggles) {
     if (!isEnabled(toggles, "history", "alliance")) return;
-    const menu = document.querySelector("#menuAlliance");
-    const after = (
-      menu?.querySelector(".optizzz-tdc-chain") ??
-      menu?.querySelector(".optizzz-alliance-map") ??
-      menu?.querySelector("a.boutonMembres")
-    )?.closest("li");
-    if (!after || menu?.querySelector(".optizzz-history")) return;
-
-    const icon = document.createElement("span");
-    icon.append(svgElement(document, HISTORY_ICON));
-    icon.style.background = "none";
-    icon.style.display = "flex";
-    icon.style.alignItems = "center";
-    icon.style.justifyContent = "center";
-
-    const link = document.createElement("a");
-    link.className = "optizzz-history";
-    link.href = HISTORY_LINK;
-    link.append(icon, "Historique");
-
-    const item = document.createElement("li");
-    item.append(link);
-    after.after(item);
+    addAllianceMenuEntry(document, {
+      className: "optizzz-history",
+      href: HISTORY_LINK,
+      label: "Historique",
+      icon: HISTORY_ICON,
+    });
   },
 };
