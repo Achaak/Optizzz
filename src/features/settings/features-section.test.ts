@@ -26,6 +26,8 @@ describe("buildFeaturesSection", () => {
       "resource-forecast.costs",
       "resource-forecast.outlook",
       "resource-forecast.simulator",
+      "alerts",
+      "alerts.badge",
       "laying-planner",
       "convoy",
       "targets",
