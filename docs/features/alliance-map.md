@@ -18,8 +18,8 @@ Aider une alliance à s'organiser : voir où sont les membres et qui est proche 
   - la mienne est relue sur `laboratoire.php` à l'ouverture de la carte, par `game-levels` (même lecteur et même mémoire que les autres features) ;
   - niveau global = saisi à la main, sinon le mien ; il s'applique aux membres sans niveau connu, et ces temps sont marqués « ≈ » (estimation) ;
   - niveau par joueur saisi dans le tableau ;
-  - partage par copier-coller : une ligne `Pseudo: niveau` par membre (export → presse-papiers, import → retrouve les membres par pseudo, signale les lignes ignorées).
-- **Mémorisé par serveur** (`browser.storage.local`) : k, niveau global, niveau Laboratoire, niveaux par joueur, dernier export.
+  - quand « Partage d'alliance » est allumé, la Vitesse d'attaque que les membres ont partagée (`partage-alliance.md`) ; un niveau saisi dans le tableau l'emporte seulement s'il est plus récent que le relevé partagé (chaque saisie est datée ; une saisie d'avant cette version compte comme plus ancienne). L'ancien partage `Pseudo: niveau` de la Carte a disparu : ce format se colle désormais dans « Partage ».
+- **Mémorisé par serveur** (`browser.storage.local`) : k, niveau global, niveau Laboratoire, niveaux par joueur et leur date de saisie, dernier export.
 
 ## Hors v1
 
@@ -27,17 +27,17 @@ Rôles de chaîne (chasseur / passeur / grenier), alliés et ennemis sur la cart
 
 ## Code
 
-| Fichier                                                    | Rôle                                                            |
-| ---------------------------------------------------------- | --------------------------------------------------------------- |
-| `src/features/alliance-map/menu.ts`                        | Entrée de menu (script léger, toutes les pages)                 |
-| `src/entrypoints/alliance-map.content/index.tsx`           | Script dédié à `alliance.php` : monte la vue dans un Shadow DOM |
-| `src/data/exports.ts`                                      | Export des joueurs + cache par version (partagé)                |
-| `src/game/pages/alliance.ts`                               | Lecture de la page Membres et de l'en-tête (partagé)            |
-| `neighbors.ts`                                             | k plus proches, liens (distance : `src/game/travel.ts`)         |
-| `neighbor-table.ts`                                        | Niveaux connus/estimés, trajets dans les deux sens              |
-| `level-sharing.ts`                                         | Export / import texte des niveaux                               |
-| `settings.ts`, `src/utils/export-date.ts`                  | Réglages mémorisés, date de l'export                            |
-| `chart-option.ts`, `MapChart.tsx`                          | Option ECharts, zoom, événements                                |
-| `AllianceMap.tsx`, `NeighborTable.tsx`, `LevelSharing.tsx` | Vue React                                                       |
+| Fichier                                          | Rôle                                                            |
+| ------------------------------------------------ | --------------------------------------------------------------- |
+| `src/features/alliance-map/menu.ts`              | Entrée de menu (script léger, toutes les pages)                 |
+| `src/entrypoints/alliance-map.content/index.tsx` | Script dédié à `alliance.php` : monte la vue dans un Shadow DOM |
+| `src/data/exports.ts`                            | Export des joueurs + cache par version (partagé)                |
+| `src/game/pages/alliance.ts`                     | Lecture de la page Membres et de l'en-tête (partagé)            |
+| `neighbors.ts`                                   | k plus proches, liens (distance : `src/game/travel.ts`)         |
+| `neighbor-table.ts`                              | Niveaux connus/estimés, trajets dans les deux sens              |
+| `shared-levels.ts`                               | Vitesse d'attaque partagée (« Partage »), pour Carte et Chaîne  |
+| `settings.ts`, `src/utils/export-date.ts`        | Réglages mémorisés, date de l'export                            |
+| `chart-option.ts`, `MapChart.tsx`                | Option ECharts, zoom, événements                                |
+| `AllianceMap.tsx`, `NeighborTable.tsx`           | Vue React                                                       |
 
-Tests vitest aux interfaces : neighbors, `src/game/travel.ts`, pages (fixtures), level-sharing, api (fetch simulé + fakeBrowser), neighbor-table, dates, bornes et zone carrée du graphe (`chart-option`), vues d'alliance affichées selon les interrupteurs (`src/utils/alliance-views.ts`). La vue elle-même se vérifie dans le jeu.
+Tests vitest aux interfaces : neighbors, `src/game/travel.ts`, pages (fixtures), api (fetch simulé + fakeBrowser), neighbor-table, dates, bornes et zone carrée du graphe (`chart-option`), vues d'alliance affichées selon les interrupteurs (`src/utils/alliance-views.ts`). La vue elle-même se vérifie dans le jeu.

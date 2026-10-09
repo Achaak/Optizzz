@@ -1,0 +1,140 @@
+:host {
+  all: initial;
+  display: block;
+}
+
+/* WXT resets the host with `all: initial !important`, which beats an inline `display: none`. */
+:host([hidden]) {
+  display: none !important;
+}
+
+.alliance-sharing {
+  font-family: var(--optizzz-font);
+  font-size: var(--optizzz-font-size);
+  color: var(--optizzz-text);
+  background: var(--optizzz-surface);
+  border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius);
+  padding: 12px 16px;
+  margin: 8px auto;
+  max-width: 900px;
+  box-sizing: border-box;
+}
+
+h2 {
+  font-size: 16px;
+  font-style: italic;
+  color: var(--optizzz-title);
+  margin: 0 0 4px;
+}
+
+.note {
+  color: var(--optizzz-text-muted);
+  font-size: var(--optizzz-font-size-small);
+  margin: 4px 0;
+}
+
+.warning {
+  color: var(--optizzz-warning);
+  margin: 6px 0;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--optizzz-link);
+  text-decoration: underline;
+  font-weight: inherit;
+}
+
+button.tab.active {
+  font-weight: bold;
+  background: var(--optizzz-surface-raised);
+}
+
+.choices,
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.preview {
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border-soft);
+  padding: 6px 8px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: var(--optizzz-font-size-small);
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: monospace;
+  margin: 6px 0;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--optizzz-border-soft);
+  text-align: right;
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child,
+th.left,
+td.left {
+  text-align: left;
+}
+
+thead th {
+  background: var(--optizzz-surface-alt);
+}
+
+tr.stale td {
+  color: var(--optizzz-text-muted);
+}
+
+td.changed {
+  background: var(--optizzz-success-bg);
+  font-weight: bold;
+}
+
+td.manual {
+  font-style: italic;
+}
+
+td .done {
+  color: var(--optizzz-text-muted);
+}
+
+input.value {
+  width: 56px;
+  padding: 1px 2px;
+}

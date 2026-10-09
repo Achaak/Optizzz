@@ -100,7 +100,8 @@ export function formatDateTime(date: Date): string {
   return `${dayMonth(date)} à ${clock(date)}`;
 }
 
-function dayMonth(date: Date): string {
+/** « 07/10 »: the day, Paris time. */
+export function dayMonth(date: Date): string {
   const { day, month } = parisParts(date);
   return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}`;
 }

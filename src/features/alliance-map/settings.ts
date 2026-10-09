@@ -8,6 +8,8 @@ export interface Settings {
   labLevel: number | null;
   /** Levels entered per player, keyed by player id. */
   playerLevels: Record<string, number>;
+  /** When each of `playerLevels` was entered (ms), to weigh it against a shared state; missing for older entries. */
+  playerLevelsAt: Record<string, number>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -15,6 +17,7 @@ export const DEFAULT_SETTINGS: Settings = {
   manualLevel: null,
   labLevel: null,
   playerLevels: {},
+  playerLevelsAt: {},
 };
 
 const key = (host: string) => `local:allianceMap:${host}:settings` as const;

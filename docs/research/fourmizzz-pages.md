@@ -16,6 +16,7 @@ Notes plus larges (connexion, convois, pontes…) : `bot-fourmizzz/research/four
 - `nav#menu` > `ul#menu_horizontal` (Fourmilière, Alliance, Communauté, Compte +, Aide) + des colonnes `ul.menu_colonne`.
 - Menu d'alliance : `ul#menuAlliance.menu_colonne`, une `li > a.bouton<Nom>` par entrée : `boutonChat` (`alliance.php`), `boutonForum` (`?forum_menu`), `boutonMembres` (`?Membres`), `boutonCandidature` (`?voirCandidature`), `boutonMC` (`?messCollectif`), `boutonDiplomatie` (`?Diplomatie2`), `boutonDescription` (`?Description`), `boutonOptions` (`?Options`).
 - Absent quand le joueur n'a pas d'alliance.
+- Menu Fourmilière : `ul#menuFourmiliere.menu_colonne`, de `boutonReine` (`Reine.php`) à `boutonMaFourmiliere` (`fourmiliere.php`), le dernier (relevé le 2026-10-09 sur S5).
 - Barre du haut : `#menu` (`position: fixed`, `z-index: 20000`, 30 px de haut). Onglets `ul#menu_horizontal li` à `width: 19.9%` (en ajouter un fait passer à la ligne) ; `ul#menu_horizontal` a `margin-right: 45px` pour `a#boutonDeconnexion` (`position: absolute; right: 0; width: 45px`). Optizzz y place sa roue à `right: 45px` et porte la marge à 90 px.
 - Autres liens utiles : `boutonSimulateurDuree` → `simulateurDuree.php`, carte du jeu `carte2.php` (vue isométrique).
 
@@ -110,7 +111,11 @@ terrain <br />et <strong>5 022</strong> avec votre champignonnière. <br /><br /
 
 - Script de la page : `var pourcentagePillage = 43;` (colonisé), `var champi = 1721321.5369…;` (valeur exacte), `var terrain`, `var nbOuvrieres`.
 - Chiffres **avant taxe** ; la consommation de l'armée **inclut les troupes en déplacement**. Voir `ressources-et-entretien.md`.
-- Chasses en cours, après `span.titre` « Chasse en cours » : `- Vos chasseuses vont conquérir 122 cm² dans <span id="chasse_139778">…</span><script>reste(1090, "chasse_139778");</script>`. Compte+ seulement : `<small><em>Troupes en chasses : 1 975 Jeunes Soldates Naines, 124 Soldates Naines.<br>Arrivée à 12h39</em></small>`.
+- Chasses en cours, après `span.titre` « Chasse en cours » : `- Vos chasseuses vont conquérir 122 cm² dans <span id="chasse_139778">…</span><script>reste(1090, "chasse_139778");</script>`. Compte+ seulement : `<small><em>Troupes en chasses : 1 975 Jeunes Soldates Naines, 124 Soldates Naines.<br>Arrivée à 12h39</em></small>`. Un bloc par chasse, dans `#boite_tdc` ; revu le 2026-10-09 sur S5 (« 3 405 Jeunes Soldates Naines, 364 Soldates Naines, 15 Naines d’Elites. »). Sans Compte+, les troupes en chasse ne sont écrites nulle part (`Armee.php` ne les montre pas non plus).
+
+## fourmiliere.php (Ma Fourmilière)
+
+- Relevé le 2026-10-09 sur S5 : `div#centre > center > div` (`position: relative`, 760 × 750 px) : l'image de la fourmilière, une `table.boite_amelioration#messageN` par bâtiment (description au survol) et une `map`. Aucun niveau lisible. Optizzz masque ce `center` pour afficher « Mon état » (`#etat`).
 
 ## Reine.php
 

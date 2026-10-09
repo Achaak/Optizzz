@@ -143,19 +143,3 @@ a {
   color: var(--optizzz-text-muted);
   font-weight: normal;
 }
-
-.level-sharing {
-  margin-top: 12px;
-}
-
-.level-sharing summary {
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.level-sharing textarea {
-  width: 100%;
-  box-sizing: border-box;
-  font-family: monospace;
-  margin: 6px 0;
-}
