@@ -18,7 +18,7 @@ Faire passer du TDC entre membres d'une alliance : qui peut prendre à qui, et l
 
 - **Accès** : entrée « Chaîne » du menu d'alliance, après « Carte » (après « Membres » si la carte est coupée), `alliance.php?Membres#chaine`. La vue remplace le tableau des membres tant que le hash est `#chaine`.
 - **Membres** : ceux de mon alliance dans l'export, TDC en direct sur la page Membres. Vacances et bannis exclus d'office ; colonisés gardés (⛓).
-- **Rôles** : Grenier, Passeur 1, Passeur 2…, Chasseur, Hors chaîne (exclu). Sans rôles enregistrés, ceux proposés d'après le TDC s'affichent ; un membre arrivé depuis l'enregistrement des rôles est « Hors chaîne », et un avertissement le nomme. « Proposer des rôles » les remet :
+- **Rôles** : Grenier, Passeur 1, Passeur 2…, Chasseur, Hors chaîne (exclu). La liste propose toujours au moins Passeur 1 à 5, et un rang au-dessus du plus haut utilisé : on peut monter la chaîne par le haut sans remplir les échelons un à un. Sans rôles enregistrés, ceux proposés d'après le TDC s'affichent ; un membre arrivé depuis l'enregistrement des rôles est « Hors chaîne », et un avertissement le nomme. « Proposer des rôles » les remet :
   - greniers : les membres à 80 % ou plus du plus gros TDC (le plus gros seul si tout le monde y est) ;
   - chaque échelon suivant : ceux que le plus petit de l'échelon du dessus peut attaquer ;
   - le dernier échelon : les chasseurs ; les échelons du milieu, des passeurs numérotés depuis le bas.

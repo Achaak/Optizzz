@@ -42,6 +42,16 @@ export function proposeRoles(members: readonly Member[], margin = 0): Map<number
   return roles;
 }
 
+/** Passer ranks always offered, so a chain can be built from the top without filling the rungs one by one. */
+const MIN_PASSER_RANKS = 5;
+
+/** Passer ranks to offer, highest first: at least {@link MIN_PASSER_RANKS}, and always one above the highest used. */
+export function passerRanks(roles: Iterable<Role>): number[] {
+  const highest = Math.max(0, ...[...roles].map((role) => (role.kind === "passer" ? role.rank : 0)));
+  const count = Math.max(MIN_PASSER_RANKS, highest + 1);
+  return Array.from({ length: count }, (_, i) => count - i);
+}
+
 /** The role as the players write it: « Chasseur », « Passeur 2 », « Grenier », « Hors chaîne ». */
 export function roleLabel(role: Role): string {
   switch (role.kind) {

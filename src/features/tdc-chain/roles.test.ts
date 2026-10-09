@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exportRoles, importRoles, proposeRoles, type Role } from "./roles";
+import { exportRoles, importRoles, passerRanks, proposeRoles, type Role } from "./roles";
 
 // Live fields of an alliance on S5, 2026-10-08.
 const s5 = [
@@ -103,5 +103,17 @@ describe("sharing roles", () => {
 
   it("reads a passer without a number as the first passer", () => {
     expect(importRoles("Delta: Passeur", members).roles.get(2)).toEqual({ kind: "passer", rank: 1 });
+  });
+});
+
+describe("passerRanks", () => {
+  it("offers five passer ranks, highest first, even when the chain uses fewer", () => {
+    expect(passerRanks([{ kind: "granary" }, { kind: "passer", rank: 1 }, { kind: "hunter" }])).toEqual([
+      5, 4, 3, 2, 1,
+    ]);
+  });
+
+  it("offers one rank above the highest used", () => {
+    expect(passerRanks([{ kind: "passer", rank: 6 }])).toEqual([7, 6, 5, 4, 3, 2, 1]);
   });
 });
