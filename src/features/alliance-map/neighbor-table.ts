@@ -9,6 +9,10 @@ export interface KnownLevels {
   manualLevel: number | null;
   /** Levels entered (or imported) for specific players. */
   byPlayer: ReadonlyMap<number, number>;
+  /** When each of `byPlayer` was entered; missing for levels entered before they were dated. */
+  enteredAt?: ReadonlyMap<number, Date>;
+  /** Attack Speed from the states the members shared (« Partage »), with when it was read. */
+  shared?: ReadonlyMap<number, { level: number; at: Date }>;
 }
 
 export interface Level {
@@ -21,10 +25,15 @@ export function globalLevel(levels: KnownLevels): number {
   return levels.manualLevel ?? levels.labLevel ?? 0;
 }
 
+/** A level entered by hand when newer than the shared one, my Laboratory level, the shared one, or the global one. */
 export function levelOf(playerId: number, levels: KnownLevels): Level {
   const entered = levels.byPlayer.get(playerId);
-  if (entered !== undefined) return { level: entered, estimated: false };
+  const shared = levels.shared?.get(playerId);
+  const enteredAt = levels.enteredAt?.get(playerId)?.getTime() ?? 0;
+  if (entered !== undefined && (!shared || enteredAt > shared.at.getTime()))
+    return { level: entered, estimated: false };
   if (playerId === levels.myId && levels.labLevel !== null) return { level: levels.labLevel, estimated: false };
+  if (shared) return { level: shared.level, estimated: false };
   return { level: globalLevel(levels), estimated: true };
 }
 

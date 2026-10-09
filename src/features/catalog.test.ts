@@ -12,6 +12,7 @@ const HEAVY_SCRIPTS: Record<string, string> = {
   "alliance-map": "../entrypoints/alliance-map.content/index.tsx",
   "tdc-chain": "../entrypoints/tdc-chain.content/index.tsx",
   history: "../entrypoints/history.content/index.tsx",
+  "alliance-sharing": "../entrypoints/alliance-sharing.content/index.tsx",
 };
 
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");

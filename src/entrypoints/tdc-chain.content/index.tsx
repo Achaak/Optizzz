@@ -33,6 +33,7 @@ export default defineContentScript({
           origin={location.origin}
           loggedInPseudo={readLoggedInPseudo(document)}
           liveHuntingFields={liveHuntingFields}
+          sharing={isEnabled(toggles, "alliance-sharing")}
         />,
       );
 

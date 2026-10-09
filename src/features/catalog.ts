@@ -115,6 +115,13 @@ export const featureCatalog = [
     ],
   },
   {
+    id: "alliance-sharing",
+    label: "Partage d'alliance",
+    description:
+      "Entrée « Mon état » dans le menu Fourmilière pour copier votre état à coller sur Discord, et « Partage » dans le menu d'alliance pour lire celui des membres.",
+    options: [],
+  },
+  {
     id: "hunt-launcher",
     label: "Lanceur de chasse",
     description: "Sur Ressources : combien chasser, avec quoi, et lancer en un clic.",
