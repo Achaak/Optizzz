@@ -11,7 +11,7 @@ Chaque outil se désactive dans les paramètres (roue dentée dans la barre du j
 - **Chantiers en cours** : tableau des constructions et recherches, avec progression et heure de fin.
 - **Heures de fin** : l'heure de fin des chasses, pontes et chantiers à côté des décomptes, et un encart « Prochaines fins ».
 - **Prévisions de ressources** : quand tu pourras payer, famine, entrepôts pleins, et un simulateur de répartition des ouvrières.
-- **Planificateur de ponte** : fin de la ponte, date de paiement possible, entretien et bouton « max » sur la Reine.
+- **Planificateur de ponte** : raccourcis de ponte avec aperçu (tout payer, durée, bilan à zéro), fin, date de paiement et entretien sur la Reine.
 - **Rapports de chasse** : tableau des combats de chaque chasse dans la messagerie, avec les pertes prévues.
 - **Simulateur de combat** : depuis la page Armée ou le popup de l'extension.
 - **Lanceur de chasse** : combien chasser et avec quoi, puis lancer en un clic.

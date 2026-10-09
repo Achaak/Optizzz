@@ -1,5 +1,9 @@
 <!-- Structure observed on s5.fourmizzz.fr/Reine.php on 2026-10-07: the workers' row and the young dwarves' row (each field in a table inside its form), as the
      game shows them after typing a number (maj_cout_ponte updates the time and food). Descriptions and token trimmed. -->
+<!-- The page's laying speed, as its script applies it (trimmed): 1/6 here, so that a worker takes 10 s and a dwarf 50 s. -->
+<script>
+  var max_ponte2 = Math.round((7 * 24 * 3600) / (temps_ponte_base * 0.16666666666667));
+</script>
 <div id="data" style="display: none"><span id="quantite_tdc">4496</span></div>
 <table>
   <tr>
