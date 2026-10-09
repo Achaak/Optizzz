@@ -42,6 +42,16 @@ export const featureCatalog = [
     ],
   },
   {
+    id: "alerts",
+    label: "Alertes",
+    description:
+      "Sur l'icône de l'extension : le temps avant une famine ou un entrepôt plein, pour tous vos serveurs. Les notifications se choisissent dans l'onglet « Notifications ».",
+    options: [
+      { id: "badge", label: "Badge de l'icône" },
+      { id: "notifications", label: "Notifications" },
+    ],
+  },
+  {
     id: "laying-planner",
     label: "Planificateur de ponte",
     description: "Sur la Reine : fin de la ponte, quand elle sera payable, son entretien, et un bouton « max ».",
@@ -93,6 +103,16 @@ export const featureCatalog = [
     description:
       "Entrée « Chaîne » dans le menu d'alliance : qui peut prendre à qui, rôles, et l'ordre des floods pour faire monter le TDC.",
     options: [],
+  },
+  {
+    id: "history",
+    label: "Historique de progression",
+    description:
+      "Courbes du TDC et des scores dans le temps, d'après les exports publics de chaque nuit, pour comparer avec votre alliance.",
+    options: [
+      { id: "alliance", label: "Entrée « Historique » dans le menu d'alliance" },
+      { id: "profile", label: "Encart « Progression » sur les profils" },
+    ],
   },
   {
     id: "hunt-launcher",

@@ -4,8 +4,8 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 // The ESM build: the CommonJS one (lib/core) resolves to the module object instead of the component.
 import ReactECharts from "echarts-for-react/esm/core";
-import { useMemo, useRef } from "react";
-import { buildChartOption, zoomWindowAround, type MapMember } from "./chart-option";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildChartOption, chartHeightFor, zoomWindowAround, type MapMember } from "./chart-option";
 import type { KnownLevels } from "./neighbor-table";
 
 echarts.use([GraphChart, GridComponent, TooltipComponent, DataZoomComponent, CanvasRenderer]);
@@ -23,9 +23,31 @@ interface Props {
   onSelect: (playerId: number) => void;
 }
 
+const MAX_HEIGHT = 640;
+
 export function MapChart({ members, selected, k, levels, onSelect }: Props) {
   const chartRef = useRef<ReactECharts>(null);
-  const option = useMemo(() => buildChartOption(members, selected, k, levels), [members, selected, k, levels]);
+  const boxRef = useRef<HTMLDivElement>(null);
+  // The plot area must be square for both axes to share a scale: it depends on the width actually given.
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    const observer = new ResizeObserver(([entry]) => {
+      // A hidden view measures 0: keep the last width.
+      const measured = Math.round(entry?.contentRect.width ?? 0);
+      if (measured > 0) setWidth(measured);
+    });
+    observer.observe(box);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  const height = chartHeightFor(width, MAX_HEIGHT);
+  const option = useMemo(
+    () => buildChartOption(members, selected, k, levels, { width, height }),
+    [members, selected, k, levels, width, height],
+  );
 
   const zoomTo = (x: readonly number[], y: readonly number[]) => {
     const chart = chartRef.current?.getEchartsInstance();
@@ -57,19 +79,25 @@ export function MapChart({ members, selected, k, levels, onSelect }: Props) {
   return (
     <div className="chart">
       <div className="chart-toolbar">
-        <span className="hint">Molette ou pincer : zoom · Glisser : déplacer · Double-clic : zoomer sur un joueur</span>
+        <span className="hint">
+          Ctrl + molette ou pincer : zoom · Glisser : déplacer · Double-clic : zoomer sur un joueur
+        </span>
         <button type="button" onClick={resetZoom}>
           Réinitialiser le zoom
         </button>
       </div>
-      <ReactECharts
-        ref={chartRef}
-        echarts={echarts}
-        option={option}
-        onEvents={onEvents}
-        lazyUpdate
-        style={{ width: "100%", height: "min(640px, 85vw)" }}
-      />
+      <div ref={boxRef}>
+        {width > 0 && (
+          <ReactECharts
+            ref={chartRef}
+            echarts={echarts}
+            option={option}
+            onEvents={onEvents}
+            lazyUpdate
+            style={{ width: "100%", height }}
+          />
+        )}
+      </div>
     </div>
   );
 }

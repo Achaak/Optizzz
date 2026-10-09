@@ -1,7 +1,7 @@
 // Players one can attack, read from ennemie.php and the public exports. See docs/features/cibles.md.
-import { inRange } from "@/game/flood";
+import { inRange, maxTake } from "@/game/attack";
 import { distance, travelTime } from "@/game/travel";
-import type { Alliance, Player } from "../alliance-map/api";
+import type { Alliance, Player } from "@/data/exports";
 
 /** State of an anthill, as the « Etat » column of ennemie.php writes it. */
 export type AnthillState = "free" | "colonized" | "holiday" | "banned" | "protected";
@@ -46,9 +46,6 @@ export function readEnemyTable(doc: Document): EnemyRow[] {
   });
 }
 
-/** On the hunting field, a win takes 20 % of the defender's field, 1 cm² per ant at most (tutorial « Attaque »). */
-export const takeMax = (defenderField: number) => Math.floor(defenderField * 0.2);
-
 export type Diplomacy = { kind: "pact"; name: string; description: string } | { kind: "war" };
 
 export interface Target {
@@ -66,6 +63,8 @@ export interface Target {
   /** If the attack leaves now. */
   arrival: Date;
   state: AnthillState | null;
+  /** The state comes from the game's table; from the export, the beginner protection is unknown. */
+  stateLive: boolean;
   master: string | null;
   diplomacy: Diplomacy | null;
   attackableNow: boolean;
@@ -133,11 +132,12 @@ export function listTargets(input: TargetsInput, now: Date): Target[] {
           alliance: player.alliance,
           field,
           ratio: field / myField,
-          takeMax: takeMax(field),
+          takeMax: maxTake(field),
           distance: squares,
           travelSeconds,
           arrival: new Date(now.getTime() + travelSeconds * 1000),
           state,
+          stateLive: row !== undefined,
           master,
           diplomacy,
           attackableNow: (state === "free" || state === "colonized") && diplomacy?.kind !== "pact",

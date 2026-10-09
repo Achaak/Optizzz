@@ -1,7 +1,6 @@
 // Reading game pages for the hunt launcher. Selectors: docs/research/fourmizzz-pages.md.
 import { UNITS } from "@/game/army/units";
-
-const toInteger = (text: string | null | undefined) => Number((text ?? "").replace(/\D/g, "")) || 0;
+import { parseGameInteger } from "@/utils/game-number";
 
 export interface UnitPlaces {
   field: number;
@@ -18,6 +17,11 @@ export interface HuntForm {
   submit: { name: string; value: string };
 }
 
+/** AcquerirTerrain.php without a form: « Vous n'avez pas d'armée a envoyer. » (all units away, or none). */
+export function hasNoArmyToSend(doc: Document): boolean {
+  return /pas d.arm[ée]e [àa] envoyer/i.test(doc.body.textContent);
+}
+
 /** The army step of AcquerirTerrain.php: a GET gives the full form. */
 export function readHuntForm(doc: Document): HuntForm | null {
   const form = doc.querySelector<HTMLFormElement>('form[action="AcquerirTerrain.php"]');
@@ -31,9 +35,9 @@ export function readHuntForm(doc: Document): HuntForm | null {
     const input = row.querySelector<HTMLInputElement>('input[name^="unite"]');
     const unit = UNITS.find((candidate) => input?.name === `unite${String(candidate.field)}`);
     if (!input || !unit) continue;
-    const [, field, nest, lodge] = [...row.cells].map((cell) => toInteger(cell.textContent));
+    const [, field, nest, lodge] = [...row.cells].map((cell) => parseGameInteger(cell.textContent));
     byPlace[unit.key] = { field: field ?? 0, nest: nest ?? 0, lodge: lodge ?? 0 };
-    available[unit.key] = toInteger(input.value);
+    available[unit.key] = parseGameInteger(input.value);
   }
 
   const hiddenFields = Object.fromEntries(
@@ -63,7 +67,7 @@ export function readTroops(text: string): Record<string, number> {
     if (!match?.[1] || !match[2]) continue;
     const name = normalize(match[2]);
     const unit = UNITS.find((candidate) => normalize(candidate.plural) === name || normalize(candidate.name) === name);
-    if (unit) troops[unit.key] = (troops[unit.key] ?? 0) + toInteger(match[1]);
+    if (unit) troops[unit.key] = (troops[unit.key] ?? 0) + parseGameInteger(match[1]);
   }
   return troops;
 }
@@ -87,7 +91,7 @@ export function readOngoingHunts(doc: Document, now: Date): OngoingHunt[] {
     return [
       {
         id: countdown.id,
-        fieldGain: toInteger(gain[1]),
+        fieldGain: parseGameInteger(gain[1]),
         returnsAt: new Date(now.getTime() + seconds * 1000),
         troops: troopsAfter(line),
       },

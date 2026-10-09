@@ -1,27 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { loadPlayersExport, type Player, type PlayersExport } from "../alliance-map/api";
-import { formatExportVersion } from "../alliance-map/dates";
+import { useEffect, useMemo, useState } from "react";
+import { loadPlayersExport, type Player, type PlayersExport } from "@/data/exports";
+import { formatExportVersion } from "@/utils/export-date";
 import { levelOf, type KnownLevels } from "../alliance-map/neighbor-table";
-import { readSettings as readMapSettings, type Settings as MapSettings } from "../alliance-map/settings";
-import { formatDuration } from "../alliance-map/travel";
-import { loadLevelsOf } from "../game-levels/levels";
 import {
-  bridge,
-  planChain,
-  planTransfer,
-  takeMatrix,
-  type ChainMember,
-  type Gap,
-  type Hit,
-  type Transfer,
-} from "./chain";
-import { planText } from "./plan-text";
+  readSettings as readMapSettings,
+  watchSettings as watchMapSettings,
+  type Settings as MapSettings,
+} from "../alliance-map/settings";
+import { loadLaunches } from "@/data/launches";
+import { loadLevelsOf } from "@/data/levels";
+import { bridge, planChain, planTransfer, takeMatrix, type ChainMember, type Gap, type Transfer } from "./chain";
+import { byDeparture, planText, type PlannedLaunch } from "./plan-text";
 import { exportRoles, importRoles, proposeRoles, roleLabel, rungs, type Role } from "./roles";
 import { defaultFirstArrival, schedule } from "./schedule";
-import { readChainSettings, writeChainSettings, type ChainSettings } from "./settings";
+import { readChainSettings, writeChainSettings } from "./settings";
+import { attackSlots } from "@/game/attack";
 import { distance, travelTime } from "@/game/travel";
 import { formatNumber } from "@/utils/number-format";
-import { formatEndTimeShort } from "@/utils/time-format";
+import { NumberField } from "@/utils/NumberField";
+import { useStoredSettings } from "@/utils/useStoredSettings";
+import { formatDuration, formatEndTimeShort, fromParisParts, parisParts } from "@/utils/time-format";
 
 /** Kept above the 50 % limit, as the flood planner: other attacks and hunts may move the fields before arrival. */
 const MARGIN = 0.01;
@@ -50,9 +48,22 @@ function parseRoleValue(value: string): Role {
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
-/** For `<input type="datetime-local">`, in local time. */
-const toLocalInput = (date: Date) =>
-  `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+/** For `<input type="datetime-local">`, in Paris time like every time shown. */
+const toParisInput = (date: Date) => {
+  const { year, month, day, hours, minutes } = parisParts(date);
+  return `${String(year)}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}`;
+};
+const fromParisInput = (value: string): Date | null => {
+  const [year, month, day, hours, minutes] = value.split(/[-T:]/).map(Number);
+  if ([year, month, day, hours, minutes].some((part) => part === undefined || Number.isNaN(part))) return null;
+  return fromParisParts({
+    year: year ?? 0,
+    month: month ?? 1,
+    day: day ?? 1,
+    hours: hours ?? 0,
+    minutes: minutes ?? 0,
+  });
+};
 
 export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
   const host = new URL(origin).host;
@@ -60,7 +71,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [mapSettings, setMapSettings] = useState<MapSettings | null>(null);
   const [myAttackSpeed, setMyAttackSpeed] = useState<number | null>(null);
-  const [settings, setSettings] = useState<ChainSettings | null>(null);
+  const [settings, updateSettings] = useStoredSettings(host, readChainSettings, writeChainSettings);
   const [mode, setMode] = useState<"chain" | "transfer">("chain");
   const [transfer, setTransfer] = useState<{ from: number | null; to: number | null; amount: number | null }>({
     from: null,
@@ -69,29 +80,33 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
   });
   const [firstArrival, setFirstArrival] = useState<Date | null>(null);
   const [now, setNow] = useState(() => new Date());
+  // The default first arrival counts from here, not from the clock: the plan must not change while it is read
+  // or between two members opening it a few minutes apart.
+  const [plannedAt, setPlannedAt] = useState(() => new Date());
+  const [sortBy, setSortBy] = useState<"departure" | "arrival">("departure");
+  const [myAttacksOnWay, setMyAttacksOnWay] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
-
-  const updateSettings = useCallback(
-    (update: (current: ChainSettings) => ChainSettings) =>
-      setSettings((current) => {
-        if (!current) return current;
-        const next = update(current);
-        void writeChainSettings(host, next);
-        return next;
-      }),
-    [host],
-  );
+  const [copyText, setCopyText] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPlayersExport(origin).then(setPlayersExport, (e: unknown) => setError(String(e)));
+    loadPlayersExport(origin).then(setPlayersExport, (e: unknown) => {
+      console.error("[Optizzz] TDC chain: loading the public export failed", e);
+      setError("l'export public de Fourmizzz ne répond pas. Réessayez dans quelques minutes.");
+    });
     void readMapSettings(host).then(setMapSettings);
-    void readChainSettings(host).then(setSettings);
+    // Levels entered on the map while this view was open.
+    const unwatch = watchMapSettings(host, setMapSettings);
     loadLevelsOf(origin, ["attackSpeed"]).then(
       (levels) => setMyAttackSpeed(levels.attackSpeed),
       () => setMyAttackSpeed(null),
     );
+    // My attacks sent through the game's form (flood plan) use some of my slots.
+    void loadLaunches(origin, new Date()).then((launches) => setMyAttacksOnWay(launches.length));
     const timer = setInterval(() => setNow(new Date()), CLOCK_TICK_MS);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      unwatch();
+    };
   }, [origin, host]);
 
   const me = playersExport?.players.find((p) => p.pseudo === loggedInPseudo) ?? null;
@@ -117,7 +132,14 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
     [mapSettings, me?.id, myAttackSpeed],
   );
 
-  const proposed = useMemo(() => proposeRoles(members.map((m) => ({ id: m.id, field: m.huntingField }))), [members]);
+  const proposed = useMemo(
+    () =>
+      proposeRoles(
+        members.map((m) => ({ id: m.id, field: m.huntingField })),
+        MARGIN,
+      ),
+    [members],
+  );
   const storedRoles = settings?.roles;
   const roles = useMemo<Map<number, Role>>(() => {
     if (!storedRoles) return proposed;
@@ -133,8 +155,12 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
     if (!levels) return [];
     return members
       .filter((m) => (roles.get(m.id) ?? OUT).kind !== "out")
-      .map((m) => ({ id: m.id, field: m.huntingField, slots: levelOf(m.id, levels).level + 1 }));
-  }, [members, roles, levels]);
+      .map((m) => ({
+        id: m.id,
+        field: m.huntingField,
+        slots: attackSlots(levelOf(m.id, levels).level, m.id === me?.id ? myAttacksOnWay : 0),
+      }));
+  }, [members, roles, levels, me?.id, myAttacksOnWay]);
 
   // Highest rung first, then biggest field: the chain reads from top to bottom.
   const heights = useMemo(() => rungs(roles), [roles]);
@@ -161,17 +187,18 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
     return { seconds, ...level };
   });
   const travels = trips.map((trip) => trip.seconds);
-  const arrival = firstArrival ?? defaultFirstArrival(now, travels);
+  const arrival = firstArrival ?? defaultFirstArrival(plannedAt, travels);
   const slots = schedule(arrival, travels);
   const usedPairs = new Set(hits.map((hit) => `${String(hit.attackerId)}-${String(hit.targetId)}`));
 
   if (error) return <div className="tdc-chain error">Impossible de charger les joueurs : {error}</div>;
+  const unassigned = storedRoles ? members.filter((m) => !(m.id in storedRoles)) : [];
   if (!playersExport || !settings || !levels) return <div className="tdc-chain">Chargement de l'alliance…</div>;
   if (!me || !allianceTag) {
     return (
       <div className="tdc-chain">
-        Ton alliance n'apparaît pas dans l'export du {formatExportVersion(playersExport.version)}. Si tu viens de la
-        rejoindre, elle apparaîtra après la prochaine mise à jour (chaque nuit à minuit).
+        Votre alliance n'apparaît pas dans l'export du {formatExportVersion(playersExport.version)}. Si vous venez de la
+        rejoindre, elle apparaîtra à la prochaine mise à jour de l'export, dans l'heure.
       </div>
     );
   }
@@ -197,20 +224,29 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
       ),
     }));
 
-  const launches = hits.map((hit, i) => ({
+  const launches: PlannedLaunch[] = hits.map((hit, i) => ({
+    rank: i + 1,
     attacker: pseudo(hit.attackerId),
     target: pseudo(hit.targetId),
     ants: hit.take,
     departure: slots[i]?.departure ?? arrival,
     arrival: slots[i]?.arrival ?? arrival,
   }));
+  const rows = hits.map((hit, i) => ({ hit, slot: slots[i], trip: trips[i], rank: i + 1 }));
+  if (sortBy === "departure") {
+    rows.sort((a, b) => (a.slot?.departure.getTime() ?? 0) - (b.slot?.departure.getTime() ?? 0) || a.rank - b.rank);
+  }
+  const anyLate = !firstArrival && slots.some((slot) => slot.departure < now);
 
   const copyPlan = async () => {
+    const text = planText(sortBy === "departure" ? byDeparture(launches) : launches, now);
     try {
-      await navigator.clipboard.writeText(planText(launches, now));
-      setMessage("Plan copié : colle-le dans un message collectif.");
+      await navigator.clipboard.writeText(text);
+      setCopyText(null);
+      setMessage("Plan copié : collez-le dans un message collectif.");
     } catch {
-      setMessage("Impossible de copier le plan.");
+      setCopyText(text);
+      setMessage("Le presse-papiers refuse : copiez le texte ci-dessous.");
     }
   };
 
@@ -234,7 +270,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
       <h2>Chaîne de TDC {allianceTag}</h2>
       <p className="meta">
         {chainMembers.length} membres dans la chaîne · positions du {formatExportVersion(playersExport.version)} · TDC{" "}
-        {liveHuntingFields.size > 0 ? "en direct (page Membres)" : "de l'export"} · membres en vacances exclus
+        {liveHuntingFields.size > 0 ? "en direct (page Membres)" : "de l'export"} · membres en vacances ou bannis exclus
       </p>
       <p className="rules">
         Règles supposées : une attaque gagnée prend 20 % du TDC de la cible, 1 cm² par fourmi au plus ; la cible doit
@@ -252,72 +288,83 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
           >
             Proposer des rôles
           </button>
-          {!settings.roles && <span className="note">Rôles proposés d'après le TDC : modifie-les ou garde-les.</span>}
+          {!settings.roles && <span className="note">Rôles proposés d'après le TDC : modifiez-les ou gardez-les.</span>}
         </div>
-        <table className="roles">
-          <thead>
-            <tr>
-              <th>Membre</th>
-              <th>TDC</th>
-              <th>Rôle</th>
-              <th title="Le surplus au-dessus monte vers les greniers">TDC à garder</th>
-              <th title="Vitesse d'attaque + 1 (réglable sur la Carte)">Attaques à la fois</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...members]
-              .sort((a, b) => b.huntingField - a.huntingField)
-              .map((m) => {
-                const role = roles.get(m.id) ?? OUT;
-                const level = levelOf(m.id, levels);
-                return (
-                  <tr key={m.id} className={role.kind === "out" ? "out" : undefined}>
-                    <td>
-                      <a href={`/Membre.php?Pseudo=${encodeURIComponent(m.pseudo)}`}>
-                        {m.masterPlayerId !== null && "⛓ "}
-                        {m.pseudo}
-                      </a>
-                      {m.id === me.id && " (toi)"}
-                    </td>
-                    <td>{formatNumber(m.huntingField)}</td>
-                    <td>
-                      <select
-                        value={roleValue(role)}
-                        aria-label={`Rôle de ${m.pseudo}`}
-                        onChange={(e) => setRole(m.id, parseRoleValue(e.target.value))}
+        {unassigned.length > 0 && (
+          <p className="warning">
+            {unassigned.length === 1 ? "1 membre n'a" : `${String(unassigned.length)} membres n'ont`} pas encore de rôle
+            ({unassigned.map((m) => m.pseudo).join(", ")}) : hors chaîne tant que vous ne le choisissez pas.
+          </p>
+        )}
+        <div className="table-wrap">
+          <table className="roles">
+            <thead>
+              <tr>
+                <th>Membre</th>
+                <th>TDC</th>
+                <th>Rôle</th>
+                <th title="Le surplus au-dessus monte vers les greniers">TDC à garder</th>
+                <th title="Vitesse d'attaque + 1 (réglable sur la Carte)">Attaques à la fois</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...members]
+                .sort((a, b) => b.huntingField - a.huntingField)
+                .map((m) => {
+                  const role = roles.get(m.id) ?? OUT;
+                  const level = levelOf(m.id, levels);
+                  return (
+                    <tr key={m.id} className={role.kind === "out" ? "out" : undefined}>
+                      <td>
+                        <a href={`/Membre.php?Pseudo=${encodeURIComponent(m.pseudo)}`}>
+                          {m.masterPlayerId !== null && "⛓ "}
+                          {m.pseudo}
+                        </a>
+                        {m.id === me.id && " (vous)"}
+                      </td>
+                      <td>{formatNumber(m.huntingField)}</td>
+                      <td>
+                        <select
+                          value={roleValue(role)}
+                          aria-label={`Rôle de ${m.pseudo}`}
+                          onChange={(e) => setRole(m.id, parseRoleValue(e.target.value))}
+                        >
+                          {roleOptions.map((option) => (
+                            <option key={roleValue(option)} value={roleValue(option)}>
+                              {roleLabel(option)}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        {role.kind === "hunter" && (
+                          <NumberField
+                            min={0}
+                            integer
+                            allowEmpty
+                            className="keep"
+                            placeholder="—"
+                            aria-label={`TDC à garder par ${m.pseudo}`}
+                            value={keep.get(m.id) ?? null}
+                            onCommit={(field) => {
+                              setKeep(m.id, field);
+                            }}
+                          />
+                        )}
+                      </td>
+                      <td
+                        className={level.estimated ? "estimated" : undefined}
+                        title={`Vitesse d'attaque ${String(level.level)}${level.estimated ? " (niveau par défaut)" : ""}`}
                       >
-                        {roleOptions.map((option) => (
-                          <option key={roleValue(option)} value={roleValue(option)}>
-                            {roleLabel(option)}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      {role.kind === "hunter" && (
-                        <input
-                          type="number"
-                          min={0}
-                          className="keep"
-                          placeholder="—"
-                          aria-label={`TDC à garder par ${m.pseudo}`}
-                          value={keep.get(m.id) ?? ""}
-                          onChange={(e) => setKeep(m.id, e.target.value === "" ? null : Number(e.target.value))}
-                        />
-                      )}
-                    </td>
-                    <td
-                      className={level.estimated ? "estimated" : undefined}
-                      title={`Vitesse d'attaque ${String(level.level)}${level.estimated ? " (niveau par défaut)" : ""}`}
-                    >
-                      {level.estimated && "≈ "}
-                      {level.level + 1}
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
+                        {level.estimated && "≈ "}
+                        {level.level + 1}
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
         <RoleSharing
           members={members}
           roles={roles}
@@ -349,7 +396,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
               </tr>
             </thead>
             <tbody>
-              {takeMatrix(ordered).map((row, i) => {
+              {takeMatrix(ordered, MARGIN).map((row, i) => {
                 const attacker = ordered[i];
                 if (!attacker) return null;
                 return (
@@ -421,15 +468,16 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
             </label>
             <label>
               cm² :{" "}
-              <input
-                type="number"
+              <NumberField
                 min={1}
+                integer
+                allowEmpty
                 className="keep"
                 placeholder="max"
-                value={transfer.amount ?? ""}
-                onChange={(e) =>
-                  setTransfer((t) => ({ ...t, amount: e.target.value === "" ? null : Number(e.target.value) }))
-                }
+                value={transfer.amount}
+                onCommit={(amount) => {
+                  setTransfer((t) => ({ ...t, amount }));
+                }}
               />
             </label>
           </div>
@@ -444,8 +492,8 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
         {hits.length === 0 ? (
           <p className="note">
             {mode === "chain"
-              ? "Rien à faire monter : saisis le « TDC à garder » des chasseurs."
-              : "Choisis qui donne et qui reçoit."}
+              ? "Rien à faire monter : saisissez le « TDC à garder » des chasseurs."
+              : "Choisissez qui donne et qui reçoit."}
           </p>
         ) : (
           <>
@@ -454,82 +502,102 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
                 Première arrivée :{" "}
                 <input
                   type="datetime-local"
-                  value={toLocalInput(arrival)}
-                  onChange={(e) => setFirstArrival(e.target.value ? new Date(e.target.value) : null)}
+                  value={toParisInput(arrival)}
+                  onChange={(e) => setFirstArrival(e.target.value ? fromParisInput(e.target.value) : null)}
                 />
               </label>
-              {firstArrival && (
-                <button type="button" className="link" onClick={() => setFirstArrival(null)}>
+              {(firstArrival ?? anyLate) && (
+                <button
+                  type="button"
+                  className="link"
+                  onClick={() => {
+                    setFirstArrival(null);
+                    setPlannedAt(new Date());
+                  }}
+                >
                   au plus tôt
                 </button>
               )}
-              <span className="note">Une arrivée par minute, dans l'ordre.</span>
+              <span className="note">
+                Une arrivée par minute, dans l'ordre des N°. Calculée à l'ouverture de la vue : elle ne bouge plus
+                ensuite, et deux membres ne la retrouvent que s'ils fixent la même heure ici.
+              </span>
             </div>
             <PlanSummary transfers={plan.transfers} pseudo={pseudo} />
-            <table className="plan">
-              <thead>
-                <tr>
-                  <th>N°</th>
-                  <th>Départ</th>
-                  <th>Attaquant</th>
-                  <th>Cible</th>
-                  <th title="Fourmis à envoyer : 1 cm² pris par fourmi">Fourmis</th>
-                  <th>Trajet</th>
-                  <th>Arrivée</th>
-                  <th>TDC après</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {hits.map((hit: Hit, i) => {
-                  const slot = slots[i];
-                  const trip = trips[i];
-                  const mine = hit.attackerId === me.id;
-                  const late = slot !== undefined && slot.departure < now;
-                  return (
-                    <tr key={i} className={mine ? "mine" : undefined}>
-                      <td>{i + 1}</td>
-                      <td className={late ? "late" : undefined} title={late ? "Départ déjà passé" : undefined}>
-                        {slot && formatEndTimeShort(slot.departure, now)}
-                      </td>
-                      <td>{pseudo(hit.attackerId)}</td>
-                      <td>{pseudo(hit.targetId)}</td>
-                      <td>{formatNumber(hit.take)}</td>
-                      <td
-                        className={trip?.estimated ? "estimated" : undefined}
-                        title={
-                          trip &&
-                          `Vitesse d'attaque ${String(trip.level)}${trip.estimated ? " (niveau par défaut)" : ""}`
-                        }
-                      >
-                        {trip?.estimated && "≈ "}
-                        {trip && formatDuration(trip.seconds)}
-                      </td>
-                      <td>{slot && formatEndTimeShort(slot.arrival, now)}</td>
-                      <td>
-                        {formatNumber(hit.attackerAfter)} / {formatNumber(hit.targetAfter)}
-                      </td>
-                      <td>
-                        {mine && (
-                          <a
-                            href={`/ennemie.php?Attaquer=${String(hit.targetId)}&lieu=1`}
-                            title="Ouvre le formulaire d'attaque du jeu : tu choisis l'armée et tu valides toi-même"
-                          >
-                            Attaquer
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="toolbar">
+              <label>
+                <input type="radio" checked={sortBy === "departure"} onChange={() => setSortBy("departure")} /> Trier
+                par départ
+              </label>
+              <label>
+                <input type="radio" checked={sortBy === "arrival"} onChange={() => setSortBy("arrival")} /> par arrivée
+              </label>
+            </div>
+            <div className="table-wrap">
+              <table className="plan">
+                <thead>
+                  <tr>
+                    <th title="Ordre d'arrivée : le plan tient si les attaques arrivent dans cet ordre">N°</th>
+                    <th>Départ</th>
+                    <th>Attaquant</th>
+                    <th>Cible</th>
+                    <th title="Fourmis à envoyer : 1 cm² pris par fourmi">Fourmis</th>
+                    <th>Trajet</th>
+                    <th>Arrivée</th>
+                    <th>TDC après (attaquant / cible)</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(({ hit, slot, trip, rank }) => {
+                    const mine = hit.attackerId === me.id;
+                    const late = slot !== undefined && slot.departure < now;
+                    return (
+                      <tr key={rank} className={mine ? "mine" : undefined}>
+                        <td>{rank}</td>
+                        <td className={late ? "late" : undefined} title={late ? "Départ déjà passé" : undefined}>
+                          {slot && formatEndTimeShort(slot.departure, now)}
+                        </td>
+                        <td>{pseudo(hit.attackerId)}</td>
+                        <td>{pseudo(hit.targetId)}</td>
+                        <td>{formatNumber(hit.take)}</td>
+                        <td
+                          className={trip?.estimated ? "estimated" : undefined}
+                          title={
+                            trip &&
+                            `Vitesse d'attaque ${String(trip.level)}${trip.estimated ? " (niveau par défaut)" : ""}`
+                          }
+                        >
+                          {trip?.estimated && "≈ "}
+                          {trip && formatDuration(trip.seconds * 1000)}
+                        </td>
+                        <td>{slot && formatEndTimeShort(slot.arrival, now)}</td>
+                        <td>
+                          {formatNumber(hit.attackerAfter)} / {formatNumber(hit.targetAfter)}
+                        </td>
+                        <td>
+                          {mine && (
+                            <a
+                              href={`/ennemie.php?Attaquer=${String(hit.targetId)}&lieu=1`}
+                              title="Ouvre le formulaire d'attaque du jeu : vous choisissez l'armée et validez vous-même"
+                            >
+                              Attaquer
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
             <div className="toolbar">
               <button type="button" onClick={() => void copyPlan()}>
                 Copier le plan
               </button>
               {message && <span className="note">{message}</span>}
             </div>
+            {copyText && <textarea readOnly rows={Math.min(12, launches.length + 2)} value={copyText} />}
           </>
         )}
       </section>
@@ -577,7 +645,7 @@ function RoleSharing({
       await navigator.clipboard.writeText(exported);
       setMessage("Rôles copiés dans le presse-papiers.");
     } catch {
-      setMessage("Copie le texte ci-dessous.");
+      setMessage("Copiez le texte ci-dessous.");
     }
   };
 

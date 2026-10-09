@@ -1,7 +1,8 @@
 import type { Levels } from "@/game/army/units";
 import type { Feature } from "../feature";
-import { loadLevels } from "../game-levels/levels";
+import { loadLevels } from "@/data/levels";
 import { HUNT_REPORT_STYLE, mountHuntReport } from "./mount";
+import { expeditionCount } from "./report";
 
 type MountedReport = ReturnType<typeof mountHuntReport>;
 
@@ -50,15 +51,25 @@ export const huntReports: Feature = {
         }
         pending.add(conversation);
         void getLevels().then((read) => {
-          const report = mountHuntReport(conversation, read, (text) => navigator.clipboard.writeText(text));
+          const report = mountHuntReport(
+            conversation,
+            read,
+            (text) => navigator.clipboard.writeText(text),
+            expeditionCount(headerOf(conversation)?.textContent ?? ""),
+          );
           mounted.set(conversation, { report, count: report.messageCount() });
           pending.delete(conversation);
         });
       }
     };
 
-    // The game loads each conversation over AJAX when its title is clicked.
-    const observer = new MutationObserver(scan);
+    // The game loads each conversation over AJAX when its title is clicked. The report's own changes are skipped.
+    const observer = new MutationObserver((records) => {
+      const outside = records.some(
+        (record) => !(record.target instanceof Element && record.target.closest(".optizzz-hunt-report")),
+      );
+      if (outside) scan();
+    });
     observer.observe(document.body, { childList: true, subtree: true });
     ctx.onInvalidated(() => observer.disconnect());
     scan();

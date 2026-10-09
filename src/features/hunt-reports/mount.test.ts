@@ -11,7 +11,8 @@ const setup = () => {
 
 const cells = (doc: Document, selector: string) =>
   [...doc.querySelectorAll(`.optizzz-hunt-report ${selector}`)].map((row) =>
-    [...row.children].map((cell) => cell.textContent.trim()),
+    // Numbers and units are joined by non-breaking spaces, never cut apart.
+    [...row.children].map((cell) => cell.textContent.replace(/\u00a0/g, " ").trim()),
   );
 
 const levels = { shield: 4, cochineal: 0 };
@@ -35,7 +36,9 @@ describe("mountHuntReport", () => {
       ],
     ]);
     expect(cells(doc, "tfoot tr")[0]).toEqual(["Total : 2 combats", "", "", "9", "10", "240", "1 614"]);
-    expect(doc.querySelector(".optizzz-hunt-report-yield")?.textContent).toBe("26,7 cm² par fourmi perdue");
+    expect(doc.querySelector(".optizzz-hunt-report-yield")?.textContent).toBe(
+      "26,7 cm² par fourmi tuée (d'après les rapports, sans les blessées)",
+    );
   });
 
   it("flags a fight far from the prediction", () => {
@@ -90,5 +93,23 @@ describe("mountHuntReport", () => {
     conversation.querySelector("tbody")?.prepend(older);
     report.update();
     expect(cells(doc, "tbody tr")).toHaveLength(3);
+  });
+
+  it("tells how many fights the conversation has when only some are shown", () => {
+    const { doc, conversation } = setup();
+    mountHuntReport(conversation, levels, () => Promise.resolve(), 191);
+    expect(doc.querySelector(".optizzz-hunt-report tfoot")?.textContent).toContain("affichés sur 191");
+  });
+
+  it("keeps the game's « Corbeille » at hand when its text is folded", () => {
+    const { doc, conversation } = setup();
+    const gameTable = conversation.querySelector(":scope > td > table");
+    if (!gameTable) throw new Error("fixture");
+    const bin = doc.createElement("a");
+    bin.href = "#";
+    bin.textContent = "Corbeille";
+    gameTable.querySelector("td")?.append(bin);
+    mountHuntReport(conversation, null, () => Promise.resolve());
+    expect(bin.closest(".optizzz-hunt-report-tools")).not.toBeNull();
   });
 });

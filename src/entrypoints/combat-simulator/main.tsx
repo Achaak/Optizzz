@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { CombatSimulator } from "@/features/combat-simulator/CombatSimulator";
-import { loadLastServer } from "@/features/combat-simulator/garrison";
+import { loadLastServer } from "@/data/garrison";
+import "@/theme/theme.css";
 import "./style.css";
 
 const query = new URLSearchParams(location.search);

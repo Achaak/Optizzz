@@ -19,7 +19,7 @@ export function LevelSharing({ members, levels, onImport }: Props) {
       await navigator.clipboard.writeText(exported);
       setMessage("Niveaux copiés dans le presse-papiers.");
     } catch {
-      setMessage("Copie le texte ci-dessous.");
+      setMessage("Copiez le texte ci-dessous.");
     }
   };
 
@@ -35,8 +35,8 @@ export function LevelSharing({ members, levels, onImport }: Props) {
     <details className="level-sharing">
       <summary>Partager les niveaux de Vitesse d'attaque</summary>
       <p className="note">
-        Format : une ligne « Pseudo: niveau » par membre. Exporte pour coller sur le forum ou Discord, importe ce qu'un
-        membre a partagé.
+        Format : une ligne « Pseudo: niveau » par membre. Exportez pour coller sur le forum ou Discord, importez ce
+        qu'un membre a partagé.
       </p>
       <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={"Peanut: 4\nDelta: 7"} />
       <div>

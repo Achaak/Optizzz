@@ -1,8 +1,8 @@
 // The simulator's form, apart from React: what fills it and what the engine gets from it.
 import { PLACES, type Attacker, type Defender, type Place } from "@/game/army/battle";
 import { armyFromKeys, armyToKeys, parseCounts, unitKeyOf, type Army } from "@/game/army/units";
-import type { StoredLevels } from "../game-levels/levels";
-import type { Garrison } from "./garrison";
+import type { StoredLevels } from "@/data/levels";
+import type { Garrison } from "@/data/garrison";
 import type { SimulatorSide } from "./open";
 
 /** Unit counts by unit key; units at 0 are left out. */
@@ -98,8 +98,23 @@ export function prefill(
       dome: garrison?.dome ?? form.defender.dome,
       lodge: garrison?.lodge ?? form.defender.lodge,
       field: garrison?.field ?? form.defender.field,
+      food: garrison?.food ?? form.defender.food,
+      materials: garrison?.materials ?? form.defender.materials,
     },
   };
+}
+
+/**
+ * The form when the player changes side: their old side is emptied only if it still holds what was filled in for
+ * them; an army pasted or typed there (the opponent's) stays.
+ */
+export function leaveSide(form: SimulatorForm, side: SimulatorSide, filled: SimulatorForm | null): SimulatorForm {
+  const empty = emptyForm();
+  const untouched = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  if (side === "attack") {
+    return filled && untouched(form.attacker, filled.attacker) ? { ...form, attacker: empty.attacker } : form;
+  }
+  return filled && untouched(form.defender, filled.defender) ? { ...form, defender: empty.defender } : form;
 }
 
 const TROOPS: Record<"attack" | "defense", RegExp> = {

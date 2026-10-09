@@ -1,5 +1,5 @@
-// Ant units as a hunt sees them. Order matters: it is the order in which our units take the prey's damage.
-// Figures: game help, Reine.php and docs/research/combat.md (elite Doorkeeper and Tank: Calystene, Outiiil);
+// Ant units, the reference shared by hunts, combats between players, laying, flood and targets. Order matters: it is
+// the order in which our units take damage (in a hunt, the prey's). Figures: game help, Reine.php and docs/research/combat.md (elite Doorkeeper and Tank: Calystene, Outiiil);
 // promotion weights from the « Chasse à zéro perte » reconstruction (docs/research/chasse.md).
 
 export interface Unit {
@@ -213,11 +213,20 @@ export interface Levels {
   cochineal: number;
 }
 
+/** Abbreviations Armee.php writes differently from our keys (the keys are stored: they never change). */
+const GAME_ABBREVIATIONS: Partial<Record<string, string>> = { Tu: "T", TuE: "TE" };
+
+/** A unit's abbreviation as the game writes it, for display: « T » for the key « Tu ». */
+export const unitLabel = (key: string): string => GAME_ABBREVIATIONS[key] ?? key;
+
+/** +10 % per level of Armes, Bouclier thoracique or Étable à cochenilles. */
+export const levelBonus = (level: number) => 1 + 0.1 * level;
+
 /** Total attack with the Weapons bonus. */
 export function armyAttack(army: Army, levels: Pick<Levels, "weapons">): number {
   let attack = 0;
   army.forEach((count, i) => (attack += count * (UNITS[i]?.attack ?? 0)));
-  return attack * (1 + 0.1 * levels.weapons);
+  return attack * levelBonus(levels.weapons);
 }
 
 /** What the army cost to lay, in food: the yardstick for losses. */

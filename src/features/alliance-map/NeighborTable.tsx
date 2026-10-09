@@ -1,8 +1,8 @@
 import type { MapMember } from "./chart-option";
-import type { Row, Trip } from "./neighbor-table";
-import { formatDuration } from "./travel";
-
-const numberFormat = new Intl.NumberFormat("fr-FR");
+import { levelOf, type KnownLevels, type Row, type Trip } from "./neighbor-table";
+import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { NumberField } from "@/utils/NumberField";
+import { formatDuration } from "@/utils/time-format";
 
 function TripTime({ trip }: { trip: Trip }) {
   return (
@@ -11,7 +11,7 @@ function TripTime({ trip }: { trip: Trip }) {
       title={`Calculé avec Vitesse d'attaque niveau ${trip.level}${trip.estimated ? " (niveau par défaut)" : ""}`}
     >
       {trip.estimated && "≈ "}
-      {formatDuration(trip.seconds)}
+      {formatDuration(trip.seconds * 1000)}
     </span>
   );
 }
@@ -21,21 +21,26 @@ interface Props {
   rows: Row<MapMember>[];
   playerLevels: Record<string, number>;
   defaultLevel: number;
+  levels: KnownLevels;
   onSelect: (playerId: number) => void;
   onLevelChange: (playerId: number, level: number | null) => void;
 }
 
-export function NeighborTable({ selected, rows, playerLevels, defaultLevel, onSelect, onLevelChange }: Props) {
+export function NeighborTable({ selected, rows, playerLevels, defaultLevel, levels, onSelect, onLevelChange }: Props) {
+  // Empty field: the level actually used is shown (mine from the Laboratory, the default for the others).
   const levelInput = (member: MapMember) => (
-    <input
-      type="number"
+    <NumberField
       min={0}
       max={30}
+      integer
+      allowEmpty
       className="level"
-      placeholder={String(defaultLevel)}
-      value={playerLevels[member.id] ?? ""}
+      placeholder={String(levelOf(member.id, levels).level)}
+      value={playerLevels[member.id] ?? null}
       aria-label={`Vitesse d'attaque de ${member.pseudo}`}
-      onChange={(e) => onLevelChange(member.id, e.target.value === "" ? null : Number(e.target.value))}
+      onCommit={(level) => {
+        onLevelChange(member.id, level);
+      }}
     />
   );
 
@@ -79,8 +84,8 @@ export function NeighborTable({ selected, rows, playerLevels, defaultLevel, onSe
                 </a>
                 {row.player.onHoliday && <span className="holiday"> (vacances)</span>}
               </td>
-              <td>{row.distance.toFixed(1)}</td>
-              <td>{numberFormat.format(row.player.huntingField)}</td>
+              <td>{formatDecimal(row.distance)}</td>
+              <td>{formatNumber(row.player.huntingField)}</td>
               <td>
                 <TripTime trip={row.outbound} />
               </td>
@@ -94,7 +99,7 @@ export function NeighborTable({ selected, rows, playerLevels, defaultLevel, onSe
       </table>
       <p className="note">
         En gras : les membres reliés à {selected.pseudo} sur la carte. ≈ : Vitesse d'attaque inconnue, temps estimé avec
-        le niveau par défaut ({defaultLevel}). Renseigne-la dans la dernière colonne pour un temps exact.
+        le niveau par défaut ({defaultLevel}). Renseignez-la dans la dernière colonne pour un temps exact.
       </p>
     </div>
   );

@@ -2,6 +2,7 @@
 import type { Place } from "@/game/army/battle";
 import { emptyArmy, UNITS, type Army } from "@/game/army/units";
 import { formatNumber } from "@/utils/number-format";
+import { parseGameInteger } from "@/utils/game-number";
 
 export interface AttackForm {
   target: string;
@@ -18,14 +19,12 @@ const PLACE_COLUMNS: [Place, number][] = [
 ];
 const PLACE_OF_LIEU: Record<string, Place> = { "1": "field", "2": "nest", "3": "lodge" };
 
-const toInteger = (text: string | null | undefined) => Number((text ?? "").replace(/\D/g, ""));
-
 /** A count as the game's fields take it: « 2 000 », « 2k », « 0.1M ». */
 function parseCount(text: string): number {
   const match = /^([\d\s.,]+)\s*([kKmMgG]?)/.exec(text.trim());
   if (!match?.[1]) return 0;
   const factor = { "": 1, k: 1e3, m: 1e6, g: 1e9 }[match[2]?.toLowerCase() ?? ""] ?? 1;
-  const number = factor === 1 ? toInteger(match[1]) : Number(match[1].replace(/\s/g, "").replace(",", "."));
+  const number = factor === 1 ? parseGameInteger(match[1]) : Number(match[1].replace(/\s/g, "").replace(",", "."));
   return Math.floor(number * factor);
 }
 
@@ -48,7 +47,7 @@ export function readAttackForm(doc: Document): AttackForm | null {
     if (i < 0) continue;
     for (const [place, column] of PLACE_COLUMNS) {
       const counts = available[place];
-      counts[i] = toInteger(row.cells[column]?.textContent);
+      counts[i] = parseGameInteger(row.cells[column]?.textContent);
     }
   }
   return { target, targetId: Number(targetId), available };
@@ -72,11 +71,9 @@ export function onAttackSent(doc: Document, sent: (attack: { army: number[]; pla
   });
 }
 
-/** The live hunting field on Membre.php: the « Terrain » row of the scores. */
-export function readProfileField(doc: Document): number | null {
-  const row = [...doc.querySelectorAll<HTMLTableRowElement>("#centre tr")].find(
-    (candidate) => candidate.cells[0]?.textContent.trim() === "Terrain",
-  );
-  const value = toInteger(row?.cells[1]?.textContent);
-  return row && value > 0 ? value : null;
-}
+/**
+ * Whether the game warns that I am under the beginner protection (« Vous profitez de la protection débutant… Si vous
+ * attaquez, vous ne serez plus protégés »): attacking ends it.
+ */
+export const isUnderBeginnerProtection = (doc: Document) =>
+  /Vous profitez de la protection d[ée]butant|vous ne serez plus prot[ée]g/i.test(doc.body.textContent);

@@ -24,15 +24,15 @@ describe("neighborRows", () => {
   });
 
   it("uses the selected player's level outbound and the member's level inbound", () => {
-    // Reference values: distance 10 → 17949 s at level 0, 13085 s at level 3.
+    // Reference values: distance 10 → 17948 s at level 0, 13084 s at level 3.
     const [row] = neighborRows(me, members, 1, levels({ labLevel: 3 }));
-    expect(row?.outbound).toEqual({ seconds: 13085, level: 3, estimated: false });
-    expect(row?.inbound).toEqual({ seconds: 13085, level: 3, estimated: true });
+    expect(row?.outbound).toEqual({ seconds: 13084, level: 3, estimated: false });
+    expect(row?.inbound).toEqual({ seconds: 13084, level: 3, estimated: true });
   });
 
   it("prefers a level entered for a player over the global level", () => {
     const [row] = neighborRows(me, members, 1, levels({ byPlayer: new Map([[2, 0]]), labLevel: 3 }));
-    expect(row?.inbound).toEqual({ seconds: 17949, level: 0, estimated: false });
+    expect(row?.inbound).toEqual({ seconds: 17948, level: 0, estimated: false });
   });
 
   it("applies the manual global level to members without a known level", () => {

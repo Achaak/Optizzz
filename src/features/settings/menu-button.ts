@@ -37,7 +37,7 @@ export function insertSettingsButton(doc: Document, onClick: () => void): HTMLBu
     padding: "0",
     border: "none",
     background: "none",
-    color: "rgb(211, 217, 184)",
+    color: "var(--optizzz-menu-text)",
     cursor: "pointer",
   });
   button.addEventListener("click", onClick);

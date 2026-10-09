@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCounts, unitKeyOf } from "./units";
+import { parseCounts, unitKeyOf, unitLabel } from "./units";
 
 describe("parseCounts", () => {
   it("reads counts written with thousands separators, names as written", () => {
@@ -17,5 +17,13 @@ describe("unitKeyOf", () => {
     expect(unitKeyOf("Naines d'Elite")).toBe("NE");
     expect(unitKeyOf("jsn")).toBe("JSN");
     expect(unitKeyOf("Fourmi volante")).toBeUndefined();
+  });
+});
+
+describe("unitLabel", () => {
+  it("writes the Killers as the game does, the other units by their key", () => {
+    expect(unitLabel("Tu")).toBe("T");
+    expect(unitLabel("TuE")).toBe("TE");
+    expect(unitLabel("JSN")).toBe("JSN");
   });
 });

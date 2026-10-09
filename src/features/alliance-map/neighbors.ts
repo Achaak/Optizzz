@@ -1,3 +1,5 @@
+import { distance } from "@/game/travel";
+
 export interface Position {
   id: number;
   x: number;
@@ -7,10 +9,6 @@ export interface Position {
 export interface Neighbor<P extends Position> {
   player: P;
   distance: number;
-}
-
-export function distance(a: Position, b: Position): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
 /** The other members, from closest to farthest from `origin`. */

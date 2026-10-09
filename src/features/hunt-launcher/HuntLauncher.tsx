@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { loadLevels, type HuntLevels } from "../game-levels/levels";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { loadLevels, unknownLevelsHint, type HuntLevels } from "@/data/levels";
 import { createEngine } from "./engine/client";
 import { summarize, type Objective, type Plan, type PlanInput } from "./engine/planner";
 import type { Extras } from "./engine/requests";
-import { armyFromKeys, armyToKeys, UNITS } from "@/game/army/units";
+import { armyFromKeys, armyToKeys, unitLabel, UNITS } from "@/game/army/units";
 import { HuntTable } from "./HuntTable";
 import { launchHunts, type LaunchStatus } from "./launch";
 import { LossCurve } from "./LossCurve";
-import { readHuntForm, type HuntForm, type OngoingHunt } from "./pages";
+import { hasNoArmyToSend, readHuntForm, type HuntForm, type OngoingHunt } from "./pages";
 import { huntableArmy, readSettings, writeSettings, type ObjectiveKind, type Settings } from "./settings";
 import { stepNotice, unitsText } from "./view";
-import { formatNumber } from "@/utils/number-format";
+import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { NumberField } from "@/utils/NumberField";
+import { useStoredSettings } from "@/utils/useStoredSettings";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 
 interface Props {
@@ -30,9 +32,12 @@ const OBJECTIVES: { kind: ObjectiveKind; label: string; hint: string }[] = [
 const RELOAD_DELAY_MS = 1500;
 const RECOMPUTE_DELAY_MS = 300;
 
-async function fetchHuntForm(origin: string): Promise<HuntForm | null> {
-  const html = await fetch(`${origin}/AcquerirTerrain.php`).then((response) => response.text());
-  return readHuntForm(new DOMParser().parseFromString(html, "text/html"));
+/** The hunt form, « none » when the game has no army to send, « error » when the page cannot be read. */
+async function fetchHuntForm(origin: string): Promise<HuntForm | "none" | "error"> {
+  const response = await fetch(`${origin}/AcquerirTerrain.php`);
+  if (!response.ok) return "error";
+  const doc = new DOMParser().parseFromString(await response.text(), "text/html");
+  return readHuntForm(doc) ?? (hasNoArmyToSend(doc) ? "none" : "error");
 }
 
 function objectiveOf(settings: Settings): Objective {
@@ -47,9 +52,10 @@ function objectiveOf(settings: Settings): Objective {
 export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
   const host = new URL(origin).host;
   const engine = useMemo(() => createEngine(), []);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, updateSettings] = useStoredSettings(host, readSettings, writeSettings);
   const [levels, setLevels] = useState<HuntLevels | null>(null);
-  const [form, setForm] = useState<HuntForm | null | "error">(null);
+  const [levelsError, setLevelsError] = useState<string | null>(null);
+  const [form, setForm] = useState<HuntForm | "none" | "error" | null>(null);
   const ongoingGain = ongoing.reduce((sum, hunt) => sum + hunt.fieldGain, 0);
   const [field, setField] = useState(currentField + ongoingGain);
   const [answered, setAnswered] = useState<{ input: PlanInput; answer: Plan } | null>(null);
@@ -58,25 +64,21 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
   const [editing, setEditing] = useState(false);
   const [statuses, setStatuses] = useState<LaunchStatus[]>([]);
   const [busy, setBusy] = useState(false);
+  // Once some hunts left, the army and slots read at load are stale: the plan stays as launched.
+  const [frozen, setFrozen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const requestId = useRef(0);
 
-  const updateSettings = useCallback(
-    (update: (current: Settings) => Settings) =>
-      setSettings((current) => {
-        if (!current) return current;
-        const next = update(current);
-        void writeSettings(host, next);
-        return next;
-      }),
-    [host],
-  );
-
   useEffect(() => {
-    void readSettings(host).then(setSettings);
-    loadLevels(origin).then(setLevels, () => setLevels({ weapons: 0, shield: 0, huntSpeed: 0, cochineal: 0 }));
-    fetchHuntForm(origin).then(setForm, () => setForm("error"));
+    loadLevels(origin).then(setLevels, (error: unknown) => {
+      setLevelsError(unknownLevelsHint(error));
+    });
+    fetchHuntForm(origin).then(setForm, () => {
+      setForm("error");
+    });
   }, [origin, host]);
+
+  useEffect(() => () => engine.dispose(), [engine]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -84,7 +86,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
   }, []);
 
   const input = useMemo<PlanInput | null>(() => {
-    if (!settings || !levels || !form || form === "error") return null;
+    if (!settings || !levels || !form || form === "error" || form === "none") return null;
     return {
       army: armyFromKeys(huntableArmy(form.available, settings.reserve)),
       field,
@@ -104,7 +106,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
   }, [levels, ongoing, readAt]);
 
   useEffect(() => {
-    if (!input) return;
+    if (!input || frozen) return;
     const id = ++requestId.current;
     const timer = setTimeout(() => {
       void engine({ type: "plan", input }).then(async (result) => {
@@ -119,14 +121,14 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
       });
     }, RECOMPUTE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [engine, input, waiting]);
+  }, [engine, input, waiting, frozen]);
 
   const answer = answered?.answer ?? null;
-  const computing = editing || (input !== null && answered?.input !== input);
+  const computing = editing || (input !== null && !frozen && answered?.input !== input);
   const plan = override ?? answer;
 
   const pickAmount = (amount: number) => {
-    if (!input || !plan) return;
+    if (!input || !plan || frozen) return;
     const id = ++requestId.current;
     setEditing(true);
     void engine({ type: "fixed", input, count: Math.max(1, plan.hunts.length), amount }).then((result) => {
@@ -137,7 +139,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
   };
 
   const editHunt = (index: number, change: { amount?: number; unit?: string; count?: number }) => {
-    if (!input || !plan) return;
+    if (!input || !plan || frozen) return;
     const drafts = plan.hunts.map((hunt) => ({ amount: hunt.amount, field: hunt.field, army: [...hunt.army] }));
     const edited = drafts[index];
     if (!edited) return;
@@ -178,6 +180,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
     const all = base.map((status, i) => (i >= from && i < to ? (result[i - from] ?? status) : status));
     setBusy(false);
     if (all.every((status) => status === "launched")) setTimeout(() => location.reload(), RELOAD_DELAY_MS);
+    else if (all.includes("launched")) setFrozen(true);
   };
 
   if (!settings) return null;
@@ -194,11 +197,40 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
   );
   if (!settings.open) return <div className="hunt-launcher closed">{header}</div>;
 
-  if (form === "error") {
+  const ongoingList = ongoing.length > 0 && (
+    <div className="ongoing">
+      <strong>Chasses en cours</strong>
+      <ul>
+        {ongoing.map((hunt) => (
+          <li key={hunt.id}>
+            +{formatNumber(hunt.fieldGain)} cm² · retour dans{" "}
+            {formatDuration(Math.max(0, hunt.returnsAt.getTime() - now.getTime()))} (
+            {formatEndTime(hunt.returnsAt, now)})
+            {hunt.troops && <span className="muted"> · {unitsText(hunt.troops)}</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  if (form === "error" || levelsError) {
     return (
       <div className="hunt-launcher">
         {header}
-        <p className="error">Impossible de lire le formulaire de chasse (AcquerirTerrain.php).</p>
+        <p className="error">
+          {levelsError ?? "Impossible de lire le formulaire de chasse (AcquerirTerrain.php)."} Aucune chasse n'est
+          calculée.
+        </p>
+        {ongoingList}
+      </div>
+    );
+  }
+  if (form === "none") {
+    return (
+      <div className="hunt-launcher">
+        {header}
+        <p className="note">Aucune unité à envoyer : votre armée est en chasse, ou vous n'en avez pas.</p>
+        {ongoingList}
       </div>
     );
   }
@@ -206,7 +238,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
     return (
       <div className="hunt-launcher">
         {header}
-        <p className="note">Lecture de ton armée et de tes niveaux…</p>
+        <p className="note">Lecture de votre armée et de vos niveaux…</p>
       </div>
     );
   }
@@ -242,15 +274,14 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
           {settings.objective === "yield" && (
             <label>
               pertes jusqu'à{" "}
-              <input
-                type="number"
+              <NumberField
                 min={0.1}
                 max={20}
                 step={0.1}
                 value={Math.round(settings.maxLossShare * 1000) / 10}
-                onChange={(e) =>
-                  updateSettings((s) => ({ ...s, maxLossShare: Math.max(0.001, Number(e.target.value) / 100 || 0.01) }))
-                }
+                onCommit={(percent) => {
+                  if (percent !== null) updateSettings((s) => ({ ...s, maxLossShare: percent / 100 }));
+                }}
               />{" "}
               % de l'armée envoyée (en nourriture, 9 fois sur 10)
             </label>
@@ -264,7 +295,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
               >
                 {RATIOS.map((ratio) => (
                   <option key={ratio} value={ratio}>
-                    {ratio.toLocaleString("fr-FR")}
+                    {formatDecimal(ratio)}
                   </option>
                 ))}
               </select>
@@ -275,14 +306,16 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
 
         <fieldset>
           <legend>Terrain et niveaux</legend>
-          <label title="TDC au moment où les chasses combattront : ton TDC plus ce que rapportent les chasses en cours. Change-le si tu attends un flood.">
+          <label title="TDC au moment où les chasses combattront : votre TDC plus ce que rapportent les chasses en cours. Changez-le si vous attendez un flood.">
             TDC de calcul{" "}
-            <input
-              type="number"
+            <NumberField
               min={1}
+              integer
               className="wide"
               value={field}
-              onChange={(e) => setField(Math.max(1, Number(e.target.value) || 1))}
+              onCommit={(value) => {
+                if (value !== null) setField(value);
+              }}
             />{" "}
             cm²
           </label>
@@ -303,18 +336,15 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
           {unitKeys.length === 0 && <span className="note">Aucune unité disponible.</span>}
           {unitKeys.map((key) => (
             <label key={key} title={UNITS.find((u) => u.key === key)?.name}>
-              {key}{" "}
-              <input
-                type="number"
+              {unitLabel(key)}{" "}
+              <NumberField
                 min={0}
+                integer
                 className="units"
                 value={settings.reserve[key] ?? 0}
-                onChange={(e) =>
-                  updateSettings((s) => ({
-                    ...s,
-                    reserve: { ...s.reserve, [key]: Math.max(0, Number(e.target.value) || 0) },
-                  }))
-                }
+                onCommit={(count) => {
+                  updateSettings((s) => ({ ...s, reserve: { ...s.reserve, [key]: count ?? 0 } }));
+                }}
               />
               <span className="muted"> / {formatNumber(form.available[key] ?? 0)}</span>
             </label>
@@ -322,8 +352,23 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
         </fieldset>
       </div>
 
-      {input.slots === 0 && <p className="warning">Tous tes créneaux de chasse sont pris.</p>}
+      {input.slots === 0 && <p className="warning">Tous vos créneaux de chasse sont pris.</p>}
       {computing && <p className="note">Calcul…</p>}
+      {frozen && (
+        <p className="warning">
+          Des chasses sont parties : ce plan n'est plus recalculé, l'armée disponible a changé.{" "}
+          <button
+            type="button"
+            className="link"
+            onClick={() => {
+              location.reload();
+            }}
+          >
+            Recharger la page
+          </button>{" "}
+          pour en préparer d'autres.
+        </p>
+      )}
 
       {answer?.hunts.length === 0 && input.slots > 0 && (
         <p className="warning">Aucune chasse possible avec ces unités et cet objectif.</p>
@@ -336,6 +381,8 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
             unitKeys={unitKeys}
             statuses={statuses}
             busy={busy}
+            frozen={frozen}
+            launchBlocked={computing}
             now={now}
             onEdit={editHunt}
             onLaunch={(i) => void launch(i, i + 1)}
@@ -344,14 +391,14 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
             <button
               type="button"
               className="primary"
-              disabled={busy || pendingCount === 0}
+              disabled={busy || computing || pendingCount === 0}
               onClick={() => void launch(Math.max(0, firstPending), plan.hunts.length)}
             >
               {pendingCount === plan.hunts.length
-                ? `Lancer ${plan.hunts.length === 1 ? "la chasse" : `${String(plan.hunts.length)} chasses`} (${formatNumber(plan.totalAmount)} cm²)`
+                ? `Lancer ${plan.hunts.length === 1 ? "la chasse" : `${String(plan.hunts.length)} chasses`} (${formatNumber(plan.totalAmount)} cm²${emptiesGarrison ? ", toute l'armée" : ""})`
                 : `Lancer les ${String(pendingCount)} chasses restantes`}
             </button>
-            {override && (
+            {override && !frozen && (
               <button type="button" className="link" onClick={() => setOverride(null)}>
                 revenir au plan conseillé
               </button>
@@ -362,12 +409,17 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
             {formatNumber(plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.food, 0))} de nourriture rapportée
           </p>
           {emptiesGarrison && (
-            <p className="warning">Ce plan envoie toute ton armée : rien ne reste pour défendre la fourmilière.</p>
+            <p className="warning">Ce plan envoie toute votre armée : rien ne reste pour défendre la fourmilière.</p>
           )}
           <p className="note">{stepNotice(field, plan.totalAmount)}</p>
 
-          {extras && extras.curve.length > 1 && (
+          {extras && extras.curve.length > 1 && !frozen && (
             <LossCurve curve={extras.curve} amount={plan.hunts[0]?.amount ?? 0} onPick={pickAmount} />
+          )}
+          {override && extras && (
+            <p className="note">
+              La courbe et les conseils ci-dessous portent sur le plan conseillé, à surfaces égales.
+            </p>
           )}
 
           {answer && extras && extras.laying.length > 0 && (
@@ -391,21 +443,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
         </>
       )}
 
-      {ongoing.length > 0 && (
-        <div className="ongoing">
-          <strong>Chasses en cours</strong>
-          <ul>
-            {ongoing.map((hunt) => (
-              <li key={hunt.id}>
-                +{formatNumber(hunt.fieldGain)} cm² · retour dans{" "}
-                {formatDuration(Math.max(0, hunt.returnsAt.getTime() - now.getTime()))} (
-                {formatEndTime(hunt.returnsAt, now)})
-                {hunt.troops && <span className="muted"> · {unitsText(hunt.troops)}</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {ongoingList}
 
       <p className="meta">
         Pertes simulées sur 10 000 tirages de proies, une unité blessée à plus de la moitié de sa vie comptant comme
