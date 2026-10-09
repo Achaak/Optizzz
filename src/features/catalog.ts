@@ -54,7 +54,8 @@ export const featureCatalog = [
   {
     id: "laying-planner",
     label: "Planificateur de ponte",
-    description: "Sur la Reine : fin de la ponte, quand elle sera payable, son entretien, et un bouton « max ».",
+    description:
+      "Sur la Reine : des raccourcis (tout payer, durée de ponte, bilan à zéro) avec aperçu, et la fin, le paiement et l'entretien de la ponte choisie.",
     options: [],
   },
   {

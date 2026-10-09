@@ -2,14 +2,15 @@ import { readSection } from "@/game/pages/end-times";
 import type { Feature } from "../feature";
 import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
 import { readStock } from "@/game/pages/resources";
-import { queuedWorkers, readLayingRows } from "./laying";
-import { LAYING_STYLE, mountLayingNotice, mountLayingPlan } from "./mount";
+import { queuedWorkers, readLayingRows, readLayingSpeed } from "./laying";
+import { LAYING_STYLE, mountLayingNotice, mountLayingPlan, settingsStore } from "./mount";
+import { readLayingSettings, writeLayingSettings } from "./settings";
 
 const REFRESH_MS = 60_000;
 
 /**
- * On Reine.php, under each unit's laying cost: when the typed order ends and can be paid, its upkeep and a « max »
- * button. See docs/features/laying-planner.md.
+ * On Reine.php, next to each unit's laying form: shortcuts that fill it (previewed on hover), and when the chosen order
+ * can be paid and ends, and what it changes. See docs/features/laying-planner.md.
  */
 export const layingPlanner: Feature = {
   id: "laying-planner",
@@ -42,7 +43,14 @@ export const layingPlanner: Feature = {
       huntingField: stock.huntingField,
       queuedWorkers: queuedWorkers(queued.map((item) => item.label)),
     };
-    const plans = rows.map((row) => mountLayingPlan(row, state, context, readAt, () => new Date()));
+    const host = location.host;
+    const settings = settingsStore(await readLayingSettings(host), (next) => {
+      writeLayingSettings(host, next).catch((error: unknown) => {
+        console.error("[Optizzz] saving laying settings failed", error);
+      });
+    });
+    const options = { speed: readLayingSpeed(document), settings };
+    const plans = rows.map((row) => mountLayingPlan(row, state, context, readAt, () => new Date(), options));
     ctx.setInterval(() => {
       for (const plan of plans) plan.render();
     }, REFRESH_MS);
