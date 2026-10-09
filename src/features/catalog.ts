@@ -89,7 +89,7 @@ export const featureCatalog = [
     id: "combat-simulator",
     label: "Simulateur de combat",
     description:
-      "Bouton « Simuler un combat » sur la page Armée ; le simulateur reste ouvrable depuis l'onglet Outils.",
+      "Bouton dans la barre du haut, sur toutes les pages : le simulateur s'ouvre par-dessus le jeu. Il reste ouvrable depuis l'onglet Outils.",
     options: [],
   },
   {

@@ -20,6 +20,8 @@ interface Props {
   /** Game server whose remembered army fills the form, e.g. "s5.fourmizzz.fr"; null when none is known. */
   server: string | null;
   side: SimulatorSide;
+  /** Framed in the in-game dialog, which already shows the title. */
+  embedded?: boolean;
 }
 
 function NumberInput({ value, onChange, label }: { value: number; onChange: (value: number) => void; label: string }) {
@@ -145,7 +147,7 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
   );
 }
 
-export function CombatSimulator({ server, side: initialSide }: Props) {
+export function CombatSimulator({ server, side: initialSide, embedded = false }: Props) {
   const [side, setSide] = useState<SimulatorSide>(initialSide);
   const [form, setForm] = useState<SimulatorForm>(emptyForm);
   const [armyNote, setArmyNote] = useState<string | null>(null);
@@ -217,7 +219,7 @@ export function CombatSimulator({ server, side: initialSide }: Props) {
   return (
     <main className="simulator">
       <header>
-        <h1>Simulateur de combat</h1>
+        {!embedded && <h1>Simulateur de combat</h1>}
         <p className="note">
           {server ? `Serveur ${server}` : "Aucun serveur connu : passez sur la page Armée du jeu pour pré-remplir."}
           {armyNote && ` · ${armyNote}`}
