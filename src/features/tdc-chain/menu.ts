@@ -1,4 +1,4 @@
-import { svgElement } from "@/utils/html";
+import { addAllianceMenuEntry } from "@/utils/alliance-menu";
 import type { Feature } from "../feature";
 
 export const CHAIN_HASH = "#chaine";
@@ -16,26 +16,11 @@ export const tdcChainMenu: Feature = {
   toggle: "tdc-chain",
   matches: () => true,
   run() {
-    const menu = document.querySelector("#menuAlliance");
-    const after = (menu?.querySelector(".optizzz-alliance-map") ?? menu?.querySelector("a.boutonMembres"))?.closest(
-      "li",
-    );
-    if (!after || menu?.querySelector(".optizzz-tdc-chain")) return;
-
-    const icon = document.createElement("span");
-    icon.append(svgElement(document, CHAIN_ICON));
-    icon.style.background = "none";
-    icon.style.display = "flex";
-    icon.style.alignItems = "center";
-    icon.style.justifyContent = "center";
-
-    const link = document.createElement("a");
-    link.className = "optizzz-tdc-chain";
-    link.href = CHAIN_LINK;
-    link.append(icon, "Chaîne");
-
-    const item = document.createElement("li");
-    item.append(link);
-    after.after(item);
+    addAllianceMenuEntry(document, {
+      className: "optizzz-tdc-chain",
+      href: CHAIN_LINK,
+      label: "Chaîne",
+      icon: CHAIN_ICON,
+    });
   },
 };

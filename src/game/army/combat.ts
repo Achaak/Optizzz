@@ -1,7 +1,7 @@
 // One hunt fight (rounds: ./rounds.ts). Rules and their checks against real reports: docs/research/chasse.md.
 import { PREYS, type Pack } from "./prey";
 import { EPSILON, resolveRounds } from "./rounds";
-import { UNITS, type Army, type Levels } from "./units";
+import { levelBonus, UNITS, type Army, type Levels } from "./units";
 
 export interface FightResult {
   win: boolean;
@@ -18,8 +18,8 @@ export interface FightResult {
 }
 
 export function fight(army: Army, pack: Pack, levels: Omit<Levels, "huntSpeed">): FightResult {
-  const attackBonus = 1 + 0.1 * levels.weapons;
-  const hpBonus = 1 + 0.1 * levels.shield;
+  const attackBonus = levelBonus(levels.weapons);
+  const hpBonus = levelBonus(levels.shield);
 
   // Each side is a list of stacks; a stack's pool is its remaining hp.
   const ours = UNITS.flatMap((unit, i) => {
@@ -55,8 +55,8 @@ function promotions(army: Army, pack: Pack, levels: Omit<Levels, "huntSpeed">, s
   pack.forEach((count, i) => (preyValue += count * (PREYS[i]?.value ?? 0)));
   army.forEach((count, i) => (armyWeight += count * (UNITS[i]?.weight ?? 0)));
   if (armyWeight <= 0) return UNITS.map(() => 0);
-  const ratio = (13.2 * preyValue) / (armyWeight * Math.sqrt((1 + 0.1 * levels.shield) * (1 + 0.1 * levels.weapons)));
-  const share = (1 + 0.1 * levels.cochineal) * ratio * ratio;
+  const ratio = (13.2 * preyValue) / (armyWeight * Math.sqrt(levelBonus(levels.shield) * levelBonus(levels.weapons)));
+  const share = levelBonus(levels.cochineal) * ratio * ratio;
   return UNITS.map((unit, i) => {
     const left = survivors[i] ?? 0;
     if (!unit.promotesTo || left <= 0) return 0;

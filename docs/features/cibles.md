@@ -14,32 +14,33 @@ Elle filtre 50 à 300 % de mon TDC et trie (TDC, distance, alliance, pseudo), ma
 
 - **Où** : `ennemie.php`, encart repliable « Cibles à portée (N) » au-dessus du formulaire du jeu, déplié par défaut ; replié ou non est mémorisé par serveur. Rien sur le formulaire d'attaque (`ennemie.php?Attaquer=…`). Les lignes du jeu ne sont pas touchées.
 - **Qui** : TDC entre 50 % (inclus) et 300 % (exclu) de mon TDC en direct (`#quantite_tdc`). Sont masqués : moi, mon alliance, les bannis.
-- **Données** : exports publics des joueurs et des alliances (horaires, en cache). Pour les joueurs que le tableau du jeu affiche, son TDC en direct et son état remplacent ceux de l'export ; la protection débutant (« Nouveau ») n'est connue que pour eux. Position et alliance d'après l'export ; Vitesse d'attaque mémorisée (`game-levels`).
+- **Données** : exports publics des joueurs et des alliances (horaires, en cache). Pour les joueurs que le tableau du jeu affiche, son TDC en direct et son état remplacent ceux de l'export ; la protection débutant (« Nouveau ») n'est connue que pour eux. Position et alliance d'après l'export ; Vitesse d'attaque mémorisée (`game-levels`). Export injoignable ou Vitesse d'attaque illisible : l'encart s'affiche quand même, avec la raison (« L'export public de Fourmizzz ne répond pas… », « Niveaux inconnus : passez par le Laboratoire… »).
+- **Protection débutant** : quand le jeu dit que je suis protégé (« Vous profitez de la protection débutant… »), l'encart le rappelle en tête : attaquer y met fin.
 - **Colonnes** :
-  - Pseudo : lien vers le profil, suivi de ⚔ si le joueur peut m'attaquer en retour (mon TDC entre 50 et 300 % du sien, soit le sien entre 33 et 200 % du mien) ;
+  - Pseudo : lien vers le profil, suivi de l'icône du jeu `icone_degat_defense.gif` (infobulle « Peut vous attaquer en retour ») si le joueur peut m'attaquer en retour (mon TDC entre 50 et 300 % du sien, soit le sien entre 33 et 200 % du mien) ;
   - Alliance : avec « · Pacte (PNA) » (la description du pacte en infobulle) ou « · Guerre » ;
   - TDC, puis % de mon TDC ;
   - Prise max : `floor(20 % de son TDC)` ; l'infobulle rappelle qu'il faut au moins autant de fourmis ;
-  - Flood max (si « Plan de flood » est activé et mon armée connue par `Armee.php`) : le total d'un flood avec mes attaques possibles et mon armée, sa défense collée comprise (« — » si mon armée ne suffit pas) ; triable ; voir `flood.md` ;
+  - Flood max (si « Plan de flood » est activé et mon armée connue par `Armee.php`) : le total d'un flood avec mes attaques possibles et mon armée, sa défense collée comprise (« — » si mon armée ne suffit pas), calculé comme le Plan de flood : une fois arrivées les attaques en route (prises notées, attaques lancées sans le plan relevées sur `Armee.php`, relu en arrière-plan) ; triable ; voir `flood.md`. Colonne absente, avec la raison dans la note, quand l'armée est inconnue, vide (toute en chasse) ou les niveaux illisibles ;
   - Distance en cases, puis Trajet et Arrivée si l'attaque part maintenant ;
-  - État : libre, colonisé par X, en vacances, protection débutant ;
+  - État : libre, colonisé par X, en vacances, protection débutant ; « libre ? » pour un joueur absent du tableau du jeu, dont la protection débutant est inconnue (infobulle) ;
   - Attaquer : lien vers `ennemie.php?Attaquer=<id>&lieu=1`, le formulaire du jeu, où le joueur choisit son armée et valide lui-même. Seulement pour les cibles attaquables maintenant : libres ou colonisées, hors pacte.
 - **Couleurs** : comme le jeu, fond rouge pour une guerre (déclarée d'un côté ou de l'autre), bleu pour un pacte. Les joueurs en vacances ou protégés sont grisés.
 - **Filtres** :
   - « Masquer les pactes », cochée par défaut ;
   - « Seulement les attaquables maintenant », décochée par défaut.
-- **Tri** : par distance ; un clic sur « TDC » ou « Flood max » trie du plus gros au plus petit, un clic sur « Distance » ou « Trajet » revient à la distance. On voit les 50 premiers, puis « Voir plus (N restants) ».
+- **Tri** : par distance ; un clic sur « TDC » ou « Flood max » trie du plus gros au plus petit, un clic sur « Distance » ou « Trajet » revient à la distance. Les en-têtes triables sont des boutons (clavier) ; la colonne active porte une flèche (▲ distance, ▼ sinon). Le « Flood max » de chaque cible est calculé une fois, pas à chaque tri. On voit les 50 premiers, puis « Voir plus (N restants) ».
 - Les séries d'attaques (flood) relèvent de l'étape 9 (« Chaîne de TDC »).
 
 ## Code
 
-| Fichier                                     | Rôle                                                                               |
-| ------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `src/features/alliance-map/api.ts` (+ test) | Exports des joueurs et des alliances (`loadAlliancesExport`), en cache, zod        |
-| `src/features/targets/targets.ts` (+ test)  | Lecture de `#tabEnnemie`, portée, prise max, diplomatie, état, liste des cibles    |
-| `src/features/targets/mount.ts` (+ test)    | L'encart : tableau, filtres, tri, « voir plus », liens                             |
-| `src/features/targets/index.ts`             | La feature (interrupteur `targets`), chargement des exports et des niveaux         |
-| `src/features/targets/__fixtures__/*.html`  | `ennemie.php` relevée sur S2 (tous les états) et S5 (« Nouveau »), pseudos fictifs |
+| Fichier                                    | Rôle                                                                               |
+| ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `src/data/exports.ts` (+ test)             | Exports des joueurs et des alliances (`loadAlliancesExport`), en cache, zod        |
+| `src/features/targets/targets.ts` (+ test) | Lecture de `#tabEnnemie`, portée, prise max, diplomatie, état, liste des cibles    |
+| `src/features/targets/mount.ts` (+ test)   | L'encart : tableau, filtres, tri, « voir plus », liens                             |
+| `src/features/targets/index.ts`            | La feature (interrupteur `targets`), chargement des exports et des niveaux         |
+| `src/features/targets/__fixtures__/*.html` | `ennemie.php` relevée sur S2 (tous les états) et S5 (« Nouveau »), pseudos fictifs |
 
 ## Plus tard
 

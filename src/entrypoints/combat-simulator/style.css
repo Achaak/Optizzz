@@ -1,10 +1,10 @@
 /* Close to the game: parchment background, olive titles, thin dark table borders. */
 body {
   margin: 0;
-  background: #efe0ad;
-  font-family: Verdana, Arial, sans-serif;
-  font-size: 12px;
-  color: #222;
+  background: var(--optizzz-surface);
+  font-family: var(--optizzz-font);
+  font-size: var(--optizzz-font-size);
+  color: var(--optizzz-text);
 }
 
 .simulator {
@@ -16,7 +16,7 @@ body {
 h1,
 h2,
 h3 {
-  color: #6f6a1f;
+  color: var(--optizzz-title);
   font-weight: normal;
   margin: 0 0 8px;
 }
@@ -34,14 +34,14 @@ h3 {
 }
 
 .note {
-  color: #6b5d3a;
+  color: var(--optizzz-text-muted);
   margin: 4px 0;
 }
 
 .warning {
-  background: #f7d9a8;
-  border: 1px solid #c76b00;
-  border-radius: 3px;
+  background: var(--optizzz-warning-bg);
+  border: 1px solid var(--optizzz-warning);
+  border-radius: var(--optizzz-radius);
   padding: 6px 10px;
   margin: 8px 0;
 }
@@ -55,8 +55,8 @@ h3 {
 }
 
 fieldset {
-  border: 1px solid #a8894a;
-  border-radius: 3px;
+  border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius);
   display: flex;
   gap: 12px;
 }
@@ -86,10 +86,16 @@ button {
 
 .side,
 .results {
-  background: #f7ecc6;
-  border: 1px solid #a8894a;
-  border-radius: 4px;
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius);
   padding: 12px;
+}
+
+/* A narrow window scrolls the defender's table (3 places × 14 units) instead of overflowing. */
+.side {
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .results {
@@ -119,7 +125,7 @@ table {
 
 th,
 td {
-  border: 1px solid #000;
+  border: 1px solid var(--optizzz-table-border);
   padding: 2px 6px;
   text-align: left;
 }
@@ -162,12 +168,12 @@ td {
 
 .won h3,
 .verdict.won {
-  color: #2f6b12;
+  color: var(--optizzz-success);
 }
 
 .lost h3,
 .verdict.lost {
-  color: #a01010;
+  color: var(--optizzz-danger);
 }
 
 .stage {
@@ -175,5 +181,5 @@ td {
 }
 
 .reply {
-  color: #4a4320;
+  color: var(--optizzz-text-muted);
 }

@@ -1,14 +1,13 @@
 // Who can take hunting field from whom, and in which order: see docs/features/chaine-tdc.md.
-import { inRange } from "@/game/flood";
+import { inRange, maxTake, takeAtLimit } from "@/game/attack";
 import { rungs, type Role } from "./roles";
 
-/** What a won attack takes on the hunting field, 1 cm² per ant at most (tutorial « Attaque »). */
-const fullTake = (field: number) => Math.floor(field * 0.2);
-
-/** Attacker by target: what a won attack takes, or null when out of range (or the same member). */
-export function takeMatrix(members: readonly { field: number }[]): (number | null)[][] {
+/** Attacker by target: what a won attack takes, or null when out of range with the margin (or the same member). */
+export function takeMatrix(members: readonly { field: number }[], margin: number): (number | null)[][] {
   return members.map((attacker, i) =>
-    members.map((target, j) => (i !== j && inRange(attacker.field, target.field) ? fullTake(target.field) : null)),
+    members.map((target, j) =>
+      i !== j && inRange(attacker.field, target.field, margin) ? maxTake(target.field) : null,
+    ),
   );
 }
 
@@ -43,10 +42,6 @@ type State = Map<number, { field: number; slots: number }>;
 
 const cloneState = (state: State): State => new Map([...state].map(([id, entry]) => [id, { ...entry }]));
 
-/** Whether the target is in range at the arrival, `margin` above the 50 % limit: other moves may land first. */
-const inRangeWithMargin = (attacker: number, target: number, margin: number) =>
-  target * 2 >= attacker * (1 + margin) && target < attacker * 3;
-
 /**
  * The attacks for `attackerId` to take `amount` from `targetId`, changing `state`: 20 % each while the target stays
  * in range for the next one, else the largest take that keeps it at the limit, then a last 20 %.
@@ -57,11 +52,11 @@ function link(state: State, attackerId: number, targetId: number, amount: number
   if (!attacker || !target) return [];
   const hits: Hit[] = [];
   let left = amount;
-  while (left > 0 && attacker.slots > 0 && inRangeWithMargin(attacker.field, target.field, margin)) {
-    let take = Math.min(fullTake(target.field), left);
+  while (left > 0 && attacker.slots > 0 && inRange(attacker.field, target.field, margin)) {
+    let take = Math.min(maxTake(target.field), left);
     let last = false;
-    if (take < left && !inRangeWithMargin(attacker.field + take, target.field - take, margin)) {
-      const limit = Math.floor((2 * target.field - (1 + margin) * attacker.field) / (3 + margin));
+    if (take < left && !inRange(attacker.field + take, target.field - take, margin)) {
+      const limit = takeAtLimit(attacker.field, target.field, margin);
       if (attacker.slots > 1 && limit > 0) take = Math.min(take, limit);
       else last = true;
     }
@@ -94,7 +89,7 @@ function shortestPath(
     const currentField = state.get(current)?.field ?? 0;
     for (const [id, { field, slots }] of state) {
       if (previous.has(id) || (!ignoreSlots && slots <= 0) || !canFlood(id, current)) continue;
-      if (!inRangeWithMargin(field, currentField, margin)) continue;
+      if (!inRange(field, currentField, margin)) continue;
       previous.set(id, current);
       queue.push(id);
     }

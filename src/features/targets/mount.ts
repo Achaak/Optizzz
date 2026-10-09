@@ -1,14 +1,16 @@
 import type { Army } from "@/game/army/units";
 import { planAttacks } from "@/game/flood";
-import { formatNumber } from "@/utils/number-format";
+import { afterOnWay, type OnWay } from "@/data/on-way";
+import { formatDecimal, formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import { listTargets, type Target, type TargetsInput } from "./targets";
 
 // Colours of the game's own panel (table.simulateur) and of the rows of #tabEnnemie.
 export const TARGETS_STYLE = `
 .optizzz-targets { margin: 8px auto; width: fit-content; max-width: 100%; box-sizing: border-box; overflow-x: auto;
-  padding: 6px 10px; text-align: left; background: rgb(215, 195, 132); border: 1px solid rgb(102, 88, 50); }
-.optizzz-targets summary { cursor: pointer; font-weight: bold; font-size: 1.1em; }
+  padding: 6px 10px; text-align: left; background: var(--optizzz-surface); border: 1px solid var(--optizzz-border); }
+.optizzz-targets summary, .optizzz-targets-title { cursor: pointer; font-weight: bold; font-size: 1.1em; }
+.optizzz-targets-title { cursor: default; margin: 0; }
 .optizzz-targets-note { font-style: italic; font-size: 0.85em; margin: 4px 0; max-width: 700px; }
 .optizzz-targets label { margin-right: 16px; }
 .optizzz-targets table { border-collapse: collapse; margin-top: 4px; font-size: 0.85em; }
@@ -16,10 +18,15 @@ export const TARGETS_STYLE = `
 .optizzz-targets td.optizzz-targets-state { white-space: normal; min-width: 90px; }
 .optizzz-targets td.optizzz-targets-number { text-align: right; }
 .optizzz-targets td img { vertical-align: middle; margin-left: 2px; }
-.optizzz-targets th.optizzz-targets-sortable { cursor: pointer; text-decoration: underline dotted; }
-.optizzz-targets tbody tr:nth-child(even) { background: rgb(201, 174, 99); }
-.optizzz-targets tbody tr.optizzz-targets-war { background: rgba(200, 40, 40, 0.25); }
-.optizzz-targets tbody tr.optizzz-targets-pact { background: rgba(40, 90, 200, 0.2); }
+.optizzz-targets th button { background: none; border: none; padding: 0; font: inherit; font-weight: bold;
+  color: inherit; cursor: pointer; text-decoration: underline dotted; }
+.optizzz-targets th[aria-sort] button { text-decoration: none; }
+.optizzz-targets th[aria-sort] button::after { content: " ▼"; }
+.optizzz-targets th[aria-sort="ascending"] button::after { content: " ▲"; }
+.optizzz-targets-protected { font-weight: bold; margin: 4px 0; }
+.optizzz-targets tbody tr:nth-child(even) { background: var(--optizzz-surface-alt); }
+.optizzz-targets tbody tr.optizzz-targets-war { background: var(--optizzz-war-bg); }
+.optizzz-targets tbody tr.optizzz-targets-pact { background: var(--optizzz-pact-bg); }
 .optizzz-targets tr.optizzz-targets-inactive { opacity: 0.55; }
 .optizzz-targets-more { margin-top: 6px; }`;
 
@@ -28,13 +35,19 @@ export interface TargetsContext extends TargetsInput {
   open: boolean;
   /** Called when the player folds or unfolds the box, to remember it. */
   onOpenChange: (open: boolean) => void;
-  /** My army and free attack slots, when known (plan de flood switched on, army read on Armee.php). */
+  /** My army and attacks on their way, when known (plan de flood switched on, army read on Armee.php). */
   flood?: FloodSettings | null;
+  /** Why the « Flood max » column is missing, when the flood plan is on. */
+  floodMissing?: string | null;
+  /** I am under the beginner protection: attacking ends it. */
+  protectedMe?: boolean;
 }
 
 export interface FloodSettings {
   available: Army;
-  slots: number;
+  attackSpeed: number;
+  /** The same attacks on their way as the flood plan counts. */
+  onWay: OnWay;
   /** Armies pasted on the attack form, by target id. */
   defenses: Map<number, Army>;
   weapons: number;
@@ -72,7 +85,7 @@ function stateText(target: Target): string {
     case "banned":
       return "banni";
     case "free":
-      return "libre";
+      return target.stateLive ? "libre" : "libre ?";
     case null:
       return "";
   }
@@ -87,6 +100,22 @@ const checkbox = (doc: Document, className: string, label: string, checked: bool
   wrapper.append(input, ` ${label}`);
   return { wrapper, input };
 };
+
+/** Above the search form of ennemie.php, when the list cannot be made: says why. */
+export function mountTargetsNotice(doc: Document, text: string) {
+  const form = doc.getElementById("formulairePageEnnemie");
+  const anchor = form?.closest("table.simulateur") ?? form;
+  if (!anchor) return;
+  const box = doc.createElement("div");
+  box.className = "optizzz-targets";
+  const title = doc.createElement("p");
+  title.className = "optizzz-targets-title";
+  title.textContent = "Cibles à portée";
+  const message = doc.createElement("p");
+  message.textContent = text;
+  box.append(title, message);
+  anchor.before(box);
+}
 
 /**
  * Above the search form of ennemie.php: the players I may attack, nearest first, with the trip, the arrival and
@@ -106,8 +135,18 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
   const summary = doc.createElement("summary");
   const note = doc.createElement("p");
   note.className = "optizzz-targets-note";
-  note.textContent =
-    "TDC en direct pour les joueurs listés par le jeu ci-dessous, sinon d'après l'export public (mis à jour chaque heure). La protection débutant n'est connue que pour les joueurs listés par le jeu.";
+  note.textContent = [
+    "TDC en direct pour les joueurs listés par le jeu ci-dessous, sinon d'après l'export public (mis à jour chaque heure).",
+    "La protection débutant n'est connue que pour les joueurs listés par le jeu : « libre ? » pour les autres.",
+    context.floodMissing ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const protectedMe = doc.createElement("p");
+  protectedMe.className = "optizzz-targets-protected";
+  protectedMe.textContent =
+    "Vous êtes sous protection débutant : attaquer y met fin (avertissement du jeu, sous le formulaire de recherche).";
+  protectedMe.hidden = !context.protectedMe;
   const hidePacts = checkbox(doc, "optizzz-targets-hide-pacts", "Masquer les pactes", true);
   const attackableOnly = checkbox(
     doc,
@@ -135,16 +174,18 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
   let shown = PAGE_SIZE;
 
   const { flood } = context;
-  /** What a flood takes from each target, null when my army cannot beat its known defense; per render. */
-  let floods = new Map<number, number | null>();
+  /** What a flood takes from each target, null when my army cannot beat its known defense; kept between renders. */
+  const floods = new Map<number, number | null>();
   const floodOf = (target: Target): number | null => {
     if (!flood) return null;
     if (!floods.has(target.id)) {
       const defense = flood.defenses.get(target.id);
+      // As the flood plan: once the attacks on their way have landed.
+      const after = afterOnWay(context.me.field, target, flood.onWay, flood.attackSpeed);
       const plan = planAttacks({
-        attackerField: context.me.field,
-        targetField: target.field,
-        slots: flood.slots,
+        attackerField: after.myField,
+        targetField: after.targetField,
+        slots: after.slots,
         margin: flood.margin,
         available: flood.available,
         defender: defense
@@ -168,18 +209,24 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     flood: (a, b) => (floodOf(b) ?? -1) - (floodOf(a) ?? -1),
   };
 
+  const sortHeaders: { th: HTMLTableCellElement; key: SortKey }[] = [];
   for (const column of COLUMNS) {
     if (column.flood && !flood) continue;
     const th = doc.createElement("th");
-    th.textContent = column.title;
     const key = column.sort;
     if (key) {
-      th.className = "optizzz-targets-sortable";
-      th.title = "Trier";
-      th.addEventListener("click", () => {
+      const button = doc.createElement("button");
+      button.type = "button";
+      button.textContent = column.title;
+      button.title = "Trier";
+      button.addEventListener("click", () => {
         sort = key;
         render();
       });
+      th.append(button);
+      sortHeaders.push({ th, key });
+    } else {
+      th.textContent = column.title;
     }
     headRow.append(th);
   }
@@ -226,15 +273,20 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
       `20 % de son TDC, 1 cm² par fourmi au plus : il faut au moins ${formatNumber(target.takeMax)} fourmis pour tout prendre.`;
     if (flood) {
       const taken = floodOf(target);
+      const { slots } = afterOnWay(context.me.field, target, flood.onWay, flood.attackSpeed);
       cell(row, taken === null ? "—" : formatNumber(taken), true).title =
         taken === null
           ? "Votre armée ne suffit pas à écraser sa défense connue."
-          : `Avec vos ${String(flood.slots)} attaques possibles et votre armée${flood.defenses.has(target.id) ? ", sa défense connue comprise" : ", sans défense en face"}.`;
+          : `Avec vos ${String(slots)} attaques possibles et votre armée, après les attaques en route${flood.defenses.has(target.id) ? ", sa défense connue comprise" : ", sans défense en face"}.`;
     }
-    cell(row, target.distance.toLocaleString("fr-FR", { maximumFractionDigits: 1 }), true);
+    cell(row, formatDecimal(target.distance), true);
     cell(row, formatDuration(target.travelSeconds * 1000), true);
     cell(row, formatEndTimeShort(target.arrival, now));
-    cell(row, stateText(target)).className = "optizzz-targets-state";
+    const state = cell(row, stateText(target));
+    state.className = "optizzz-targets-state";
+    if (target.state === "free" && !target.stateLive) {
+      state.title = "D'après l'export : pas dans le tableau du jeu, sa protection débutant est inconnue.";
+    }
 
     const action = cell(row);
     if (target.attackableNow) {
@@ -249,7 +301,11 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
 
   const render = () => {
     const now = clock();
-    floods = new Map();
+    for (const { th, key } of sortHeaders) {
+      // Each key sorts one way only; the trip and the distance share theirs.
+      if (key === sort) th.setAttribute("aria-sort", key === "distance" ? "ascending" : "descending");
+      else th.removeAttribute("aria-sort");
+    }
     const targets = listTargets(context, now)
       .filter((target) => !(hidePacts.input.checked && target.diplomacy?.kind === "pact"))
       .filter((target) => !attackableOnly.input.checked || target.attackableNow)
@@ -275,7 +331,7 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     });
   }
 
-  box.append(summary, note, filters, empty, table);
+  box.append(summary, protectedMe, note, filters, empty, table);
   anchor.before(box);
   render();
 }

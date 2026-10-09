@@ -2,8 +2,9 @@
 // docs/research/fourmizzz-pages.md (« Reine.php »); upkeep: docs/research/ressources-et-entretien.md.
 import type { Place } from "@/game/army/battle";
 import { UNITS } from "@/game/army/units";
-import { dailyBalance, timeToAfford, type Affordability, type ColonyState } from "../resource-forecast/forecast";
-import { parseGameDuration } from "../work-queue/queue";
+import { dailyBalance, timeToAfford, type Affordability, type ColonyState } from "@/game/forecast";
+import { parseGameDuration } from "@/game/pages/work-queue";
+import { parseGameInteger } from "@/utils/game-number";
 
 /** One unit's laying form: its elements carry the row's suffix ("" for workers, "1" for `unite1`…). */
 export interface LayingRow {
@@ -42,8 +43,6 @@ const DESTINATIONS: Record<string, Place> = { "1": "field", "2": "nest", "3": "l
 /** Daily upkeep, share of the laying cost in food (official help, « Attaque & Défense »). */
 const UPKEEP: Record<Place, number> = { field: 0.05, nest: 0.1, lodge: 0.15 };
 
-const toInteger = (text: string | null | undefined) => Number((text ?? "").replace(/\D/g, ""));
-
 export function readLayingRows(doc: Document): LayingRow[] {
   return [...doc.querySelectorAll<HTMLInputElement>('input[id^="input_cout_nombre"]')].flatMap((input) => {
     const suffix = input.id.slice("input_cout_nombre".length);
@@ -58,8 +57,9 @@ export function readLayingRows(doc: Document): LayingRow[] {
 }
 
 /**
- * The number typed and what the game computed for it; an empty field orders nothing. The field takes « 2k » or
- * « 0.1M »: the count is the one the game wrote in its hidden `nombre_de_ponte`.
+ * The number ordered and what the game computed for it. The game sets it with a slider, the field (« 2k », « 0.1M »)
+ * or the time and food fields: the count is always the one it wrote in its hidden `nombre_de_ponte`. At 1 with an
+ * empty field, nothing was chosen yet (the game shows the cost of one unit).
  */
 export function readOrder(row: LayingRow): Order {
   const doc = row.input.ownerDocument;
@@ -67,9 +67,10 @@ export function readOrder(row: LayingRow): Order {
   const destination = doc.getElementById(`destination${row.suffix}`) as HTMLInputElement | null;
   const parsed = doc.getElementById(`nombre_de_ponte${row.suffix}`) as HTMLInputElement | null;
   const typed = row.input.value.trim();
+  const count = parseGameInteger(parsed?.value);
   return {
-    count: typed === "" || typed === "0" ? 0 : toInteger(parsed?.value),
-    food: toInteger(text("cout_nourriture")),
+    count: typed === "0" || (typed === "" && count <= 1) ? 0 : count,
+    food: parseGameInteger(text("cout_nourriture")),
     duration: parseGameDuration(text("cout_temps")) ?? 0,
     destination: row.unitKey ? (DESTINATIONS[destination?.value ?? ""] ?? "nest") : null,
   };
@@ -79,7 +80,13 @@ export interface LayingContext {
   /** When the layings already queued end (now when none). */
   queueEnd: Date;
   huntingField: number;
+  /** Workers already in the laying queue: they will need a cm² too. */
+  queuedWorkers: number;
 }
+
+/** Workers in the « Pontes en cours » rows (« 224 ouvrières »). */
+export const queuedWorkers = (labels: readonly string[]) =>
+  labels.reduce((sum, label) => sum + parseGameInteger(/^([\d\s]+)\s+ouvri[eè]res?$/i.exec(label.trim())?.[1]), 0);
 
 /** An order is paid when it is placed, then waits for the queue. */
 export function planLaying(order: Order, state: ColonyState, context: LayingContext, now: Date): LayingPlan {
@@ -92,7 +99,9 @@ export function planLaying(order: Order, state: ColonyState, context: LayingCont
     endsAt: start ? new Date(start.getTime() + order.duration) : null,
     upkeepPerDay,
     balanceAfter: dailyBalance(state).food - upkeepPerDay,
-    idleWorkers: order.destination ? null : Math.max(0, state.workers + order.count - context.huntingField),
+    idleWorkers: order.destination
+      ? null
+      : Math.max(0, state.workers + context.queuedWorkers + order.count - context.huntingField),
   };
 }
 

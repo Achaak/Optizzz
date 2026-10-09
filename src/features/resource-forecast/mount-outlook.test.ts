@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import headerHtml from "./__fixtures__/header.html?raw";
-import type { ColonyState } from "./forecast";
+import type { ColonyState } from "@/game/forecast";
 import { renderOutlook } from "./mount-outlook";
 
 const MINUTE = 60_000;
@@ -70,7 +70,7 @@ describe("renderOutlook", () => {
     const balance = badge(doc, "nourriture");
     expect(balance?.textContent).toBe("Solde : +1 400 / jour");
     expect(balance?.className).toBe("optizzz-outlook");
-    expect(balance?.getAttribute("title")).toContain("Équilibre : 0 ouvrières sur la nourriture");
+    expect(balance?.getAttribute("data-optizzz-tip")).toContain("Équilibre : 0 ouvrières sur la nourriture");
     expect(badge(doc, "materiaux")).toBeNull();
   });
 
@@ -85,13 +85,25 @@ describe("renderOutlook", () => {
       hunts: [{ returnsAt: at(39), fieldGain: 122 }],
     });
     renderOutlook(doc, state, now);
-    expect(badge(doc, "nourriture")?.getAttribute("title")).toBe(
+    expect(badge(doc, "nourriture")?.getAttribute("data-optizzz-tip")).toBe(
       [
         "Nourriture par jour : −498",
         "Récolte +480, champignonnière +5 022, armée −6 000",
         "Équilibre : 21 ouvrières sur la nourriture",
+        "Capacité des entrepôts inconnue : ouvrez Construction pour être prévenu d'un entrepôt plein",
         "Chasse de retour aujourd'hui 12 h 39 : +122 cm²",
       ].join("\n"),
     );
+  });
+
+  it("keeps the game's tooltip from opening over the badge, whose own keeps its lines", () => {
+    const doc = parse(headerHtml);
+    renderOutlook(doc, colony(), now);
+    const cell = badge(doc, "nourriture")?.closest("td");
+    let gameTooltip = false;
+    cell?.addEventListener("mouseover", () => (gameTooltip = true));
+    badge(doc, "nourriture")?.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    expect(gameTooltip).toBe(false);
+    expect(badge(doc, "nourriture")?.hasAttribute("title")).toBe(false);
   });
 });

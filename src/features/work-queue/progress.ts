@@ -1,4 +1,4 @@
-import type { WorkItem, WorkKind } from "./queue";
+import type { WorkItem, WorkKind } from "@/game/pages/work-queue";
 
 export interface WorkProgress {
   startsAt: Date;
@@ -12,13 +12,29 @@ export interface WorkProgress {
  */
 const LEVEL_GROWTH: Record<WorkKind, number> = { construction: 1.6, research: 1.7 };
 
-/** Where an item of the queue stands; `previousEnd` is the end of the item before it, if any. */
-export function progressOf(item: WorkItem, previousEnd: Date | null, kind: WorkKind, now: Date): WorkProgress | null {
-  // A queued item waits for the one before it.
-  if (previousEnd) return { startsAt: previousEnd, progress: 0 };
+const clamp = (value: number) => Math.min(1, Math.max(0, value));
+
+/**
+ * Where an item of the queue stands; `previousEnd` is the end of the item before it, if any. `sameLater`: items of
+ * the same building or research after this one, whose levels the row's duration already counts.
+ */
+export function progressOf(
+  item: WorkItem,
+  previousEnd: Date | null,
+  kind: WorkKind,
+  now: Date,
+  sameLater = 0,
+): WorkProgress | null {
+  // A queued item starts when the one before it ends: its duration is known exactly.
+  if (previousEnd) {
+    const duration = item.endsAt.getTime() - previousEnd.getTime();
+    const progress = duration > 0 ? clamp((now.getTime() - previousEnd.getTime()) / duration) : 0;
+    return { startsAt: previousEnd, progress };
+  }
   if (item.nextLevelDuration === null) return null;
-  const duration = item.nextLevelDuration / LEVEL_GROWTH[kind];
+  // The row shows the level after the last one queued: one growth step back per level of this item and the later ones.
+  const duration = item.nextLevelDuration / LEVEL_GROWTH[kind] ** (1 + sameLater);
   const startsAt = new Date(item.endsAt.getTime() - duration);
-  const progress = Math.min(1, Math.max(0, (now.getTime() - startsAt.getTime()) / duration));
+  const progress = clamp((now.getTime() - startsAt.getTime()) / duration);
   return { startsAt, progress };
 }

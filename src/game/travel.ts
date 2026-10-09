@@ -1,12 +1,12 @@
-// Shared by the alliance map and the convoy calculator.
+// Travel times between two nests: alliance map, TDC chain, targets, flood plan and convoy calculator.
 
 /**
  * Travel time (attack or convoy) in seconds for a given distance,
  * depending on the sender's Attack Speed ("Vitesse d'attaque") research level.
- * Formula taken from Toolzzz — see docs/research/temps-de-trajet.md.
+ * Formula taken from Toolzzz, rounded down as the game shows it on profiles — see docs/research/temps-de-trajet.md.
  */
 export function travelTime(distance: number, attackSpeedLevel: number): number {
-  return Math.ceil(0.9 ** attackSpeedLevel * 637200 * (1 - Math.exp(-distance / 350)));
+  return Math.floor(0.9 ** attackSpeedLevel * 637200 * (1 - Math.exp(-distance / 350)));
 }
 
 /** Distance between two points of the map, in squares. */

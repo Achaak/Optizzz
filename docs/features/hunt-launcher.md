@@ -8,13 +8,13 @@ Dire au joueur **combien chasser, avec quoi, et lancer en un clic** : le plus de
 
 ## Comportement
 
-- **Accès** : encart repliable « Lanceur de chasse » sur `Ressources.php`, sous `#boite_tdc`. Script dédié (React + ECharts), monté dans un Shadow DOM. Replié, il montre le résumé.
+- **Accès** : encart repliable « Lanceur de chasse » sur `Ressources.php`, sous `#boite_tdc` et à sa largeur (728 px). Script dédié (React + ECharts), monté dans un Shadow DOM. Replié, il montre le résumé.
 - **Données** :
-  - Armes, Bouclier, Vitesse de chasse : mémorisés quand le joueur passe sur `laboratoire.php` ; Étable à cochenilles : sur `construction.php` (feature légère `game-levels`). Rien en mémoire → lecture de la page en `fetch`.
-  - Armée et jeton : un `GET AcquerirTerrain.php` (terrain + fourmilière + loge, comme le formulaire du jeu), moins une **réserve par unité** saisie par le joueur et mémorisée. Avertissement si le plan vide toute la garnison.
+  - Armes, Bouclier, Vitesse de chasse : mémorisés quand le joueur passe sur `laboratoire.php` ; Étable à cochenilles : sur `construction.php` (feature légère `game-levels`). Rien en mémoire → lecture de la page en `fetch`. Niveau toujours illisible → message « Niveaux inconnus : passez par… » et aucun plan (jamais de niveau 0 supposé).
+  - Armée et jeton : un `GET AcquerirTerrain.php` (terrain + fourmilière + loge, comme le formulaire du jeu), moins une **réserve par unité** saisie par le joueur et mémorisée. Avertissement si le plan vide toute la garnison, rappelé dans le bouton (« Lancer la chasse (230 cm², toute l'armée) »). Si le jeu répond « Vous n'avez pas d'armée a envoyer » (armée en chasse, ou aucune), l'encart le dit et montre les chasses en cours.
   - TDC de calcul : TDC actuel + gains des chasses en cours ; modifiable (flood attendu…).
   - Créneaux libres : Vitesse de chasse + 1 − chasses en cours.
-- **Moteur** : combat simulé (Monte Carlo, ~2 000 tirages de proies en recherche, 10 000 pour le plan affiché), règle de la demi-vie pour les pertes.
+- **Moteur** : combat simulé (Monte Carlo, 1 000 tirages de proies en recherche, 10 000 pour le plan affiché), règle de la demi-vie pour les pertes.
 - **Objectifs** (mémorisés par serveur) :
   - **Rendement** (par défaut, 1 %) : pertes (9 fois sur 10) ≤ X % de la valeur en nourriture de l'armée envoyée ;
   - **Ratio** : ratio attaque / difficulté choisi (1 à 10, 8 par défaut), comme Calystene.
@@ -25,12 +25,13 @@ Dire au joueur **combien chasser, avec quoi, et lancer en un clic** : le plus de
   - une ligne par chasse : surface, TDC au combat, difficulté, ratio, pertes (moyenne, 9 fois sur 10, pire tirage), recoupement Calystene, unités envoyées (modifiables : la chasse est re-simulée), promotions attendues, durée, heure de retour ;
   - totaux : cm², cm²/jour, nourriture rapportée ;
   - alerte de palier quand le TDC d'une chasse franchit un palier de difficulté ;
-  - curseur surface ↔ pertes avec sa courbe ;
+  - curseur surface ↔ pertes avec sa courbe : la poignée bouge librement, la surface choisie est simulée au relâchement ;
   - conseil de ponte : ce que donneraient +10 % / +25 % de l'unité la plus nombreuse ;
   - « attendre le retour » : avec Compte+ (troupes en chasse connues), plan si l'on attend le retour des chasses en cours, comparé au plan immédiat ;
   - chasses en cours avec leur compte à rebours.
+- **Saisie** : les champs (surface, unités, réserve, TDC de calcul, pertes) gardent ce que le joueur tape ; la valeur est prise en compte après une pause, à Entrée ou en quittant le champ, bornée au minimum affiché. Les boutons « Lancer » sont désactivés pendant le recalcul, pour ne jamais lancer le plan d'avant.
 - **Lancement**, au clic seulement, jamais planifié :
-  - « Lancer N chasses de X cm² » : une chasse après l'autre (GET du jeton, POST du formulaire), 1 s entre deux, arrêt au premier échec, état par ligne, rechargement de la page à la fin ; bouton désactivé pendant le lancement ;
+  - « Lancer N chasses de X cm² » : une chasse après l'autre (GET du jeton, POST du formulaire), 1 s entre deux, arrêt au premier échec, état par ligne ; bouton désactivé pendant le lancement. Toutes parties : rechargement de la page. Une partie seulement : le plan est figé (plus de recalcul, l'armée lue au chargement n'est plus la bonne), les échecs peuvent être relancés, et un lien propose de recharger la page ;
   - « Lancer » par ligne, dans l'ordre.
 
 ## Hors v1

@@ -1,13 +1,15 @@
 // Separate script: the map bundles React + ECharts, so it only loads on alliance.php.
 import { createRoot, type Root } from "react-dom/client";
 import { AllianceMap } from "@/features/alliance-map/AllianceMap";
-import { readLoggedInPseudo, readMembersHuntingField } from "@/features/alliance-map/pages";
-import { isFeatureEnabled } from "@/features/toggles";
-import { showsAllianceView } from "@/utils/alliance-views";
+import { MAP_HASH } from "@/features/alliance-map/menu";
+import { readLoggedInPseudo, readMembersHuntingField } from "@/game/pages/alliance";
+import { isEnabled, loadToggles } from "@/features/toggles";
+import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
+import "@/theme/theme.css";
 import "@/features/alliance-map/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
-const isMapPage = () => location.search === "?Membres" && location.hash === "#carte";
+const isMapPage = () => location.search === "?Membres" && location.hash === MAP_HASH;
 
 // The game fills #alliance over AJAX after load, replacing its content: the map is mounted
 // next to it (never inside) and the members table is awaited before reading live fields.
@@ -17,7 +19,8 @@ export default defineContentScript({
   matches: ["*://*.fourmizzz.fr/alliance.php*"],
   cssInjectionMode: "ui",
   async main(ctx) {
-    if (!(await isFeatureEnabled("alliance-map"))) return;
+    const toggles = await loadToggles();
+    if (!isEnabled(toggles, "alliance-map")) return;
     if (location.search !== "?Membres") return;
     const allianceContent = document.querySelector<HTMLElement>("#alliance");
     if (!allianceContent) return;
@@ -54,8 +57,8 @@ export default defineContentScript({
     const update = () => {
       const visible = isMapPage();
       if (visible && !ui.mounted) ui.mount();
-      ui.shadowHost.style.display = visible ? "" : "none";
-      allianceContent.style.display = showsAllianceView() ? "none" : "";
+      ui.shadowHost.hidden = !visible;
+      allianceContent.style.display = showsAllianceView(allianceViewHashes(toggles)) ? "none" : "";
     };
     update();
     ctx.addEventListener(window, "hashchange", update);

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import huntFormHtml from "./__fixtures__/hunt-form.html?raw";
 import ressourcesHuntsHtml from "./__fixtures__/ressources-hunts.html?raw";
 import ressourcesHtml from "../resource-forecast/__fixtures__/ressources.html?raw";
-import { readHuntForm, readOngoingHunts } from "./pages";
+import { hasNoArmyToSend, readHuntForm, readOngoingHunts } from "./pages";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const now = new Date(2026, 9, 7, 12, 7, 0);
@@ -51,5 +51,17 @@ describe("readOngoingHunts", () => {
   it("reads the hunt of the resource forecast fixture too", () => {
     const [hunt] = readOngoingHunts(parse(ressourcesHtml), now);
     expect(hunt?.fieldGain).toBe(122);
+  });
+});
+
+describe("hasNoArmyToSend", () => {
+  it("tells the page without army apart from an unreadable one", () => {
+    const noArmy = parse(
+      `<div id="centre"><form action="AcquerirTerrain.php">Vous n'avez pas d'armée a envoyer.</form></div>`,
+    );
+    expect(readHuntForm(noArmy)).toBeNull();
+    expect(hasNoArmyToSend(noArmy)).toBe(true);
+    expect(hasNoArmyToSend(parse("<p>Erreur</p>"))).toBe(false);
+    expect(hasNoArmyToSend(parse(huntFormHtml))).toBe(false);
   });
 });
