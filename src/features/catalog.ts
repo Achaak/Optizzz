@@ -128,6 +128,13 @@ export const featureCatalog = [
     description: "Sur Ressources : combien chasser, avec quoi, et lancer en un clic.",
     options: [],
   },
+  {
+    id: "safe-reload",
+    label: "Rechargement sans risque",
+    description:
+      "Recharger une page ou revenir en arrière ne renvoie plus un formulaire (ponte, chasse, ouvrières) ni un lien d'action (construction, annulation).",
+    options: [],
+  },
 ] as const satisfies readonly CatalogEntry[];
 
 export type FeatureId = (typeof featureCatalog)[number]["id"];
