@@ -11,7 +11,7 @@ import { loadLaunches } from "@/data/launches";
 import { loadLevelsOf } from "@/data/levels";
 import { bridge, planChain, planTransfer, takeMatrix, type ChainMember, type Gap, type Transfer } from "./chain";
 import { byDeparture, planText, type PlannedLaunch } from "./plan-text";
-import { exportRoles, importRoles, proposeRoles, roleLabel, rungs, type Role } from "./roles";
+import { exportRoles, importRoles, passerRanks, proposeRoles, roleLabel, rungs, type Role } from "./roles";
 import { defaultFirstArrival, schedule } from "./schedule";
 import { readChainSettings, writeChainSettings } from "./settings";
 import { attackSlots } from "@/game/attack";
@@ -204,10 +204,9 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
   }
 
   const pseudo = (id: number) => byId.get(id)?.pseudo ?? "?";
-  const highestPasser = Math.max(0, ...[...roles.values()].map((r) => (r.kind === "passer" ? r.rank : 0)));
   const roleOptions: Role[] = [
     { kind: "granary" },
-    ...Array.from({ length: highestPasser + 1 }, (_, i): Role => ({ kind: "passer", rank: highestPasser + 1 - i })),
+    ...passerRanks(roles.values()).map((rank): Role => ({ kind: "passer", rank })),
     { kind: "hunter" },
     OUT,
   ];
