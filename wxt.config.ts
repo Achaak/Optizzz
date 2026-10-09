@@ -8,7 +8,8 @@ export default defineConfig({
   manifestVersion: 3,
   manifest: ({ browser }) => ({
     name: "Optizzz",
-    description: "Outils pour le jeu Fourmizzz : carte de l'alliance, voisins les plus proches et temps de trajet.",
+    description:
+      "Outils pour Fourmizzz : heures de fin, ressources, ponte, chasse, combat, flood, convois, alertes et outils d'alliance.",
     // Version comes from package.json (single source of truth for releases).
     // String form: AMO rejects the { email } object form.
     author: "Axel Lavoie",
