@@ -15,6 +15,7 @@ Chaque outil se désactive dans les paramètres (roue dentée dans la barre du j
 - **Rapports de chasse** : tableau des combats de chaque chasse dans la messagerie, avec les pertes prévues.
 - **Simulateur de combat** : depuis la page Armée ou le popup de l'extension.
 - **Lanceur de chasse** : combien chasser et avec quoi, puis lancer en un clic.
+- **Rechargement sans risque** : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.
 - **Carte de l'alliance** : les membres reliés à leurs plus proches voisins, avec les temps de trajet. Les positions viennent de l'[API publique des exports](https://s5.fourmizzz.fr/developer.php).
 
 Optizzz n'agit jamais seul : les formulaires du jeu ne sont envoyés que lorsque tu cliques.

@@ -21,6 +21,7 @@ Optizzz ajoute des outils au jeu de stratégie Fourmizzz (fourmizzz.fr), directe
 • Rapports de chasse : dans la messagerie, un tableau des combats de chaque chasse avec les pertes prévues.
 • Simulateur de combat : depuis la page Armée ou l'icône de l'extension.
 • Lanceur de chasse : sur Ressources, combien chasser et avec quelles unités, puis lancer en un clic.
+• Rechargement sans risque : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.
 • Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens.
 
 Optizzz n'agit jamais seul : une chasse n'est lancée et une répartition appliquée que lorsque vous cliquez.
