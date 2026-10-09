@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import constructionFullHtml from "@/features/work-queue/__fixtures__/construction-full.html?raw";
 import constructionIdleHtml from "@/features/work-queue/__fixtures__/construction-idle.html?raw";
 import laboratoryOneHtml from "@/features/work-queue/__fixtures__/laboratory-one.html?raw";
-import { readWorkQueue } from "@/game/pages/work-queue";
+import { parseGameDuration, readWorkQueue } from "@/game/pages/work-queue";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const now = new Date(2026, 9, 7, 12, 50, 0);
@@ -47,5 +47,14 @@ describe("readWorkQueue", () => {
       items: [],
       full: false,
     });
+  });
+});
+
+describe("parseGameDuration", () => {
+  it("reads days, hours, minutes and seconds, and the decimal seconds of a single laying", () => {
+    expect(parseGameDuration("1J 3h")).toBe(27 * 3_600_000);
+    expect(parseGameDuration("1H 25m 54s")).toBe((3600 + 25 * 60 + 54) * 1000);
+    expect(parseGameDuration("6.57s")).toBe(6570);
+    expect(parseGameDuration("—")).toBeNull();
   });
 });

@@ -17,7 +17,7 @@ Optizzz ajoute des outils au jeu de stratégie Fourmizzz (fourmizzz.fr), directe
 • Chantiers en cours : tableau des constructions et recherches, avec leur progression et leur heure de fin.
 • Heures de fin : l'heure de fin des chasses, pontes et chantiers à côté des décomptes, et un encart « Prochaines fins ».
 • Prévisions de ressources : quand vous pourrez payer, quand vous tomberez en famine, quand un entrepôt sera plein, et un simulateur de répartition des ouvrières.
-• Planificateur de ponte : sur la Reine, la fin de la ponte, quand elle sera payable, son entretien et un bouton « max ».
+• Planificateur de ponte : sur la Reine, des raccourcis (tout payer, durée de ponte, bilan à zéro) avec un aperçu au survol, et la fin, le paiement et l'entretien de la ponte choisie.
 • Rapports de chasse : dans la messagerie, un tableau des combats de chaque chasse avec les pertes prévues.
 • Simulateur de combat : depuis la page Armée ou l'icône de l'extension.
 • Lanceur de chasse : sur Ressources, combien chasser et avec quelles unités, puis lancer en un clic.

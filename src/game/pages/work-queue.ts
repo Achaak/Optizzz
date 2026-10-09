@@ -54,15 +54,15 @@ function readRowDuration(doc: Document, name: string): number | null {
 
 const DURATION_UNITS: Record<string, number> = { j: 86_400, h: 3600, m: 60, s: 1 };
 
-/** « 1H 25m 54s », « 50m 20s » → milliseconds. */
+/** « 1H 25m 54s », « 50m 20s », « 6.57s » (one worker on Reine.php) → milliseconds. */
 export function parseGameDuration(text: string): number | null {
   let seconds = 0;
   let found = false;
-  for (const [, value, unit] of text.matchAll(/(\d+)\s*([jhms])/gi)) {
-    seconds += Number(value) * (DURATION_UNITS[(unit ?? "").toLowerCase()] ?? 0);
+  for (const [, value, unit] of text.matchAll(/(\d+(?:[.,]\d+)?)\s*([jhms])/gi)) {
+    seconds += Number((value ?? "").replace(",", ".")) * (DURATION_UNITS[(unit ?? "").toLowerCase()] ?? 0);
     found = true;
   }
-  return found ? seconds * 1000 : null;
+  return found ? Math.round(seconds * 1000) : null;
 }
 
 /** Whether any row shows a start button, active or greyed out for lack of resources. */
