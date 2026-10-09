@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { WorkQueue } from "../work-queue/queue";
+import type { WorkQueue } from "@/game/pages/work-queue";
 import constructionCostsHtml from "./__fixtures__/construction-costs.html?raw";
 import laboratoryCostsHtml from "./__fixtures__/laboratory-costs.html?raw";
-import type { ColonyState } from "./forecast";
+import type { ColonyState } from "@/game/forecast";
 import { renderCostForecasts } from "./mount-costs";
 
 const MINUTE = 60_000;
@@ -42,7 +42,8 @@ describe("renderCostForecasts", () => {
     renderCostForecasts(doc, state, null, now);
     expect(forecasts(doc)).toEqual({
       "Entrepôt de Nourriture": "Disponible dans 46 min (aujourd'hui 12 h 46) · manque 4 200 matériaux",
-      "Entrepôt de Matériaux": "Disponible dans 2 h 46 (aujourd'hui 14 h 46) · manque 23 400 matériaux",
+      // The game shows its own time left on this row (Compte+ clock): only the hour is added.
+      "Entrepôt de Matériaux": "Disponible aujourd'hui 14 h 46 · manque 23 400 matériaux",
     });
   });
 

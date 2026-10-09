@@ -1,6 +1,6 @@
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import type { RecapRow } from "./recap";
-import { SOURCE_PAGES, type EndKind } from "./sources";
+import { SOURCE_PAGES, type EndKind } from "@/game/pages/end-times";
 import { htmlElement } from "@/utils/html";
 
 const ICONS: Record<EndKind, string> = { hunt: "🏹", laying: "🥚", construction: "🔨", research: "🔬", convoy: "🐜" };
@@ -11,13 +11,14 @@ const GAP_PX = 5;
 const TITLE_PX = 25;
 
 export const RECAP_STYLE = `
-.optizzz-recap { position: absolute; left: 65px; width: 220px; color: rgb(211, 217, 184); text-align: center; }
+.optizzz-recap { position: absolute; left: 65px; width: 220px; color: var(--optizzz-menu-text); text-align: center; }
 .optizzz-recap .contenu_boite_compte_plus { height: auto; padding: 8px 10px 6px; box-sizing: border-box; text-align: left; }
 .optizzz-recap ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .optizzz-recap a { color: inherit; font-weight: normal; text-decoration: none; }
 .optizzz-recap li a:hover { text-decoration: underline; }
 .optizzz-recap-when { font-size: 0.9em; opacity: 0.85; }
-.optizzz-recap-done { font-style: italic; }`;
+.optizzz-recap-done { font-style: italic; }
+.optizzz-recap-title { cursor: default; }`;
 
 /**
  * « Prochaines fins » box in the left column, where the Compte+ box sits; that box is pushed below it.
@@ -34,7 +35,7 @@ export function mountRecap(doc: Document) {
   const box = htmlElement(
     doc,
     "div",
-    `<div class="optizzz-recap"><div class="titre_colonne_cliquable"><a>Prochaines fins</a></div>
+    `<div class="optizzz-recap"><div class="titre_colonne_cliquable optizzz-recap-title">Prochaines fins</div>
     <div class="contenu_boite_compte_plus"><ul></ul></div></div>`,
   );
   box.style.top = `${String(top)}px`;

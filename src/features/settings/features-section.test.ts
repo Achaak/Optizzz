@@ -26,6 +26,9 @@ describe("buildFeaturesSection", () => {
       "resource-forecast.costs",
       "resource-forecast.outlook",
       "resource-forecast.simulator",
+      "alerts",
+      "alerts.badge",
+      "alerts.notifications",
       "laying-planner",
       "convoy",
       "targets",
@@ -34,6 +37,9 @@ describe("buildFeaturesSection", () => {
       "combat-simulator",
       "alliance-map",
       "tdc-chain",
+      "history",
+      "history.alliance",
+      "history.profile",
       "hunt-launcher",
     ]);
     expect(boxes.every((box) => box.checked && !box.disabled)).toBe(true);

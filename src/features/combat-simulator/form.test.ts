@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { armyFromKeys } from "@/game/army/units";
-import { emptyForm, prefill, readArmyText, toBattle } from "./form";
-import type { Garrison } from "./garrison";
+import { emptyForm, leaveSide, prefill, readArmyText, toBattle } from "./form";
+import type { Garrison } from "@/data/garrison";
 
 const garrison: Garrison = {
   armies: {
@@ -43,6 +43,28 @@ describe("prefill", () => {
 
   it("keeps the form as is without a remembered garrison, levels aside", () => {
     expect(prefill(emptyForm(), "attack", null, {}).attacker).toEqual(emptyForm().attacker);
+  });
+});
+
+describe("leaveSide", () => {
+  it("empties the player's old side only if they did not change it", () => {
+    const filled = prefill(emptyForm(), "attack", garrison, levels);
+    expect(leaveSide(filled, "attack", filled).attacker).toEqual(emptyForm().attacker);
+  });
+
+  it("keeps an army pasted on the player's old side: the opponent's", () => {
+    const filled = prefill(emptyForm(), "attack", garrison, levels);
+    const pasted = { ...filled, attacker: { ...filled.attacker, army: { JSN: 5000 } } };
+    expect(leaveSide(pasted, "attack", filled).attacker.army).toEqual({ JSN: 5000 });
+  });
+
+  it("never touches the other side", () => {
+    const filled = prefill(emptyForm(), "attack", garrison, levels);
+    const withDefense = {
+      ...filled,
+      defender: { ...filled.defender, armies: { ...filled.defender.armies, field: { SN: 30 } } },
+    };
+    expect(leaveSide(withDefense, "attack", filled).defender.armies.field).toEqual({ SN: 30 });
   });
 });
 

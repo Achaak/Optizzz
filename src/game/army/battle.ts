@@ -1,6 +1,7 @@
 // A fight between players. Rules, sources and what is not verified yet: docs/research/combat.md.
 import { EPSILON, resolveRounds, type Stack } from "./rounds";
-import { UNITS, type Army } from "./units";
+import { levelBonus, UNITS, type Army } from "./units";
+import { maxTake } from "../attack";
 
 /** Hunting field, nest (Fourmilière, Dôme bonus), imperial lodge (Loge Impériale). */
 export type Place = "field" | "nest" | "lodge";
@@ -80,13 +81,13 @@ export function battle(attacker: Attacker, defender: Defender, target: Place): B
   for (const place of PLACES.slice(0, PLACES.indexOf(target) + 1)) {
     const ours = stacksOf(
       army,
-      (i) => (UNITS[i]?.attack ?? 0) * (1 + 0.1 * attacker.weapons),
-      1 + 0.1 * attacker.shield,
+      (i) => (UNITS[i]?.attack ?? 0) * levelBonus(attacker.weapons),
+      levelBonus(attacker.shield),
     );
     const theirs = stacksOf(
       defender.armies[place],
-      (i) => (UNITS[i]?.defense ?? 0) * (1 + 0.1 * defender.weapons),
-      1 + 0.1 * defender.shield + placeHpBonus(place, defender),
+      (i) => (UNITS[i]?.defense ?? 0) * levelBonus(defender.weapons),
+      levelBonus(defender.shield) + placeHpBonus(place, defender),
     );
     const rounds = resolveRounds(ours, theirs);
     const won = theirs.every((stack) => stack.pool <= EPSILON) && ours.some((stack) => stack.pool > EPSILON);
@@ -110,7 +111,7 @@ export function battle(attacker: Attacker, defender: Defender, target: Place): B
 
 /** First-round damage needed to cut the defenders' reply to 50, 30 and 10 %. */
 export function requiredAttack(army: Army, shield: number, placeBonus: number) {
-  const hp = UNITS.reduce((sum, unit, i) => sum + (army[i] ?? 0) * unit.hp, 0) * (1 + 0.1 * shield + placeBonus);
+  const hp = UNITS.reduce((sum, unit, i) => sum + (army[i] ?? 0) * unit.hp, 0) * (levelBonus(shield) + placeBonus);
   return { half: hp * 1.5, thirty: hp * 2, ten: hp * 3 };
 }
 
@@ -140,14 +141,14 @@ export interface SpoilsInput {
 export function spoils(result: BattleResult, target: Place, input: SpoilsInput): Spoils {
   if (!result.won) return { field: 0, food: 0, materials: 0, colony: false };
   const ants = result.survivors.reduce((sum, count) => sum + count, 0);
-  const field = Math.min(Math.floor(0.2 * input.field), ants);
+  const field = Math.min(maxTake(input.field), ants);
   if (target !== "nest") return { field, food: 0, materials: 0, colony: target === "lodge" };
 
   const share = 0.3 + 0.01 * input.aphids;
   let food = Math.floor(share * input.food);
   let materials = Math.floor(share * input.materials);
   const attack =
-    UNITS.reduce((sum, unit, i) => sum + (result.survivors[i] ?? 0) * unit.attack, 0) * (1 + 0.1 * input.weapons);
+    UNITS.reduce((sum, unit, i) => sum + (result.survivors[i] ?? 0) * unit.attack, 0) * levelBonus(input.weapons);
   if (food + materials > attack) {
     const scale = attack / (food + materials);
     food = Math.floor(food * scale);

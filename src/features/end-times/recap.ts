@@ -1,4 +1,4 @@
-import { SOURCE_PAGES, type EndItem, type EndKind, type Section } from "./sources";
+import { SOURCE_PAGES, type EndItem, type EndKind, type Section } from "@/game/pages/end-times";
 
 /** What ended stays listed this long, as « terminé ». */
 export const DONE_KEPT_MS = 60 * 60_000;

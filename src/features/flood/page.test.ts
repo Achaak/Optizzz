@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { armyFromKeys } from "@/game/army/units";
 import formHtml from "./__fixtures__/attack-form.html?raw";
-import profileHtml from "./__fixtures__/profile.html?raw";
-import { fillAttackForm, onAttackSent, readAttackForm, readProfileField } from "./page";
+import profileHtml from "../history/__fixtures__/profile.html?raw";
+import { readProfile } from "@/game/pages/scores";
+import { fillAttackForm, onAttackSent, readAttackForm } from "./page";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const input = (doc: Document, id: string) => doc.getElementById(id) as HTMLInputElement;
@@ -50,8 +51,8 @@ describe("onAttackSent", () => {
   });
 });
 
-describe("readProfileField", () => {
-  it("reads the live hunting field on a profile", () => {
-    expect(readProfileField(parse(profileHtml))).toBe(700180);
+describe("profile", () => {
+  it("is read by the shared profile reader, the live hunting field included", () => {
+    expect(readProfile(parse(profileHtml))?.scores.field).toBe(1206299);
   });
 });

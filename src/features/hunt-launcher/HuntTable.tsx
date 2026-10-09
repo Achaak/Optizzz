@@ -1,8 +1,9 @@
 import type { Plan } from "./engine/planner";
-import { UNITS } from "@/game/army/units";
+import { unitLabel, UNITS } from "@/game/army/units";
 import type { LaunchStatus } from "./launch";
 import { formatChance } from "./view";
-import { formatNumber } from "@/utils/number-format";
+import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { NumberField } from "@/utils/NumberField";
 import { formatEndTime } from "@/utils/time-format";
 
 interface Props {
@@ -11,6 +12,10 @@ interface Props {
   unitKeys: string[];
   statuses: LaunchStatus[];
   busy: boolean;
+  /** Some hunts left: the plan can no longer be changed. */
+  frozen: boolean;
+  /** A change is being simulated: launching now would send the previous plan. */
+  launchBlocked: boolean;
   now: Date;
   onEdit: (hunt: number, change: { amount?: number; unit?: string; count?: number }) => void;
   onLaunch: (hunt: number) => void;
@@ -23,11 +28,10 @@ const STATUS_TEXT: Record<LaunchStatus, string> = {
   failed: "✗ Refusée",
 };
 
-const round1 = (value: number) =>
-  value < 10 ? (Math.round(value * 10) / 10).toLocaleString("fr-FR") : formatNumber(value);
+const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatNumber(value));
 
 /** One row per hunt; surface and units can be changed, the hunt is then simulated again. */
-export function HuntTable({ plan, unitKeys, statuses, busy, now, onEdit, onLaunch }: Props) {
+export function HuntTable({ plan, unitKeys, statuses, busy, frozen, launchBlocked, now, onEdit, onLaunch }: Props) {
   const units = UNITS.filter((unit) => unitKeys.includes(unit.key));
   return (
     <div className="table-wrap">
@@ -39,16 +43,16 @@ export function HuntTable({ plan, unitKeys, statuses, busy, now, onEdit, onLaunc
             <th>Surface</th>
             {units.map((unit) => (
               <th key={unit.key} title={unit.name}>
-                {unit.key}
+                {unitLabel(unit.key)}
               </th>
             ))}
             <th title="TDC au moment du combat">TDC au combat</th>
             <th title="Attaque (bonus Armes compris) / difficulté">Ratio</th>
             <th title="Unités qui ne rentrent pas (mortes ou blessées à plus de la moitié de leur vie) : moyenne · 9 fois sur 10 · pire tirage">
-              Pertes
+              Pertes <span className="legend">moy. · 9/10 · pire</span>
             </th>
             <th title="Pertes moyennes selon les tables du simulateur de Calystene, en JSN">Calystene</th>
-            <th title="Promotions attendues (moyenne)">XP</th>
+            <th title="Promotions attendues (moyenne)">Promues</th>
             <th>Retour</th>
           </tr>
         </thead>
@@ -58,10 +62,11 @@ export function HuntTable({ plan, unitKeys, statuses, busy, now, onEdit, onLaunc
             const previousLaunched = statuses.slice(0, i).every((s) => s === "launched");
             const promoted = UNITS.filter((unit) => (hunt.outcome.promoted[unit.key] ?? 0) >= 0.5)
               .map(
-                (unit) => `${formatNumber(hunt.outcome.promoted[unit.key] ?? 0)} ${unit.key}→${unit.promotesTo ?? ""}`,
+                (unit) =>
+                  `${formatNumber(hunt.outcome.promoted[unit.key] ?? 0)} ${unitLabel(unit.key)}→${unitLabel(unit.promotesTo ?? "")}`,
               )
               .join(", ");
-            const locked = busy || status === "launched" || status === "launching";
+            const locked = busy || frozen || status === "launched" || status === "launching";
             return (
               <tr key={i} className={status}>
                 <td>{i + 1}</td>
@@ -71,8 +76,10 @@ export function HuntTable({ plan, unitKeys, statuses, busy, now, onEdit, onLaunc
                       {status === "failed" && <span className="status failed">{STATUS_TEXT.failed} </span>}
                       <button
                         type="button"
-                        disabled={busy || !previousLaunched}
-                        title={previousLaunched ? "Lancer cette chasse seule" : "Lance d'abord les chasses précédentes"}
+                        disabled={busy || launchBlocked || !previousLaunched}
+                        title={
+                          previousLaunched ? "Lancer cette chasse seule" : "Lancez d'abord les chasses précédentes"
+                        }
                         onClick={() => {
                           onLaunch(i);
                         }}
@@ -85,13 +92,14 @@ export function HuntTable({ plan, unitKeys, statuses, busy, now, onEdit, onLaunc
                   )}
                 </td>
                 <td>
-                  <input
-                    type="number"
+                  <NumberField
                     min={1}
+                    integer
+                    aria-label={`Surface de la chasse ${String(i + 1)}`}
                     value={hunt.amount}
                     disabled={locked}
-                    onChange={(event) => {
-                      onEdit(i, { amount: Math.max(1, Number(event.target.value) || 1) });
+                    onCommit={(amount) => {
+                      if (amount !== null) onEdit(i, { amount });
                     }}
                   />
                 </td>
@@ -99,21 +107,22 @@ export function HuntTable({ plan, unitKeys, statuses, busy, now, onEdit, onLaunc
                   const index = UNITS.indexOf(unit);
                   return (
                     <td key={unit.key}>
-                      <input
-                        type="number"
+                      <NumberField
                         min={0}
+                        integer
                         className="units"
+                        aria-label={`${unit.name}, chasse ${String(i + 1)}`}
                         value={hunt.army[index] ?? 0}
                         disabled={locked}
-                        onChange={(event) => {
-                          onEdit(i, { unit: unit.key, count: Math.max(0, Number(event.target.value) || 0) });
+                        onCommit={(count) => {
+                          onEdit(i, { unit: unit.key, count: count ?? 0 });
                         }}
                       />
                     </td>
                   );
                 })}
                 <td>{formatNumber(hunt.field)}</td>
-                <td>{(hunt.attack / hunt.difficulty).toLocaleString("fr-FR", { maximumFractionDigits: 1 })}</td>
+                <td>{formatDecimal(hunt.attack / hunt.difficulty)}</td>
                 <td>
                   {round1(hunt.outcome.lostUnits.mean)} · {formatNumber(hunt.outcome.lostUnits.p90)} ·{" "}
                   {formatNumber(hunt.outcome.lostUnits.max)}

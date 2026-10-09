@@ -1,51 +1,31 @@
-import { loadPlayersExport } from "../alliance-map/api";
-import { readLoggedInPseudo } from "../alliance-map/pages";
-import { readGarrison, storeGarrison } from "../combat-simulator/garrison";
+import { loadPlayersExport } from "@/data/exports";
+import { readLoggedInPseudo } from "@/game/pages/alliance";
 import type { Feature } from "../feature";
-import { loadLevelsOf } from "../game-levels/levels";
-import { readStock } from "../resource-forecast/pages";
+import { loadLevelsOf, unknownLevelsHint } from "@/data/levels";
+import { readStock } from "@/game/pages/resources";
 import { distance, travelTime } from "@/game/travel";
-import { FLOOD_STYLE, mountFloodPlanner } from "./mount";
-import { readAttacksOnWay, reconcileLaunches } from "./attacks";
-import { readAttackForm, readProfileField } from "./page";
+import { FLOOD_STYLE, mountFloodNotice, mountFloodPlanner } from "./mount";
+import { isUnderBeginnerProtection, readAttackForm } from "./page";
+import { readProfile } from "@/game/pages/scores";
+import { checkLaunches } from "@/data/on-way";
 import {
   clearDefense,
   flushQueuedLaunches,
   loadCountLodge,
   loadDefense,
-  loadLaunches,
   queueLaunch,
   saveCountLodge,
-  saveLaunches,
   saveDefense,
-} from "./store";
+} from "@/data/launches";
+import { fetchGamePage } from "@/utils/game-page";
 
 /** Kept above the 50 % limit: other attacks and hunts may move the fields before arrival. */
 export const FLOOD_MARGIN = 0.01;
 
-/**
- * The launches still on their way, checked against the game's list on Armee.php (`doc`, or read in the
- * background): a cancelled attack is forgotten, one sent without this plan is counted in `unknown`.
- */
-async function checkLaunches(origin: string, now: Date, doc?: Document) {
-  const launches = await loadLaunches(origin, now);
-  try {
-    const page =
-      doc ??
-      new DOMParser().parseFromString(await fetch("/Armee.php").then((response) => response.text()), "text/html");
-    const checked = reconcileLaunches(launches, readAttacksOnWay(page, now));
-    await saveLaunches(origin, checked.launches);
-    return checked;
-  } catch (error) {
-    console.warn("[Optizzz] could not check the attacks on their way", error);
-    return { launches, unknown: 0 };
-  }
-}
-
 async function liveField(pseudo: string): Promise<number | null> {
   try {
-    const html = await fetch(`/Membre.php?Pseudo=${encodeURIComponent(pseudo)}`).then((response) => response.text());
-    return readProfileField(new DOMParser().parseFromString(html, "text/html"));
+    const doc = await fetchGamePage(`/Membre.php?Pseudo=${encodeURIComponent(pseudo)}`);
+    return (doc && readProfile(doc)?.scores.field) ?? null;
   } catch {
     return null;
   }
@@ -65,8 +45,7 @@ export const floodPlanner: Feature = {
     await flushQueuedLaunches(sessionStorage, origin);
     const path = location.pathname.toLowerCase();
     if (path === "/armee.php") {
-      const garrison = readGarrison(document);
-      if (garrison) await storeGarrison(origin, garrison, new Date());
+      // The army is kept by the collect feature; the attacks on their way are checked here.
       await checkLaunches(origin, new Date(), document);
       return;
     }
@@ -78,20 +57,34 @@ export const floodPlanner: Feature = {
     if (!form || !me || !stock) return;
     const now = new Date();
     const [playersExport, levels, launches, defense, countLodge] = await Promise.all([
-      loadPlayersExport(origin),
-      loadLevelsOf(origin, ["attackSpeed", "weapons", "shield"]),
+      // The export only gives the trip and a fallback field: without it, the plan is still made.
+      loadPlayersExport(origin).catch((error: unknown) => {
+        console.warn("[Optizzz] flood plan: public export unavailable", error);
+        return null;
+      }),
+      loadLevelsOf(origin, ["attackSpeed", "weapons", "shield"]).catch((error: unknown) => ({ error })),
       checkLaunches(origin, now),
       loadDefense(origin, form.targetId),
       loadCountLodge(origin),
     ]);
-    const sender = playersExport.players.find((player) => player.pseudo.toLowerCase() === me.toLowerCase());
-    const target = playersExport.players.find((player) => player.id === form.targetId);
-    const field = (await liveField(form.target)) ?? target?.field;
-    if (field === undefined) return;
-
     const style = document.createElement("style");
     style.textContent = FLOOD_STYLE;
     document.head.append(style);
+    if ("error" in levels) {
+      mountFloodNotice(
+        document,
+        `${unknownLevelsHint(levels.error)} Le plan en a besoin (attaques simultanées, combat).`,
+      );
+      return;
+    }
+    const sender = playersExport?.players.find((player) => player.pseudo.toLowerCase() === me.toLowerCase());
+    const target = playersExport?.players.find((player) => player.id === form.targetId);
+    const field = (await liveField(form.target)) ?? target?.field;
+    if (field === undefined) {
+      mountFloodNotice(document, `TDC de ${form.target} illisible (profil et export public) : pas de plan.`);
+      return;
+    }
+
     mountFloodPlanner(
       document,
       {
@@ -100,10 +93,10 @@ export const floodPlanner: Feature = {
         available: form.available,
         attackSpeed: levels.attackSpeed,
         travelSeconds: sender && target ? travelTime(distance(sender, target), levels.attackSpeed) : null,
-        launches: launches.launches,
-        unknownOnWay: launches.unknown,
+        onWay: launches,
         defense,
         countLodge,
+        protectedMe: isUnderBeginnerProtection(document),
         margin: FLOOD_MARGIN,
         onCountLodgeChange: (count) => void saveCountLodge(origin, count),
         onDefenseChange: (army) =>

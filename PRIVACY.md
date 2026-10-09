@@ -1,6 +1,6 @@
 # Politique de confidentialité — Optizzz
 
-_Dernière mise à jour : 7 octobre 2026 (version 1.0.1)_
+_Dernière mise à jour : 8 octobre 2026_
 
 Optizzz est une extension pour le jeu [Fourmizzz](http://www.fourmizzz.fr). Elle ne fonctionne que sur les pages `*.fourmizzz.fr`.
 
@@ -28,7 +28,9 @@ Dans le stockage local de ton navigateur (`storage.local`), et nulle part ailleu
 - tes paramètres (outils activés, réglages de chaque outil) ;
 - les niveaux et heures de fin lus dans le jeu, pour les afficher sur les autres pages ;
 - les derniers exports publics des joueurs et des alliances téléchargés, un par serveur (pour ne pas les retélécharger), et les niveaux de Vitesse d'attaque que tu saisis ou importes ;
-- pour le Plan de flood : tes attaques envoyées en cours de route et les armées adverses que tu colles.
+- pour l'Historique de progression : les scores de tous les joueurs (TDC, Fourmilière, Technologie, Combat) de l'export de chaque nuit déjà téléchargé, pour tracer les courbes sans le retélécharger ;
+- pour le Plan de flood : tes attaques envoyées en cours de route et les armées adverses que tu colles ;
+- pour les Alertes : ton stock de nourriture, de matériaux et d'ouvrières lu sur chaque page du jeu, un par serveur, pour calculer le badge de l'icône, les notifications que tu as activées et celles déjà affichées (gardées 2 jours, pour ne pas les répéter).
 
 Une attaque que tu envoies avec le Plan de flood est notée un instant dans le stockage de session de l'onglet du jeu (`sessionStorage`), le temps que la page change, puis déplacée dans le stockage local ci-dessus.
 
@@ -38,6 +40,8 @@ Désinstaller l'extension efface ces données.
 
 - `storage` : enregistrer les paramètres et le cache décrits ci-dessus.
 - `unlimitedStorage` : lever la limite de 10 Mo de ce stockage, que les exports d'un gros serveur (4 Mo pour les joueurs de S2) suffisent à remplir quand on joue sur plusieurs serveurs. Rien d'autre n'est stocké, et rien ne sort de ton navigateur.
+- `alarms` : recalculer chaque minute le badge de l'icône (temps avant une famine ou un entrepôt plein) à partir des données déjà enregistrées. L'extension n'interroge pas le jeu en arrière-plan pour cela.
+- `notifications` (facultative) : demandée seulement si tu actives une notification (famine, entrepôt plein, chantier terminé, chasse rentrée). Les notifications sont affichées par ton navigateur, à partir des données déjà enregistrées ; rien n'est envoyé ailleurs.
 - Accès à `*.fourmizzz.fr` : afficher les outils dans les pages du jeu et lire l'API publique du serveur.
 
 ## Contact
