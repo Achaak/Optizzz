@@ -42,6 +42,7 @@ describe("buildFeaturesSection", () => {
       "history.profile",
       "alliance-sharing",
       "hunt-launcher",
+      "safe-reload",
     ]);
     expect(boxes.every((box) => box.checked && !box.disabled)).toBe(true);
   });

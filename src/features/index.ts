@@ -12,6 +12,7 @@ import { historyMenu } from "./history/menu";
 import { huntReports } from "./hunt-reports";
 import { layingPlanner } from "./laying-planner";
 import { resourceForecast } from "./resource-forecast";
+import { safeReload } from "./safe-reload";
 import { settingsMenu } from "./settings";
 import { tdcChainMenu } from "./tdc-chain/menu";
 import { targets } from "./targets";
@@ -37,4 +38,5 @@ export const features: Feature[] = [
   floodPlanner,
   combatSimulator,
   gameLevels,
+  safeReload,
 ];
