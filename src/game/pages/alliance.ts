@@ -20,3 +20,10 @@ export function readLoggedInPseudo(doc: Document): string | null {
   if (!pseudo) return null;
   return pseudo;
 }
+
+/** The player's alliance tag, from the hidden `div#data` of every page; null outside an alliance. */
+export function readAllianceTag(doc: Document): string | null {
+  const tag = doc.querySelector("#data #tag_alliance")?.textContent.trim();
+  if (!tag) return null;
+  return tag;
+}

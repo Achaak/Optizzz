@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { neighborRows, type KnownLevels } from "./neighbor-table";
+import { levelOf, neighborRows, type KnownLevels } from "./neighbor-table";
 
 const me = { id: 1, pseudo: "Me", x: 0, y: 0 };
 const near = { id: 2, pseudo: "Near", x: 0, y: 10 };
@@ -41,5 +41,28 @@ describe("neighborRows", () => {
     expect(row?.player.pseudo).toBe("Me");
     expect(row?.outbound).toMatchObject({ level: 0, estimated: true });
     expect(row?.inbound).toMatchObject({ level: 5, estimated: false });
+  });
+});
+
+describe("levelOf with shared states", () => {
+  const sharedAt = new Date("2026-10-09T10:00:00Z");
+  const shared = new Map([[2, { level: 9, at: sharedAt }]]);
+
+  it("uses the Attack Speed a member shared", () => {
+    expect(levelOf(2, levels({ shared }))).toEqual({ level: 9, estimated: false });
+  });
+
+  it("prefers a level entered after the shared state, and the shared state when it is newer", () => {
+    const byPlayer = new Map([[2, 4]]);
+    const later = new Map([[2, new Date("2026-10-09T11:00:00Z")]]);
+    const earlier = new Map([[2, new Date("2026-10-09T09:00:00Z")]]);
+    expect(levelOf(2, levels({ shared, byPlayer, enteredAt: later })).level).toBe(4);
+    expect(levelOf(2, levels({ shared, byPlayer, enteredAt: earlier })).level).toBe(9);
+    // Entered before levels were dated: older than any shared state.
+    expect(levelOf(2, levels({ shared, byPlayer })).level).toBe(9);
+  });
+
+  it("keeps my Laboratory level over what I shared", () => {
+    expect(levelOf(1, levels({ labLevel: 6, shared: new Map([[1, { level: 5, at: sharedAt }]]) })).level).toBe(6);
   });
 });

@@ -40,6 +40,7 @@ describe("buildFeaturesSection", () => {
       "history",
       "history.alliance",
       "history.profile",
+      "alliance-sharing",
       "hunt-launcher",
     ]);
     expect(boxes.every((box) => box.checked && !box.disabled)).toBe(true);

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { loadPlayersExport, type Player, type PlayersExport } from "@/data/exports";
 import { formatExportVersion } from "@/utils/export-date";
 import { levelOf, type KnownLevels } from "../alliance-map/neighbor-table";
+import { enteredAtOf, useSharedAttackSpeeds } from "../alliance-map/shared-levels";
 import {
   readSettings as readMapSettings,
   watchSettings as watchMapSettings,
@@ -30,6 +31,8 @@ interface Props {
   loggedInPseudo: string | null;
   /** Hunting fields read live on the members page, by nickname. */
   liveHuntingFields: ReadonlyMap<string, number>;
+  /** « Partage d'alliance » is on: the Attack Speed members shared counts. */
+  sharing: boolean;
 }
 
 interface Member extends Player {
@@ -65,7 +68,7 @@ const fromParisInput = (value: string): Date | null => {
   });
 };
 
-export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
+export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing }: Props) {
   const host = new URL(origin).host;
   const [playersExport, setPlayersExport] = useState<PlayersExport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +124,8 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
   }, [playersExport, allianceTag, liveHuntingFields]);
   const byId = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
 
+  const shared = useSharedAttackSpeeds(origin, allianceTag, members, sharing);
+
   const levels = useMemo<KnownLevels | null>(
     () =>
       mapSettings && {
@@ -128,8 +133,10 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields }: Props) {
         labLevel: myAttackSpeed ?? mapSettings.labLevel,
         manualLevel: mapSettings.manualLevel,
         byPlayer: new Map(Object.entries(mapSettings.playerLevels).map(([id, level]) => [Number(id), level])),
+        enteredAt: enteredAtOf(mapSettings.playerLevelsAt),
+        shared,
       },
-    [mapSettings, me?.id, myAttackSpeed],
+    [mapSettings, me?.id, myAttackSpeed, shared],
   );
 
   const proposed = useMemo(

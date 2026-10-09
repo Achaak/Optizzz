@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { loadPlayersExport, type PlayersExport } from "@/data/exports";
 import type { MapMember } from "./chart-option";
 import { formatExportVersion } from "@/utils/export-date";
-import { LevelSharing } from "./LevelSharing";
 import { MapChart } from "./MapChart";
 import { globalLevel, neighborRows, type KnownLevels } from "./neighbor-table";
 import { NeighborTable } from "./NeighborTable";
+import { enteredAtOf, useSharedAttackSpeeds } from "./shared-levels";
 import { readSettings, writeSettings } from "./settings";
 import { refreshLevels } from "@/data/levels";
 import { NumberField } from "@/utils/NumberField";
@@ -16,6 +16,8 @@ interface Props {
   loggedInPseudo: string | null;
   /** Hunting fields read live on the members page, by nickname. */
   liveHuntingFields: ReadonlyMap<string, number>;
+  /** « Partage d'alliance » is on: the Attack Speed members shared counts. */
+  sharing: boolean;
 }
 
 /** Read fresh at each opening: a research may have ended since the levels were remembered. */
@@ -23,7 +25,7 @@ async function fetchLabLevel(origin: string): Promise<number | null> {
   return (await refreshLevels(origin, "laboratoire.php")).attackSpeed ?? null;
 }
 
-export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props) {
+export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing }: Props) {
   const host = new URL(origin).host;
   const [playersExport, setPlayersExport] = useState<PlayersExport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +60,8 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
       .map((p) => ({ ...p, huntingField: liveHuntingFields.get(p.pseudo) ?? p.field }));
   }, [playersExport, allianceTag, liveHuntingFields]);
 
+  const shared = useSharedAttackSpeeds(origin, allianceTag, members, sharing);
+
   const levels = useMemo<KnownLevels | null>(
     () =>
       settings && {
@@ -65,8 +69,10 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
         labLevel: settings.labLevel,
         manualLevel: settings.manualLevel,
         byPlayer: new Map(Object.entries(settings.playerLevels).map(([id, level]) => [Number(id), level])),
+        enteredAt: enteredAtOf(settings.playerLevelsAt),
+        shared,
       },
-    [settings, me?.id],
+    [settings, me?.id, shared],
   );
 
   if (error) return <div className="alliance-map error">Impossible de charger les positions : {error}</div>;
@@ -131,27 +137,28 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields }: Props
       <NeighborTable
         selected={selected}
         rows={neighborRows(selected, members, k, levels)}
-        playerLevels={settings.playerLevels}
+        playerLevels={Object.fromEntries(
+          // A level entered before a newer shared state no longer counts: the field shows the shared one.
+          Object.entries(settings.playerLevels).filter(([id]) => {
+            const sharedLevel = shared.get(Number(id));
+            return !sharedLevel || (settings.playerLevelsAt[id] ?? 0) > sharedLevel.at.getTime();
+          }),
+        )}
         defaultLevel={globalLevel(levels)}
         levels={levels}
         onSelect={setSelectedId}
         onLevelChange={(playerId, level) =>
-          updateSettings((s) => ({
-            ...s,
-            playerLevels: Object.fromEntries(
-              Object.entries({ ...s.playerLevels, [playerId]: level }).filter(
-                (entry): entry is [string, number] => entry[1] !== null,
-              ),
-            ),
-          }))
-        }
-      />
-
-      <LevelSharing
-        members={members}
-        levels={levels.byPlayer}
-        onImport={(imported) =>
-          updateSettings((s) => ({ ...s, playerLevels: { ...s.playerLevels, ...Object.fromEntries(imported) } }))
+          updateSettings((s) => {
+            const others = <T,>(byId: Record<string, T>) =>
+              Object.fromEntries(Object.entries(byId).filter(([id]) => id !== String(playerId)));
+            return level === null
+              ? { ...s, playerLevels: others(s.playerLevels), playerLevelsAt: others(s.playerLevelsAt) }
+              : {
+                  ...s,
+                  playerLevels: { ...s.playerLevels, [playerId]: level },
+                  playerLevelsAt: { ...s.playerLevelsAt, [playerId]: Date.now() },
+                };
+          })
         }
       />
     </div>

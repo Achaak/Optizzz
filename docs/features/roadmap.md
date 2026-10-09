@@ -15,6 +15,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 9. **Chaîne de TDC** (`alliance.php?Membres#chaine`) : rôles (chasseur, passeurs, grenier), qui peut prendre à qui, ordre de passage avec horaires et texte à partager ; voir `chaine-tdc.md`.
 10. **Historique de progression** : TDC et scores en courbes, sur une vue du menu d'alliance et sur les profils ; voir `historique.md`.
 11. **Alertes** : badge de l'icône, puis notifications ; voir `alertes.md`.
+12. **Partage d'alliance** : chacun copie son état (niveaux, chantiers, ouvrières, TDC, armée) pour un salon Discord privé, les autres l'importent dans un tableau de l'alliance ; rien ne sort de Fourmizzz par l'extension. Voir `partage-alliance.md`.
 
 ## Décisions transverses
 
