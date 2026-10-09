@@ -19,6 +19,9 @@ export default defineConfig({
     // Asked only when the player switches a notification on (Alertes).
     optional_permissions: ["notifications"],
     host_permissions: ["*://*.fourmizzz.fr/*"],
+    // The combat simulator is framed over the game (src/features/combat-simulator/dialog.ts). Side effect: the game's
+    // pages can tell the extension is installed by loading this page.
+    web_accessible_resources: [{ resources: ["combat-simulator.html"], matches: ["*://*.fourmizzz.fr/*"] }],
     ...(browser === "firefox" && {
       browser_specific_settings: {
         gecko: {

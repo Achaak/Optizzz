@@ -1,37 +1,37 @@
 import type { Feature } from "../feature";
-import { readGarrison } from "@/data/garrison";
-import { requestSimulator } from "./open";
+import { insertMenuBarButton } from "@/utils/menu-bar";
+import { simulatorDialog } from "./dialog";
 
-const STYLE = `.optizzz-simulate { margin: 8px 0; font: inherit; font-weight: bold; cursor: pointer; }`;
+export const SIMULATOR_BUTTON_CLASS = "optizzz-simulator-button";
+
+// Crossed swords, drawn in the menu's link colour like the gear next to it.
+const SWORDS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/>
+  <line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/>
+  <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" y1="14" x2="9" y2="18"/>
+  <line x1="7" y1="17" x2="4" y2="20"/><line x1="3" y1="19" x2="5" y2="21"/></svg>`;
 
 /**
- * On Armee.php: remembers the army by place (and the dome and lodge levels) for the combat simulator, and adds a
- * button that opens it. See docs/features/combat-simulator.md.
+ * A button in the game's top bar, on every page, opening the combat simulator over the game. The army it starts
+ * from is kept by the collect feature on Armee.php. See docs/features/combat-simulator.md.
  */
 export const combatSimulator: Feature = {
   id: "combat-simulator",
   toggle: "combat-simulator",
-  matches: (url) => url.pathname.toLowerCase() === "/armee.php",
-  run() {
-    // The army itself is kept by the collect feature.
-    const garrison = readGarrison(document);
-    if (!garrison) return;
-
-    const style = document.createElement("style");
-    style.textContent = STYLE;
-    document.head.append(style);
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "optizzz-simulate";
-    button.textContent = "Simuler un combat avec cette armée";
-    button.addEventListener("click", () => {
-      requestSimulator(location.host, "attack").catch((error: unknown) => {
-        console.error("[Optizzz] could not open the combat simulator", error);
-      });
+  matches: () => true,
+  run(ctx) {
+    const dialog = simulatorDialog(ctx);
+    insertMenuBarButton(document, {
+      className: SIMULATOR_BUTTON_CLASS,
+      title: "Simulateur de combat",
+      label: "Simulateur de combat",
+      icon: SWORDS_ICON,
+      onClick: () => {
+        dialog.toggle().catch((error: unknown) => {
+          console.error("[Optizzz] combat simulator dialog failed", error);
+        });
+      },
     });
-    const table = [...document.querySelectorAll("table.simulateur")].find((candidate) =>
-      candidate.textContent.includes("Troupes en Garnison"),
-    );
-    table?.before(button);
   },
 };

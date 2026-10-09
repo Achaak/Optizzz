@@ -19,7 +19,7 @@ Optizzz ajoute des outils au jeu de stratégie Fourmizzz (fourmizzz.fr), directe
 • Prévisions de ressources : quand vous pourrez payer, quand vous tomberez en famine, quand un entrepôt sera plein, et un simulateur de répartition des ouvrières.
 • Planificateur de ponte : sur la Reine, des raccourcis (tout payer, durée de ponte, bilan à zéro) avec un aperçu au survol, et la fin, le paiement et l'entretien de la ponte choisie.
 • Rapports de chasse : dans la messagerie, un tableau des combats de chaque chasse avec les pertes prévues.
-• Simulateur de combat : depuis la page Armée ou l'icône de l'extension.
+• Simulateur de combat : depuis n'importe quelle page du jeu (barre du haut) ou l'icône de l'extension.
 • Lanceur de chasse : sur Ressources, combien chasser et avec quelles unités, puis lancer en un clic.
 • Rechargement sans risque : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.
 • Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens.
@@ -49,7 +49,7 @@ Optizzz adds tools to the strategy game Fourmizzz (fourmizzz.fr), right inside t
 • Resource forecasts: when you will be able to pay, when you will run out of food, when a warehouse will be full, and a worker split simulator.
 • Laying planner: on the Queen page, when the laying ends, when you can pay for it, its upkeep and a "max" button.
 • Hunt reports: in the messages, a table of every fight of each hunt, with the predicted losses.
-• Combat simulator: from the Army page or the extension icon.
+• Combat simulator: from any game page (top bar) or the extension icon.
 • Hunt launcher: on the Resources page, how much to hunt and with which units, then launch in one click.
 • Alliance map: members on the map, linked to their nearest neighbours, with travel times both ways.
 

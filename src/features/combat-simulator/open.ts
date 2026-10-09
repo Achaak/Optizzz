@@ -1,5 +1,6 @@
 // Opening the simulator page: an extension page can be opened by the extension only, so content scripts ask the
-// background script (no extra permission: tabs.create needs none).
+// background script (no extra permission: tabs.create needs none). Over the game, it is framed in a dialog instead
+// (dialog.ts).
 
 export type SimulatorSide = "attack" | "defend";
 
@@ -10,9 +11,15 @@ export interface OpenSimulatorMessage {
   side: SimulatorSide;
 }
 
-/** Without a server, the page falls back on the one whose army was read last. */
-export function simulatorUrl(server: string | null, side: SimulatorSide): string {
-  const query = new URLSearchParams({ side, ...(server ? { server } : {}) });
+/** Sent by the framed page to the dialog around it when Escape is pressed inside. */
+export const CLOSE_SIMULATOR_MESSAGE = "optizzz:close-combat-simulator";
+
+/**
+ * Without a server, the page falls back on the one whose army was read last. Embedded: framed in the in-game dialog,
+ * which already shows the title.
+ */
+export function simulatorUrl(server: string | null, side: SimulatorSide, { embedded = false } = {}): string {
+  const query = new URLSearchParams({ side, ...(server ? { server } : {}), ...(embedded ? { embedded: "1" } : {}) });
   return browser.runtime.getURL(`/combat-simulator.html?${query.toString()}`);
 }
 

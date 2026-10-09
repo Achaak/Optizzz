@@ -5,7 +5,7 @@ export const TOOLS_STYLE = `
 .tool-description { margin: 2px 0 0; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }`;
 
 export interface ToolsInput {
-  /** Opens the combat simulator in a new tab. */
+  /** Opens the combat simulator: over the game, or in a new tab from the toolbar popup. */
   openSimulator: () => void;
 }
 
@@ -20,8 +20,7 @@ export function buildToolsSection(doc: Document, tools: ToolsInput): HTMLElement
   button.addEventListener("click", tools.openSimulator);
   const description = doc.createElement("p");
   description.className = "tool-description";
-  description.textContent =
-    "Deux armées, un lieu : vainqueur, pertes, riposte, TDC et pillage. S'ouvre dans un nouvel onglet.";
+  description.textContent = "Deux armées, un lieu : vainqueur, pertes, riposte, TDC et pillage.";
   item.append(button, description);
   list.append(item);
   return list;
