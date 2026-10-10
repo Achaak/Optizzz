@@ -26,6 +26,8 @@ pnpm zip:firefox    # .output/optizzz-X.Y.Z-firefox.zip + optizzz-X.Y.Z-sources.
 4. Soumettre pour examen.
 5. Noter l'**ID de l'extension** (dans l'URL de la fiche) et l'**ID d'éditeur** (« Publisher ID », page Compte).
 
+Fiche publiée : https://chromewebstore.google.com/detail/optizzz/goeifkbimepccacjfkkmhjmhgoiigjpl (ID `goeifkbimepccacjfkkmhjmhgoiigjpl`).
+
 ### Firefox Add-ons (AMO)
 
 1. Compte : https://addons.mozilla.org/developers/ .
