@@ -4,6 +4,11 @@
 
 Extension Chrome et Firefox qui ajoute des outils au jeu [Fourmizzz](http://www.fourmizzz.fr).
 
+## Installer
+
+- **Chrome** (et navigateurs Chromium : Edge, Brave, Opera…) : [Chrome Web Store](https://chromewebstore.google.com/detail/optizzz/goeifkbimepccacjfkkmhjmhgoiigjpl)
+- **Firefox** : bientôt sur addons.mozilla.org
+
 ## Fonctionnalités
 
 Chaque outil se désactive dans les paramètres (roue dentée dans la barre du jeu, ou icône de l'extension).
