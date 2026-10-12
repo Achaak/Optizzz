@@ -49,3 +49,10 @@ Ce que le simulateur de combat (`src/game/army/battle.ts`) suppose, d'où ça vi
 - Plafond de TDC compté sur les fourmis **survivantes** ; plafond de pillage partagé au prorata entre nourriture et matériaux.
 - Une attaque de la Loge rapporte-t-elle aussi le TDC et le pillage des lieux traversés ? Le simulateur n'affiche que la colonie.
 - Promotions en combat entre joueurs : formule inconnue, non simulées.
+
+## Trophées (score « Combat »)
+
+- `developer.php` (relevé le 2026-10-12) : `trophyScore` = « Score de trophées (classement Elo), 0 si le joueur n'est pas classé » ; `totalTrophyScore` d'une alliance = somme des scores des membres. Le « 0 » partout sur S5 voudrait donc dire « pas classé », pas « 0 trophée ».
+- Origine (forum, fil « Nouveau Classement », admin preem, 06/05/2015) : classement « combat » repris de War2100 ; après un gros combat entre deux joueurs, « le gagnant reçoit des trophées/points de combat du perdant » ; ils ne servent qu'au classement.
+- Joueurs du fil « MAJ 3 : Classement » (2015, privé, lu par les extraits de recherche seulement) : une **sonde** perdue donne aussi des trophées au joueur sondé ; un joueur très sondé en accumule sans gros combat.
+- Inconnu : la formule Elo (valeur de départ, facteur K, part du score adverse), le seuil d'un « gros combat », le cas d'une attaque partiellement gagnée, la condition pour être « classé ». À mesurer sur S2 : relever `trophyScore` des deux camps avant et après un combat connu.
