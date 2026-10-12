@@ -35,6 +35,8 @@ Fiche publiée : https://chromewebstore.google.com/detail/optizzz/goeifkbimepcca
 3. Remplir la fiche avec `docs/store/fiche.md`, cocher Firefox pour Android.
 4. L'identifiant de l'extension est `optizzz@achaak.github.io` (fixé dans `wxt.config.ts`, **ne jamais le changer**).
 
+Fiche publiée : https://addons.mozilla.org/fr/firefox/addon/optizzz/ (slug `optizzz`).
+
 ### Secrets GitHub pour le workflow
 
 Dans _Settings → Secrets and variables → Actions_ du dépôt :
