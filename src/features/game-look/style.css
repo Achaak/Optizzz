@@ -261,6 +261,26 @@ html.optizzz-game-look {
     padding: 6px 10px;
   }
 
+  /* Its harvest choice (food, materials, none): the game sizes the three pictures 18, 17 and 23 px */
+  & #centre table[style*="ridge"] td:has(img[src*="croix.gif"]) label > :is(img, input[type="radio"]) {
+    vertical-align: middle;
+  }
+
+  & #centre table[style*="ridge"] td:has(img[src*="croix.gif"]) label > img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+  }
+
+  /* Ressources, hunting ground: the game glues the field, « cm² » and « Agrandir » together */
+  & #AcquerirTerrain {
+    margin: 0 6px;
+  }
+
+  & #AgrandirTerrain {
+    margin-left: 12px;
+  }
+
   &
     #centre
     :is(
