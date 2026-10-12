@@ -1,0 +1,193 @@
+/*
+ * The game's icons, upscaled ×4 by Real-ESRGAN then saved at 3× (the menu sprite at 2×): sharp on high-density
+ * screens. Same pictures, same sizes: `image-set(… 3x)` keeps each image's size in CSS pixels, so an `<img>`
+ * without width or height still shows at the game's size. How to redo them: docs/features/game-look.md.
+ */
+html.optizzz-game-look {
+  & img[src*="images/bouton/fleche-armee.gif"] {
+    content: image-set(url("./icons/bouton/fleche-armee.webp") 3x);
+  }
+
+  & img[src*="images/bouton/fleche-champs-droite.gif"] {
+    content: image-set(url("./icons/bouton/fleche-champs-droite.webp") 3x);
+  }
+
+  & img[src*="images/bouton/fleche-champs-gauche.gif"] {
+    content: image-set(url("./icons/bouton/fleche-champs-gauche.webp") 3x);
+  }
+
+  & img[src*="images/bouton/fleche_haut.gif"] {
+    content: url("./icons/bouton/fleche_haut.svg");
+  }
+
+  & img[src*="images/bouton/icone_construction.png"] {
+    content: image-set(url("./icons/bouton/icone_construction.webp") 3x);
+  }
+
+  & img[src*="images/bouton/icone_construction_grise.png"] {
+    content: image-set(url("./icons/bouton/icone_construction_grise.webp") 3x);
+  }
+
+  & img[src*="images/bouton/icone_recherche.png"] {
+    content: image-set(url("./icons/bouton/icone_recherche.webp") 3x);
+  }
+
+  & img[src*="images/bouton/icone_recherche_grise.png"] {
+    content: image-set(url("./icons/bouton/icone_recherche_grise.webp") 3x);
+  }
+
+  & img[src*="images/croix.gif"] {
+    content: url("./icons/croix.svg");
+  }
+
+  & img[src*="images/icone/afficher_plus.png"] {
+    content: image-set(url("./icons/icone/afficher_plus.webp") 3x);
+  }
+
+  & img[src*="images/icone/archive.gif"] {
+    content: image-set(url("./icons/icone/archive.webp") 3x);
+  }
+
+  & img[src*="images/icone/bulle.gif"] {
+    content: image-set(url("./icons/icone/bulle.webp") 3x);
+  }
+
+  & img[src*="images/icone/delete.png"] {
+    content: image-set(url("./icons/icone/delete.webp") 3x);
+  }
+
+  & img[src*="images/icone/etoile.gif"] {
+    content: image-set(url("./icons/icone/etoile.webp") 3x);
+  }
+
+  & img[src*="images/icone/favicon.gif"] {
+    content: image-set(url("./icons/icone/favicon.webp") 3x);
+  }
+
+  & img[src*="images/icone/feuille.gif"] {
+    content: image-set(url("./icons/icone/feuille.webp") 3x);
+  }
+
+  & img[src*="images/icone/fleche-bas-claire.png"] {
+    content: image-set(url("./icons/icone/fleche-bas-claire.webp") 3x);
+  }
+
+  & img[src*="images/icone/fleche-bas.png"] {
+    content: image-set(url("./icons/icone/fleche-bas.webp") 3x);
+  }
+
+  & img[src*="images/icone/fleche-haut.png"] {
+    content: image-set(url("./icons/icone/fleche-haut.webp") 3x);
+  }
+
+  & img[src*="images/icone/folder.gif"] {
+    content: image-set(url("./icons/icone/folder.webp") 3x);
+  }
+
+  & img[src*="images/icone/fourmi.png"] {
+    content: image-set(url("./icons/icone/fourmi.webp") 3x);
+  }
+
+  & img[src*="images/icone/fourmi_convoi.png"] {
+    content: image-set(url("./icons/icone/fourmi_convoi.webp") 3x);
+  }
+
+  & img[src*="images/icone/horloge.png"] {
+    content: image-set(url("./icons/icone/horloge.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_bois.png"] {
+    content: image-set(url("./icons/icone/icone_bois.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_coeur.gif"] {
+    content: image-set(url("./icons/icone/icone_coeur.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_degat_attaque.gif"] {
+    content: image-set(url("./icons/icone/icone_degat_attaque.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_degat_defense.gif"] {
+    content: image-set(url("./icons/icone/icone_degat_defense.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_enveloppe.png"] {
+    content: image-set(url("./icons/icone/icone_enveloppe.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_enveloppe_bleue.png"] {
+    content: image-set(url("./icons/icone/icone_enveloppe_bleue.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_enveloppe_chasse.png"] {
+    content: image-set(url("./icons/icone/icone_enveloppe_chasse.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_enveloppe_combat.png"] {
+    content: image-set(url("./icons/icone/icone_enveloppe_combat.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_ouvriere.png"] {
+    content: image-set(url("./icons/icone/icone_ouvriere.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_pomme.png"] {
+    content: image-set(url("./icons/icone/icone_pomme.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_sablier.gif"] {
+    content: image-set(url("./icons/icone/icone_sablier.webp") 3x);
+  }
+
+  & img[src*="images/icone/icone_tdc.png"] {
+    content: image-set(url("./icons/icone/icone_tdc.webp") 3x);
+  }
+
+  & img:is([src*="images/icone/livre.gif"], [src*="images/livre.gif"]) {
+    content: image-set(url("./icons/icone/livre.webp") 3x);
+  }
+
+  & img[src*="images/icone/loupe.png"] {
+    content: image-set(url("./icons/icone/loupe.webp") 3x);
+  }
+
+  & img[src*="images/icone/more_options.gif"] {
+    content: image-set(url("./icons/icone/more_options.webp") 3x);
+  }
+
+  & img[src*="images/icone/new_message.png"] {
+    content: image-set(url("./icons/icone/new_message.webp") 3x);
+  }
+
+  & img[src*="images/icone/outil.gif"] {
+    content: image-set(url("./icons/icone/outil.webp") 3x);
+  }
+
+  & img[src*="images/icone/poubelle_claire.png"] {
+    content: image-set(url("./icons/icone/poubelle_claire.webp") 3x);
+  }
+
+  & img[src*="images/icone/restaure.png"] {
+    content: image-set(url("./icons/icone/restaure.webp") 3x);
+  }
+
+  & img[src*="images/icone/subject.png"] {
+    content: image-set(url("./icons/icone/subject.webp") 3x);
+  }
+
+  /* The menu sprite (design7.css): menu and button pictures. Not where the look already paints its own background. */
+  & ul#menu_horizontal li a span,
+  & ul.menu_colonne li a span,
+  & #menuDeconnexion li a span,
+  & #boutonDeconnexion span,
+  & .drapeau,
+  & :is(.mini_icone_chasse, .mini_icone_attaque, .mini_icone_convoi),
+  & :is(.icone_fourmis, .icone_pomme, .icone_bois, .icone_tdc),
+  & :is(.icone_lettre_blanche, .icone_lettre_rouge, .icone_lettre_verte),
+  & :is(.plein, .plein_marron, .decor_jauge),
+  & :is(.icone_ponte, .icone_construction, .icone_recherche),
+  & :is(.boite_connexion_titre, .boite_connexion_contenu, .boite_presentation_contenu) {
+    background-image: image-set(url("./icons/bouton/sprite_menu.webp") 2x);
+  }
+}
