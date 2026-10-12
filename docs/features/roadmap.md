@@ -11,11 +11,10 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 5. **Planificateur de ponte** : raccourcis avec aperçu, fin, date à laquelle on pourra payer, entretien ; voir `laying-planner.md`.
 6. **Calculateur de convoi** : trajet, arrivée, ouvrières prises, destinataires suggérés ; voir `convoy.md`.
 7. **Cibles à portée** (`ennemie.php`) : joueurs entre 50 % et 300 % de son TDC, triés par distance, avec trajet, état, pactes et guerres ; voir `cibles.md`. Suivi du **Plan de flood** (formulaire d'attaque) : les attaques qui prennent le plus de TDC sur une cible avec son armée, et « Flood max » dans les Cibles ; voir `flood.md`.
-8. **Renforts** : qui peut arriver avant une attaque entrante.
-9. **Chaîne de TDC** (`alliance.php?Membres#chaine`) : rôles (chasseur, passeurs, grenier), qui peut prendre à qui, ordre de passage avec horaires et texte à partager ; voir `chaine-tdc.md`.
-10. **Historique de progression** : TDC et scores en courbes, sur une vue du menu d'alliance et sur les profils ; voir `historique.md`.
-11. **Alertes** : badge de l'icône, puis notifications ; voir `alertes.md`.
-12. **Partage d'alliance** : chacun copie son état (niveaux, chantiers, ouvrières, TDC, armée) pour un salon Discord privé, les autres l'importent dans un tableau de l'alliance ; rien ne sort de Fourmizzz par l'extension. Voir `partage-alliance.md`.
+8. **Chaîne de TDC** (`alliance.php?Membres#chaine`) : rôles (chasseur, passeurs, grenier), qui peut prendre à qui, ordre de passage avec horaires et texte à partager ; voir `chaine-tdc.md`.
+9. **Historique de progression** : TDC et scores en courbes, sur une vue du menu d'alliance et sur les profils ; voir `historique.md`.
+10. **Alertes** : badge de l'icône, puis notifications ; voir `alertes.md`.
+11. **Partage d'alliance** : chacun copie son état (niveaux, chantiers, ouvrières, TDC, armée) pour un salon Discord privé, les autres l'importent dans un tableau de l'alliance ; rien ne sort de Fourmizzz par l'extension. Voir `partage-alliance.md`.
 
 ## Décisions transverses
 

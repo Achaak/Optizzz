@@ -31,6 +31,7 @@ pnpm format         # Prettier (format:check en lecture seule)
   - `src/game/pages/` : lecteurs purs des pages du jeu (en-tête et Ressources, chantiers, profils et Membres, listes de fins) ;
   - `src/data/` : données mémorisées par serveur et relues en arrière-plan (export public, revenus, niveaux, armée, fins, attaques en route) ;
   - `src/theme/` : variables CSS du thème (`theme.css`) et palette des graphiques ; aucune couleur en dur dans les styles.
+- L'habillage du jeu (`src/features/game-look/`, `docs/features/game-look.md`) est toujours actif, hors catalogue : une feuille sous `html.optizzz-game-look`, posée à `document_start`. Les outils suivent par les variables de `src/theme/theme.css`.
 - La feature `collect` (toujours active, hors catalogue) mémorise ce que montre la page courante, sans requête, pour toutes les features allumées qui en ont besoin : couper une feature n'ôte que son affichage et ses relectures.
 - Briques partagées de `src/utils/` à réutiliser plutôt que recopier : `formatNumber` / `formatDecimal` (nombres comme le jeu), `parseGameInteger`, `time-format`, `NumberField` (champ numérique React qui garde la saisie), `useStoredSettings` (réglages d'une vue React), `fetchGamePage` (relire une page du jeu en arrière-plan, partagé entre features), `alliance-menu` / `alliance-views`.
 - Seul hôte autorisé : `*://*.fourmizzz.fr/*`. Aucune donnée n'est envoyée ailleurs (`data_collection_permissions: none` côté Firefox) ; si ça change, mettre à jour le manifest.

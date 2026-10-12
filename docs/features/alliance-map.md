@@ -4,7 +4,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-07.
 
 ## But
 
-Aider une alliance à s'organiser : voir où sont les membres et qui est proche de qui (défense, renforts, convois). La chaîne de TDC n'est **pas** dans la feature : c'est un outil à part, `chaine-tdc.md`.
+Aider une alliance à s'organiser : voir où sont les membres et qui est proche de qui (défense, convois). La chaîne de TDC n'est **pas** dans la feature : c'est un outil à part, `chaine-tdc.md`.
 
 ## Comportement
 
