@@ -7,7 +7,7 @@ Extension Chrome et Firefox qui ajoute des outils au jeu [Fourmizzz](http://www.
 ## Installer
 
 - **Chrome** (et navigateurs Chromium : Edge, Brave, Opera…) : [Chrome Web Store](https://chromewebstore.google.com/detail/optizzz/goeifkbimepccacjfkkmhjmhgoiigjpl)
-- **Firefox** : bientôt sur addons.mozilla.org
+- **Firefox** (ordinateur et Android) : [Firefox Add-ons](https://addons.mozilla.org/fr/firefox/addon/optizzz/)
 
 ## Fonctionnalités
 
