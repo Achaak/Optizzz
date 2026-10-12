@@ -23,6 +23,8 @@ Chaque outil se désactive dans les paramètres (roue dentée dans la barre du j
 - **Rechargement sans risque** : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.
 - **Carte de l'alliance** : les membres reliés à leurs plus proches voisins, avec les temps de trajet. Les positions viennent de l'[API publique des exports](https://s5.fourmizzz.fr/developer.php).
 
+Optizzz retouche aussi l'apparence du jeu, sans changer ses couleurs ni ses images : plus lisible, et adapté au téléphone, à la tablette et aux grands écrans.
+
 Optizzz n'agit jamais seul : les formulaires du jeu ne sont envoyés que lorsque tu cliques.
 
 ## Confidentialité

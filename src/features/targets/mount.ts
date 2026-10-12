@@ -8,8 +8,9 @@ import { listTargets, type Target, type TargetsInput } from "./targets";
 // Colours of the game's own panel (table.simulateur) and of the rows of #tabEnnemie.
 export const TARGETS_STYLE = `
 .optizzz-targets { margin: 8px auto; width: fit-content; max-width: 100%; box-sizing: border-box; overflow-x: auto;
-  padding: 6px 10px; text-align: left; background: var(--optizzz-surface); border: 1px solid var(--optizzz-border); }
-.optizzz-targets summary, .optizzz-targets-title { cursor: pointer; font-weight: bold; font-size: 1.1em; }
+  padding: 6px 10px; text-align: left; background: var(--optizzz-surface); border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius); box-shadow: var(--optizzz-panel-shadow); }
+.optizzz-targets summary, .optizzz-targets-title { cursor: pointer; font-weight: bold; font-size: 1.1em; font-family: var(--optizzz-title-font); }
 .optizzz-targets-title { cursor: default; margin: 0; }
 .optizzz-targets-note { font-style: italic; font-size: 0.85em; margin: 4px 0; max-width: 700px; }
 .optizzz-targets label { margin-right: 16px; }

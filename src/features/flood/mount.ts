@@ -11,8 +11,9 @@ import type { Launch } from "@/data/launches";
 
 export const FLOOD_STYLE = `
 .optizzz-flood { margin: 8px auto; width: fit-content; max-width: 100%; box-sizing: border-box; overflow-x: auto;
-  padding: 6px 10px; text-align: left; background: var(--optizzz-surface); border: 1px solid var(--optizzz-border); }
-.optizzz-flood h3 { margin: 0 0 4px; }
+  padding: 6px 10px; text-align: left; background: var(--optizzz-surface); border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius); box-shadow: var(--optizzz-panel-shadow); }
+.optizzz-flood h3 { margin: 0 0 4px; font-family: var(--optizzz-title-font); }
 .optizzz-flood p { margin: 4px 0; }
 .optizzz-flood-warning { font-style: italic; font-size: 0.85em; }
 .optizzz-flood-protected { font-weight: bold; }

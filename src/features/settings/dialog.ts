@@ -83,7 +83,7 @@ export const DIALOG_STYLE = `
   box-shadow: var(--optizzz-shadow);
 }
 .dialog-header { position: relative; padding: 10px 40px 6px; text-align: center; }
-.dialog-title { margin: 0; font-size: 18px; font-weight: bold; font-style: italic; color: var(--optizzz-title); }
+.dialog-title { margin: 0; font-family: var(--optizzz-title-font); font-size: 18px; font-weight: bold; font-style: italic; color: var(--optizzz-title); }
 .dialog-close {
   position: absolute; top: 6px; right: 8px; width: 28px; height: 28px; padding: 0;
   border: none; background: none; color: var(--optizzz-text-muted); font-size: 26px; line-height: 1; cursor: pointer;
