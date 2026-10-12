@@ -9,7 +9,7 @@ Le jeu est daté : Verdana tassé, tableaux à bordure noire, boutons natifs, au
 ## Décisions de cadrage
 
 - **Toujours actif** : il fait partie de l'extension, il ne se coupe pas. Il n'y a plus de thème « classique » copiant le jeu.
-- **Retouche soignée**, poussée plus loin le 2026-10-12 : mêmes couleurs (parchemin, brun, rouge des titres, vert-de-gris des menus) et mêmes images. On change la typographie (police système pour le texte, Georgia pour les titres), les espacements, les encarts (coins arrondis, ombres douces), les tableaux, les champs, les boutons, la barre du haut et ses menus, les infobulles et curseurs jQuery UI, le chat d'alliance. La colonne de gauche garde son décor (forêt) mais ses encarts découpés dans les images du jeu deviennent des panneaux vert-de-gris arrondis, à la même taille et à la même place.
+- **Retouche soignée**, poussée plus loin le 2026-10-12 : mêmes couleurs (parchemin, brun, rouge des titres, vert-de-gris des menus) et mêmes images (icônes affinées, voir « Icônes »). On change la typographie (police système pour le texte, Georgia pour les titres), les espacements, les encarts (coins arrondis, ombres douces), les tableaux, les champs, les boutons, la barre du haut et ses menus, les infobulles et curseurs jQuery UI, le chat d'alliance. La colonne de gauche garde son décor (forêt) mais ses encarts découpés dans les images du jeu deviennent des panneaux vert-de-gris arrondis, à la même taille et à la même place.
 - **Toutes les tailles d'écran**, avec les seuils du jeu (`design7.css`) :
   - téléphone (< 41em, 656 px) : plus aucun défilement horizontal de la page. Un tableau trop large défile dans son cadre ; les lignes de la Reine, de Construction et du Laboratoire s'enroulent (photo et description, puis coût et bouton) ; la messagerie passe en liste (participants, sujet dessous) ; la fourmilière (canvas de 750 px dont les clics sont en pixels) défile au lieu de rétrécir ; champs en 16 px (sinon iOS zoome) et boutons de 40 px de haut ;
   - tablette (41em à 61em) : marges du contenu ;
@@ -39,10 +39,28 @@ Le jeu est daté : Verdana tassé, tableaux à bordure noire, boutons natifs, au
 
 Reine, Construction, Laboratoire, Ressources, Armée, Ennemies, Convois, Messagerie, Membres, Alliance, profil, Ma Fourmilière, Lancer une chasse, Classement des alliances : aucun débordement horizontal à 375 px.
 
+## Icônes
+
+Décidé le 2026-10-12 : les icônes du jeu (17 à 72 px, souvent des GIF) étaient floues sur les écrans haute densité. On garde les mêmes images, simplement agrandies (pas de nouveau dessin).
+
+- **Lesquelles** : les `<img>` de `images/icone/` et `images/bouton/` (ressources, enveloppes, sablier, cœur, dégâts, flèches, poubelle, messagerie…), `croix.gif`, `livre.gif`, `icone/favicon.gif` (cadenas), et le sprite `bouton/sprite_menu.png` (icônes des menus, boutons Construire / Rechercher / Pondre, icônes de la colonne). Pas les photos des unités et bâtiments, ni les décors, ni les smileys, ni `attendre.gif` (animé).
+- **Exceptions redessinées** : `bouton/fleche_haut.gif` et `croix.gif` (boutons ronds de 23 px) sortaient sales de l'agrandissement (contours crénelés, halo). Ils sont redessinés en SVG à l'identique : même disque bombé, mêmes couleurs, flèche et croix blanches.
+- **Comment elles s'affichent** : `icons.css` remplace chaque `img[src*="images/…"]` par `content: image-set(url(…) 3x)` ; le sprite passe par `background-image: image-set(url(…) 2x)` sur les sélecteurs de `design7.css` qui l'emploient encore (pas ceux que l'habillage repeint déjà). `image-set` garde la taille d'origine en pixels CSS, même sans `width`/`height`. Vérifié dans Chrome et Firefox 157.
+- **Poids** : WXT intègre les WebP en `data:` dans la feuille de l'habillage (624 Ko en tout, dont 155 Ko pour le sprite). Pas de `web_accessible_resources`.
+- **Les refaire** (ajouter une icône) :
+  1. télécharger les originaux dans un dossier plat (`icone_X.png`, `bouton_X.gif`…) ;
+  2. `python3 scripts/game-icons/prepare.py <originaux> <entrée>` : étend les couleurs sous la transparence (sinon le blanc de fond des GIF déborde sur les bords) ;
+  3. `realesrgan-ncnn-vulkan -i <entrée> -o <sortie> -n realesrgan-x4plus -s 4 -f png` ([Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN), binaire `ncnn-vulkan` pour macOS) ;
+  4. `python3 scripts/game-icons/finish.py <originaux> <sortie> <final>` : lisse le bord des GIF (transparence tout ou rien), ramène à 3× (sprite 2×), WebP qualité 90 (Pillow et numpy requis) ;
+  5. copier dans `src/features/game-look/icons/` sous le chemin du jeu, et ajouter la règle dans `icons.css`.
+
 ## Code
 
 | Fichier                                      | Rôle                                                                   |
 | -------------------------------------------- | ---------------------------------------------------------------------- |
 | `src/features/game-look/style.css`           | La feuille du jeu, tout sous `html.optizzz-game-look`                  |
+| `src/features/game-look/icons.css`           | Les icônes du jeu agrandies, à la place des originales                 |
+| `src/features/game-look/icons/`              | Les WebP, rangés comme dans `images/` du jeu                           |
+| `scripts/game-icons/`                        | Préparation et finition de l'agrandissement (voir « Icônes »)          |
 | `src/entrypoints/game-look.content/index.ts` | Pose la classe sur `<html>` à `document_start`                         |
 | `src/theme/theme.css`                        | Variables des outils et contrôles restylés (`@layer optizzz-controls`) |
