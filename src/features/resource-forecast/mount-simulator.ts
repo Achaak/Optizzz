@@ -12,8 +12,8 @@ const MATERIALS_ICON = "/images/icone/icone_bois.png";
 
 /** Close to the game's boxes: brown border, red italic title, Verdana inherited. */
 export const SIMULATOR_STYLE = `
-.${PANEL_CLASS} { margin: 14px 0 6px; padding: 10px 12px; border: 1px solid var(--optizzz-border); background: var(--optizzz-surface-tint); }
-.${PANEL_CLASS}-title { display: block; margin-bottom: 6px; color: var(--optizzz-title); font-size: 17px; font-style: italic; font-weight: bold; }
+.${PANEL_CLASS} { margin: 14px 0 6px; padding: 10px 12px; border: 1px solid var(--optizzz-border); border-radius: var(--optizzz-radius); background: var(--optizzz-surface-tint); box-shadow: var(--optizzz-panel-shadow); }
+.${PANEL_CLASS}-title { display: block; margin-bottom: 6px; font-family: var(--optizzz-title-font); color: var(--optizzz-title); font-size: 17px; font-style: italic; font-weight: bold; }
 .${PANEL_CLASS}-split { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px; }
 .${PANEL_CLASS}-split label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .${PANEL_CLASS}-split img { width: 18px; height: 18px; }

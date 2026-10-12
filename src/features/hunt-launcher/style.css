@@ -10,6 +10,7 @@
   background: var(--optizzz-surface);
   border: 1px solid var(--optizzz-border);
   border-radius: var(--optizzz-radius);
+  box-shadow: var(--optizzz-panel-shadow);
   padding: 8px 12px;
   /* As wide as the game's boxes around it (#boite_tdc), not the whole column. */
   max-width: 728px;
@@ -43,6 +44,7 @@ button {
   font-weight: bold;
   font-style: italic;
   color: var(--optizzz-title);
+  font-family: var(--optizzz-title-font);
   font-size: 14px;
 }
 

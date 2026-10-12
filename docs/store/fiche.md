@@ -14,6 +14,8 @@ Outils pour Fourmizzz : heures de fin, ressources, ponte, chasse, combat, flood,
 
 Optizzz ajoute des outils au jeu de stratégie Fourmizzz (fourmizzz.fr), directement dans les pages du jeu. Chaque outil se désactive dans les paramètres (roue dentée dans la barre du jeu).
 
+Il retouche aussi l'apparence du jeu, sans changer ses couleurs ni ses images : texte plus lisible, tableaux, boutons et menus plus nets, et des pages adaptées au téléphone, à la tablette et aux grands écrans.
+
 Votre fourmilière
 • Chantiers en cours : tableau des constructions et recherches, avec leur progression et leur heure de fin.
 • Heures de fin : l'heure de fin des chasses, pontes, chantiers et convois à côté des décomptes, et un encart « Prochaines fins ».

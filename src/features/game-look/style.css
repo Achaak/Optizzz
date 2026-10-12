@@ -1,0 +1,849 @@
+/*
+ * Game look (docs/features/game-look.md): the game retouched, same colours and same images, always on.
+ * Every rule is nested under html.optizzz-game-look (set at document_start): the extra class outweighs the game's
+ * selectors (design7.css) without !important. Breakpoints are the game's own:
+ * phone < 41em (656px), tablet < 61em (980px, no left column), wide >= 97em (1550px).
+ */
+html.optizzz-game-look {
+  /* The look's own tokens */
+  --look-page: #c9ad63;
+  --look-page-light: #d4bc78;
+  --look-box: #dccb94;
+  --look-box-alt: #d2bd80;
+  --look-box-head: #c6ab62;
+  --look-row-hover: rgba(255, 250, 230, 0.35);
+  --look-field: #fbf6e6;
+  --look-line: rgba(102, 88, 50, 0.35);
+  --look-line-strong: rgba(102, 88, 50, 0.6);
+  --look-title: #b3120e;
+  --look-text: #241c0c;
+  --look-muted: #5f5233;
+  --look-menu: #4c4f3e;
+  --look-menu-dark: #3c3e31;
+  --look-menu-hover: #63674f;
+  --look-menu-text: #e4e9cf;
+  --look-focus: rgba(179, 18, 14, 0.35);
+  --look-radius: 8px;
+  --look-radius-small: 5px;
+  --look-shadow: 0 1px 2px rgba(60, 45, 10, 0.12), 0 3px 10px rgba(60, 45, 10, 0.08);
+  /* Same as --optizzz-font in theme.css, which arrives later: this sheet is on before the page is drawn */
+  --look-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --look-title-font: Georgia, "Palatino Linotype", Palatino, "Book Antiqua", serif;
+
+  background: linear-gradient(180deg, var(--look-page-light), var(--look-page) 420px) var(--look-page);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+
+  & body {
+    font-family: var(--look-font);
+    color: var(--look-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Content column ---------- */
+
+  & #centre {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  & #centre a {
+    transition: color 0.12s;
+  }
+
+  /* The top bar (nav#menu) sits inside #centre: it keeps its own hover */
+  & #centre a:not(#menu a):hover {
+    color: var(--look-title);
+  }
+
+  & #centre h2,
+  & #centre .titre,
+  & .boite_amelioration .titre {
+    font-family: var(--look-title-font);
+    color: var(--look-title);
+    letter-spacing: 0.01em;
+  }
+
+  & #centre > h2,
+  & #centre > center > h2 {
+    margin: 12px 0 14px;
+    font-size: 26px;
+  }
+
+  & #centre h3,
+  & #centre h4 {
+    font-family: var(--look-title-font);
+    margin: 14px 0 8px;
+  }
+
+  & #centre hr {
+    border: 0;
+    border-top: 1px solid var(--look-line);
+    margin: 14px 0;
+  }
+
+  /* ---------- Boxes ---------- */
+
+  & .boite_amelioration,
+  & .ligneAmelioration,
+  & .simulateur,
+  & .simulateur_combat,
+  & .boite_membre,
+  & .boiteMessagerie,
+  & #messagerie,
+  & .caseColonie,
+  & .tableau_ami,
+  & .message_voile,
+  & #formulairePageEnnemie fieldset {
+    background-color: var(--look-box);
+    border: 1px solid var(--look-line-strong);
+    border-radius: var(--look-radius);
+    box-shadow: var(--look-shadow);
+  }
+
+  /* Tables used as boxes: rounded corners need separate borders. */
+  & table.boite_amelioration,
+  & table.ligneAmelioration,
+  & table.simulateur,
+  & table.boite_membre {
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+  }
+
+  & .ligneAmelioration {
+    margin-bottom: 10px;
+  }
+
+  /* A table row: Chrome would draw its shadow and its rounded corners again on every cell */
+  & tr.ligneAmelioration {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* Ressources « Terrain de Chasse », Fourmilière: the text no longer touches the edge of the box */
+  & table.boite_amelioration > tbody > tr > td {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  & table.boite_amelioration > tbody > tr:first-child > td {
+    padding-top: 10px;
+  }
+
+  & table.boite_amelioration > tbody > tr:last-child > td {
+    padding-bottom: 10px;
+  }
+
+  & .boite_amelioration {
+    margin-bottom: 12px;
+  }
+
+  & .simulateur,
+  & .simulateur_combat,
+  & .boite_membre {
+    padding: 14px;
+  }
+
+  & .simulateur fieldset,
+  & .simulateur_combat fieldset {
+    border: 1px solid var(--look-line);
+    border-radius: var(--look-radius-small);
+  }
+
+  /* Unit, building and research pictures */
+  & .photo_unite,
+  & .photo_recherche,
+  & .photo_batiment {
+    border-radius: 6px;
+  }
+
+  /* ---------- Tables ---------- */
+
+  & .tableau_leger,
+  & .boite_membre .tableau_score,
+  & .tableau_diplomatie_carte,
+  & .tableau_fourmiliere_carte,
+  & .tableau_detail_carte {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--look-line-strong);
+    border-radius: var(--look-radius-small);
+    overflow: hidden;
+    background-color: var(--look-box);
+  }
+
+  & .tableau_leger :is(td, th),
+  & .boite_membre .tableau_score :is(td, th) {
+    border: 0;
+    border-bottom: 1px solid var(--look-line);
+    padding: 6px 12px;
+  }
+
+  & .tableau_leger tr:last-child > td,
+  & .boite_membre .tableau_score tr:last-child > td {
+    border-bottom: 0;
+  }
+
+  & .tableau_leger th,
+  & .boite_membre .tableau_score th,
+  & #TableMessagerie th,
+  & #tabChoixArmee th,
+  & .tab_triable th {
+    background-color: var(--look-box-head);
+    color: var(--look-text);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  & #TableMessagerie th,
+  & #tabChoixArmee th,
+  & .tab_triable th,
+  & #tabEnnemie .ligneTableau:first-of-type {
+    font-variant: normal;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* The game's zebra stripes, softened */
+  & .ligne_paire,
+  & .tab_triable tr.alt,
+  & #TableMessagerie tr:nth-of-type(4n + 4),
+  & #TableMessagerie tr:nth-of-type(4n + 5),
+  & #tabChoixArmee tr:nth-of-type(2n + 1),
+  & #tabEnnemie tr:nth-of-type(2n + 1),
+  & .diplomatie tr:nth-of-type(2n + 1),
+  & #tab_blocnote tr:nth-of-type(2n) {
+    background-color: var(--look-box-alt);
+  }
+
+  & .ligne_impaire,
+  & #tabEnnemie .ligneTableau:nth-of-type(2n + 1) {
+    background-color: var(--look-box);
+  }
+
+  & :is(.tab_triable, #tabEnnemie, #TableMessagerie, .tableau_leger) tr:hover > td {
+    background-color: var(--look-row-hover);
+  }
+
+  & .tab_triable :is(td, th),
+  & #tabEnnemie :is(td, th) {
+    padding: 5px 10px;
+  }
+
+  /* Members, rankings: short cells, a number cut in two (« 30 / 457 ») reads badly */
+  & .tab_triable td {
+    white-space: nowrap;
+  }
+
+  /* Sortable headers: the game's dark gradient pictures, replaced by an arrow */
+  & .tab_triable th:is([class*="sortable"], .forwardSort, .reverseSort) {
+    background-image: none;
+    padding: 6px 12px;
+  }
+
+  & .tab_triable th.forwardSort::after {
+    content: " ▾";
+  }
+
+  & .tab_triable th.reverseSort::after {
+    content: " ▴";
+  }
+
+  /* ---------- Forms (never Optizzz's own controls, styled by theme.css; `body`: <html> has an optizzz class) ---------- */
+
+  /* Ressources: the workers' form, framed inline with a ridge border */
+  & #centre table[style*="ridge"] {
+    border: 1px solid var(--look-line-strong) !important;
+    border-radius: var(--look-radius);
+    background-color: var(--look-box-alt);
+    padding: 6px 10px;
+  }
+
+  &
+    #centre
+    :is(
+      input:is(
+        [type="text"],
+        [type="tel"],
+        [type="number"],
+        [type="password"],
+        [type="email"],
+        [type="search"],
+        :not([type])
+      ),
+      select,
+      textarea
+    ):not(body [class*="optizzz"], body [class*="optizzz"] *) {
+    font: inherit;
+    font-size: 14px;
+    color: var(--look-text);
+    background-color: var(--look-field);
+    border: 1px solid var(--look-line-strong);
+    border-radius: var(--look-radius-small);
+    padding: 4px 8px;
+    min-height: 30px;
+    box-shadow: inset 0 1px 2px rgba(60, 45, 10, 0.12);
+    transition:
+      border-color 0.12s,
+      box-shadow 0.12s;
+  }
+
+  & #centre textarea {
+    min-height: 0;
+    line-height: 1.45;
+  }
+
+  & #centre :is(input, select, textarea):not(body [class*="optizzz"], body [class*="optizzz"] *):focus-visible {
+    outline: none;
+    border-color: var(--look-title);
+    box-shadow: 0 0 0 3px var(--look-focus);
+  }
+
+  &
+    #centre
+    :is(input:is([type="submit"], [type="button"], [type="reset"]), button):not(
+      body [class*="optizzz"],
+      body [class*="optizzz"] *
+    ) {
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--look-menu-text);
+    background: linear-gradient(180deg, var(--look-menu-hover), var(--look-menu));
+    border: 1px solid var(--look-menu-dark);
+    border-radius: var(--look-radius-small);
+    padding: 5px 14px;
+    min-height: 30px;
+    cursor: pointer;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.15) inset,
+      0 1px 2px rgba(0, 0, 0, 0.2);
+    transition:
+      filter 0.12s,
+      transform 0.06s;
+  }
+
+  &
+    #centre
+    :is(input:is([type="submit"], [type="button"], [type="reset"]), button):not(
+      body [class*="optizzz"],
+      body [class*="optizzz"] *
+    ):hover {
+    filter: brightness(1.12);
+  }
+
+  &
+    #centre
+    :is(input:is([type="submit"], [type="button"], [type="reset"]), button):not(
+      body [class*="optizzz"],
+      body [class*="optizzz"] *
+    ):active {
+    transform: translateY(1px);
+  }
+
+  &
+    #centre
+    :is(input:is([type="submit"], [type="button"], [type="reset"]), button):not(
+      body [class*="optizzz"],
+      body [class*="optizzz"] *
+    ):disabled {
+    filter: grayscale(0.6) opacity(0.6);
+    cursor: default;
+  }
+
+  & #centre :is(input:is([type="radio"], [type="checkbox"])) {
+    accent-color: var(--look-title);
+  }
+
+  /* ---------- Top bar ---------- */
+
+  & #menu {
+    background: linear-gradient(180deg, var(--look-menu), var(--look-menu-dark));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    font-family: var(--look-font);
+  }
+
+  & #menu ul li a {
+    transition: background-color 0.12s;
+  }
+
+  & #menu a:hover {
+    color: #fff;
+  }
+
+  /* The icons on the right (Optizzz's buttons, log out) react as the tabs; Optizzz's are styled inline. */
+  & :is(ul#menu_horizontal > li > a, #menu [data-optizzz-bar-button], #boutonDeconnexion) {
+    transition:
+      background-color 0.12s,
+      color 0.12s;
+  }
+
+  & :is(ul#menu_horizontal > li > a, #boutonDeconnexion):hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  & #menu [data-optizzz-bar-button]:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+  }
+
+  & .boutonActif,
+  & .boutonActifSansColonne {
+    background: var(--look-menu-hover);
+    box-shadow: inset 0 -2px 0 var(--look-page);
+  }
+
+  & #liBoutonRessource .boutonActif,
+  & #boutonDeconnexion.boutonActif {
+    box-shadow: inset 0 -2px 0 var(--look-page) !important;
+  }
+
+  & ul.menu_colonne {
+    background: var(--look-menu);
+    border-radius: 0 0 var(--look-radius) var(--look-radius);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    padding: 6px 4px;
+    box-sizing: border-box;
+  }
+
+  & ul.menu_colonne li {
+    border-radius: 6px;
+    transition: background-color 0.12s;
+  }
+
+  & ul.menu_colonne li:hover {
+    background: var(--look-menu-hover);
+    border-radius: 6px;
+  }
+
+  /* ---------- Alliance chat ---------- */
+
+  & #chatAlliance {
+    margin-top: 10px;
+    padding: 8px 14px;
+    background-color: var(--look-box);
+    border: 1px solid var(--look-line-strong);
+    border-radius: var(--look-radius);
+    box-shadow: var(--look-shadow);
+  }
+
+  & #chatAlliance p {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--look-line);
+    line-height: 1.4;
+  }
+
+  & #chatAlliance p:last-child {
+    border-bottom: 0;
+  }
+
+  /* ---------- Left column (desktop): the game's sliced pictures become panels, same size and place ---------- */
+
+  & .titre_colonne_cliquable {
+    box-sizing: content-box;
+    color: var(--look-menu-text);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: linear-gradient(180deg, var(--look-menu-hover), var(--look-menu));
+    border: 1px solid rgba(0, 0, 0, 0.45);
+    border-bottom-color: rgba(0, 0, 0, 0.25);
+    border-radius: 10px 10px 0 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    width: 218px;
+    transition: filter 0.12s;
+  }
+
+  & .titre_colonne_cliquable:hover {
+    background: linear-gradient(180deg, var(--look-menu-hover), var(--look-menu));
+    filter: brightness(1.12);
+  }
+
+  & :is(.contenu_boite_info, .contenu_boite_compte_plus) {
+    background: rgba(60, 62, 49, 0.94);
+    border: 1px solid rgba(0, 0, 0, 0.45);
+    border-top: 0;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+    width: 218px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  /*
+   * The game places its boxes at fixed heights (resources at 20px, Compte+ at 200px): a taller resources box
+   * (Optizzz's « Entrepôt plein » lines) runs under Compte+. Here they follow each other: resources, then
+   * Optizzz's « Prochaines fins », then Compte+. Their inline `top` (set by « Prochaines fins ») is ignored.
+   */
+  & #menuBoite {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: auto;
+    padding-top: 20px;
+  }
+
+  & #menuBoite > :is(#boiteInfo, #boiteComptePlus, .optizzz-recap) {
+    position: relative;
+    top: 0 !important;
+    left: 15px;
+  }
+
+  & #boiteInfo {
+    order: 1;
+  }
+
+  & #menuBoite > .optizzz-recap {
+    order: 2;
+  }
+
+  & #boiteComptePlus {
+    order: 3;
+  }
+
+  & #menuBoite :is(.titre_colonne_cliquable, .contenu_boite_info, .contenu_boite_compte_plus) {
+    position: relative;
+    top: 0;
+  }
+
+  @media screen and (min-width: 97em) {
+    & #menuBoite > :is(#boiteInfo, #boiteComptePlus, .optizzz-recap) {
+      left: 65px;
+    }
+  }
+
+  @media screen and (min-width: 112em) {
+    & #menuBoite > :is(#boiteInfo, #boiteComptePlus, .optizzz-recap) {
+      left: 165px;
+    }
+  }
+
+  /* A little more room between the lines of resources */
+  & .ligne_boite_info {
+    height: 28px;
+  }
+
+  & :is(.boite_info, .boite_compte_plus) a {
+    color: var(--look-menu-text);
+  }
+
+  & .lien_rapide a {
+    border-radius: 5px;
+  }
+
+  & .jauge {
+    height: 5px;
+    border-radius: 999px;
+    border-color: rgba(0, 0, 0, 0.45);
+    background-color: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+  }
+
+  & :is(.jauge_nourriture, .jauge_materiaux) {
+    border-right: 0;
+  }
+
+  & :is(#boiteComptePlus, #boiteInfo) input:is([type="text"], :not([type])) {
+    box-sizing: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-family: var(--look-font);
+  }
+
+  /* ---------- Units, buildings, research (desktop) ---------- */
+
+  @media screen and (min-width: 41em) {
+    & tr.ligneAmelioration > td {
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    & tr.ligneAmelioration > td:first-child {
+      padding-left: 10px;
+    }
+
+    & tr.ligneAmelioration > td:last-child {
+      padding-right: 10px;
+    }
+
+    /* The description (and Optizzz's laying planner in it) no longer touches the slider and the cost */
+    & tr.ligneAmelioration > td.desciption_amelioration {
+      padding-right: 16px;
+    }
+  }
+
+  & .ligneAmelioration h2 {
+    font-size: 22px;
+  }
+
+  /* ---------- jQuery UI: tooltips and sliders ---------- */
+
+  & .ui-tooltip {
+    background: var(--look-field) !important;
+    color: var(--look-text);
+    border: 1px solid var(--look-line-strong) !important;
+    border-radius: var(--look-radius-small);
+    box-shadow: 0 6px 18px rgba(40, 30, 5, 0.3) !important;
+    font-family: var(--look-font);
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+
+  & .warning-tooltip {
+    background: var(--look-menu) !important;
+    color: var(--look-menu-text) !important;
+  }
+
+  & .ui-slider-horizontal {
+    height: 8px;
+    border-radius: 999px;
+  }
+
+  & .ui-slider .ui-slider-handle {
+    width: 18px;
+    height: 18px;
+    top: -6px;
+    border-radius: 50%;
+    cursor: grab;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ---------- Wide screens: a readable column, not a stretched one ---------- */
+
+  @media screen and (min-width: 97em) {
+    & #centre {
+      max-width: 1240px;
+      margin-left: max(310px, calc((100% - 1240px) / 2));
+      margin-right: max(310px, calc((100% - 1240px) / 2));
+    }
+  }
+
+  @media screen and (min-width: 112em) {
+    & #centre {
+      margin-left: max(410px, calc((100% - 1240px) / 2));
+      margin-right: max(410px, calc((100% - 1240px) / 2));
+    }
+  }
+
+  /* ---------- Tablet and phone ---------- */
+
+  @media screen and (max-width: 61em) {
+    & #centre {
+      margin: 0 10px;
+    }
+  }
+
+  @media screen and (max-width: 41em) {
+    & #centre {
+      margin: 0 8px;
+      font-size: 15px;
+    }
+
+    & #centre h2,
+    & #centre .titre {
+      font-size: 22px;
+      text-align: left;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    & #centre :is(div, fieldset, form, center, input, select, textarea, img) {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /*
+     * Two kinds of tables in the game. A layout table holds other tables or form frames (Ennemies, profiles,
+     * Armée): its cells are stacked. A data table holds only data (Membres, rankings, pontes): wider than the
+     * screen, it scrolls inside itself instead of widening the page. Units and buildings rows and the
+     * messagerie have their own layout below.
+     */
+    & #centre table:is(:has(table), :has(fieldset)):not(:has(.ligneAmelioration), #messagerie table) {
+      &,
+      & > tbody,
+      & > tbody > tr,
+      & > tbody > tr > :is(td, th) {
+        display: block;
+        width: auto;
+      }
+    }
+
+    & #centre table:not(:has(table), :has(fieldset), #messagerie table, .ligneAmelioration table) {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+    }
+
+    /* Messagerie: one conversation per row, as in a mail app: participants, then the subject below. */
+    & #table_liste_conversations,
+    & #table_liste_conversations > tbody {
+      display: block;
+      width: 100%;
+    }
+
+    & #table_liste_conversations > tbody > tr {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 6px;
+
+      & > td {
+        display: block;
+        min-width: 0;
+        width: auto;
+      }
+
+      & > td[colspan] {
+        grid-column: 2 / -1;
+      }
+
+      /* An opened conversation */
+      & > td[colspan="5"] {
+        grid-column: 1 / -1;
+      }
+    }
+
+    & #table_liste_conversations {
+      & td.td_coche {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+      }
+
+      & td.td_importance {
+        display: none;
+      }
+
+      & td.td_participants {
+        grid-column: 2;
+        grid-row: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      & td.td_save {
+        grid-column: 3;
+        grid-row: 1;
+      }
+
+      & td.td_objet {
+        grid-column: 2 / -1;
+        grid-row: 2;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    & .tableau_leger :is(td, th) {
+      padding: 6px 8px;
+    }
+
+    /*
+     * Reine, Construction, Laboratoire: one table row per unit or building, its cells side by side are wider
+     * than a phone. They wrap instead: picture and description, then the cost and the button below.
+     */
+    & #centre table:has(> tbody > tr.ligneAmelioration),
+    & #centre table:has(> tbody > tr.ligneAmelioration) > tbody {
+      display: block;
+      width: 100%;
+    }
+
+    & tr.ligneAmelioration {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 6px 10px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    & tr.ligneAmelioration > td {
+      display: block;
+      padding: 0;
+      min-width: 0;
+    }
+
+    & tr.ligneAmelioration > td.desciption_amelioration {
+      flex: 1 1 160px;
+    }
+
+    & #centre td > fieldset {
+      display: block;
+      min-height: 0;
+      margin: 0 0 10px;
+    }
+
+    /* The cost, the slider and the button: a line of their own */
+    & tr.ligneAmelioration > td.cout_amelioration {
+      flex: 1 1 100%;
+    }
+
+    /* Reine: the slider across, then the count, time and food side by side, the button on the right */
+    & td.cout_amelioration form > table {
+      width: 100%;
+    }
+
+    & td.cout_amelioration .slider {
+      margin: 6px 10px 10px;
+    }
+
+    & td.cout_ponte > div {
+      display: inline-block;
+      margin-right: 14px;
+    }
+
+    & td.td_icone_ponte {
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    /* Profiles: side by side blocks spaced with an inline margin */
+    & .boite_membre div[style*="margin"] {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    /* Ma Fourmilière: the nest is a 750px canvas, its clicks are mapped in pixels: it scrolls, never shrinks. */
+    & #centre div:has(> #fourmiliere) {
+      overflow: auto;
+    }
+
+    & #centre tr:has(> td.separateur),
+    & #centre td.separateur {
+      display: block;
+      width: auto;
+    }
+
+    /* Touch targets */
+    &
+      #centre
+      :is(input:is([type="submit"], [type="button"]), button, select):not(
+        body [class*="optizzz"],
+        body [class*="optizzz"] *
+      ) {
+      min-height: 40px;
+    }
+
+    &
+      #centre
+      :is(input:is([type="text"], [type="tel"], [type="number"]), select):not(
+        body [class*="optizzz"],
+        body [class*="optizzz"] *
+      ) {
+      min-height: 38px;
+      font-size: 16px; /* below 16px, iOS zooms in on focus */
+    }
+
+    & .boite_amelioration {
+      border-radius: var(--look-radius-small);
+    }
+
+    /* A flex box here, no longer a table row: it can be rounded */
+    & tr.ligneAmelioration {
+      border-radius: var(--look-radius);
+      box-shadow: var(--look-shadow);
+    }
+  }
+}
