@@ -21,7 +21,7 @@ Le `/` final compte (sinon 301). Erreurs : toujours `{"error": "…"}` en JSON ;
 
 ## Joueur
 
-`id`, `pseudo`, `alliance` (tag ou null), `masterPlayerId` (colonisateur ou null), `x`, `y`, `field` (TDC en cm²), `grade` (ou null), `buildingScore`, `technologyScore`, `trophyScore`, `onHoliday`, `isBanned`.
+`id`, `pseudo`, `alliance` (tag ou null), `masterPlayerId` (colonisateur ou null), `x`, `y`, `field` (TDC en cm²), `grade` (ou null), `buildingScore`, `technologyScore`, `trophyScore` (classement Elo, 0 si non classé ; voir `combat.md`), `onHoliday`, `isBanned`.
 
 Un joueur s'identifie par **serveur + id** (le pseudo peut changer).
 
