@@ -148,13 +148,13 @@ describe("mountLayingPlan", () => {
     mountLayingPlan(workers, state, context, now, () => now, options);
     mountLayingPlan(dwarves, state, context, now, () => now, options);
     const form = dwarves.panel.querySelector("form");
-    const pay = form?.querySelector<HTMLInputElement>('input[type="text"]');
-    if (!form || !pay) throw new Error("settings form");
-    pay.value = "6";
+    const durations = form?.querySelector<HTMLInputElement>('input[type="text"]');
+    if (!form || !durations) throw new Error("settings form");
+    durations.value = "6";
     form.dispatchEvent(new Event("change"));
-    expect(settings.get().payDelays).toEqual([6]);
-    expect(chip(workers, "dans 6 h")).toBeDefined();
-    expect(chip(workers, "dans 3 h")).toBeUndefined();
+    expect(settings.get().durations).toEqual([6]);
+    expect(chip(workers, "6 h")).toBeDefined();
+    expect(chip(workers, "8 h")).toBeUndefined();
     expect(workers.panel.querySelector<HTMLInputElement>('form input[type="text"]')?.value).toBe("6");
   });
 
