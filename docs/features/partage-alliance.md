@@ -57,7 +57,6 @@ Chacun avec son propre cadrage ; le format v1 porte déjà leurs données :
 
 - Chaîne de TDC : armée réelle des passeurs.
 - Simulateur : un allié en défense (Bouclier, Dôme, Loge, armée).
-- Renforts.
 - Historique des relevés en courbes.
 - Forum d'alliance comme canal, si la page dit qui lit une section.
 
