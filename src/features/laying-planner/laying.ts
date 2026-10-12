@@ -224,7 +224,7 @@ export function nextParisTime(after: Date, clock: { hours: number; minutes: numb
 }
 
 /**
- * The shortcuts of a row: all the food pays now or within a few hours, a laying of a few hours or ending at the
+ * The shortcuts of a row: all the food pays now, a laying of a few hours or ending at the
  * player's return, and the most units whose upkeep keeps the balance at zero (workers: up to the hunting field).
  * Never more than a week of laying, as the game's slider.
  */
@@ -233,8 +233,8 @@ export function layingShortcuts(input: ShortcutInput): ShortcutGroup[] {
   const week = unit.duration > 0 ? Math.floor(MAX_LAYING_MS / unit.duration) : Infinity;
   const cap = (count: number) => Math.max(0, Math.min(Math.floor(count), week));
   const capacity = state.capacities?.food ?? Infinity;
-  const payable = (hours: number) => {
-    const count = cap(maxAffordable(unit.food, state, new Date(now.getTime() + hours * HOUR), readAt));
+  const payable = () => {
+    const count = cap(maxAffordable(unit.food, state, now, readAt));
     const limit =
       count >= week ? "7 j max" : unit.food > 0 && (count + 1) * unit.food > capacity ? "entrepôt plein" : undefined;
     return { count, limit };
@@ -250,20 +250,14 @@ export function layingShortcuts(input: ShortcutInput): ShortcutGroup[] {
   const groups: ShortcutGroup[] = [
     {
       label: "Tout payer",
-      // Once the warehouse caps them, later delays give the same number: only the first is kept.
       shortcuts: [
         {
           label: "maintenant",
-          ...payable(0),
+          ...payable(),
           title: "Tout ce que la nourriture paie maintenant.",
           empty: "rien de payable maintenant",
         },
-        ...settings.payDelays.map((hours) => ({
-          label: `dans ${String(hours)} h`,
-          ...payable(hours),
-          title: `Tout ce que la nourriture paiera dans ${String(hours)} h, récoltes et entretien compris.`,
-        })),
-      ].filter((shortcut, index, all) => index === 0 || shortcut.count !== all[index - 1]?.count),
+      ],
     },
     {
       label: "Durée de ponte",
