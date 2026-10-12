@@ -44,6 +44,11 @@ Respect de votre vie privée : aucune donnée n'est collectée ni envoyée aille
 
 Optizzz est un projet de joueur, non affilié à Fourmizzz.
 
+## Notes de version 1.1.0
+
+• Nouveau : l'apparence du jeu est retouchée, sans changer ses couleurs ni ses images : texte plus lisible, tableaux, boutons, menus et icônes plus nets, et des pages adaptées au téléphone, à la tablette et aux grands écrans.
+• Planificateur de ponte : « Tout payer » ne propose plus que « maintenant ».
+
 ## Notes de version 1.0.2
 
 • Nouveau : calculateur de convoi, cibles à portée, plan de flood, chaîne de TDC, historique de progression, partage d'alliance, alertes (badge de l'icône et notifications) et rechargement sans risque.
@@ -64,6 +69,8 @@ Tools for Fourmizzz: end times, resources, egg laying, hunting, combat, floods, 
 **Description**
 
 Optizzz adds tools to the strategy game Fourmizzz (fourmizzz.fr), right inside the game pages. Each tool can be switched off in the settings (gear icon in the game bar). The extension's interface is in French, like the game.
+
+It also retouches the game's look without changing its colours or images: more readable text, sharper tables, buttons and menus, and pages fitted to phones, tablets and large screens.
 
 Your anthill
 • Ongoing work: a table of constructions and research in progress, with their progress and end time.
@@ -92,6 +99,11 @@ Optizzz never plays for you: a hunt is launched, a worker split applied and an a
 Privacy: no data is collected or sent anywhere but Fourmizzz. Your settings stay in your browser; alliance sharing only goes through your own copy and paste. Open source (MIT licence): https://github.com/Achaak/Optizzz
 
 Optizzz is a player-made project, not affiliated with Fourmizzz.
+
+**Release notes 1.1.0**
+
+• New: the game's look is retouched without changing its colours or images: more readable text, sharper tables, buttons, menus and icons, and pages fitted to phones, tablets and large screens.
+• Laying planner: « Tout payer » now only offers « maintenant ».
 
 **Release notes 1.0.2**
 
