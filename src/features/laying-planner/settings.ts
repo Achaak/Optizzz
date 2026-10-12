@@ -2,8 +2,6 @@ import { storage } from "wxt/utils/storage";
 
 /** The laying planner's shortcuts, set by the player, stored per server in the browser. */
 export interface LayingSettings {
-  /** « Tout payer dans … h ». */
-  payDelays: number[];
   /** « Durée de ponte » : laying of … h. */
   durations: number[];
   /** « jusqu'à … » : when the player comes back, Paris time. */
@@ -11,7 +9,6 @@ export interface LayingSettings {
 }
 
 export const DEFAULT_LAYING_SETTINGS: LayingSettings = {
-  payDelays: [3, 12],
   durations: [1, 8],
   returnAt: { hours: 8, minutes: 0 },
 };
@@ -41,8 +38,10 @@ export const clockValue = ({ hours, minutes }: LayingSettings["returnAt"]) =>
 const key = (host: string) => `local:layingPlanner:${host}:settings` as const;
 
 export async function readLayingSettings(host: string): Promise<LayingSettings> {
-  const stored = await storage.getItem<Partial<LayingSettings>>(key(host));
-  return { ...DEFAULT_LAYING_SETTINGS, ...stored };
+  const stored = await storage.getItem<Partial<LayingSettings> & { payDelays?: unknown }>(key(host));
+  // « Tout payer dans … h », removed on 2026-10-12, may still be saved.
+  const { durations, returnAt } = { ...DEFAULT_LAYING_SETTINGS, ...stored };
+  return { durations, returnAt };
 }
 
 export async function writeLayingSettings(host: string, settings: LayingSettings): Promise<void> {

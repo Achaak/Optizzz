@@ -13,7 +13,7 @@ import {
 import { clockValue, parseClock, parseHours, type LayingSettings } from "./settings";
 
 export const LAYING_STYLE = `
-.optizzz-laying { margin-top: 8px; padding: 6px 8px; border: 1px solid var(--optizzz-border-soft); background: var(--optizzz-surface-tint); font-size: var(--optizzz-font-size); line-height: 1.4; }
+.optizzz-laying { margin-top: 8px; padding: 6px 8px; border: 1px solid var(--optizzz-border-soft); border-radius: var(--optizzz-radius); background: var(--optizzz-surface-tint); font-size: var(--optizzz-font-size); line-height: 1.4; }
 .optizzz-laying-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 0; }
 .optizzz-laying-group-label { width: 100px; flex: none; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
 .optizzz-laying-chip { font: inherit; padding: 1px 6px; cursor: pointer; color: var(--optizzz-text); background: var(--optizzz-surface-raised); border: 1px solid var(--optizzz-border-soft); border-radius: var(--optizzz-radius); }
@@ -23,8 +23,8 @@ export const LAYING_STYLE = `
 .optizzz-laying-limit { margin-left: 4px; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
 .optizzz-laying-empty { padding: 1px 0; color: var(--optizzz-text-muted); font-style: italic; }
 .optizzz-laying-summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 6px; min-height: 54px; }
-.optizzz-laying-summary-empty { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; padding: 0 8px; border: 1px dashed var(--optizzz-border-soft); color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); text-align: center; }
-.optizzz-laying-tile { padding: 2px 6px; border: 1px solid var(--optizzz-border-soft); background: var(--optizzz-surface-raised); min-width: 0; }
+.optizzz-laying-summary-empty { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; padding: 0 8px; border: 1px dashed var(--optizzz-border-soft); border-radius: var(--optizzz-radius); color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); text-align: center; }
+.optizzz-laying-tile { padding: 2px 6px; border: 1px solid var(--optizzz-border-soft); border-radius: var(--optizzz-radius); background: var(--optizzz-surface-raised); min-width: 0; }
 .optizzz-laying-preview .optizzz-laying-tile { border-style: dashed; }
 .optizzz-laying-tile-label { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
 .optizzz-laying-tile-value { font-weight: bold; }
@@ -270,7 +270,7 @@ export function mountLayingPlan(
   return { render };
 }
 
-/** « Régler les raccourcis »: the hours of « Tout payer » and « Durée de ponte », and the time of « jusqu'à ». */
+/** « Régler les raccourcis »: the hours of « Durée de ponte » and the time of « jusqu'à ». */
 function buildSettingsForm(doc: Document, store: SettingsStore): HTMLFormElement {
   const form = doc.createElement("form");
   form.className = "optizzz-laying-settings";
@@ -289,10 +289,6 @@ function buildSettingsForm(doc: Document, store: SettingsStore): HTMLFormElement
   const hours = (values: number[]) => values.join(" ");
 
   const settings = store.get();
-  const pay = doc.createElement("input");
-  pay.type = "text";
-  pay.value = hours(settings.payDelays);
-  pay.placeholder = "3 12";
   const durations = doc.createElement("input");
   durations.type = "text";
   durations.value = hours(settings.durations);
@@ -300,7 +296,6 @@ function buildSettingsForm(doc: Document, store: SettingsStore): HTMLFormElement
   const returnAt = doc.createElement("input");
   returnAt.type = "time";
   returnAt.value = clockValue(settings.returnAt);
-  field("Tout payer dans (h)", pay);
   field("Durées de ponte (h)", durations);
   field("Ponte jusqu'à", returnAt);
   const note = doc.createElement("p");
@@ -310,14 +305,12 @@ function buildSettingsForm(doc: Document, store: SettingsStore): HTMLFormElement
   // Another row's form may change them.
   store.subscribe(() => {
     const current = store.get();
-    pay.value = hours(current.payDelays);
     durations.value = hours(current.durations);
     returnAt.value = clockValue(current.returnAt);
   });
   form.addEventListener("change", () => {
     const current = store.get();
     const next: LayingSettings = {
-      payDelays: parseHours(pay.value),
       durations: parseHours(durations.value),
       returnAt: parseClock(returnAt.value) ?? current.returnAt,
     };

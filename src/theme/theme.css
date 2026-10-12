@@ -1,36 +1,34 @@
 /*
- * Optizzz's design tokens. The classic theme copies the game's own boxes (parchment, brown border, red titles):
- * every Optizzz style reads these variables, so a « modern » theme only has to redefine them.
- * Injected on the game's pages (:root), in each Shadow DOM (:host) and on the extension's pages.
+ * Optizzz's design tokens: the game's colours (parchment, brown borders, red titles, olive menus), retouched as the
+ * game itself is (src/features/game-look/style.css). Defined on :root: on the game's pages, a Shadow DOM inherits
+ * them, and WXT rewrites `:root` into `:host` in a tool's own CSS anyway. On the extension's pages, :root is the page.
  */
-:root,
-:host {
+:root {
   /* Text */
-  --optizzz-font: Verdana, Arial, sans-serif;
-  --optizzz-font-size: 12px;
-  --optizzz-font-size-small: 11px;
+  --optizzz-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --optizzz-font-size: 13px;
+  --optizzz-font-size-small: 12px;
   --optizzz-text: #000;
   --optizzz-text-muted: #6b5d3a;
-  --optizzz-title: rgb(197, 19, 15);
+  --optizzz-title: #b3120e;
   --optizzz-link: #1d4f85;
   /* The game's dark menus (top bar, left column) */
   --optizzz-menu-text: rgb(211, 217, 184);
 
-  /* Boxes, as the game's (table.simulateur, .boite_membre) */
-  --optizzz-surface: rgb(215, 195, 132);
-  --optizzz-surface-alt: rgb(201, 174, 99);
-  --optizzz-surface-raised: rgb(240, 230, 190);
-  --optizzz-border: rgb(102, 88, 50);
-  --optizzz-border-soft: rgba(102, 88, 50, 0.35);
-  /* The game's own tables: thin black borders */
-  --optizzz-table-border: #000;
+  /* Boxes, the game's parchment (table.simulateur, .boite_membre) */
+  --optizzz-surface: #dccb94;
+  --optizzz-surface-alt: #d2bd80;
+  --optizzz-surface-raised: #f3ead0;
+  --optizzz-border: rgba(102, 88, 50, 0.55);
+  --optizzz-border-soft: rgba(102, 88, 50, 0.3);
+  --optizzz-table-border: rgba(102, 88, 50, 0.4);
   /* A lighter area inside a game box (the resource simulator) */
-  --optizzz-surface-tint: rgba(255, 255, 255, 0.18);
+  --optizzz-surface-tint: rgba(255, 250, 230, 0.35);
   /* Workers with no work, in the split bar */
   --optizzz-idle: #bbb;
   --optizzz-idle-alt: #eee;
-  --optizzz-radius: 0;
-  --optizzz-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --optizzz-radius: 8px;
+  --optizzz-shadow: 0 6px 24px rgba(40, 30, 5, 0.3);
   --optizzz-overlay: rgba(0, 0, 0, 0.5);
 
   /* States: the same red and orange as the urgency scale (src/utils/urgency.ts) */
@@ -44,8 +42,8 @@
   --optizzz-pact-bg: rgba(40, 90, 200, 0.2);
 
   /* Main action (launch hunts) */
-  --optizzz-action: #6b8e23;
-  --optizzz-action-border: #4f6b17;
+  --optizzz-action: #5d7f1f;
+  --optizzz-action-border: #445e14;
   --optizzz-action-text: #fff;
   --optizzz-action-disabled: #b9c49c;
   --optizzz-action-disabled-border: #a3ad86;
@@ -53,4 +51,100 @@
   /* Resources, as the game's apple and wood */
   --optizzz-food: rgb(0, 120, 0);
   --optizzz-materials: rgb(139, 90, 43);
+
+  /* Titles of Optizzz's boxes: red and italic as the game's, in a serif */
+  --optizzz-title-font: Georgia, "Palatino Linotype", Palatino, "Book Antiqua", serif;
+  /* Boxes, slightly raised */
+  --optizzz-panel-shadow: 0 1px 2px rgba(60, 45, 10, 0.12), 0 3px 10px rgba(60, 45, 10, 0.08);
+  /* Fields, table headers, focus (the controls below) */
+  --optizzz-field-bg: #fbf6e6;
+  --optizzz-head-bg: #c6ab62;
+  --optizzz-focus-ring: rgba(179, 18, 14, 0.35);
+}
+
+/*
+ * The browser's native controls, restyled in Optizzz's tools: in a Shadow DOM (`:host`) or in an Optizzz block of the
+ * game's page, never the game's own controls. In a layer: any rule of a tool, unlayered, wins over these.
+ */
+@layer optizzz-controls {
+  :host button,
+  body [class*="optizzz-"] button {
+    font: inherit;
+    padding: 4px 12px;
+    color: var(--optizzz-text);
+    /* A darker bottom edge rather than a shadow: a bare button (background and border none) stays bare. */
+    background: linear-gradient(180deg, var(--optizzz-surface-raised), var(--optizzz-surface));
+    border: 1px solid var(--optizzz-border);
+    border-bottom-color: rgba(60, 45, 10, 0.75);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  :host button:hover:not(:disabled),
+  body [class*="optizzz-"] button:hover:not(:disabled) {
+    filter: brightness(1.05);
+  }
+
+  :host button:disabled,
+  body [class*="optizzz-"] button:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  :host :is(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea),
+  body [class*="optizzz-"] :is(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea) {
+    font: inherit;
+    padding: 3px 7px;
+    min-height: 26px;
+    box-sizing: border-box;
+    color: var(--optizzz-text);
+    background: var(--optizzz-field-bg);
+    border: 1px solid var(--optizzz-border);
+    border-radius: 5px;
+    box-shadow: inset 0 1px 2px rgba(60, 45, 10, 0.12);
+  }
+
+  :host :is(input, select, textarea, button):focus-visible,
+  body [class*="optizzz-"] :is(input, select, textarea, button):focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--optizzz-focus-ring);
+  }
+
+  :host input:is([type="checkbox"], [type="radio"], [type="range"]),
+  body [class*="optizzz-"] input:is([type="checkbox"], [type="radio"], [type="range"]) {
+    accent-color: var(--optizzz-title);
+  }
+
+  :host fieldset,
+  body [class*="optizzz-"] fieldset {
+    border: 1px solid var(--optizzz-border-soft);
+    border-radius: 8px;
+  }
+
+  :host legend,
+  body [class*="optizzz-"] legend {
+    padding: 0 4px;
+    font-weight: 600;
+    color: var(--optizzz-text-muted);
+  }
+
+  :host th,
+  body [class*="optizzz-"] th {
+    font-weight: 600;
+  }
+
+  :host thead th,
+  body [class*="optizzz-"] thead th {
+    background: var(--optizzz-head-bg);
+  }
+
+  :host :is(th, td),
+  body [class*="optizzz-"] :is(th, td) {
+    padding: 4px 8px;
+  }
+
+  :host summary,
+  body [class*="optizzz-"] summary {
+    cursor: pointer;
+  }
 }

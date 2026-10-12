@@ -174,13 +174,11 @@ describe("layingShortcuts", () => {
   const find = (groups: ShortcutGroup[], label: string) =>
     groups.flatMap((group) => group.shortcuts).find((shortcut) => shortcut.label === label);
 
-  it("offers all the food pays now and within the hours set, a laying of the hours set, and a zero balance", () => {
+  it("offers all the food pays now, a laying of the hours set, and a zero balance", () => {
     const groups = shortcuts();
     expect(groups.map((group) => group.label)).toEqual(["Tout payer", "Durée de ponte", "Entretien"]);
-    expect(groups[0]?.shortcuts.map((shortcut) => shortcut.label)).toEqual(["maintenant", "dans 3 h", "dans 12 h"]);
     // 2 000 food at 16 each.
     expect(find(groups, "maintenant")?.count).toBe(125);
-    expect(find(groups, "dans 3 h")?.count).toBe(maxAffordable(16, state, new Date(now.getTime() + 3 * HOUR), now));
     // 50 s each: 72 an hour.
     expect(find(groups, "1 h")?.count).toBe(72);
     expect(find(groups, "8 h")?.count).toBe(576);
@@ -198,9 +196,16 @@ describe("layingShortcuts", () => {
   });
 
   it("follows the hours set by the player", () => {
-    const groups = shortcuts({ settings: { ...DEFAULT_LAYING_SETTINGS, payDelays: [6], durations: [2, 4] } });
-    expect(groups[0]?.shortcuts.map((shortcut) => shortcut.label)).toEqual(["maintenant", "dans 6 h"]);
+    const groups = shortcuts({ settings: { ...DEFAULT_LAYING_SETTINGS, durations: [2, 4] } });
     expect(groups[1]?.shortcuts.map((shortcut) => shortcut.label).slice(0, 2)).toEqual(["2 h", "4 h"]);
+  });
+
+  it("pays everything now only: no « dans … h »", () => {
+    expect(
+      shortcuts({})
+        .at(0)
+        ?.shortcuts.map((shortcut) => shortcut.label),
+    ).toEqual(["maintenant"]);
   });
 
   it("never offers more than a week of laying, as the game's slider", () => {
@@ -227,12 +232,11 @@ describe("layingShortcuts", () => {
     expect(fill?.empty).toBe("TDC plein, 500 sans travail");
   });
 
-  it("says when the food warehouse caps « Tout payer », and drops the later delays it makes equal", () => {
-    // 50 000 food at most: 3 125 dwarves.
-    const groups = shortcuts({ state: { ...state, food: 49_990 } });
+  it("says when the food warehouse caps « Tout payer »", () => {
+    // 50 000 food at most: 3 125 dwarves, and not one more.
+    const groups = shortcuts({ state: { ...state, food: 50_000 } });
     expect(groups[0]?.shortcuts).toEqual([
-      expect.objectContaining({ label: "maintenant", count: 3124 }),
-      expect.objectContaining({ label: "dans 3 h", count: 3125, limit: "entrepôt plein" }),
+      expect.objectContaining({ label: "maintenant", count: 3125, limit: "entrepôt plein" }),
     ]);
   });
 });
