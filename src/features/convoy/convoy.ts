@@ -31,7 +31,8 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
   if (!title) return [];
   const convoys: ConvoyOnWay[] = [];
   for (let element = title.nextElementSibling; element; element = element.nextElementSibling) {
-    if (element.tagName === "BR") continue;
+    // With Compte+, « - Retour le 13 oct. à 21h59 » follows each line, in a <small>.
+    if (element.tagName === "BR" || element.tagName === "SMALL") continue;
     const match = ON_WAY.exec(element.textContent.replace(/\s+/g, " ").trim());
     const left = parseGameDuration(match?.[4] ?? "");
     if (!match || left === null) break;
