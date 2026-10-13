@@ -31,6 +31,7 @@ describe("buildFeaturesSection", () => {
       "alerts.notifications",
       "laying-planner",
       "convoy",
+      "convoy.workers",
       "targets",
       "flood",
       "hunt-reports",

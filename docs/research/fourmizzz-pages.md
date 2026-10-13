@@ -195,7 +195,7 @@ Relevé le 2026-10-07 sur s5 (convoi de 1 nourriture vers Osirus_jack, envoyé �
 - Formulaire `form[action="commerce.php"]` : `input#pseudo_convoi`, `input#input_nbNourriture` / `#input_nbMateriaux` / `#input_nbOuvriere` (`type="tel"`, abréviations k, m, g), chacun doublé d'un champ caché (`#nbNourriture`, `#nbMateriaux`, `#nbOuvriere`) où le script du jeu écrit le nombre lu ; `#ratio_nourriture` ; bouton `input[name="convoi"]` « Lancer le convoi ». Cliquer sur un titre (« Nourriture donnée »…) remplit le maximum : premier clic avec les ouvrières disponibles, second avec toutes.
 - Aide `#explication_convois` : une ouvrière par lot de 10 ressources, +5 % par niveau d'étable à pucerons ; Vitesse d'attaque −10 % de trajet par niveau ; le surplus est perdu si les entrepôts du destinataire débordent.
 - Convois en cours : `h3` « Convois en cours: », puis une ligne par convoi : `<strong>- Vous allez livrer 1<img pomme> et 0<img bois> à <a href="Membre.php?Pseudo=X">X</a> dans 1H 22m 22s</strong><br>`. Le temps restant est écrit au chargement, **sans décompte `reste()`**.
-- Les ouvrières ne font pas de trajet retour (observation du joueur).
+- Les ouvrières ne font pas de trajet retour (observation du joueur) : le jeu les retire du compteur des ouvrières (`#nb_ouvrieres`, en-tête) au départ et les rend à l'arrivée du convoi.
 - Un message `data-type="Commerce"` arrive **au départ** : « 20h15 Convoi livré à Osirus_jack : 1 ».
 
 ## simulateurDuree.php

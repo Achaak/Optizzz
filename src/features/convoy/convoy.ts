@@ -103,3 +103,26 @@ export function recipients<P extends MapPlayer>(players: P[], senderPseudo: stri
   const ally = (candidate: P) => sender.alliance !== null && candidate.alliance === sender.alliance;
   return others.sort((a, b) => Number(ally(b)) - Number(ally(a)) || distance(sender, a) - distance(sender, b));
 }
+
+export interface WorkersAway {
+  recipient: string;
+  workers: number;
+  /** The workers are back when the convoy arrives: they make no trip back. */
+  backAt: Date;
+}
+
+/** The workers carrying the convoys still on their way, soonest back first. The game takes them off its count. */
+export function workersAway(
+  convoys: Pick<ConvoyOnWay, "recipient" | "food" | "materials" | "arrivesAt">[],
+  aphids: number,
+  now: Date,
+): WorkersAway[] {
+  return convoys
+    .filter((convoy) => convoy.arrivesAt > now)
+    .map((convoy) => ({
+      recipient: convoy.recipient,
+      workers: workersNeeded(convoy.food + convoy.materials, aphids),
+      backAt: convoy.arrivesAt,
+    }))
+    .sort((a, b) => a.backAt.getTime() - b.backAt.getTime());
+}

@@ -2,20 +2,10 @@
 import { formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import { urgencyOf } from "@/utils/urgency";
+import { setHeaderTip } from "@/utils/header-tip";
 import { balancedFoodWorkers, dailyBalance, HARVESTS_PER_DAY, outlook, type ColonyState } from "@/game/forecast";
 
 const BADGE_CLASS = "optizzz-outlook";
-
-/**
- * The game's tooltip (jQuery UI, on the gauge cell) would take the badge's `title` and lose its line breaks: the
- * badge has its own, and keeps the game's from opening over it.
- */
-export const OUTLOOK_TIP_STYLE = `
-.optizzz-outlook[data-optizzz-tip] { position: relative; cursor: help; }
-.optizzz-outlook[data-optizzz-tip]:hover::after, .optizzz-outlook[data-optizzz-tip]:focus::after {
-  content: attr(data-optizzz-tip); position: absolute; left: 0; top: 100%; z-index: 1000; width: max-content;
-  max-width: 340px; padding: 4px 6px; white-space: pre-line; text-align: left; font-weight: normal;
-  color: var(--optizzz-text); background: var(--optizzz-surface-raised); border: 1px solid var(--optizzz-border); }`;
 
 /** What `state` gives, computed once: only the countdowns move afterwards. */
 const computed = new WeakMap<
@@ -52,9 +42,7 @@ export function renderOutlook(doc: Document, state: ColonyState, readAt: Date, n
       ? badge(doc, "Entrepôt plein dans", foodFullAt, now)
       : balanceBadge(doc, state);
   if (foodCell) {
-    foodBadge.dataset.optizzzTip = foodTooltip(state, balance, now);
-    foodBadge.tabIndex = 0;
-    for (const event of ["mouseover", "focusin"]) foodBadge.addEventListener(event, (e) => e.stopPropagation());
+    setHeaderTip(foodBadge, foodTooltip(state, balance, now));
     foodCell.append(foodBadge);
   }
 
