@@ -61,8 +61,9 @@ export const featureCatalog = [
   {
     id: "convoy",
     label: "Calculateur de convoi",
-    description: "Sur les Convois : trajet et heure d'arrivée, ouvrières prises, destinataires suggérés.",
-    options: [],
+    description:
+      "Sur les Convois : trajet et heure d'arrivée, ouvrières prises, destinataires suggérés. Dans l'en-tête : le total des ouvrières, convois en route compris.",
+    options: [{ id: "workers", label: "Total des ouvrières, convois compris, dans l'en-tête" }],
   },
   {
     id: "targets",
