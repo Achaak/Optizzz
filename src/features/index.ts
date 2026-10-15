@@ -3,7 +3,7 @@ import { collect } from "./collect";
 import { allianceMapMenu } from "./alliance-map/menu";
 import { allianceSharingMenu } from "./alliance-sharing/menu";
 import { combatSimulator } from "./combat-simulator";
-import { convoyPlanner } from "./convoy";
+import { convoyPlanner, convoyWorkers } from "./convoy";
 import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
 import { floodPlanner } from "./flood";
@@ -35,6 +35,7 @@ export const features: Feature[] = [
   huntReports,
   layingPlanner,
   convoyPlanner,
+  convoyWorkers,
   targets,
   membersColumns,
   floodPlanner,

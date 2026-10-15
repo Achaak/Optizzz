@@ -5,6 +5,12 @@ import { loadLevelsOf, unknownLevelsHint } from "@/data/levels";
 import { INCOME_MAX_AGE, loadIncome } from "@/data/income";
 import { readStock } from "@/game/pages/resources";
 import { annotateConvoysOnWay, CONVOY_STYLE, mountConvoyPlanner } from "./mount";
+import { isEnabled } from "../toggles";
+import { CONVOYS_MAX_AGE, loadConvoys, refreshConvoys, type KeptConvoys } from "@/data/convoys";
+import { loadStoredLevels } from "@/data/levels";
+import { HEADER_TIP_STYLE } from "@/utils/header-tip";
+import { workersAway } from "./convoy";
+import { CONVOY_WORKERS_STYLE, renderConvoyWorkers } from "./mount-workers";
 
 /**
  * On commerce.php: trip and arrival of the convoy being prepared, the workers it takes, recipient suggestions,
@@ -53,5 +59,47 @@ export const convoyPlanner: Feature = {
       },
       () => new Date(),
     );
+  },
+};
+
+/**
+ * On every page: under the header's workers, the total with those carrying convoys, which the game takes off its
+ * count until the convoy arrives. See docs/features/convoy.md.
+ */
+export const convoyWorkers: Feature = {
+  id: "convoy-workers",
+  toggle: "convoy",
+  matches: () => true,
+  async run(_ctx, toggles) {
+    if (!isEnabled(toggles, "convoy", "workers")) return;
+    const stock = readStock(document);
+    if (!stock) return;
+    const { origin } = location;
+    // The header's count is the page's: the convoys are taken as they were then, arrived ones too.
+    const loadedAt = new Date();
+
+    const style = document.createElement("style");
+    style.textContent = CONVOY_WORKERS_STYLE + HEADER_TIP_STYLE;
+    document.head.append(style);
+
+    const { aphids } = await loadStoredLevels(origin);
+    const render = (kept: KeptConvoys | null) => {
+      if (!kept) return;
+      renderConvoyWorkers(
+        document,
+        {
+          atHome: stock.workers,
+          away: workersAway(kept.convoys, aphids ?? 0, loadedAt),
+          readAt: kept.readAt,
+          stale: loadedAt.getTime() - kept.readAt.getTime() > CONVOYS_MAX_AGE,
+          aphidsKnown: aphids !== undefined,
+        },
+        loadedAt,
+      );
+    };
+    // Kept by the collect feature, commerce.php included.
+    const kept = await loadConvoys(origin);
+    render(kept);
+    if (!kept || loadedAt.getTime() - kept.readAt.getTime() > CONVOYS_MAX_AGE) render(await refreshConvoys(origin));
   },
 };
