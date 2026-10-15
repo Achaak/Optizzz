@@ -459,6 +459,109 @@ html.optizzz-game-look {
     border-bottom: 0;
   }
 
+  /* ---------- Alliance members (alliance.php?Membres) ---------- */
+
+  /* `clip`, not `hidden`: the box keeps its rounded corners without becoming a scroller, so the header can stick */
+  & #alliance table.simulateur:has(#tabMembresAlliance) {
+    overflow: clip;
+  }
+
+  /* The legend (Actif, Inactif…): quieter, it is read once */
+  & #alliance table.simulateur:has(#tabMembresAlliance) table.ligne_paire {
+    font-size: 12px;
+    color: var(--look-muted);
+    background-color: var(--look-box-alt);
+    border-radius: var(--look-radius-small);
+
+    & td {
+      padding: 1px 6px;
+    }
+  }
+
+  /* « Ajouter tous les membres à ma liste d'amis »: a small button under the table */
+  & #alliance table.simulateur:has(#tabMembresAlliance) > tbody > tr:last-child a {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+    font-size: 13px;
+    border: 1px solid var(--look-line-strong);
+    border-radius: var(--look-radius-small);
+    background-color: var(--look-box-alt);
+    text-decoration: none;
+  }
+
+  /*
+   * Data cells: 1 empty, 2 position, 3 grade, 4 nickname, 5 « can attack me », 6 hunting field, 7 « attack »,
+   * 8 technology, 9 anthill, 10 activity, 11 colonised, 12 empty, then Optizzz's columns. The header row spans
+   * Terrain over 6–7 and Etat over 10–11, so its cells are counted apart.
+   */
+  & #tabMembresAlliance {
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+
+    & :is(td, th) {
+      border-bottom: 1px solid var(--look-line);
+      vertical-align: middle;
+    }
+
+    & tr:last-child > td {
+      border-bottom: 0;
+    }
+
+    /* Under the game's fixed top bar (30px) */
+    & th {
+      position: sticky;
+      top: 30px;
+      z-index: 1;
+    }
+
+    & td:nth-child(2) {
+      width: 1%;
+      text-align: right;
+      font-size: 12px;
+      color: var(--look-muted);
+    }
+
+    & td:nth-child(3) {
+      text-align: left;
+      font-size: 13px;
+      color: var(--look-muted);
+    }
+
+    & td:nth-child(4) {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    & td:nth-child(4) a {
+      color: var(--look-text);
+      text-decoration: none;
+    }
+
+    /* Icon cells: narrow, the icon centred */
+    & td:is(:nth-child(5), :nth-child(7), :nth-child(10), :nth-child(11)) {
+      width: 22px;
+      padding-left: 2px;
+      padding-right: 2px;
+      text-align: center;
+    }
+
+    & td:is(:nth-child(6), :nth-child(8), :nth-child(9)),
+    & th:is(:nth-child(7), :nth-child(8)) {
+      text-align: right;
+    }
+
+    /* Terrain spans the « attack » icon cell (22px + 4px): its title ends over the numbers */
+    & th:nth-child(6) {
+      text-align: right;
+      padding-right: 36px;
+    }
+
+    & th:nth-child(9) {
+      text-align: center;
+    }
+  }
+
   /* ---------- Left column (desktop): the game's sliced pictures become panels, same size and place ---------- */
 
   & .titre_colonne_cliquable {
