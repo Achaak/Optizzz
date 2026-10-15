@@ -11,6 +11,7 @@ import { gameLevels } from "./game-levels";
 import { historyMenu } from "./history/menu";
 import { huntReports } from "./hunt-reports";
 import { layingPlanner } from "./laying-planner";
+import { membersColumns } from "./members-columns";
 import { resourceForecast } from "./resource-forecast";
 import { safeReload } from "./safe-reload";
 import { settingsMenu } from "./settings";
@@ -35,6 +36,7 @@ export const features: Feature[] = [
   layingPlanner,
   convoyPlanner,
   targets,
+  membersColumns,
   floodPlanner,
   combatSimulator,
   gameLevels,
