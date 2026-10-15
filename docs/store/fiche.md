@@ -22,7 +22,7 @@ Votre fourmilière
 • Prévisions de ressources : quand vous pourrez payer, quand vous tomberez en famine, quand un entrepôt sera plein, et un simulateur de répartition des ouvrières.
 • Alertes : sur l'icône de l'extension, le temps avant une famine ou un entrepôt plein pour tous vos serveurs, et des notifications au choix (famine, entrepôt plein, chantier terminé, chasse rentrée).
 • Planificateur de ponte : sur la Reine, des raccourcis (tout payer, durée de ponte, bilan à zéro) avec un aperçu au survol, et la fin, le paiement et l'entretien de la ponte choisie.
-• Calculateur de convoi : trajet, heure d'arrivée, récolte perdue pendant le trajet et destinataires proposés, du plus proche au plus loin.
+• Calculateur de convoi : trajet, heure d'arrivée, récolte perdue pendant le trajet et destinataires proposés, du plus proche au plus loin ; dans l'en-tête, le total de vos ouvrières, convois en route compris.
 • Rechargement sans risque : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.
 
 Chasse et combat
@@ -44,6 +44,11 @@ Optizzz ne joue jamais à votre place : une chasse n'est lancée, une répartiti
 Respect de votre vie privée : aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur ; le partage d'alliance passe uniquement par votre copier-coller. Code source ouvert (licence MIT) : https://github.com/Achaak/Optizzz
 
 Optizzz est un projet de joueur, non affilié à Fourmizzz.
+
+## Notes de version 1.2.1
+
+• Nouveau : dans l'en-tête, sous vos ouvrières, le total en comptant celles qui transportent un convoi, avec le détail de chaque convoi au survol.
+• Convois : avec Compte+, tous les convois en route sont lus, plus seulement le premier.
 
 ## Notes de version 1.2.0
 
@@ -86,7 +91,7 @@ Your anthill
 • Resource forecasts: when you will be able to pay, when you will run out of food, when a warehouse will be full, and a worker split simulator.
 • Alerts: on the extension icon, the time left before running out of food or filling a warehouse on all your servers, and optional notifications (famine, full warehouse, finished work, hunt back home).
 • Laying planner: on the Queen page, shortcuts (pay everything, laying time, zero balance) with a preview on hover, and the end, payment date and upkeep of the chosen laying.
-• Convoy calculator: travel time, arrival, harvest lost during the trip and suggested recipients, nearest first.
+• Convoy calculator: travel time, arrival, harvest lost during the trip and suggested recipients, nearest first; in the header, your total of workers, convoys on their way included.
 • Safe reload: reloading a page or going back no longer replays an egg laying, a hunt or a construction.
 
 Hunting and combat
@@ -108,6 +113,11 @@ Optizzz never plays for you: a hunt is launched, a worker split applied and an a
 Privacy: no data is collected or sent anywhere but Fourmizzz. Your settings stay in your browser; alliance sharing only goes through your own copy and paste. Open source (MIT licence): https://github.com/Achaak/Optizzz
 
 Optizzz is a player-made project, not affiliated with Fourmizzz.
+
+**Release notes 1.2.1**
+
+• New: in the header, under your workers, the total including those carrying a convoy, with each convoy in the tooltip.
+• Convoys: with Compte+, every convoy on its way is read, not only the first one.
 
 **Release notes 1.2.0**
 
