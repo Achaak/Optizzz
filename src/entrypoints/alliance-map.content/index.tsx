@@ -34,6 +34,7 @@ export default defineContentScript({
           loggedInPseudo={readLoggedInPseudo(document)}
           liveHuntingFields={liveHuntingFields}
           sharing={isEnabled(toggles, "alliance-sharing")}
+          chain={isEnabled(toggles, "tdc-chain")}
         />,
       );
 

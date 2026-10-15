@@ -12,7 +12,19 @@ import { loadLaunches } from "@/data/launches";
 import { loadLevelsOf } from "@/data/levels";
 import { bridge, planChain, planTransfer, takeMatrix, type ChainMember, type Gap, type Transfer } from "./chain";
 import { byDeparture, planText, type PlannedLaunch } from "./plan-text";
-import { exportRoles, importRoles, passerRanks, proposeRoles, roleLabel, rungs, type Role } from "./roles";
+import { BUBBLE_SIZES, bubbleOf, PALETTE, rolesTopDown, styleOf, type BubbleSize, type RoleStyle } from "./role-styles";
+import {
+  CHAIN_MARGIN as MARGIN,
+  chainRoles,
+  exportRoles,
+  importRoles,
+  passerRanks,
+  proposeRoles,
+  roleKey,
+  roleLabel,
+  rungs,
+  type Role,
+} from "./roles";
 import { defaultFirstArrival, schedule } from "./schedule";
 import { readChainSettings, writeChainSettings } from "./settings";
 import { attackSlots } from "@/game/attack";
@@ -22,8 +34,6 @@ import { NumberField } from "@/utils/NumberField";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { formatDuration, formatEndTimeShort, fromParisParts, parisParts } from "@/utils/time-format";
 
-/** Kept above the 50 % limit, as the flood planner: other attacks and hunts may move the fields before arrival. */
-const MARGIN = 0.01;
 const CLOCK_TICK_MS = 30_000;
 
 interface Props {
@@ -33,6 +43,8 @@ interface Props {
   liveHuntingFields: ReadonlyMap<string, number>;
   /** « Partage d'alliance » is on: the Attack Speed members shared counts. */
   sharing: boolean;
+  /** « Carte de l'alliance » is on: the bubble of each role on the map is chosen here. */
+  map: boolean;
 }
 
 interface Member extends Player {
@@ -41,8 +53,6 @@ interface Member extends Player {
 }
 
 const OUT: Role = { kind: "out" };
-
-const roleValue = (role: Role) => (role.kind === "passer" ? `passer:${String(role.rank)}` : role.kind);
 
 function parseRoleValue(value: string): Role {
   if (value.startsWith("passer:")) return { kind: "passer", rank: Number(value.slice("passer:".length)) };
@@ -68,7 +78,7 @@ const fromParisInput = (value: string): Date | null => {
   });
 };
 
-export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing }: Props) {
+export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, map }: Props) {
   const host = new URL(origin).host;
   const [playersExport, setPlayersExport] = useState<PlayersExport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -139,19 +149,9 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing }:
     [mapSettings, me?.id, myAttackSpeed, shared],
   );
 
-  const proposed = useMemo(
-    () =>
-      proposeRoles(
-        members.map((m) => ({ id: m.id, field: m.huntingField })),
-        MARGIN,
-      ),
-    [members],
-  );
+  const fields = useMemo(() => members.map((m) => ({ id: m.id, field: m.huntingField })), [members]);
   const storedRoles = settings?.roles;
-  const roles = useMemo<Map<number, Role>>(() => {
-    if (!storedRoles) return proposed;
-    return new Map(members.map((m) => [m.id, storedRoles[m.id] ?? OUT]));
-  }, [storedRoles, proposed, members]);
+  const roles = useMemo(() => chainRoles(fields, storedRoles ?? null), [fields, storedRoles]);
   const storedKeep = settings?.keep;
   const keep = useMemo(
     () => new Map(Object.entries(storedKeep ?? {}).map(([id, field]) => [Number(id), field])),
@@ -289,7 +289,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing }:
         <div className="toolbar">
           <button
             type="button"
-            onClick={() => updateSettings((s) => ({ ...s, roles: Object.fromEntries(proposed) }))}
+            onClick={() => updateSettings((s) => ({ ...s, roles: Object.fromEntries(proposeRoles(fields, MARGIN)) }))}
             title="Les plus gros en greniers, puis un échelon par portée de l'échelon du dessus, les plus petits en chasseurs"
           >
             Proposer des rôles
@@ -331,12 +331,12 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing }:
                       <td>{formatNumber(m.huntingField)}</td>
                       <td>
                         <select
-                          value={roleValue(role)}
+                          value={roleKey(role)}
                           aria-label={`Rôle de ${m.pseudo}`}
                           onChange={(e) => setRole(m.id, parseRoleValue(e.target.value))}
                         >
                           {roleOptions.map((option) => (
-                            <option key={roleValue(option)} value={roleValue(option)}>
+                            <option key={roleKey(option)} value={roleKey(option)}>
                               {roleLabel(option)}
                             </option>
                           ))}
@@ -381,6 +381,16 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing }:
             }))
           }
         />
+        {map && (
+          <RoleBubbles
+            roles={rolesTopDown(roles.values())}
+            styles={settings.styles}
+            onChange={(role, style) =>
+              updateSettings((s) => ({ ...s, styles: { ...s.styles, [roleKey(role)]: style } }))
+            }
+            onReset={() => updateSettings((s) => ({ ...s, styles: {} }))}
+          />
+        )}
       </section>
 
       <section>
@@ -686,6 +696,84 @@ function RoleSharing({
         </button>
       </div>
       {message && <p className="note">{message}</p>}
+    </details>
+  );
+}
+
+/** The bubble of each role in use on the alliance map: a colour of the palette and a size. */
+function RoleBubbles({
+  roles,
+  styles,
+  onChange,
+  onReset,
+}: {
+  roles: Role[];
+  styles: Readonly<Record<string, RoleStyle>>;
+  onChange: (role: Role, style: RoleStyle) => void;
+  onReset: () => void;
+}) {
+  return (
+    <details className="role-bubbles">
+      <summary>Couleurs des rôles sur la Carte</summary>
+      <p className="note">
+        Sur la Carte, cochez « Couleurs des rôles de la chaîne » pour voir chaque membre avec la bulle de son rôle.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Rôle</th>
+            <th>Couleur</th>
+            <th>Taille</th>
+            <th>Aperçu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {roles.map((role) => {
+            const style = styleOf(role, styles);
+            const bubble = bubbleOf(style);
+            return (
+              <tr key={roleKey(role)}>
+                <td>{roleLabel(role)}</td>
+                <td>
+                  <span className="swatches" role="radiogroup" aria-label={`Couleur de ${roleLabel(role)}`}>
+                    {PALETTE.map((color, index) => (
+                      <button
+                        key={color}
+                        type="button"
+                        role="radio"
+                        className="swatch"
+                        aria-checked={index === style.color}
+                        aria-label={`Couleur ${String(index + 1)}`}
+                        style={{ background: color }}
+                        onClick={() => onChange(role, { ...style, color: index })}
+                      />
+                    ))}
+                  </span>
+                </td>
+                <td>
+                  <select
+                    value={style.size}
+                    aria-label={`Taille de ${roleLabel(role)}`}
+                    onChange={(e) => onChange(role, { ...style, size: e.target.value as BubbleSize })}
+                  >
+                    {Object.entries(BUBBLE_SIZES).map(([size, { label }]) => (
+                      <option key={size} value={size}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="preview">
+                  <span className="bubble" style={{ background: bubble.color, width: bubble.px, height: bubble.px }} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <button type="button" onClick={onReset}>
+        Couleurs par défaut
+      </button>
     </details>
   );
 }
