@@ -34,7 +34,7 @@ Chasse et combat
 • Plan de flood : sur le formulaire d'attaque, les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
 
 Alliance
-• Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens.
+• Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens et, au choix, leur rôle dans la chaîne de TDC.
 • Chaîne de TDC : qui peut prendre à qui, les rôles (chasseur, passeur, grenier) et l'ordre des floods pour faire monter le TDC.
 • Historique de progression : les courbes du TDC et des scores jour après jour, pour vous, votre alliance et sur chaque profil.
 • Partage d'alliance : copiez vos niveaux, chantiers et armée pour les coller sur le Discord de votre alliance, et lisez ceux des autres membres.
@@ -44,6 +44,13 @@ Optizzz ne joue jamais à votre place : une chasse n'est lancée, une répartiti
 Respect de votre vie privée : aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur ; le partage d'alliance passe uniquement par votre copier-coller. Code source ouvert (licence MIT) : https://github.com/Achaak/Optizzz
 
 Optizzz est un projet de joueur, non affilié à Fourmizzz.
+
+## Notes de version 1.2.0
+
+• Page Membres : deux colonnes triables, le temps d'une attaque ou d'un convoi vers chaque membre et son rôle dans la chaîne de TDC ; votre ligne est mise en avant.
+• Chaîne de TDC : choisissez la couleur et la taille de chaque rôle, reprises sur la carte de l'alliance et la page Membres.
+• Carte de l'alliance : chaque membre peut s'afficher avec la bulle de son rôle, avec une légende.
+• Apparence : le tableau des membres de l'alliance est plus lisible.
 
 ## Notes de version 1.1.0
 
@@ -87,10 +94,11 @@ Hunting and combat
 • Hunt reports: in the messages, a table of every fight of each hunt, with the predicted losses.
 • Combat simulator: from a button in the top bar on every page, or from the extension icon.
 • Targets in range: on the Enemies page, the players you can attack, nearest first, with travel time, possible gain, status, pacts and wars.
+• Members page: the attack or convoy time to each member, and their role in the hunting field chain in colour, two sortable columns.
 • Flood plan: on the attack form, the attacks that take the most hunting field with your army; a button fills the form, you confirm it yourself.
 
 Alliance
-• Alliance map: members on the map, linked to their nearest neighbours, with travel times both ways.
+• Alliance map: members on the map, linked to their nearest neighbours, with travel times both ways and, if you wish, their role in the hunting field chain.
 • Hunting field chain: who can take from whom, the roles (hunter, passer, granary) and the flood order to move hunting field up the chain.
 • Progress history: hunting field and score curves day by day, for you, your alliance and on every profile.
 • Alliance sharing: copy your levels, work and army to paste them on your alliance's Discord, and read the other members' ones.
@@ -100,6 +108,13 @@ Optizzz never plays for you: a hunt is launched, a worker split applied and an a
 Privacy: no data is collected or sent anywhere but Fourmizzz. Your settings stay in your browser; alliance sharing only goes through your own copy and paste. Open source (MIT licence): https://github.com/Achaak/Optizzz
 
 Optizzz is a player-made project, not affiliated with Fourmizzz.
+
+**Release notes 1.2.0**
+
+• Members page: two sortable columns, the attack or convoy time to each member and their role in the hunting field chain; your own row is highlighted.
+• Hunting field chain: choose the colour and size of each role, used on the alliance map and the Members page.
+• Alliance map: each member can be drawn with the bubble of their role, with a legend.
+• Look: the alliance members table is easier to read.
 
 **Release notes 1.1.0**
 
