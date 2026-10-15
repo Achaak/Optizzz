@@ -29,6 +29,18 @@ Le jeu est daté : Verdana tassé, tableaux à bordure noire, boutons natifs, au
 - La feuille est injectée par le manifest sur toutes les pages du jeu, et le content script pose la classe `optizzz-game-look` sur `<html>` à `document_start` : pas de flash de l'ancien style. Toutes les règles sont imbriquées sous `html.optizzz-game-look` : la classe en plus l'emporte sur les sélecteurs du jeu sans `!important` (sauf contre les styles inline du jeu).
 - Colonne de gauche : les encarts s'enchaînent (ressources, « Prochaines fins », Compte+) au lieu des hauteurs fixes du jeu, qui les faisaient se chevaucher.
 
+## Membres (`alliance.php?Membres`)
+
+Repris le 2026-10-15 :
+
+- titres de colonnes au-dessus de leurs valeurs : les nombres (Terrain, Technologie, Fourmilière) alignés à droite en chiffres de même largeur, Terrain décalé de la cellule d'icône qu'il couvre ;
+- position et grade en retrait (gris, plus petits), pseudo en gras ;
+- cellules d'icônes étroites et centrées ;
+- en-tête collé sous la barre du haut au défilement (le cadre passe en `overflow: clip`, qui garde les coins arrondis sans devenir un conteneur de défilement) ;
+- légende plus discrète, « Ajouter tous les membres à ma liste d'amis » en petit bouton.
+
+Ma ligne en surbrillance et les colonnes « Trajet » et « Rôle » viennent de `colonnes-membres.md`.
+
 ## Téléphone
 
 - Un tableau qui contient d'autres tableaux ou des `fieldset` est un tableau de mise en page : ses cellules s'empilent (Ennemies, profils). Un tableau de données défile dans son cadre (Membres, Ennemies, pontes en cours).
