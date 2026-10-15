@@ -209,3 +209,43 @@ td.late {
   box-sizing: border-box;
   font-family: monospace;
 }
+
+.role-bubbles {
+  margin: 8px 0;
+}
+
+.role-bubbles summary {
+  cursor: pointer;
+}
+
+.role-bubbles td {
+  vertical-align: middle;
+}
+
+.swatches {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.swatch {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--optizzz-border);
+  border-radius: 50%;
+}
+
+.swatch[aria-checked="true"] {
+  outline: 2px solid var(--optizzz-text);
+  outline-offset: 1px;
+}
+
+.role-bubbles .preview {
+  width: 24px;
+  text-align: center;
+}
+
+.bubble {
+  display: inline-block;
+  border-radius: 50%;
+}

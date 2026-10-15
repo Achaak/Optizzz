@@ -3,6 +3,8 @@ import type { Player } from "@/data/exports";
 import { levelOf, type KnownLevels } from "./neighbor-table";
 import { kNearestLinks, membersByDistance } from "./neighbors";
 import { distance, travelTime } from "@/game/travel";
+import type { MemberBubble } from "@/features/tdc-chain/role-styles";
+import { roleLabel } from "@/features/tdc-chain/roles";
 import { CHART_COLORS } from "@/theme";
 import { formatDecimal, formatNumber } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
@@ -67,6 +69,8 @@ export function buildChartOption(
   k: number,
   levels: KnownLevels,
   size: { width: number; height: number },
+  /** Chain roles shown: each member's bubble; the selected player is then ringed instead of coloured. */
+  bubbles: ReadonlyMap<number, MemberBubble> | null = null,
 ): EChartsCoreOption {
   const selectedNeighbors = new Set(
     membersByDistance(selected, members)
@@ -78,6 +82,25 @@ export function buildChartOption(
 
   const nodes = members.map((m) => {
     const isSelected = m.id === selected.id;
+    const bubble = bubbles?.get(m.id);
+    if (bubble) {
+      return {
+        name: m.pseudo,
+        value: [m.x, m.y],
+        symbolSize: bubble.px + (isSelected ? 4 : 0),
+        itemStyle: {
+          color: bubble.color,
+          opacity: m.onHoliday ? 0.55 : 1,
+          borderColor: COLORS.text,
+          borderWidth: isSelected ? 2.5 : 0,
+        },
+        label: {
+          formatter: `${m.masterPlayerId !== null ? "⛓ " : ""}${m.pseudo}`,
+          fontWeight: isSelected ? "bold" : "normal",
+          color: m.onHoliday ? COLORS.holiday : COLORS.text,
+        },
+      };
+    }
     const color = isSelected
       ? COLORS.selected
       : selectedNeighbors.has(m.id)
@@ -144,6 +167,7 @@ export function buildChartOption(
         const lines = [
           `<b>${escapeHtml(m.pseudo)}</b> (${m.x} ; ${m.y})`,
           m.grade ? `Grade : ${escapeHtml(m.grade)}` : null,
+          bubbles?.has(m.id) ? `Rôle dans la chaîne : ${roleLabel(bubbles.get(m.id)?.role ?? { kind: "out" })}` : null,
           `TDC : ${formatNumber(m.huntingField)} cm²`,
           m.onHoliday ? "En vacances" : null,
           m.masterPlayerId !== null ? "Colonisé" : null,

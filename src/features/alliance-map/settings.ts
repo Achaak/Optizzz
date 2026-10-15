@@ -10,6 +10,8 @@ export interface Settings {
   playerLevels: Record<string, number>;
   /** When each of `playerLevels` was entered (ms), to weigh it against a shared state; missing for older entries. */
   playerLevelsAt: Record<string, number>;
+  /** Members drawn with the bubble of their role in the TDC chain (« Chaîne de TDC » on). */
+  showRoles: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -18,6 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
   labLevel: null,
   playerLevels: {},
   playerLevelsAt: {},
+  showRoles: true,
 };
 
 const key = (host: string) => `local:allianceMap:${host}:settings` as const;

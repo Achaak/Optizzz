@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exportRoles, importRoles, passerRanks, proposeRoles, type Role } from "./roles";
+import { chainRoles, exportRoles, importRoles, passerRanks, proposeRoles, type Role } from "./roles";
 
 // Live fields of an alliance on S5, 2026-10-08.
 const s5 = [
@@ -115,5 +115,25 @@ describe("passerRanks", () => {
 
   it("offers one rank above the highest used", () => {
     expect(passerRanks([{ kind: "passer", rank: 6 }])).toEqual([7, 6, 5, 4, 3, 2, 1]);
+  });
+});
+
+describe("chainRoles", () => {
+  const members = [
+    { id: 1, field: 1000 },
+    { id: 2, field: 600 },
+  ];
+
+  it("proposes roles from the fields until the player sets them", () => {
+    expect(chainRoles(members, null)).toEqual(proposeRoles(members, 0.01));
+  });
+
+  it("keeps the roles set, a member without one out of the chain", () => {
+    expect(chainRoles(members, { 1: { kind: "granary" } })).toEqual(
+      new Map([
+        [1, { kind: "granary" }],
+        [2, { kind: "out" }],
+      ]),
+    );
   });
 });

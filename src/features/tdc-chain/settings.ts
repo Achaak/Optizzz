@@ -1,4 +1,5 @@
 import { storage } from "wxt/utils/storage";
+import type { RoleStyles } from "./role-styles";
 import type { Role } from "./roles";
 
 /** The chain, stored per server in the browser; keyed by player id. */
@@ -7,9 +8,11 @@ export interface ChainSettings {
   roles: Record<string, Role> | null;
   /** Field each hunter keeps. */
   keep: Record<string, number>;
+  /** Bubble of each role on the map, chosen here. */
+  styles: RoleStyles;
 }
 
-const DEFAULT_SETTINGS: ChainSettings = { roles: null, keep: {} };
+const DEFAULT_SETTINGS: ChainSettings = { roles: null, keep: {}, styles: {} };
 
 const key = (host: string) => `local:tdcChain:${host}:settings` as const;
 
@@ -20,4 +23,11 @@ export async function readChainSettings(host: string): Promise<ChainSettings> {
 
 export async function writeChainSettings(host: string, settings: ChainSettings): Promise<void> {
   await storage.setItem(key(host), settings);
+}
+
+/** Calls `onChange` when the chain's settings change (roles and styles set in the chain, read by the map). */
+export function watchChainSettings(host: string, onChange: (settings: ChainSettings) => void): () => void {
+  return storage.watch<Partial<ChainSettings>>(key(host), (stored) => {
+    onChange({ ...DEFAULT_SETTINGS, ...stored });
+  });
 }

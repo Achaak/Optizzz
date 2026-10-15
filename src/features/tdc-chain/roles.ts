@@ -8,6 +8,9 @@ interface Member {
   field: number;
 }
 
+/** Kept above the 50 % limit, as the flood planner: other attacks and hunts may move the fields before arrival. */
+export const CHAIN_MARGIN = 0.01;
+
 /** Members within this share of the biggest field are proposed as granaries. */
 const GRANARY_SHARE = 0.8;
 
@@ -42,6 +45,18 @@ export function proposeRoles(members: readonly Member[], margin = 0): Map<number
   return roles;
 }
 
+/**
+ * The chain's roles, for the chain and the map: those the player set (a member arrived since is out), or until then
+ * the ones proposed from the fields. `members` are those who can be in the chain.
+ */
+export function chainRoles(
+  members: readonly Member[],
+  stored: Readonly<Record<string, Role>> | null,
+): Map<number, Role> {
+  if (!stored) return proposeRoles(members, CHAIN_MARGIN);
+  return new Map(members.map((member) => [member.id, stored[member.id] ?? { kind: "out" }]));
+}
+
 /** Passer ranks always offered, so a chain can be built from the top without filling the rungs one by one. */
 const MIN_PASSER_RANKS = 5;
 
@@ -51,6 +66,9 @@ export function passerRanks(roles: Iterable<Role>): number[] {
   const count = Math.max(MIN_PASSER_RANKS, highest + 1);
   return Array.from({ length: count }, (_, i) => count - i);
 }
+
+/** A role as a string, for a `<select>` value or a stored key: « granary », « passer:2 »… */
+export const roleKey = (role: Role): string => (role.kind === "passer" ? `passer:${String(role.rank)}` : role.kind);
 
 /** The role as the players write it: « Chasseur », « Passeur 2 », « Grenier », « Hors chaîne ». */
 export function roleLabel(role: Role): string {

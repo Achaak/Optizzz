@@ -7,6 +7,7 @@ import ReactECharts from "echarts-for-react/esm/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildChartOption, chartHeightFor, zoomWindowAround, type MapMember } from "./chart-option";
 import type { KnownLevels } from "./neighbor-table";
+import type { MemberBubble } from "@/features/tdc-chain/role-styles";
 
 echarts.use([GraphChart, GridComponent, TooltipComponent, DataZoomComponent, CanvasRenderer]);
 
@@ -20,12 +21,14 @@ interface Props {
   selected: MapMember;
   k: number;
   levels: KnownLevels;
+  /** Each member's chain role bubble, when the map shows them. */
+  bubbles: ReadonlyMap<number, MemberBubble> | null;
   onSelect: (playerId: number) => void;
 }
 
 const MAX_HEIGHT = 640;
 
-export function MapChart({ members, selected, k, levels, onSelect }: Props) {
+export function MapChart({ members, selected, k, levels, bubbles, onSelect }: Props) {
   const chartRef = useRef<ReactECharts>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   // The plot area must be square for both axes to share a scale: it depends on the width actually given.
@@ -45,8 +48,8 @@ export function MapChart({ members, selected, k, levels, onSelect }: Props) {
   }, []);
   const height = chartHeightFor(width, MAX_HEIGHT);
   const option = useMemo(
-    () => buildChartOption(members, selected, k, levels, { width, height }),
-    [members, selected, k, levels, width, height],
+    () => buildChartOption(members, selected, k, levels, { width, height }, bubbles),
+    [members, selected, k, levels, width, height, bubbles],
   );
 
   const zoomTo = (x: readonly number[], y: readonly number[]) => {

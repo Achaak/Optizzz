@@ -145,3 +145,24 @@ a {
   color: var(--optizzz-text-muted);
   font-weight: normal;
 }
+
+.role-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.role-legend li {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.role-legend .bubble {
+  display: inline-block;
+  border-radius: 50%;
+}

@@ -10,6 +10,17 @@ import { readSettings, writeSettings } from "./settings";
 import { refreshLevels } from "@/data/levels";
 import { NumberField } from "@/utils/NumberField";
 import { useStoredSettings } from "@/utils/useStoredSettings";
+import { memberBubbles, rolesTopDown, type MemberBubble } from "@/features/tdc-chain/role-styles";
+import { roleKey, roleLabel } from "@/features/tdc-chain/roles";
+import { readChainSettings, watchChainSettings, type ChainSettings } from "@/features/tdc-chain/settings";
+
+/** One bubble per role in use, from the granaries down. */
+function legend(bubbles: ReadonlyMap<number, MemberBubble>): MemberBubble[] {
+  const byRole = new Map([...bubbles.values()].map((bubble) => [roleKey(bubble.role), bubble]));
+  return rolesTopDown([...byRole.values()].map((bubble) => bubble.role)).flatMap(
+    (role) => byRole.get(roleKey(role)) ?? [],
+  );
+}
 
 interface Props {
   origin: string;
@@ -18,6 +29,8 @@ interface Props {
   liveHuntingFields: ReadonlyMap<string, number>;
   /** « Partage d'alliance » is on: the Attack Speed members shared counts. */
   sharing: boolean;
+  /** « Chaîne de TDC » is on: members can be drawn with the bubble of their role. */
+  chain: boolean;
 }
 
 /** Read fresh at each opening: a research may have ended since the levels were remembered. */
@@ -25,12 +38,20 @@ async function fetchLabLevel(origin: string): Promise<number | null> {
   return (await refreshLevels(origin, "laboratoire.php")).attackSpeed ?? null;
 }
 
-export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing }: Props) {
+export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing, chain }: Props) {
   const host = new URL(origin).host;
   const [playersExport, setPlayersExport] = useState<PlayersExport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [settings, updateSettings] = useStoredSettings(host, readSettings, writeSettings);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [chainSettings, setChainSettings] = useState<ChainSettings | null>(null);
+
+  useEffect(() => {
+    if (!chain) return;
+    void readChainSettings(host).then(setChainSettings);
+    // Roles and colours set in the chain while the map is open: the other view of the same page.
+    return watchChainSettings(host, setChainSettings);
+  }, [chain, host]);
 
   useEffect(() => {
     loadPlayersExport(origin).then(setPlayersExport, (e: unknown) => {
@@ -59,6 +80,12 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
       .filter((p) => p.alliance === allianceTag)
       .map((p) => ({ ...p, huntingField: liveHuntingFields.get(p.pseudo) ?? p.field }));
   }, [playersExport, allianceTag, liveHuntingFields]);
+
+  const showRoles = chain && settings?.showRoles === true;
+  const bubbles = useMemo(
+    () => (showRoles && chainSettings ? memberBubbles(members, chainSettings.roles, chainSettings.styles) : null),
+    [showRoles, chainSettings, members],
+  );
 
   const shared = useSharedAttackSpeeds(origin, allianceTag, members, sharing);
 
@@ -132,7 +159,46 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
         </span>
       </div>
 
-      <MapChart members={members} selected={selected} k={k} levels={levels} onSelect={setSelectedId} />
+      {chain && (
+        <div className="settings">
+          <label>
+            <input
+              type="checkbox"
+              checked={settings.showRoles}
+              onChange={(e) => {
+                const showRoles = e.target.checked;
+                updateSettings((s) => ({ ...s, showRoles }));
+              }}
+            />{" "}
+            Couleurs des rôles de la chaîne
+          </label>
+          {bubbles && (
+            <ul className="role-legend" aria-label="Rôles de la chaîne">
+              {legend(bubbles).map(({ role, color, px }) => (
+                <li key={roleKey(role)}>
+                  <span className="bubble" style={{ background: color, width: px, height: px }} />
+                  {roleLabel(role)}
+                </li>
+              ))}
+            </ul>
+          )}
+          {bubbles && (
+            <span className="note">
+              Couleurs et tailles réglables dans <a href="#chaine">Chaîne</a>
+              {!chainSettings?.roles && " ; rôles proposés d'après le TDC tant qu'ils n'y sont pas choisis"}.
+            </span>
+          )}
+        </div>
+      )}
+
+      <MapChart
+        members={members}
+        selected={selected}
+        k={k}
+        levels={levels}
+        bubbles={bubbles}
+        onSelect={setSelectedId}
+      />
 
       <NeighborTable
         selected={selected}
