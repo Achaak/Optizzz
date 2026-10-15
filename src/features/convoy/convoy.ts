@@ -31,7 +31,8 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
   if (!title) return [];
   const convoys: ConvoyOnWay[] = [];
   for (let element = title.nextElementSibling; element; element = element.nextElementSibling) {
-    if (element.tagName === "BR") continue;
+    // With Compte+, « - Retour le 13 oct. à 21h59 » follows each line, in a <small>.
+    if (element.tagName === "BR" || element.tagName === "SMALL") continue;
     const match = ON_WAY.exec(element.textContent.replace(/\s+/g, " ").trim());
     const left = parseGameDuration(match?.[4] ?? "");
     if (!match || left === null) break;
@@ -102,4 +103,27 @@ export function recipients<P extends MapPlayer>(players: P[], senderPseudo: stri
   const others = players.filter((candidate) => candidate !== sender);
   const ally = (candidate: P) => sender.alliance !== null && candidate.alliance === sender.alliance;
   return others.sort((a, b) => Number(ally(b)) - Number(ally(a)) || distance(sender, a) - distance(sender, b));
+}
+
+export interface WorkersAway {
+  recipient: string;
+  workers: number;
+  /** The workers are back when the convoy arrives: they make no trip back. */
+  backAt: Date;
+}
+
+/** The workers carrying the convoys still on their way, soonest back first. The game takes them off its count. */
+export function workersAway(
+  convoys: Pick<ConvoyOnWay, "recipient" | "food" | "materials" | "arrivesAt">[],
+  aphids: number,
+  now: Date,
+): WorkersAway[] {
+  return convoys
+    .filter((convoy) => convoy.arrivesAt > now)
+    .map((convoy) => ({
+      recipient: convoy.recipient,
+      workers: workersNeeded(convoy.food + convoy.materials, aphids),
+      backAt: convoy.arrivesAt,
+    }))
+    .sort((a, b) => a.backAt.getTime() - b.backAt.getTime());
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import commerceHtml from "./__fixtures__/commerce.html?raw";
-import { planConvoy, readConvoysOnWay, recipients, workersNeeded } from "./convoy";
+import { planConvoy, readConvoysOnWay, recipients, workersAway, workersNeeded } from "./convoy";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const now = new Date(2026, 9, 7, 20, 31, 45);
@@ -78,5 +78,28 @@ describe("recipients", () => {
 
   it("keeps the export's order when the sender is not in it", () => {
     expect(recipients([player("A", 1, 1), player("B", 0, 0)], "Nobody").map((p) => p.pseudo)).toEqual(["A", "B"]);
+  });
+});
+
+describe("workersAway", () => {
+  const at = (minutes: number) => new Date(now.getTime() + minutes * 60_000);
+  const convoy = (recipient: string, food: number, materials: number, arrivesAt: Date) => ({
+    recipient,
+    food,
+    materials,
+    arrivesAt,
+  });
+
+  it("counts the workers each convoy on its way carries, soonest back first", () => {
+    expect(workersAway([convoy("Tetramorium", 0, 12_500, at(90)), convoy("Messor", 1, 0, at(30))], 0, now)).toEqual([
+      { recipient: "Messor", workers: 1, backAt: at(30) },
+      { recipient: "Tetramorium", workers: 1250, backAt: at(90) },
+    ]);
+  });
+
+  it("carries more with the Étable à pucerons and forgets the convoys arrived", () => {
+    expect(workersAway([convoy("A", 600, 600, at(10)), convoy("B", 5, 0, at(0))], 4, now)).toEqual([
+      { recipient: "A", workers: 100, backAt: at(10) },
+    ]);
   });
 });
