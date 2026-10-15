@@ -44,6 +44,7 @@ Relevés en direct sur S5 le 2026-10-07 (compte connecté, via Claude in Chrome)
 | 9             | État : `img` (`1rondvert.gif` = actif cette semaine…) |
 
 - Légende : actif, inactif 3 j, inactif 10 j, en vacances, banni, colonisé.
+- Tri côté client par `script/tablesort.js` (fdTableSort : `th.sortable-numeric fd-column-N > a.fdTableSortTrigger`) : il déplace les lignes entières, une cellule ajoutée en fin de ligne suit (relevé le 2026-10-15). La ligne compte 12 cellules, la dernière vide.
 
 ## construction.php
 

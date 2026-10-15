@@ -72,6 +72,16 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "members-columns",
+    label: "Colonnes de la page Membres",
+    description:
+      "Sur la page Membres de l'alliance, deux colonnes triables : le temps d'une attaque ou d'un convoi vers chaque membre, et son rôle dans la chaîne de TDC avec sa couleur.",
+    options: [
+      { id: "trips", label: "Trajet" },
+      { id: "roles", label: "Rôle dans la chaîne (si « Chaîne de TDC » est activée)" },
+    ],
+  },
+  {
     id: "flood",
     label: "Plan de flood",
     description:
