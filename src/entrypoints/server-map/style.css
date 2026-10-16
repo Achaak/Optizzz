@@ -184,6 +184,65 @@ a {
   color: var(--optizzz-danger);
 }
 
+/* A chip's filter: its summary in the chip, its bounds below the chips. */
+.chip .filter-summary {
+  color: var(--optizzz-text-muted);
+  font-size: 11px;
+}
+
+.chip .filter-toggle {
+  padding: 1px 6px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.chip .filter-toggle.active {
+  font-weight: bold;
+}
+
+.chip-filter {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 6px 10px 8px;
+  border: 1px solid var(--optizzz-border-soft);
+  border-radius: var(--optizzz-radius);
+  background: var(--optizzz-surface-raised);
+}
+
+.chip-filter legend {
+  padding: 0 4px;
+  font-weight: bold;
+}
+
+/* One row per criterion: name, min « à » max, then « à ma portée » for the TDC. */
+.chip-filter .bounds {
+  display: grid;
+  grid-template-columns: max-content 7em max-content 7em max-content;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.chip-filter input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chip-filter .to {
+  color: var(--optizzz-text-muted);
+}
+
+.chip-filter .footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chip-filter .footer .note {
+  flex: 1;
+  margin: 0;
+}
+
 /* Chart, as on the alliance map. */
 .chart {
   background: var(--optizzz-surface-raised);
@@ -309,6 +368,11 @@ button.icon {
 }
 
 @media (pointer: coarse) {
+  .chip .filter-toggle {
+    min-height: 28px;
+    padding: 2px 10px;
+  }
+
   .hint-mouse {
     display: none;
   }
@@ -330,6 +394,19 @@ button.icon {
 
   .search {
     max-width: none;
+  }
+
+  /* « à ma portée » goes under the TDC bounds. */
+  .chip-filter .bounds {
+    grid-template-columns: max-content 1fr max-content 1fr;
+  }
+
+  .chip-filter .in-range {
+    grid-column: 2 / -1;
+  }
+
+  .chip-filter .spacer {
+    display: none;
   }
 
   .zoom-buttons {

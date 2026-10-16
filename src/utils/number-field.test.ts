@@ -16,6 +16,17 @@ describe("parseNumberField", () => {
     expect(parseNumberField("12.8", { integer: true })).toBe(12);
   });
 
+  it("reads an amount as the game writes it, or shortened", () => {
+    const amount = { amount: true };
+    expect(parseNumberField("10 000", amount)).toBe(10_000);
+    expect(parseNumberField("12\u202f348", amount)).toBe(12_348);
+    expect(parseNumberField("10k", amount)).toBe(10_000);
+    expect(parseNumberField("1,5 M", amount)).toBe(1_500_000);
+    expect(parseNumberField("2m", amount)).toBe(2_000_000);
+    expect(parseNumberField("10 k 5", amount)).toBeUndefined();
+    expect(parseNumberField("10 000")).toBeUndefined();
+  });
+
   it("refuses an empty or unreadable field unless empty is allowed", () => {
     expect(parseNumberField("")).toBeUndefined();
     expect(parseNumberField("abc")).toBeUndefined();

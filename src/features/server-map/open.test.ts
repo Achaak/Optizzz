@@ -6,6 +6,7 @@ describe("map target in an address", () => {
     for (const target of [
       { kind: "player", id: 42 },
       { kind: "alliance", tag: "A:B" },
+      { kind: "unaffiliated" },
     ] as const)
       expect(decodeTarget(encodeTarget(target))).toEqual(target);
     expect(decodeTarget("player:x")).toBeNull();

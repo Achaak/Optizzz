@@ -67,6 +67,13 @@ describe("searchSuggestions", () => {
     expect(searchSuggestions("e", players, alliances, [], 2)).toHaveLength(2);
     expect(searchSuggestions("  ", players, alliances, [])).toEqual([]);
   });
+
+  it("offers the players without an alliance as one chip, counting them", () => {
+    const [first] = searchSuggestions("sans al", players, alliances, []);
+    expect(first).toEqual({ target: { kind: "unaffiliated" }, label: "Sans alliance", detail: "2 joueurs" });
+    const chips: Chip[] = [{ kind: "unaffiliated", color: "#000" }];
+    expect(searchSuggestions("sans al", players, alliances, chips)).toEqual([]);
+  });
 });
 
 describe("addChip", () => {
@@ -76,6 +83,7 @@ describe("addChip", () => {
     let chips = addChip([], { kind: "alliance", tag: "EVO" }, palette);
     chips = addChip(chips, { kind: "player", id: 3 }, palette);
     chips = addChip(chips, { kind: "alliance", tag: "EVO" }, palette);
+    expect(addChip(addChip([], { kind: "unaffiliated" }), { kind: "unaffiliated" })).toHaveLength(1);
     expect(chips).toEqual([
       { kind: "alliance", tag: "EVO", color: "#a" },
       { kind: "player", id: 3, color: "#b" },
@@ -95,7 +103,9 @@ describe("initialChips", () => {
 
   it("opened on a target: my alliance and that target, whatever was chosen last", () => {
     const chips = initialChips(stored, "ANGE", { kind: "player", id: 7 });
-    expect(chips.map((chip) => (chip.kind === "player" ? chip.id : chip.tag))).toEqual(["ANGE", 7]);
+    expect(
+      chips.map((chip) => (chip.kind === "player" ? chip.id : chip.kind === "alliance" ? chip.tag : null)),
+    ).toEqual(["ANGE", 7]);
     expect(chips.map((chip) => chip.kind)).toEqual(["alliance", "player"]);
     expect(initialChips(stored, "ANGE", { kind: "alliance", tag: "ange" })).toHaveLength(1);
   });
@@ -114,6 +124,36 @@ describe("highlightedPlayers", () => {
     expect([...highlighted].map(([p, chip]) => [p.pseudo, chip.color])).toEqual([
       ["A", "#e"],
       ["B", "#b"],
+    ]);
+  });
+
+  it("leaves in grey the players a chip's filter rules out, not those of a player's own chip", () => {
+    const small = player("Small", { alliance: "EVO", field: 500 });
+    const big = player("Big", { alliance: "EVO", field: 20_000 });
+    const loner = player("Loner", { field: 100 });
+    const chosen = player("Chosen", { field: 100 });
+    const filter = { field: { min: 10_000, max: null } };
+    const chips: Chip[] = [
+      { kind: "alliance", tag: "EVO", color: "#e", filter },
+      { kind: "unaffiliated", color: "#u", filter },
+      { kind: "player", id: chosen.id, color: "#c" },
+    ];
+    const highlighted = highlightedPlayers(chips, [small, big, loner, chosen]);
+    expect([...highlighted.keys()].map((p) => p.pseudo)).toEqual(["Big", "Chosen"]);
+  });
+
+  it("colours the players without an alliance with the « Sans alliance » chip", () => {
+    const a = player("A", { alliance: "EVO" });
+    const b = player("B");
+    const c = player("C");
+    const chips: Chip[] = [
+      { kind: "unaffiliated", color: "#u" },
+      { kind: "player", id: c.id, color: "#c" },
+    ];
+    const highlighted = highlightedPlayers(chips, [a, b, c, player("D", { isBanned: true })]);
+    expect([...highlighted].map(([p, chip]) => [p.pseudo, chip.color])).toEqual([
+      ["B", "#u"],
+      ["C", "#c"],
     ]);
   });
 });

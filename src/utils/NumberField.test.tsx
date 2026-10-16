@@ -68,6 +68,19 @@ describe("NumberField", () => {
     vi.useRealTimers();
   });
 
+  it("takes an amount typed as the game writes it, and shows it so", () => {
+    const onCommit = vi.fn();
+    act(() => {
+      root.render(<NumberField value={12_348} onCommit={onCommit} amount />);
+    });
+    expect(input().value).toBe("12 348");
+    type("10k");
+    act(() => {
+      input().dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    });
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith(10_000);
+  });
+
   it("does not commit an emptied field, and shows the value again once left", () => {
     const onCommit = vi.fn();
     act(() => {

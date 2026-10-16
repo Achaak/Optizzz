@@ -76,7 +76,23 @@ async function render(target: Parameters<typeof ServerMap>[0]["target"] = null) 
   return root;
 }
 
-const chips = () => [...container.querySelectorAll(".chip")].map((chip) => chip.textContent.replace("×", "").trim());
+/** Each chip's name and filter, without its buttons. */
+const chips = () =>
+  [...container.querySelectorAll(".chip")].map((chip) => {
+    const copy = chip.cloneNode(true) as HTMLElement;
+    copy.querySelectorAll("button").forEach((button) => button.remove());
+    return copy.textContent.trim();
+  });
+
+const buttonNamed = (text: string) =>
+  [...container.querySelectorAll("button")].find((button) => button.textContent.startsWith(text));
+
+/** Types in a React field as the player would, then Enter. */
+function typeIn(input: HTMLInputElement, text: string) {
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, text);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+}
 const tablePseudos = () =>
   [...container.querySelectorAll(".player-table tbody tr")].map((row) => row.querySelector("button")?.textContent);
 
@@ -90,13 +106,34 @@ describe("ServerMap", () => {
 
   it("adds the alliances at war with mine in one click", async () => {
     await render();
-    const wars = [...container.querySelectorAll("button")].find((b) => b.textContent.startsWith("+ Mes guerres"));
     await act(async () => {
-      wars?.click();
+      buttonNamed("+ Mes guerres")?.click();
       await Promise.resolve();
     });
     expect(chips()).toEqual(["MOI", "EVO"]);
     expect(tablePseudos()).toEqual(["Amie", "Rival", "Rivale"]);
+  });
+
+  it("keeps in colour only the members of an alliance within its filter", async () => {
+    await render();
+    await act(async () => {
+      buttonNamed("+ Mes guerres")?.click();
+      await Promise.resolve();
+    });
+    const evo = [...container.querySelectorAll(".chip")].find((chip) => chip.textContent.startsWith("EVO"));
+    await act(async () => {
+      evo?.querySelector<HTMLButtonElement>(".filter-toggle")?.click();
+      await Promise.resolve();
+    });
+    const min = container.querySelector<HTMLInputElement>('.chip-filter input[aria-label="TDC minimum"]');
+    if (!min) throw new Error("no TDC field");
+    await act(async () => {
+      typeIn(min, "3500");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(chips()).toEqual(["MOI", "EVOTDC ≥ 3 500"]);
+    expect(tablePseudos()).toEqual(["Amie", "Rivale"]);
+    expect(container.querySelector(".chip-filter")?.textContent).toContain("1 joueur sur 2");
   });
 
   it("opened on a player, shows my alliance and that player", async () => {

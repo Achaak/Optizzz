@@ -3,9 +3,12 @@ import type { Alliance, Player } from "@/data/exports";
 import { sameTag } from "@/game/diplomacy";
 import { CHART_COLORS } from "@/theme";
 import { formatNumber } from "@/utils/number-format";
+import { passesFilter, type ChipFilter } from "./filter";
 
-export type ChipTarget = { kind: "player"; id: number } | { kind: "alliance"; tag: string };
-export type Chip = ChipTarget & { color: string };
+/** `unaffiliated`: every player without an alliance. */
+export type ChipTarget = { kind: "player"; id: number } | { kind: "alliance"; tag: string } | { kind: "unaffiliated" };
+/** `filter`: only the players within it are drawn in colour (alliances and « Sans alliance »). */
+export type Chip = ChipTarget & { color: string; filter?: ChipFilter };
 
 export const MY_ALLIANCE_COLOR = CHART_COLORS.member;
 
@@ -18,8 +21,17 @@ export interface Suggestion {
 
 const normalize = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
 
-export const sameTarget = (a: ChipTarget, b: ChipTarget) =>
-  a.kind === "player" ? b.kind === "player" && a.id === b.id : b.kind === "alliance" && sameTag(a.tag, b.tag);
+export const UNAFFILIATED_LABEL = "Sans alliance";
+
+export function sameTarget(a: ChipTarget, b: ChipTarget): boolean {
+  if (a.kind === "player") return b.kind === "player" && a.id === b.id;
+  if (a.kind === "alliance") return b.kind === "alliance" && sameTag(a.tag, b.tag);
+  return b.kind === "unaffiliated";
+}
+
+/** Players without an alliance, the banned left out. */
+export const countUnaffiliated = (players: readonly Player[]) =>
+  players.filter((player) => !player.alliance && !player.isBanned).length;
 
 /** 0: whole match, 1: starts with the query, 2: contains it, null: no match. */
 function rank(texts: readonly string[], query: string): number | null {
@@ -44,6 +56,13 @@ export function searchSuggestions(
   if (!wanted) return [];
   const found: (Suggestion & { score: number })[] = [];
   const chosen = (target: ChipTarget) => chips.some((chip) => sameTarget(chip, target));
+  const unaffiliated = { kind: "unaffiliated" } as const;
+  const unaffiliatedScore = rank([UNAFFILIATED_LABEL], wanted);
+  if (unaffiliatedScore !== null && !chosen(unaffiliated)) {
+    const count = countUnaffiliated(players);
+    const detail = `${formatNumber(count)} joueur${count > 1 ? "s" : ""}`;
+    found.push({ target: unaffiliated, label: UNAFFILIATED_LABEL, detail, score: unaffiliatedScore });
+  }
   for (const alliance of alliances) {
     const score = rank([alliance.tag, alliance.name], wanted);
     const target = { kind: "alliance", tag: alliance.tag } as const;
@@ -58,9 +77,19 @@ export function searchSuggestions(
     const detail = `${player.alliance ?? "sans alliance"} · ${String(player.x)} ; ${String(player.y)}`;
     found.push({ target, label: player.pseudo, detail, score });
   }
-  // Alliances before players at the same rank: stable sort keeps them first.
+  // « Sans alliance », then alliances before players at the same rank: stable sort keeps them first.
   found.sort((a, b) => a.score - b.score || a.label.length - b.label.length);
   return found.slice(0, limit).map(({ target, label, detail }) => ({ target, label, detail }));
+}
+
+/** The players an alliance or « Sans alliance » chip stands for, before its filter; the banned left out. */
+export function playersOf(target: ChipTarget, players: readonly Player[]): Player[] {
+  return players.filter((player) => {
+    if (player.isBanned) return false;
+    if (target.kind === "player") return player.id === target.id;
+    if (target.kind === "alliance") return player.alliance !== null && sameTag(player.alliance, target.tag);
+    return !player.alliance;
+  });
 }
 
 /** Adds a target once, with the first colour of `palette` no chip uses yet (cycling when all are used). */
@@ -81,19 +110,24 @@ export function initialChips(stored: readonly Chip[] | null, myTag: string | nul
   return stored ? [...stored] : mine;
 }
 
-/** Players drawn in colour, with their chip: a player's own chip wins over their alliance's. Banned players never. */
+/**
+ * Players drawn in colour, with their chip: a player's own chip wins over their alliance's (or « Sans alliance »).
+ * Those its filter rules out and the banned stay in grey.
+ */
 export function highlightedPlayers(chips: readonly Chip[], players: readonly Player[]): Map<Player, Chip> {
   const byId = new Map<number, Chip>();
   const byTag = new Map<string, Chip>();
+  let unaffiliated: Chip | undefined;
   for (const chip of chips) {
     if (chip.kind === "player") byId.set(chip.id, chip);
-    else byTag.set(chip.tag.toLowerCase(), chip);
+    else if (chip.kind === "alliance") byTag.set(chip.tag.toLowerCase(), chip);
+    else unaffiliated = chip;
   }
   const highlighted = new Map<Player, Chip>();
   for (const player of players) {
     if (player.isBanned) continue;
-    const chip = byId.get(player.id) ?? (player.alliance ? byTag.get(player.alliance.toLowerCase()) : undefined);
-    if (chip) highlighted.set(player, chip);
+    const chip = byId.get(player.id) ?? (player.alliance ? byTag.get(player.alliance.toLowerCase()) : unaffiliated);
+    if (chip && passesFilter(player, chip.filter)) highlighted.set(player, chip);
   }
   return highlighted;
 }
