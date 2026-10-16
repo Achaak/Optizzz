@@ -145,7 +145,7 @@ Relevé le 2026-10-07 sur s5 (sans Compte+).
 ## colonies.php et profil
 
 - Colonisé : `div.simulateur` avec `<h2>Vous êtes colonisés par …</h2>`, la force d'occupation, un lien « Déclencher une rebellion ».
-- `Membre.php` : ligne « Etat : » → « Fourmilière libre » ou « Fourmilière soumise par … ».
+- `Membre.php` : ligne « Etat : » → « Fourmilière libre » ou « Fourmilière soumise par <a href="Membre.php?Pseudo=X">X</a> » (relevé le 2026-10-16 sur S5). Suivent « Nombre de Colonie : », « Localisation : », « Distance : », « Temps de trajet : », dans le même tableau (sans classe) de la première `div.boite_membre`.
 - `Membre.php` (relevé le 2026-10-08 sur S5) : `div#centre > center > h2` = pseudo du joueur affiché, puis `div.boite_membre` « Informations » contenant `table.tableau_score` : une ligne par score, `<td>Terrain|Fourmilière|Technologie|Combat</td><td>valeur</td><td>classement</td>`. Fourmilière et Technologie = `buildingScore` et `technologyScore` de l'export, plus frais que lui ; Combat = sans doute `trophyScore`. Deuxième `div.boite_membre` : « Action ».
 
 ## Armee.php

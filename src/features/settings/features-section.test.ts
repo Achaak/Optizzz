@@ -36,6 +36,7 @@ describe("buildFeaturesSection", () => {
       "members-columns",
       "members-columns.trips",
       "members-columns.roles",
+      "profile-production",
       "flood",
       "hunt-reports",
       "combat-simulator",

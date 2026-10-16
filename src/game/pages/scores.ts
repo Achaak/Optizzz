@@ -26,6 +26,23 @@ export function readProfile(doc: Document): { pseudo: string; scores: Partial<Sc
   return { pseudo, scores };
 }
 
+/** The « Etat : » row of the profile's « Informations » box. */
+export function findProfileStateRow(doc: Document): HTMLTableRowElement | null {
+  const rows = doc.querySelectorAll<HTMLTableRowElement>(".boite_membre table:not(.tableau_score) tr");
+  return [...rows].find((row) => row.cells[0]?.textContent.trim().startsWith("Etat")) ?? null;
+}
+
+/**
+ * Whether the player shown on Membre.php is free or colonized, and by whom: « Fourmilière libre » or
+ * « Fourmilière soumise par <a>Maître</a> ». Null when the row is missing.
+ */
+export function readProfileState(doc: Document): { master: string | null } | null {
+  const cell = findProfileStateRow(doc)?.cells[1];
+  if (!cell) return null;
+  const colonized = /soumise par\s+(.+)$/i.exec(cell.textContent.trim());
+  return { master: colonized?.[1]?.trim() ?? null };
+}
+
 // Cells of `#tabMembresAlliance`.
 const PSEUDO_CELL = 3;
 const FIELD_CELL = 5;
