@@ -34,9 +34,12 @@ export function ProfileHistory({ origin, loggedInPseudo, profile, liveTime, alli
   );
   const progress = periodProgress(points);
 
-  if (error) return <div className="history compact error">Historique indisponible : {error}</div>;
-  if (!settings || !playersExport) return <div className="history compact">Chargement de l'historique…</div>;
-  if (!player) return <div className="history compact">{profile.pseudo} n'est pas encore dans les exports.</div>;
+  if (error)
+    return <div className="history optizzz-panel compact optizzz-panel--danger">Historique indisponible : {error}</div>;
+  if (!settings || !playersExport)
+    return <div className="history optizzz-panel compact">Chargement de l'historique…</div>;
+  if (!player)
+    return <div className="history optizzz-panel compact">{profile.pseudo} n'est pas encore dans les exports.</div>;
 
   // On my own profile, the alliance view already shows my curve.
   const sameAlliance =
@@ -51,7 +54,7 @@ export function ProfileHistory({ origin, loggedInPseudo, profile, liveTime, alli
   };
 
   return (
-    <div className="history compact">
+    <div className="history optizzz-panel compact">
       <h4>Progression</h4>
       <Controls
         metrics={METRICS}
@@ -74,7 +77,7 @@ export function ProfileHistory({ origin, loggedInPseudo, profile, liveTime, alli
         {sameAlliance && (
           <>
             {" · "}
-            <button className="link" onClick={() => void compare()}>
+            <button className="optizzz-button-link" onClick={() => void compare()}>
               Comparer avec l'alliance
             </button>
           </>

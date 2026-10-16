@@ -56,7 +56,8 @@ html.optizzz-game-look {
     color: var(--look-title);
   }
 
-  & #centre h2,
+  /* Titles: never in an Optizzz block, which has its own (src/theme/theme.css) */
+  & #centre h2:not(body [class*="optizzz"] *),
   & #centre .titre,
   & .boite_amelioration .titre {
     font-family: var(--look-title-font);
@@ -70,8 +71,8 @@ html.optizzz-game-look {
     font-size: 26px;
   }
 
-  & #centre h3,
-  & #centre h4 {
+  & #centre h3:not(body [class*="optizzz"] *),
+  & #centre h4:not(body [class*="optizzz"] *) {
     font-family: var(--look-title-font);
     margin: 14px 0 8px;
   }
@@ -788,7 +789,7 @@ html.optizzz-game-look {
       font-size: 15px;
     }
 
-    & #centre h2,
+    & #centre h2:not(body [class*="optizzz"] *),
     & #centre .titre {
       font-size: 22px;
       text-align: left;

@@ -8,7 +8,8 @@ export const HEADER_TIP_STYLE = `
 [data-optizzz-tip] { position: relative; cursor: help; }
 [data-optizzz-tip]:hover::after, [data-optizzz-tip]:focus::after {
   content: attr(data-optizzz-tip); position: absolute; left: 0; top: 100%; z-index: 1000; width: max-content;
-  max-width: 340px; padding: 4px 6px; white-space: pre-line; text-align: left; font-weight: normal;
+  max-width: 340px; padding: var(--optizzz-space-2) var(--optizzz-space-3); white-space: pre-line; text-align: left; font-weight: normal;
+  font-size: var(--optizzz-font-size-small); border-radius: var(--optizzz-radius-small); box-shadow: var(--optizzz-panel-shadow);
   color: var(--optizzz-text); background: var(--optizzz-surface-raised); border: 1px solid var(--optizzz-border); }`;
 
 export function setHeaderTip(element: HTMLElement, text: string): void {

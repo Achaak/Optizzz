@@ -1,3 +1,4 @@
+/* TDC chain: a panel of the design system (docs/design-system.md); only what is its own is here. */
 :host {
   all: initial;
   display: block;
@@ -9,79 +10,15 @@
 }
 
 .tdc-chain {
-  font-family: var(--optizzz-font);
-  font-size: var(--optizzz-font-size);
-  color: var(--optizzz-text);
-  background: var(--optizzz-surface);
-  border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius);
-  box-shadow: var(--optizzz-panel-shadow);
-  padding: 12px 16px;
-  margin: 8px auto;
   max-width: 900px;
-  box-sizing: border-box;
-}
-
-h2 {
-  font-size: 16px;
-  font-style: italic;
-  color: var(--optizzz-title);
-  font-family: var(--optizzz-title-font);
-  margin: 0 0 4px;
-}
-
-h3 {
-  font-size: 13px;
-  margin: 16px 0 6px;
-}
-
-.meta,
-.note {
-  color: var(--optizzz-text-muted);
-  font-size: 11px;
-  margin: 4px 0;
 }
 
 .rules {
-  background: var(--optizzz-surface-raised);
-  border-left: 3px solid var(--optizzz-border);
-  padding: 6px 8px;
-  font-size: 11px;
-}
-
-.error {
-  color: var(--optizzz-danger);
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  align-items: center;
-  margin: 8px 0;
-}
-
-button,
-select,
-input {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-button.link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--optizzz-link);
-  text-decoration: underline;
+  font-size: var(--optizzz-font-size-small);
 }
 
 input.keep {
   width: 70px;
-  padding: 2px 4px;
 }
 
 input::placeholder {
@@ -93,51 +30,30 @@ a {
   text-decoration: none;
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th,
-td {
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--optizzz-border-soft);
+.optizzz-table :is(th, td) {
   text-align: right;
   white-space: nowrap;
 }
 
-th:first-child,
-td:first-child {
+.optizzz-table :is(th, td):first-child {
   text-align: left;
 }
 
-thead th {
-  background: var(--optizzz-surface-alt);
-}
-
-tr.out td {
-  color: var(--optizzz-text-muted);
-}
-
+tr.out td,
 .estimated {
   color: var(--optizzz-text-muted);
 }
 
-.matrix,
-.table-wrap {
-  overflow-x: auto;
-}
-
-.matrix th,
-.matrix td {
-  padding: 2px 4px;
+/* Who can take from whom: one cell per pair, framed */
+.matrix :is(th, td) {
+  padding: var(--optizzz-space-1) var(--optizzz-space-2);
+  font-size: var(--optizzz-font-size-xs);
   border: 1px solid var(--optizzz-border-soft);
-  font-size: 11px;
 }
 
 .matrix tbody th {
-  background: var(--optizzz-surface-alt);
   font-weight: normal;
+  background: var(--optizzz-surface-alt);
 }
 
 .matrix th.vertical {
@@ -155,12 +71,11 @@ tr.out td {
 }
 
 .matrix td.used {
-  background: var(--optizzz-warning-bg);
   font-weight: bold;
+  background: var(--optizzz-warning-bg);
 }
 
-.plan th:first-child,
-.plan td:first-child {
+.plan :is(th, td):first-child {
   text-align: right;
 }
 
@@ -170,52 +85,28 @@ tr.out td {
 }
 
 tr.mine td {
-  background: var(--optizzz-warning-bg);
   font-weight: bold;
+  background: var(--optizzz-warning-bg);
 }
 
 td.late {
-  color: var(--optizzz-danger);
+  color: var(--optizzz-danger-text);
 }
 
-.summary {
-  margin: 6px 0;
+ul.summary {
+  margin: var(--optizzz-space-3) 0;
   padding-left: 18px;
 }
 
-.sharing {
-  margin-top: 8px;
-}
-
-.sharing summary {
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.sharing textarea {
-  width: 100%;
-  box-sizing: border-box;
-  font-family: monospace;
-  margin: 6px 0;
-}
-
-.warning {
-  color: var(--optizzz-warning);
-  font-weight: bold;
-}
-
-.tdc-chain > section > textarea {
-  width: 100%;
-  box-sizing: border-box;
-  font-family: monospace;
-}
-
+.sharing,
 .role-bubbles {
-  margin: 8px 0;
+  margin: var(--optizzz-space-4) 0;
 }
 
-.role-bubbles summary {
-  cursor: pointer;
+textarea {
+  width: 100%;
+  margin: var(--optizzz-space-3) 0;
+  font-family: monospace;
 }
 
 .role-bubbles td {
@@ -243,24 +134,4 @@ td.late {
 .role-bubbles .preview {
   width: 24px;
   text-align: center;
-}
-
-.bubble {
-  display: inline-block;
-  border-radius: 50%;
-}
-
-/* The shape of each kind of role (role-styles.ts), told apart without the colours. */
-.bubble[data-shape="square"] {
-  border-radius: 2px;
-}
-
-.bubble[data-shape="diamond"] {
-  border-radius: 0;
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-}
-
-.bubble[data-shape="triangle"] {
-  border-radius: 0;
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }

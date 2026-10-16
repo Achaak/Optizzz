@@ -39,8 +39,11 @@ export function AllianceBox({ origin, tag, ranking, liveTime, myTag, statsView }
   );
   const progress = periodProgress(points);
 
-  if (error) return <div className="history compact error">Statistiques indisponibles : {error}</div>;
-  if (!settings) return <div className="history compact">Chargement des statistiques…</div>;
+  if (error)
+    return (
+      <div className="history optizzz-panel compact optizzz-panel--danger">Statistiques indisponibles : {error}</div>
+    );
+  if (!settings) return <div className="history optizzz-panel compact">Chargement des statistiques…</div>;
 
   const mine = myTag !== null && myTag.toLowerCase() === tag.toLowerCase();
   // Adds the alliance to the view's comparisons before going there.
@@ -52,7 +55,7 @@ export function AllianceBox({ origin, tag, ranking, liveTime, myTag, statsView }
   };
 
   return (
-    <div className="history compact">
+    <div className="history optizzz-panel compact">
       <h4>Progression</h4>
       <Controls
         metrics={ALLIANCE_METRICS}
@@ -85,7 +88,7 @@ export function AllianceBox({ origin, tag, ranking, liveTime, myTag, statsView }
             {mine ? (
               <a href={STATS_LINK}>Voir les statistiques</a>
             ) : (
-              <button type="button" className="link" onClick={() => void compare()}>
+              <button type="button" className="optizzz-button-link" onClick={() => void compare()}>
                 Comparer avec mon alliance
               </button>
             )}

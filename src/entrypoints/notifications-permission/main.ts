@@ -5,10 +5,7 @@ const style = document.createElement("style");
 style.textContent = `
 ${THEME_CSS}
 ${PAGE_BASE_CSS}
-.grant { max-width: 520px; margin: 60px auto; padding: 16px 24px; background: var(--optizzz-surface-raised);
-  border: 2px solid var(--optizzz-border); border-radius: var(--optizzz-radius); }
-h1 { margin: 0 0 12px; font-size: 18px; font-style: italic; color: var(--optizzz-title); }
-button { font: inherit; font-weight: bold; cursor: pointer; }`;
+.grant { max-width: 520px; margin: 60px auto; padding: var(--optizzz-space-6) 24px; }`;
 document.head.append(style);
 
 const button = document.querySelector<HTMLButtonElement>("#grant");

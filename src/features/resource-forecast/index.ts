@@ -12,11 +12,11 @@ import { readCapacities, readIncome, readStock, type Income } from "@/game/pages
 const REFRESH_MS = 60_000;
 
 const STYLE = `
-.optizzz-forecast { margin-top: 4px; }
+.optizzz-forecast { margin-top: var(--optizzz-space-2); }
 .optizzz-forecast::before { content: "⏳ "; }
 .optizzz-outlook { font-size: 0.8em; line-height: 1.2; padding: 1px 0 2px; }
-.optizzz-outlook-warning { color: var(--optizzz-warning); font-weight: bold; }
-.optizzz-outlook-danger { color: var(--optizzz-danger); font-weight: bold; }
+.optizzz-outlook-warning { color: var(--optizzz-warning-text); font-weight: bold; }
+.optizzz-outlook-danger { color: var(--optizzz-danger-text); font-weight: bold; }
 ${HEADER_TIP_STYLE}`;
 
 const page = (url: URL) => url.pathname.toLowerCase();

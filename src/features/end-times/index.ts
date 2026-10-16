@@ -9,7 +9,7 @@ const WORDING_REFRESH_MS = 60_000;
 const RECAP_REFRESH_MS = 30_000;
 
 const STYLE = `
-.optizzz-end-time { font-size: 0.9em; font-style: italic; white-space: nowrap; }
+.optizzz-end-time { font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); white-space: nowrap; }
 ${RECAP_STYLE}`;
 
 /**

@@ -6,13 +6,12 @@ import { ON_WAY_STYLE, renderOnWayList, span, type Copy } from "@/utils/on-way-l
 import { parseGameInteger } from "@/utils/game-number";
 
 export const CONVOY_STYLE = `
-.optizzz-convoy { margin: 8px 0; }
-.optizzz-convoy p { margin: 2px 0; }
-.optizzz-convoy-note { font-style: italic; font-size: 0.9em; }
-.optizzz-convoys img { height: 1.1em; vertical-align: -0.2em; margin-right: 3px; }
+.optizzz-convoy { margin: var(--optizzz-space-4) 0; }
+.optizzz-convoy p { margin: var(--optizzz-space-1) 0; }
+.optizzz-convoys img { height: 1.1em; vertical-align: -0.2em; margin-right: var(--optizzz-space-1); }
 .optizzz-convoy-food { color: var(--optizzz-food); font-weight: bold; white-space: nowrap; }
 .optizzz-convoy-materials { color: var(--optizzz-materials); font-weight: bold; white-space: nowrap; }
-.optizzz-convoy-unit { margin-left: 3px; font-weight: normal; font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
+.optizzz-convoy-unit { margin-left: var(--optizzz-space-1); font-weight: normal; font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
 ${ON_WAY_STYLE}`;
 
 export interface ConvoyContext {
@@ -180,7 +179,7 @@ export function mountConvoyPlanner(doc: Document, context: ConvoyContext, clock:
     block.replaceChildren(
       ...lines.map((line) => {
         const paragraph = doc.createElement("p");
-        if (line.note) paragraph.className = "optizzz-convoy-note";
+        if (line.note) paragraph.className = "optizzz-convoy-note optizzz-note";
         paragraph.textContent = line.text;
         return paragraph;
       }),

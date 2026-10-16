@@ -6,11 +6,8 @@ import type { ProbesResult } from "@/data/probes";
 const BOX_CLASS = "optizzz-probes";
 
 export const PROBES_STYLE = `
-.${BOX_CLASS} { margin: 8px auto; width: fit-content; max-width: 100%; box-sizing: border-box; padding: 6px 10px;
-  text-align: left; color: var(--optizzz-text); background: var(--optizzz-warning-bg);
-  border: 1px solid var(--optizzz-warning); border-radius: var(--optizzz-radius); }
-.${BOX_CLASS} p { margin: 4px 0; }
-.${BOX_CLASS}-moves { font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }`;
+.${BOX_CLASS} { width: fit-content; max-width: 100%; margin: var(--optizzz-space-4) auto; }
+.${BOX_CLASS} p { margin: var(--optizzz-space-2) 0; }`;
 
 /** « le Dôme et la Loge ». */
 function placeList(places: readonly Place[]): string {
@@ -36,7 +33,7 @@ export function renderProbes(
   if (empty.length === 0 || !table || doc.querySelector(`.${BOX_CLASS}`)) return;
 
   const box = doc.createElement("div");
-  box.className = BOX_CLASS;
+  box.className = `${BOX_CLASS} optizzz-callout optizzz-callout--warning`;
   const warning = doc.createElement("p");
   warning.textContent = `⚠ Pas de sonde sur ${placeList(empty)} : si l'on vous y attaque, aucun combat n'a lieu et le rapport ne montre pas l'armée de l'attaquant.`;
   box.append(warning);
@@ -48,7 +45,7 @@ export function renderProbes(
     button.type = "button";
     button.textContent = moves.length > 1 ? "Placer les sondes" : "Placer la sonde";
     const detail = doc.createElement("span");
-    detail.className = `${BOX_CLASS}-moves`;
+    detail.className = `${BOX_CLASS}-moves optizzz-muted`;
     detail.textContent = ` ${moves
       .map(
         (move) => `1 ${unitLabel(UNITS[move.unit]?.key ?? "")} ${PLACE_FROM[move.from]} vers ${PLACE_NAMES[move.to]}`,

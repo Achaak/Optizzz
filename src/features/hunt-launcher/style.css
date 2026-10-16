@@ -1,56 +1,43 @@
+/* Hunt launcher: a panel of the design system (docs/design-system.md); only what is its own is here. */
 :host {
   all: initial;
   display: block;
 }
 
 .hunt-launcher {
-  font-family: var(--optizzz-font);
-  font-size: var(--optizzz-font-size);
-  color: var(--optizzz-text);
-  background: var(--optizzz-surface);
-  border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius);
-  box-shadow: var(--optizzz-panel-shadow);
-  padding: 8px 12px;
   /* As wide as the game's boxes around it (#boite_tdc), not the whole column. */
   max-width: 728px;
-  margin: 8px auto;
-  box-sizing: border-box;
 }
 
 .hunt-launcher.closed {
-  padding: 4px 12px;
+  padding-block: var(--optizzz-space-2);
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
-}
-
+/* The title folds and unfolds the panel */
 .toggle {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
+  gap: var(--optizzz-space-2) var(--optizzz-space-5);
   width: 100%;
-  background: none;
-  border: none;
-  padding: 2px 0;
+  padding: var(--optizzz-space-1) 0;
   text-align: left;
   color: inherit;
+  background: none;
+  border: none;
+  filter: none;
 }
 
 .toggle .title {
-  font-weight: bold;
-  font-style: italic;
-  color: var(--optizzz-title);
-  font-family: var(--optizzz-title-font);
-  font-size: 14px;
+  margin: 0;
 }
 
 .toggle .title::after {
   content: " ▾";
-  font-size: 11px;
+  font-family: var(--optizzz-font);
+  font-style: normal;
+  font-size: var(--optizzz-font-size-xs);
+  color: var(--optizzz-text-muted);
 }
 
 .toggle[aria-expanded="false"] .title::after {
@@ -64,31 +51,24 @@ button {
 .inputs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0;
+  gap: var(--optizzz-space-4);
+  margin: var(--optizzz-space-4) 0;
 }
 
 fieldset {
   flex: 1 1 260px;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: var(--optizzz-space-2) var(--optizzz-space-5);
   align-items: center;
-  border: 1px solid var(--optizzz-border-soft);
-  border-radius: var(--optizzz-radius);
-  margin: 0;
-  padding: 4px 8px 8px;
 }
 
-legend {
-  font-weight: bold;
-  padding: 0 4px;
+fieldset .optizzz-note {
+  margin: 0;
 }
 
 input[type="number"] {
   width: 60px;
-  padding: 2px 4px;
-  font: inherit;
 }
 
 input.units {
@@ -99,46 +79,11 @@ input.wide {
   width: 80px;
 }
 
-select {
-  font: inherit;
-}
-
-.note,
-.meta {
-  color: var(--optizzz-text-muted);
-  font-size: 11px;
-  margin: 4px 0;
-}
-
-.muted {
-  color: var(--optizzz-text-muted);
-}
-
-.warning {
-  color: var(--optizzz-warning);
-  font-weight: bold;
-  margin: 6px 0;
-}
-
-.error,
-.danger {
-  color: var(--optizzz-danger);
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
 table.hunts {
-  border-collapse: collapse;
-  width: 100%;
   background: var(--optizzz-surface-raised);
 }
 
-.hunts th,
-.hunts td {
-  padding: 3px 6px;
-  border-bottom: 1px solid var(--optizzz-border-soft);
+.hunts :is(th, td) {
   text-align: right;
   white-space: nowrap;
 }
@@ -146,7 +91,7 @@ table.hunts {
 .hunts th .legend {
   display: block;
   font-weight: normal;
-  font-size: 10px;
+  font-size: var(--optizzz-font-size-xs);
 }
 
 .hunts td.xp {
@@ -155,7 +100,6 @@ table.hunts {
 }
 
 .hunts thead th {
-  background: var(--optizzz-surface-alt);
   cursor: help;
 }
 
@@ -168,62 +112,32 @@ table.hunts {
 }
 
 .status.launched {
-  color: var(--optizzz-success);
+  color: var(--optizzz-success-text);
   font-weight: bold;
 }
 
 .status.failed {
-  color: var(--optizzz-danger);
+  color: var(--optizzz-danger-text);
   font-weight: bold;
 }
 
 .actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin: 8px 0 4px;
-}
-
-button.primary {
-  background: var(--optizzz-action);
-  color: var(--optizzz-action-text);
-  border: 1px solid var(--optizzz-action-border);
-  border-radius: var(--optizzz-radius);
-  padding: 5px 14px;
-  font-weight: bold;
-}
-
-button.primary:disabled {
-  background: var(--optizzz-action-disabled);
-  border-color: var(--optizzz-action-disabled-border);
-  cursor: default;
-}
-
-button.link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--optizzz-link);
-  text-decoration: underline;
+  margin: var(--optizzz-space-4) 0 var(--optizzz-space-2);
 }
 
 .totals {
+  margin: var(--optizzz-space-2) 0;
   font-weight: bold;
-  margin: 4px 0;
 }
 
 .curve {
-  background: var(--optizzz-surface-raised);
-  border: 1px solid var(--optizzz-border-soft);
-  border-radius: var(--optizzz-radius);
-  padding: 6px;
-  margin: 8px 0;
+  margin: var(--optizzz-space-4) 0;
 }
 
 .slider {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--optizzz-space-4);
 }
 
 .slider input {
@@ -232,10 +146,10 @@ button.link {
 
 .advice,
 .ongoing ul {
-  margin: 4px 0;
+  margin: var(--optizzz-space-2) 0;
   padding-left: 18px;
 }
 
 .ongoing {
-  margin-top: 8px;
+  margin-top: var(--optizzz-space-4);
 }

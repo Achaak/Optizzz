@@ -215,19 +215,20 @@ export function AllianceStats({
     setSort((current) => ({ key, descending: current.key === key ? !current.descending : key !== "tag" }));
   const sortHeader = (key: SortKey, label: string, numeric = true) => (
     <th
-      className={numeric ? "num" : undefined}
+      className={numeric ? "optizzz-num" : undefined}
       aria-sort={sort.key === key ? (sort.descending ? "descending" : "ascending") : undefined}
     >
-      <button type="button" className="sort" onClick={() => sortBy(key)}>
+      <button type="button" className="optizzz-sort" onClick={() => sortBy(key)}>
         {label}
         {sort.key === key ? (sort.descending ? " ▼" : " ▲") : ""}
       </button>
     </th>
   );
 
-  if (error) return <div className="history error">Statistiques indisponibles : {error}</div>;
-  if (!myTag) return <div className="history">Vous n'êtes dans aucune alliance.</div>;
-  if (!settings) return <div className="history">Chargement des statistiques…</div>;
+  if (error)
+    return <div className="history optizzz-panel optizzz-panel--danger">Statistiques indisponibles : {error}</div>;
+  if (!myTag) return <div className="history optizzz-panel">Vous n'êtes dans aucune alliance.</div>;
+  if (!settings) return <div className="history optizzz-panel">Chargement des statistiques…</div>;
 
   const latestMine = latest && findAlliance(latest.alliances, myTag);
   const inExport = snapshots.some((snapshot) => findAlliance(snapshot.alliances, myTag));
@@ -236,18 +237,18 @@ export function AllianceStats({
   const setMetric = (next: AllianceMetric) => updateSettings((current) => ({ ...current, metric: next }));
 
   return (
-    <div className="history">
-      <h2>Statistiques de l'alliance {myTag}</h2>
+    <div className="history optizzz-panel">
+      <h2 className="optizzz-panel-title">Statistiques de l'alliance {myTag}</h2>
       <ViewSwitch current="alliance" otherOn={membersView} />
 
-      <h3>Maintenant</h3>
-      {ranking === undefined && <p className="meta">Lecture de la page de l'alliance…</p>}
+      <h3 className="optizzz-subtitle">Maintenant</h3>
+      {ranking === undefined && <p className="optizzz-note">Lecture de la page de l'alliance…</p>}
       {ranking === null && (
-        <p className="meta">
+        <p className="optizzz-note">
           La page de l'alliance ne répond pas : totaux du tableau Membres (sans le Combat) et rangs au dernier export.
         </p>
       )}
-      <div className="cards" role="tablist">
+      <div className="optizzz-stats" role="tablist">
         {ALLIANCE_METRICS.map(({ id, label }) => {
           const liveValue = live && valueOf(live.scores, id, false);
           const exported = latestMine && valueOf(latestMine, id, false);
@@ -261,16 +262,19 @@ export function AllianceStats({
               type="button"
               role="tab"
               aria-selected={id === metric}
-              className={`card ${id === metric ? "active" : ""}`}
+              className="optizzz-stat"
               onClick={() => setMetric(id)}
             >
-              <span className="label">{label}</span>
-              <span className="value">{now === undefined ? "—" : formatNumber(now)}</span>
+              <span className="optizzz-stat-label">{label}</span>
+              <span className="optizzz-stat-value">{now === undefined ? "—" : formatNumber(now)}</span>
               {delta !== null && delta !== 0 && (
-                <span className={`delta ${delta < 0 ? "down" : ""}`}>{formatGain(delta)}</span>
+                <span className={`optizzz-stat-note ${delta < 0 ? "down" : ""}`}>{formatGain(delta)}</span>
               )}
               {rank !== null && (
-                <span className="rank" title={gameRank === undefined ? "Rang au dernier export" : "Rang du jeu"}>
+                <span
+                  className="optizzz-stat-note"
+                  title={gameRank === undefined ? "Rang au dernier export" : "Rang du jeu"}
+                >
                   {rank}
                   <sup>e</sup>
                   {gameRank === undefined ? " (export)" : ""}
@@ -280,14 +284,16 @@ export function AllianceStats({
           );
         })}
       </div>
-      {latest && latestMine && <p className="note">Écarts depuis l'export du {formatExportVersion(latest.version)}.</p>}
+      {latest && latestMine && (
+        <p className="optizzz-note">Écarts depuis l'export du {formatExportVersion(latest.version)}.</p>
+      )}
 
-      <h3>Dans le temps</h3>
-      <p className="meta">
+      <h3 className="optizzz-subtitle">Dans le temps</h3>
+      <p className="optizzz-note">
         Un point par jour (l'export des alliances de minuit), puis un point creux « en direct » pour votre alliance.
         {firstShown ? ` Depuis le ${formatExportVersion(firstShown.version)}.` : ""}
       </p>
-      {!loading && !inExport && <p className="meta">Pas encore dans l'export public.</p>}
+      {!loading && !inExport && <p className="optizzz-note">Pas encore dans l'export public.</p>}
       <Controls
         metrics={ALLIANCE_METRICS}
         metric={metric}
@@ -332,19 +338,25 @@ export function AllianceStats({
         </datalist>
         <button type="submit">Ajouter</button>
       </form>
-      {searchError && <p className="error note">{searchError}</p>}
+      {searchError && <p className="optizzz-callout optizzz-callout--danger">{searchError}</p>}
       {suggested.length > 0 && (
-        <p className="chips">
+        <p className="optizzz-chips">
           {suggested.map((s) => (
-            <button key={s.tag} type="button" onClick={() => compare(s.tag)} title={nameOf(s.tag)}>
-              + {s.tag} <span className="note">({REASONS[s.reason]})</span>
+            <button
+              key={s.tag}
+              type="button"
+              className="optizzz-chip"
+              onClick={() => compare(s.tag)}
+              title={nameOf(s.tag)}
+            >
+              + {s.tag} <span className="optizzz-muted">({REASONS[s.reason]})</span>
             </button>
           ))}
         </p>
       )}
 
-      <div className="scroll">
-        <table className="progress">
+      <div className="optizzz-scroll">
+        <table className="optizzz-table progress">
           <thead>
             <tr>
               {sortHeader("tag", "Alliance", false)}
@@ -364,15 +376,18 @@ export function AllianceStats({
                     {row.tag}
                   </a>
                 </td>
-                <td className="num" title={row.since === null ? undefined : `Le ${dayMonth(new Date(row.since))}`}>
+                <td
+                  className="optizzz-num"
+                  title={row.since === null ? undefined : `Le ${dayMonth(new Date(row.since))}`}
+                >
                   {row.progress ? formatValue(row.progress.first) : "—"}
                 </td>
-                <td className="num">{row.progress ? formatValue(row.progress.last) : "—"}</td>
-                <td className={`num ${row.progress && row.progress.gain < 0 ? "down" : ""}`}>
+                <td className="optizzz-num">{row.progress ? formatValue(row.progress.last) : "—"}</td>
+                <td className={`optizzz-num ${row.progress && row.progress.gain < 0 ? "down" : ""}`}>
                   {row.progress ? formatGain(Math.round(row.progress.gain)) : "—"}
                 </td>
-                <td className="num">{row.progress ? formatPercent(row.progress.percent) : "—"}</td>
-                <td className="num">
+                <td className="optizzz-num">{row.progress ? formatPercent(row.progress.percent) : "—"}</td>
+                <td className="optizzz-num">
                   {row.rank ?? "—"}
                   {row.rankChange !== null && row.rankChange !== 0 && (
                     <span
@@ -388,7 +403,7 @@ export function AllianceStats({
                   {!row.mine && (
                     <button
                       type="button"
-                      className="link"
+                      className="optizzz-button-link"
                       aria-label={`Retirer ${row.tag}`}
                       onClick={() => remove(row.tag)}
                     >
@@ -404,19 +419,19 @@ export function AllianceStats({
 
       {distribution.length > 0 && (
         <>
-          <h3>Répartition — {metricLabel(metric)}</h3>
+          <h3 className="optizzz-subtitle">Répartition — {metricLabel(metric)}</h3>
           {metric === "trophy" && (
-            <p className="note">D'après le dernier export : le tableau Membres n'a pas le Combat.</p>
+            <p className="optizzz-note">D'après le dernier export : le tableau Membres n'a pas le Combat.</p>
           )}
           <ul className="bars">
             {distribution.map((share) => (
               <li key={share.pseudo} className={share.pseudo === loggedInPseudo ? "me" : ""}>
                 <a href={`Membre.php?Pseudo=${encodeURIComponent(share.pseudo)}`}>{share.pseudo}</a>
-                <span className="bar">
+                <span className="optizzz-bar">
                   <span style={{ width: `${String(share.share ?? 0)}%` }} />
                 </span>
-                <span className="num">{formatNumber(share.value)}</span>
-                <span className="num">{share.share === null ? "—" : `${formatDecimal(share.share)} %`}</span>
+                <span className="optizzz-num">{formatNumber(share.value)}</span>
+                <span className="optizzz-num">{share.share === null ? "—" : `${formatDecimal(share.share)} %`}</span>
               </li>
             ))}
           </ul>

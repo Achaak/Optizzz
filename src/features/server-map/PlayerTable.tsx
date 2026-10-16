@@ -49,17 +49,17 @@ export function PlayerTable(props: Props) {
   const sorted = useMemo(() => sortRows(rows, sort.key, sort.descending), [rows, sort]);
 
   if (rows.length === 0) {
-    return <p className="note">Ajoutez des joueurs ou des alliances pour les voir ici, triés par distance.</p>;
+    return <p className="optizzz-note">Ajoutez des joueurs ou des alliances pour les voir ici, triés par distance.</p>;
   }
 
   return (
     <div className="player-table">
-      <p className="meta">
+      <p className="optizzz-note">
         {formatNumber(rows.length)} joueur{rows.length > 1 ? "s" : ""}, trajets depuis <b>{reference.pseudo}</b>
         {onReferenceMe ? (
           <>
             {" · "}
-            <button type="button" className="link" onClick={onReferenceMe}>
+            <button type="button" className="optizzz-button-link" onClick={onReferenceMe}>
               depuis vous
             </button>
           </>
@@ -67,21 +67,21 @@ export function PlayerTable(props: Props) {
           " (choisissez un joueur pour mesurer depuis lui)"
         )}
       </p>
-      <div className="scroll">
-        <table>
+      <div className="optizzz-scroll">
+        <table className="optizzz-table">
           <thead>
             <tr>
               {COLUMNS.map(({ key, label, title, num, optional }, index) => (
                 <th
                   key={index}
                   title={title}
-                  className={[num && "num", optional && "optional"].filter(Boolean).join(" ") || undefined}
+                  className={[num && "optizzz-num", optional && "optional"].filter(Boolean).join(" ") || undefined}
                   aria-sort={sort.column === index ? (sort.descending ? "descending" : "ascending") : undefined}
                 >
                   {key ? (
                     <button
                       type="button"
-                      className="link"
+                      className="optizzz-button-link"
                       onClick={() => {
                         setSort((current) => ({
                           column: index,
@@ -106,7 +106,7 @@ export function PlayerTable(props: Props) {
                 <td>
                   <button
                     type="button"
-                    className="link"
+                    className="optizzz-button-link"
                     title="Mesurer les distances depuis ce joueur"
                     onClick={() => onReference(player)}
                   >
@@ -120,18 +120,18 @@ export function PlayerTable(props: Props) {
                   <span className="dot" style={{ background: chip.color }} aria-hidden="true" />
                   {player.alliance ?? "—"}
                 </td>
-                <td className="num optional">
+                <td className="optizzz-num optional">
                   {player.x} ; {player.y}
                 </td>
-                <td className="num">{formatDecimal(distance)}</td>
+                <td className="optizzz-num">{formatDecimal(distance)}</td>
                 <td
-                  className={trip.estimated ? "num estimated" : "num"}
+                  className={trip.estimated ? "optizzz-num estimated" : "optizzz-num"}
                   title={`Vitesse d'attaque niveau ${String(trip.level)}${trip.estimated ? " (niveau par défaut)" : ""}`}
                 >
                   {trip.estimated && "≈ "}
                   {formatDuration(trip.seconds * 1000)}
                 </td>
-                <td className="num">{formatNumber(player.field)}</td>
+                <td className="optizzz-num">{formatNumber(player.field)}</td>
                 <td className="optional">{state(player)}</td>
                 <td>
                   <button
@@ -162,7 +162,7 @@ export function PlayerTable(props: Props) {
         </table>
       </div>
       {rows.some((row) => row.trip.estimated) && (
-        <p className="note">
+        <p className="optizzz-note">
           ≈ : Vitesse d'attaque de {reference.pseudo} inconnue, trajet estimé avec la vôtre (ou le niveau par défaut de
           la Carte de l'alliance).
         </p>

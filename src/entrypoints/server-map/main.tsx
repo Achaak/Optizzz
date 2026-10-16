@@ -20,14 +20,14 @@ const toggles = await loadToggles();
 function Page() {
   if (!isEnabled(toggles, "server-map")) {
     return (
-      <p className="optizzz-server-map server-map">
+      <p className="optizzz-server-map server-map optizzz-panel">
         Carte du serveur désactivée : rallumez-la dans « Fonctionnalités ».
       </p>
     );
   }
   if (!origin || !/^https?:\/\/[a-z0-9-]+\.fourmizzz\.fr$/.test(origin)) {
     return (
-      <p className="optizzz-server-map server-map">
+      <p className="optizzz-server-map server-map optizzz-panel">
         Ouvrez d'abord une page du jeu : la carte prend le serveur du dernier onglet.
       </p>
     );

@@ -172,13 +172,13 @@ export function ChipBar({
             ? "Personne sans alliance"
             : `+ Sans alliance (${formatNumber(unaffiliated)})`}
       </button>
-      <ul className="chips">
+      <ul className="chips optizzz-chips">
         {chips.map((chip) => {
           const label = labelOf(chip, byId);
           const summary = filterSummary(chip.filter);
           const open = editing !== null && sameTarget(editing, chip);
           return (
-            <li key={chipKey(chip)} className="chip">
+            <li key={chipKey(chip)} className="chip optizzz-chip">
               <label className="swatch" style={{ background: chip.color }} title="Changer la couleur">
                 <input
                   type="color"
@@ -241,7 +241,7 @@ function FilterEditor(props: {
   const all = useMemo(() => playersOf(chip, players), [chip, players]);
   const kept = all.filter((player) => passesFilter(player, chip.filter)).length;
   return (
-    <fieldset className="chip-filter">
+    <fieldset className="chip-filter optizzz-well">
       <legend>Filtrer {label}</legend>
       <div className="bounds">
         {FILTER_KEYS.map((key) => (
@@ -265,7 +265,7 @@ function FilterEditor(props: {
             {key === "field" && myField !== null ? (
               <button
                 type="button"
-                className="link in-range"
+                className="optizzz-button-link in-range"
                 title={`De 50 % à 300 % de votre TDC (${formatNumber(myField)} cm²)`}
                 onClick={() => {
                   const { min, max } = attackableBounds(myField);
@@ -281,7 +281,7 @@ function FilterEditor(props: {
         ))}
       </div>
       <div className="footer">
-        <span className="note">
+        <span className="optizzz-note">
           {formatNumber(kept)} joueur{kept > 1 ? "s" : ""} sur {formatNumber(all.length)}
         </span>
         <button type="button" disabled={!isFiltering(chip.filter)} onClick={() => onChange({})}>

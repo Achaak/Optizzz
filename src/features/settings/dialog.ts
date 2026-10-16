@@ -62,11 +62,11 @@ export const TABS_STYLE = `
 .tabs { display: flex; flex-direction: column; min-height: 0; }
 .tab-list { display: flex; gap: 2px; padding: 0 8px; border-bottom: 1px solid var(--optizzz-border); }
 .tab {
-  padding: 6px 12px; border: 1px solid transparent; border-bottom: none; border-radius: 3px 3px 0 0;
+  padding: 6px 12px; border: 1px solid transparent; border-bottom: none; border-radius: var(--optizzz-radius-small) var(--optizzz-radius-small) 0 0;
   background: var(--optizzz-surface-alt); color: var(--optizzz-text); font: inherit; font-weight: bold; cursor: pointer;
 }
 .tab[aria-selected="true"] { background: var(--optizzz-surface-raised); border-color: var(--optizzz-border); margin-bottom: -1px; }
-.tab-panel { overflow: auto; padding: 16px 20px; background: var(--optizzz-surface-raised); }
+.tab-panel { overflow: auto; padding: var(--optizzz-space-6) 20px; background: var(--optizzz-surface-raised); }
 ${FEATURES_STYLE}
 ${NOTIFICATIONS_STYLE}
 ${TOOLS_STYLE}
@@ -83,7 +83,7 @@ export const DIALOG_STYLE = `
   box-shadow: var(--optizzz-shadow);
 }
 .dialog-header { position: relative; padding: 10px 40px 6px; text-align: center; }
-.dialog-title { margin: 0; font-family: var(--optizzz-title-font); font-size: 18px; font-weight: bold; font-style: italic; color: var(--optizzz-title); }
+.dialog-title { margin: 0; font-family: var(--optizzz-title-font); font-size: var(--optizzz-font-size-title-large); font-weight: bold; font-style: italic; color: var(--optizzz-title); }
 .dialog-close {
   position: absolute; top: 6px; right: 8px; width: 28px; height: 28px; padding: 0;
   border: none; background: none; color: var(--optizzz-text-muted); font-size: 26px; line-height: 1; cursor: pointer;

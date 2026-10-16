@@ -1,0 +1,64 @@
+# Design système
+
+Tout ce qu'Optizzz affiche (encarts posés dans les pages du jeu, vues React en Shadow DOM, popup, pages de l'extension) se construit avec les mêmes jetons et les mêmes composants, définis dans `src/theme/theme.css`. Une feature n'écrit que ce qui lui est propre : sa mise en page, ses colonnes, ses largeurs. Décision : [ADR 0004](adr/0004-design-systeme.md).
+
+Planche de démonstration : `docs/design-system/specimen.html`, qui charge le vrai `theme.css`. Pour l'ouvrir, servir la racine du dépôt (`python3 -m http.server 4178`, ou la configuration `design-system` de `.claude/launch.json`), puis aller sur `/docs/design-system/specimen.html`.
+
+## Principes
+
+- **L'habillage du jeu, en plus net.** Parchemin, bordures brunes, titres rouges en italique et en serif : Optizzz a l'air d'une partie du jeu, pas d'un site à part.
+- **Un outil, pas une vitrine.** La retenue et la précision priment : les mêmes motifs partout, pour que le joueur reconnaisse d'un coup d'œil une note, un avertissement, un tableau.
+- **Jamais la couleur seule** ([ADR 0003](adr/0003-daltonisme.md)). En deutéranopie, le rouge et l'orange des états se confondent (ΔE 1,3) : un état est toujours dit en mot (« jamais », « échec », « ⚠ »), en gras, et la couleur ne fait que le souligner.
+- **Lisible.** Le texte et les notes atteignent 4,5:1 sur le parchemin (AA) ; les couleurs d'état ont une variante foncée pour le texte (`--optizzz-*-text`).
+
+## Jetons
+
+| Famille          | Jetons                                                                                                                                | Usage                                                                                                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tailles de texte | `--optizzz-font-size-xs` 11 px, `-small` 12 px, `--optizzz-font-size` 13 px, `-value` 15 px, `-title` 16 px, `-title-large` 18 px     | 11 px seulement pour les données denses (matrice, légende de graphique) ; 12 px pour les notes ; 15 px pour un chiffre clé ; 16 px pour un titre de panneau, 18 px pour une fenêtre ou une page |
+| Polices          | `--optizzz-font` (sans-serif), `--optizzz-title-font` (serif)                                                                         | La serif ne sert qu'aux titres                                                                                                                                                                  |
+| Espacements      | `--optizzz-space-1` à `-6` : 2, 4, 6, 8, 12, 16 px                                                                                    | Toute marge, marge intérieure ou gouttière en prend un                                                                                                                                          |
+| Arrondis         | `--optizzz-radius` 8 px (boîtes), `-control` 6 px (boutons, champs), `-small` 4 px (étiquettes, onglets), `-pill` (pastilles, barres) |                                                                                                                                                                                                 |
+| Surfaces         | `--optizzz-surface`, `-alt`, `-raised`, `-tint`, `--optizzz-head-bg`                                                                  | Panneau, ligne paire, encart, panneau posé dans le jeu, en-tête de tableau                                                                                                                      |
+| Texte            | `--optizzz-text`, `-muted`, `--optizzz-title`, `--optizzz-link`                                                                       |                                                                                                                                                                                                 |
+| États            | `--optizzz-danger`, `-warning`, `-success` (bordures, barres), `-bg` (fonds), `-text` (texte)                                         | Le texte prend toujours la variante `-text`                                                                                                                                                     |
+| Choix            | `--optizzz-selected`, `--optizzz-selected-text`                                                                                       | Le bouton choisi d'un groupe, une pastille cochée                                                                                                                                               |
+
+Les graphiques ECharts, qui dessinent sur un canvas, prennent `CHART_COLORS` (`src/theme/index.ts`).
+
+## Composants
+
+Classes globales, préfixées `optizzz-`, valables dans un Shadow DOM comme dans la page du jeu. Elles ne sont pas dans une `@layer` : une couche perdrait contre les règles du jeu. La règle d'une feature, chargée après, l'emporte à égalité.
+
+| Composant       | Classes                                                                                                           | Quand                                                                                   |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Panneau         | `optizzz-panel` ; `--inset` dans une boîte du jeu ; `--danger` quand il ne peut pas s'afficher                    | Toute boîte d'Optizzz                                                                   |
+| Encart          | `optizzz-well`                                                                                                    | Une boîte dans un panneau : graphique, aperçu, filtre, côté du simulateur               |
+| Titres          | `optizzz-panel-title` (`--large`), `optizzz-subtitle`                                                             | Un titre par panneau ; un sous-titre par partie                                         |
+| Note            | `optizzz-note`                                                                                                    | Explication, source, chargement. Pas d'italique                                         |
+| Message         | `optizzz-callout` ; `--warning`, `--danger`, `--success`                                                          | Un avertissement, une erreur, une règle. Jamais du texte orange nu                      |
+| États en mot    | `optizzz-text-danger`, `-warning`, `-success`, `optizzz-muted`                                                    | Un mot dans une phrase ou une cellule                                                   |
+| Barre d'outils  | `optizzz-toolbar`                                                                                                 | Une rangée de réglages et d'actions                                                     |
+| Tableau         | `optizzz-table` ; `--grid` (comme les tableaux du jeu), `--dense`, `--striped` ; `optizzz-num` ; `optizzz-sort`   | Lignes filetées et en-tête sur le parchemin foncé par défaut                            |
+| Défilement      | `optizzz-scroll`                                                                                                  | Autour d'un tableau large : il défile dans sa boîte, pas la page                        |
+| Boutons         | bouton du thème (sans classe), `optizzz-button-primary`, `optizzz-button-link`                                    | Un seul bouton principal par panneau : l'action qui agit sur le jeu                     |
+| Choix segmenté  | `optizzz-segmented` + `aria-pressed`, `aria-selected` ou `aria-current`                                           | Un choix parmi peu (période, vue)                                                       |
+| Pastilles       | `optizzz-chips`, `optizzz-chip` (+ `aria-pressed`)                                                                | Un élément d'une liste qu'on complète, un raccourci parmi beaucoup                      |
+| Étiquette       | `optizzz-tag`                                                                                                     | Une marque non cliquable (« Conseil »)                                                  |
+| Chiffres clés   | `optizzz-stats`, `optizzz-stat`, `-label`, `-value`, `-note`                                                      | Quelques chiffres côte à côte ; un `button.optizzz-stat` choisit ce qu'affiche la suite |
+| Dépliable       | `optizzz-disclosure` (`details`) ; avec `optizzz-panel` et un `summary.optizzz-panel-title`, un panneau repliable | Une partie qu'on ouvre à la demande                                                     |
+| Barre           | `optizzz-bar` > `span` (largeur en %)                                                                             | Une part d'un tout                                                                      |
+| Forme d'un rôle | `optizzz-shape` + `data-shape`                                                                                    | Les rôles de la chaîne, reconnaissables sans les couleurs                               |
+
+Les champs, listes, cases, `fieldset` et `legend` prennent le style du thème sans classe, dans un Shadow DOM ou sous un élément dont une classe commence par `optizzz-` (couche `optizzz-controls`). Une page de l'extension pose donc une classe `optizzz-…` sur sa racine (`optizzz-popup`, `optizzz-simulator-page`).
+
+L'habillage du jeu (`src/features/game-look/style.css`) ne touche ni aux titres ni aux champs d'un bloc Optizzz.
+
+## Écrire une nouvelle vue
+
+1. Une racine `optizzz-panel` (ou `--inset` dans une boîte du jeu), un `optizzz-panel-title`.
+2. Les notes en `optizzz-note`, les messages en `optizzz-callout`, les tableaux en `optizzz-table`.
+3. Dans la feuille de la feature, seulement la largeur, la grille et ce qui n'existe nulle part ailleurs. Aucune couleur, taille ou marge en dur : un jeton.
+4. Un motif qui revient dans trois features devient un composant de `theme.css`, documenté ici et ajouté à la planche.
+
+Pour revoir une interface : les skills `impeccable` (`critique`, `audit`, `polish`) et `web-design-guidelines` (`.claude/skills/`).

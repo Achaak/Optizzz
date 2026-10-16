@@ -12,8 +12,7 @@ export const FEATURES_STYLE = `
 .feature-description { margin: 2px 0 0 19px; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
 .feature-options { list-style: none; padding: 0; margin: 4px 0 0 19px; display: grid; gap: 3px; }
 .feature-options input:disabled + span { color: var(--optizzz-text-muted); opacity: 0.7; }
-.features-reload { margin: 12px 0 0; font-style: italic; }
-.features-reload button { margin-left: 6px; font: inherit; font-style: normal; cursor: pointer; }`;
+.features-reload { display: flex; flex-wrap: wrap; align-items: center; gap: var(--optizzz-space-3) var(--optizzz-space-5); }`;
 
 /**
  * « Fonctionnalités » : one checkbox per feature and option. Changes apply on the next page load, so the
@@ -46,7 +45,7 @@ export function buildFeaturesSection(
   const showReloadNotice = () => {
     if (notice) return;
     notice = doc.createElement("p");
-    notice.className = "features-reload";
+    notice.className = "features-reload optizzz-callout optizzz-callout--warning";
     if (reload) {
       notice.textContent = "Les changements s'appliquent au prochain chargement de la page.";
       const button = doc.createElement("button");

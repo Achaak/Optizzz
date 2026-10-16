@@ -85,8 +85,8 @@ export function MyState({ origin, me }: Props) {
 
   if (!me) {
     return (
-      <div className="alliance-sharing">
-        <h2>Mon état</h2>
+      <div className="alliance-sharing optizzz-panel">
+        <h2 className="optizzz-panel-title">Mon état</h2>
         <p>Vous n'êtes dans aucune alliance : il n'y a personne avec qui partager votre état.</p>
       </div>
     );
@@ -107,9 +107,9 @@ export function MyState({ origin, me }: Props) {
   };
 
   return (
-    <div className="alliance-sharing">
-      <h2>Mon état</h2>
-      <p className="note">
+    <div className="alliance-sharing optizzz-panel">
+      <h2 className="optizzz-panel-title">Mon état</h2>
+      <p className="optizzz-note">
         Ce que vous partagez avec votre alliance ({me.alliance}). Le texte n'est pas chiffré : collez-le seulement dans
         un salon réservé à votre alliance. Les membres l'importent dans « Partage », dans le menu d'alliance.
       </p>
@@ -151,18 +151,18 @@ export function MyState({ origin, me }: Props) {
       ) : (
         <>
           {collected.missing.length > 0 && (
-            <p className="warning">
+            <p className="optizzz-callout optizzz-callout--warning">
               Pages illisibles : {collected.missing.join(", ")}. Ce qu'elles montrent n'est pas dans le texte.
             </p>
           )}
           {collected.state.army?.incomplete && (
-            <p className="warning">
+            <p className="optizzz-callout optizzz-callout--warning">
               Des troupes sont dehors sans qu'Optizzz puisse les compter (chasse sans Compte+ ou attaque lancée hors du
               Plan de flood) : l'armée partagée est incomplète.
             </p>
           )}
-          <pre className="preview">{text}</pre>
-          <div className="toolbar">
+          <pre className="preview optizzz-well">{text}</pre>
+          <div className="optizzz-toolbar">
             <button type="button" onClick={() => void copy()}>
               Copier mon état
             </button>
@@ -170,7 +170,7 @@ export function MyState({ origin, me }: Props) {
               Actualiser
             </button>
           </div>
-          {message && <p className="note">{message}</p>}
+          {message && <p className="optizzz-note">{message}</p>}
           {copied && text && <textarea readOnly rows={8} value={text} onFocus={(event) => event.target.select()} />}
         </>
       )}

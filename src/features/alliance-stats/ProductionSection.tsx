@@ -53,7 +53,7 @@ function BalanceLine({ label, balance, exact }: { label: string; balance: Balanc
       </b>{" "}
       par jour
       {(balance.paid > 0 || balance.received > 0) && (
-        <span className="note">
+        <span className="optizzz-note">
           {" "}
           ({formatNumber(balance.gross)} récoltés
           {balance.paid > 0 && <>, −{amount(balance.paid, exact)} de taxes payées hors de l'alliance</>}
@@ -129,16 +129,16 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
   }, [production, sort]);
 
   if (members.size === 0) return null;
-  if (!production) return <p className="meta">Calcul de la production…</p>;
+  if (!production) return <p className="optizzz-note">Calcul de la production…</p>;
 
   const sortBy = (key: SortKey) =>
     setSort((current) => ({ key, descending: current.key === key ? !current.descending : key !== "pseudo" }));
   const sortHeader = (key: SortKey, label: string, numeric = true) => (
     <th
-      className={numeric ? "num" : undefined}
+      className={numeric ? "optizzz-num" : undefined}
       aria-sort={sort.key === key ? (sort.descending ? "descending" : "ascending") : undefined}
     >
-      <button type="button" className="sort" onClick={() => sortBy(key)}>
+      <button type="button" className="optizzz-sort" onClick={() => sortBy(key)}>
         {label}
         {sort.key === key ? (sort.descending ? " ▼" : " ▲") : ""}
       </button>
@@ -149,7 +149,7 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
   const taxes = rows.some((row) => row.paid ?? row.received ?? row.paidInside ?? row.receivedInside);
   return (
     <>
-      <h3>
+      <h3 className="optizzz-subtitle">
         Production
         <span
           className="help"
@@ -177,18 +177,20 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
             {real.ceiling > 0 && <> ({formatDecimal((real.gross / real.ceiling) * 100)} %)</>}
           </p>
         ) : (
-          <p className="note">
+          <p className="optizzz-note">
             Réel inconnu : aucun membre n'a partagé ses ouvrières (Partage d'alliance, ou saisie à la main).
           </p>
         )}
         {real.known > 0 && real.known < real.total && (
-          <p className="note">Les autres membres : ouvrières à partager dans « Partage », ou à saisir à la main.</p>
+          <p className="optizzz-note">
+            Les autres membres : ouvrières à partager dans « Partage », ou à saisir à la main.
+          </p>
         )}
       </div>
-      <details className="detail">
+      <details className="detail optizzz-disclosure">
         <summary>Détail par membre</summary>
-        <div className="scroll">
-          <table className="progress">
+        <div className="optizzz-scroll">
+          <table className="optizzz-table progress">
             <thead>
               <tr>
                 {sortHeader("pseudo", "Membre", false)}
@@ -206,14 +208,14 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
                   <td>
                     <a href={`Membre.php?Pseudo=${encodeURIComponent(row.pseudo)}`}>{row.pseudo}</a>
                   </td>
-                  <td className="num">{formatNumber(row.field)}</td>
-                  <td className="num">{row.workers === null ? "—" : formatNumber(row.workers)}</td>
-                  <td className="num">{formatNumber(row.ceiling)}</td>
-                  <td className={`num ${row.real !== null && row.real < row.ceiling ? "down" : ""}`}>
+                  <td className="optizzz-num">{formatNumber(row.field)}</td>
+                  <td className="optizzz-num">{row.workers === null ? "—" : formatNumber(row.workers)}</td>
+                  <td className="optizzz-num">{formatNumber(row.ceiling)}</td>
+                  <td className={`optizzz-num ${row.real !== null && row.real < row.ceiling ? "down" : ""}`}>
                     {row.real === null ? "—" : formatNumber(row.real)}
                   </td>
                   {taxes && (
-                    <td className="num">
+                    <td className="optizzz-num">
                       {row.paid && (
                         <div title={`Colonisé par ${row.paid.master}, hors de l'alliance`}>
                           {amount(row.paid.real ?? row.paid.ceiling, row.paid.exact)}
@@ -227,7 +229,7 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
                     </td>
                   )}
                   {taxes && (
-                    <td className="num">
+                    <td className="optizzz-num">
                       {row.received && (
                         <div title={`${String(row.received.colonies)} colonie(s) hors de l'alliance`}>
                           {amount(row.received.amount, row.received.exact)}

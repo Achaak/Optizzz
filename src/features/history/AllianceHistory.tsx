@@ -99,30 +99,32 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, 
     setSort((current) => ({ key, descending: current.key === key ? !current.descending : key !== "pseudo" }));
   const sortHeader = (key: SortKey, label: string, numeric = true) => (
     <th
-      className={numeric ? "num" : undefined}
+      className={numeric ? "optizzz-num" : undefined}
       aria-sort={sort.key === key ? (sort.descending ? "descending" : "ascending") : undefined}
     >
-      <button type="button" className="sort" onClick={() => sortBy(key)}>
+      <button type="button" className="optizzz-sort" onClick={() => sortBy(key)}>
         {label}
         {sort.key === key ? (sort.descending ? " ▼" : " ▲") : ""}
       </button>
     </th>
   );
 
-  if (error) return <div className="history error">Historique indisponible : {error}</div>;
+  if (error)
+    return <div className="history optizzz-panel optizzz-panel--danger">Historique indisponible : {error}</div>;
   // The period starts where the curves shown start, not at the first export (a member may join later).
   const shownIds = settings?.showAverage ? [...memberIds] : selected;
   const firstShown = snapshots.find((snapshot) => shownIds.some((id) => snapshot.players.has(id)));
-  if (!settings || !playersExport) return <div className="history">Chargement de l'historique…</div>;
-  if (!me?.alliance) return <div className="history">Vous n'êtes dans aucune alliance d'après le dernier export.</div>;
+  if (!settings || !playersExport) return <div className="history optizzz-panel">Chargement de l'historique…</div>;
+  if (!me?.alliance)
+    return <div className="history optizzz-panel">Vous n'êtes dans aucune alliance d'après le dernier export.</div>;
 
   const metricLabel = METRICS.find((m) => m.id === metric)?.label ?? "";
 
   return (
-    <div className="history">
-      <h2>Progression des membres de {me.alliance}</h2>
+    <div className="history optizzz-panel">
+      <h2 className="optizzz-panel-title">Progression des membres de {me.alliance}</h2>
       <ViewSwitch current="members" otherOn={allianceView} />
-      <p className="meta">
+      <p className="optizzz-note">
         Un point par jour (l'export de minuit), puis un point creux « en direct » lu sur cette page
         {metric === "trophy" ? " (le Combat n'y figure pas : il s'arrête au dernier export)" : ""}.
         {firstShown ? ` Depuis le ${formatExportVersion(firstShown.version)}.` : ""}
@@ -148,9 +150,9 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, 
         Moyenne de l'alliance
       </label>
 
-      <h3>Progression sur la période — {metricLabel}</h3>
-      <p className="note">Cochez un membre pour afficher sa courbe.</p>
-      <table className="progress">
+      <h3 className="optizzz-subtitle">Progression sur la période — {metricLabel}</h3>
+      <p className="optizzz-note">Cochez un membre pour afficher sa courbe.</p>
+      <table className="optizzz-table progress">
         <thead>
           <tr>
             <th />
@@ -176,12 +178,12 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, 
               <td>
                 <a href={`Membre.php?Pseudo=${encodeURIComponent(row.pseudo)}`}>{row.pseudo}</a>
               </td>
-              <td className="num">{row.progress ? formatNumber(row.progress.first) : "—"}</td>
-              <td className="num">{row.progress ? formatNumber(row.progress.last) : "—"}</td>
-              <td className={`num ${row.progress && row.progress.gain < 0 ? "down" : ""}`}>
+              <td className="optizzz-num">{row.progress ? formatNumber(row.progress.first) : "—"}</td>
+              <td className="optizzz-num">{row.progress ? formatNumber(row.progress.last) : "—"}</td>
+              <td className={`optizzz-num ${row.progress && row.progress.gain < 0 ? "down" : ""}`}>
                 {row.progress ? formatGain(row.progress.gain) : "—"}
               </td>
-              <td className="num">{row.progress ? formatPercent(row.progress.percent) : "—"}</td>
+              <td className="optizzz-num">{row.progress ? formatPercent(row.progress.percent) : "—"}</td>
             </tr>
           ))}
         </tbody>

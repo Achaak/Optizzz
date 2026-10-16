@@ -14,11 +14,11 @@ interface AverageProps {
 /** Total / Moyenne par membre. */
 export function AverageToggle({ checked, onChange }: AverageProps) {
   return (
-    <div className="tabs average-toggle">
-      <button type="button" className={checked ? "" : "active"} onClick={() => onChange(false)}>
+    <div className="optizzz-segmented average-toggle" role="group">
+      <button type="button" aria-pressed={!checked} onClick={() => onChange(false)}>
         Total
       </button>
-      <button type="button" className={checked ? "active" : ""} onClick={() => onChange(true)}>
+      <button type="button" aria-pressed={checked} onClick={() => onChange(true)}>
         Moyenne par membre
       </button>
     </div>

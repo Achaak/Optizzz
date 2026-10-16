@@ -13,14 +13,10 @@ import {
 import { htmlElement } from "@/utils/html";
 
 export const HUNT_REPORT_STYLE = `
-.optizzz-hunt-report { margin: 6px 0 10px; }
-.optizzz-hunt-report-tools { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
-.optizzz-hunt-report table { width: 100%; border-collapse: collapse; }
-.optizzz-hunt-report th, .optizzz-hunt-report td { border: 1px solid var(--optizzz-table-border); padding: 2px 6px; text-align: left; }
+.optizzz-hunt-report { margin: var(--optizzz-space-3) 0 10px; }
+.optizzz-hunt-report-tools { margin-top: 0; }
 .optizzz-hunt-report td:nth-child(n + 5) { text-align: right; white-space: nowrap; }
-.optizzz-hunt-report tfoot td { font-weight: bold; }
-.optizzz-hunt-report-off td { background: var(--optizzz-danger-bg); }
-.optizzz-hunt-report-yield { margin: 4px 0 0; font-style: italic; }`;
+.optizzz-hunt-report-off td { background: var(--optizzz-danger-bg); }`;
 
 type Copy = (text: string) => Promise<void>;
 
@@ -83,17 +79,17 @@ export function mountHuntReport(
   const table = htmlElement(
     doc,
     "table",
-    `<table><thead><tr><th>Date</th><th>Armée envoyée</th><th>Proies</th><th></th>
+    `<table class="optizzz-table optizzz-table--grid"><thead><tr><th>Date</th><th>Armée envoyée</th><th>Proies</th><th></th>
     <th>Promues</th><th>cm²</th><th>Nourriture</th></tr></thead><tbody></tbody><tfoot></tfoot></table>`,
   );
   const lossesCell = table.querySelector("th:nth-child(4)");
   if (lossesCell) lossesCell.textContent = lossesHeader;
   const yieldLine = doc.createElement("p");
-  yieldLine.className = "optizzz-hunt-report-yield";
+  yieldLine.className = "optizzz-hunt-report-yield optizzz-note";
 
   let fights: HuntFight[] = [];
   const tools = doc.createElement("div");
-  tools.className = "optizzz-hunt-report-tools";
+  tools.className = "optizzz-hunt-report-tools optizzz-toolbar";
   const COPY_LABEL = "Copier les combats";
   let copyReset: ReturnType<typeof setTimeout> | undefined;
   const copyButton = button(doc, "optizzz-hunt-report-copy", COPY_LABEL, () => {

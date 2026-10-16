@@ -7,29 +7,16 @@ import { listTargets, type Target, type TargetsInput } from "./targets";
 
 // Colours of the game's own panel (table.simulateur) and of the rows of #tabEnnemie.
 export const TARGETS_STYLE = `
-.optizzz-targets { margin: 8px auto; width: fit-content; max-width: 100%; box-sizing: border-box; overflow-x: auto;
-  padding: 6px 10px; text-align: left; background: var(--optizzz-surface); border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius); box-shadow: var(--optizzz-panel-shadow); }
-.optizzz-targets summary, .optizzz-targets-title { cursor: pointer; font-weight: bold; font-size: 1.1em; font-family: var(--optizzz-title-font); }
-.optizzz-targets-title { cursor: default; margin: 0; }
-.optizzz-targets-note { font-style: italic; font-size: 0.85em; margin: 4px 0; max-width: 700px; }
-.optizzz-targets label { margin-right: 16px; }
-.optizzz-targets table { border-collapse: collapse; margin-top: 4px; font-size: 0.85em; }
-.optizzz-targets th, .optizzz-targets td { padding: 2px 5px; white-space: nowrap; }
+.optizzz-targets { width: fit-content; overflow-x: auto; }
+.optizzz-targets-note { max-width: 700px; }
+.optizzz-targets label { margin-right: var(--optizzz-space-6); }
+.optizzz-targets table { width: auto; margin-top: var(--optizzz-space-2); }
+.optizzz-targets :is(th, td) { white-space: nowrap; }
 .optizzz-targets td.optizzz-targets-state { white-space: normal; min-width: 90px; }
-.optizzz-targets td.optizzz-targets-number { text-align: right; }
-.optizzz-targets td img { vertical-align: middle; margin-left: 2px; }
-.optizzz-targets th button { background: none; border: none; padding: 0; font: inherit; font-weight: bold;
-  color: inherit; cursor: pointer; text-decoration: underline dotted; }
-.optizzz-targets th[aria-sort] button { text-decoration: none; }
-.optizzz-targets th[aria-sort] button::after { content: " ▼"; }
-.optizzz-targets th[aria-sort="ascending"] button::after { content: " ▲"; }
-.optizzz-targets-protected { font-weight: bold; margin: 4px 0; }
-.optizzz-targets tbody tr:nth-child(even) { background: var(--optizzz-surface-alt); }
-.optizzz-targets tbody tr.optizzz-targets-war { background: var(--optizzz-war-bg); }
-.optizzz-targets tbody tr.optizzz-targets-pact { background: var(--optizzz-pact-bg); }
-.optizzz-targets tr.optizzz-targets-inactive { opacity: 0.55; }
-.optizzz-targets-more { margin-top: 6px; }`;
+.optizzz-targets td img { vertical-align: middle; margin-left: var(--optizzz-space-1); }
+.optizzz-targets tbody tr.optizzz-targets-war > td { background: var(--optizzz-war-bg); }
+.optizzz-targets tbody tr.optizzz-targets-pact > td { background: var(--optizzz-pact-bg); }
+.optizzz-targets tr.optizzz-targets-inactive { opacity: 0.55; }`;
 
 export interface TargetsContext extends TargetsInput {
   /** Whether the box starts unfolded. */
@@ -108,9 +95,9 @@ export function mountTargetsNotice(doc: Document, text: string) {
   const anchor = form?.closest("table.simulateur") ?? form;
   if (!anchor) return;
   const box = doc.createElement("div");
-  box.className = "optizzz-targets";
+  box.className = "optizzz-targets optizzz-panel";
   const title = doc.createElement("p");
-  title.className = "optizzz-targets-title";
+  title.className = "optizzz-targets-title optizzz-panel-title";
   title.textContent = "Cibles à portée";
   const message = doc.createElement("p");
   message.textContent = text;
@@ -128,14 +115,15 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
   if (!anchor) return;
 
   const box = doc.createElement("details");
-  box.className = "optizzz-targets";
+  box.className = "optizzz-targets optizzz-panel optizzz-disclosure";
   box.open = context.open;
   box.addEventListener("toggle", () => {
     context.onOpenChange(box.open);
   });
   const summary = doc.createElement("summary");
+  summary.className = "optizzz-panel-title";
   const note = doc.createElement("p");
-  note.className = "optizzz-targets-note";
+  note.className = "optizzz-targets-note optizzz-note";
   note.textContent = [
     "TDC en direct pour les joueurs listés par le jeu ci-dessous, sinon d'après l'export public (mis à jour chaque heure).",
     "La protection débutant n'est connue que pour les joueurs listés par le jeu : « libre ? » pour les autres.",
@@ -144,7 +132,7 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     .filter(Boolean)
     .join(" ");
   const protectedMe = doc.createElement("p");
-  protectedMe.className = "optizzz-targets-protected";
+  protectedMe.className = "optizzz-targets-protected optizzz-callout optizzz-callout--warning";
   protectedMe.textContent =
     "Vous êtes sous protection débutant : attaquer y met fin (avertissement du jeu, sous le formulaire de recherche).";
   protectedMe.hidden = !context.protectedMe;
@@ -159,13 +147,14 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
   filters.append(hidePacts.wrapper, attackableOnly.wrapper);
 
   const table = doc.createElement("table");
+  table.className = "optizzz-table optizzz-table--dense optizzz-table--striped";
   const headRow = doc.createElement("tr");
   const tbody = doc.createElement("tbody");
   const thead = doc.createElement("thead");
   thead.append(headRow);
   table.append(thead, tbody);
   const empty = doc.createElement("p");
-  empty.className = "optizzz-targets-empty";
+  empty.className = "optizzz-targets-empty optizzz-note";
   empty.textContent = "Aucune cible à portée.";
   const more = doc.createElement("button");
   more.type = "button";
@@ -218,6 +207,7 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     if (key) {
       const button = doc.createElement("button");
       button.type = "button";
+      button.className = "optizzz-sort";
       button.textContent = column.title;
       button.title = "Trier";
       button.addEventListener("click", () => {
@@ -235,7 +225,7 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
   const cell = (row: HTMLTableRowElement, text = "", number = false) => {
     const td = doc.createElement("td");
     td.textContent = text;
-    if (number) td.className = "optizzz-targets-number";
+    if (number) td.className = "optizzz-targets-number optizzz-num";
     row.append(td);
     return td;
   };

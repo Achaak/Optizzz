@@ -41,7 +41,9 @@ const setup = (options: Partial<FloodContext> = {}) => {
 describe("mountFloodPlanner", () => {
   it("plans the flood under the game's form with my free slots and army, lodge left out", () => {
     const { doc, rows, text } = setup();
-    expect(doc.getElementById("formulaireChoixArmee")?.nextElementSibling?.className).toBe("optizzz-flood");
+    expect(doc.getElementById("formulaireChoixArmee")?.nextElementSibling?.classList.contains("optizzz-flood")).toBe(
+      true,
+    );
     // 3 slots (Attack Speed 2 + 1), 1 250 ants: 400, 320, 256, cheapest first.
     expect(rows()).toEqual([
       ["1", "400 JSN", "400", "1 600", "1 400", "Remplir"],
