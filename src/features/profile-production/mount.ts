@@ -10,7 +10,7 @@ import { formatNumber } from "@/utils/number-format";
 export const PRODUCTION_ROW_ATTRIBUTE = "data-optizzz-production";
 
 export const PRODUCTION_STYLE = `
-tr[${PRODUCTION_ROW_ATTRIBUTE}] { cursor: help; }
+tr[${PRODUCTION_ROW_ATTRIBUTE}], tr[data-optizzz-colonies] { cursor: help; }
 .optizzz-production-detail { margin-left: 6px; font-size: var(--optizzz-font-size-small);
   color: var(--optizzz-text-muted); }
 @media (max-width: 600px) { .optizzz-production-detail { display: block; margin-left: 0; white-space: normal; } }
@@ -71,5 +71,55 @@ export function mountProductionRow(doc: Document, field: number, tax: ColonyTax)
     muted.textContent = `(${detail})`;
     cell?.append(muted);
   }
+  row.title = title;
+}
+
+/** Marks the row of the taxes a master takes from their colonies. */
+export const COLONIES_ROW_ATTRIBUTE = "data-optizzz-colonies";
+
+/** One colony: its TDC, and the rate it pays when Optizzz knows it (null: only the 20 % floor). */
+export interface Colony {
+  field: number;
+  rate: number | null;
+}
+
+/** What the colonies' ceilings pay their master a day, and the tooltip. */
+export function coloniesText(colonies: readonly Colony[]): { value: string; detail: string; title: string } {
+  const exact = colonies.every((colony) => colony.rate !== null);
+  const amount = colonies.reduce(
+    (total, colony) => total + estimateProduction(colony.field, colony.rate ?? BASE_COLONY_TAX).tax,
+    0,
+  );
+  const count = colonies.length;
+  return {
+    value: `${exact ? "≈" : "≥"} ${formatNumber(amount)}`,
+    detail: `${String(count)} colonie${count > 1 ? "s" : ""}, sur ${count > 1 ? "leur" : "son"} TDC du dernier export`,
+    title:
+      "La taxe prise sur la production max de chaque colonie (TDC × 48) : 20 % plus 1 % par niveau de l'Étable à " +
+      `pucerons du maître.${exact ? "" : " Le niveau de son étable n'est pas connu : la taxe peut être plus forte."}`,
+  };
+}
+
+/** Adds the « Taxes de colonies » row after the production row, or updates it; nothing without colonies. */
+export function mountColoniesRow(doc: Document, colonies: readonly Colony[]): void {
+  const after = doc.querySelector(`tr[${PRODUCTION_ROW_ATTRIBUTE}]`);
+  if (!after || colonies.length === 0) return;
+  let row = doc.querySelector<HTMLTableRowElement>(`tr[${COLONIES_ROW_ATTRIBUTE}]`);
+  if (!row) {
+    row = doc.createElement("tr");
+    row.setAttribute(COLONIES_ROW_ATTRIBUTE, "");
+    const label = doc.createElement("td");
+    label.style.textAlign = "right";
+    label.textContent = "Taxes de colonies :";
+    row.append(label, doc.createElement("td"));
+    after.after(row);
+  }
+  const { value, detail, title } = coloniesText(colonies);
+  const figure = doc.createElement("strong");
+  figure.textContent = value;
+  const muted = doc.createElement("span");
+  muted.className = "optizzz-production-detail";
+  muted.textContent = `(${detail})`;
+  row.cells[1]?.replaceChildren(figure, " par jour", muted);
   row.title = title;
 }
