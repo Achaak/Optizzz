@@ -12,7 +12,7 @@ Prendre le plus de TDC possible à une cible en plusieurs attaques (un flood), a
 - La portée 50 % (inclus) – 300 % (exclu) est revérifiée à chaque arrivée, les deux TDC ayant bougé.
 - Attaques simultanées : Vitesse d'attaque + 1 (vérifié sur le simulateur de flood du jeu).
 
-Ces règles vivent dans `src/game/attack.ts` (prise, portée avec marge, prise à la limite, créneaux), partagées avec les Cibles, la Chaîne de TDC et le simulateur. L'encart les rappelle dans un bandeau, comme le simulateur de combat.
+Ces règles vivent dans `src/game/attack.ts` (prise, portée avec marge, prise à la limite, créneaux), partagées avec les Cibles, la Chaîne de TDC et le simulateur. L'encart les rappelle dans « Règles utilisées », replié en bas.
 
 ## Comportement
 
@@ -23,15 +23,15 @@ Ces règles vivent dans `src/game/attack.ts` (prise, portée avec marge, prise �
   - jamais plus de fourmis que mon armée.
 - **Défense** : inconnue, elle compte comme nulle. Collée (rapport ou « 300 Jeunes Soldates Naines, … »), la première attaque est la plus petite armée, des plus fortes aux plus faibles, qui gagne avec une riposte à 10 % au plus d'après le simulateur, pertes en infobulle ; ses survivants plafonnent sa prise. Si mon armée ne suffit pas, rien n'est proposé. Les niveaux de la cible étant inconnus, on prend les miens.
 - **Unités** : sans défense, les moins chères d'abord (JSN), car toute fourmi prend 1 cm².
-- **Sur le formulaire d'attaque** (`ennemie.php?Attaquer=<id>`), sous le formulaire du jeu :
-  - le TDC de la cible lu sur son profil (`Membre.php`), sinon l'export ;
-  - ses attaques possibles, le trajet et l'arrivée ;
-  - un tableau N° | Armée | Prise | Son TDC après | Mon TDC après | « Remplir » ;
-  - « Remplir » met les unités dans les champs du jeu, **les autres à 0** (le jeu pré-remplit toute l'armée), et vise le TDC. Le joueur valide lui-même ;
-  - le total ;
+- **Sur le formulaire d'attaque** (`ennemie.php?Attaquer=<id>`), sous le formulaire du jeu, dans cet ordre :
+  - quand le jeu dit que je suis sous protection débutant, le rappel encadré qu'attaquer y met fin ;
+  - les chiffres clés en pavés : TDC de la cible (lu sur son profil `Membre.php`, sinon l'export), le mien, les attaques possibles, le trajet et l'arrivée ; dessous, en petit, ce qui les explique (attaques en route, lancées sans le plan, sondes gardées) ;
   - la case « Compter les troupes de la Loge » (décochée, mémorisée par serveur) ;
-  - la zone pour coller sa défense, mémorisée pour cette cible avec sa date, effaçable ; « Utiliser cette défense » reste grisé tant que la zone est vide, et un texte où aucune unité n'est reconnue ne remplace pas la défense connue (« Aucune unité reconnue dans ce texte ») ;
-  - quand le jeu dit que je suis sous protection débutant, le rappel qu'attaquer y met fin.
+  - ce qui empêche le plan (hors de portée, trop juste, armée trop faible…), encadré ;
+  - un tableau N° | Armée | (Pertes) | Prise | Son TDC après | Mon TDC après | « Remplir », avec une ligne Total (prise cumulée, TDC finaux, nombre d'attaques). La colonne Pertes n'apparaît que contre une défense ;
+  - « Remplir » met les unités dans les champs du jeu, **les autres à 0** (le jeu pré-remplit toute l'armée), et vise le TDC. Le joueur valide lui-même. La ligne remplie est marquée en gras, d'un trait et du bouton « ✓ Rempli » (pas par la seule couleur) ;
+  - « Sa défense sur le TDC » : la défense connue avec sa date et « Effacer » (absent quand elle est inconnue), puis la zone pour en coller une, mémorisée pour cette cible ; « Utiliser cette défense » reste grisé tant que la zone est vide, et un texte où aucune unité n'est reconnue ne remplace pas la défense connue (« Aucune unité reconnue dans ce texte ») ;
+  - « Règles utilisées (non vérifiées sur un vrai flood) », replié.
 - **Sans plan** : niveaux illisibles ou TDC de la cible illisible, l'encart le dit au lieu de disparaître. L'export public injoignable n'empêche pas le plan (trajet « inconnu »).
 - **Suivi** : à l'envoi du formulaire par le joueur, l'attaque (cible, fourmis, prise prévue, arrivée) est notée. Prise prévue : celle de la ligne « Remplir » si l'armée envoyée est la même (après une défense, ses survivants seulement), sinon `min(fourmis, 20 %)`, quel que soit le lieu visé (attaquer la Fourmilière ou la Loge, c'est d'abord attaquer le TDC, d'après l'aide du jeu). Elle est notée tout de suite dans le `sessionStorage` de l'onglet (le jeu change de page aussitôt), puis versée au chargement suivant dans le stockage de l'extension. Sur le formulaire d'attaque (lecture d'`Armee.php` en arrière-plan) et à chaque passage sur `Armee.php`, ces attaques sont rapprochées de la liste « Attaque(s) en cours » du jeu, cible par cible, à l'arrivée la plus proche :
   - une attaque notée que le jeu ne liste plus a été **annulée** : oubliée ;
