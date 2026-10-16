@@ -91,6 +91,8 @@ table.hunts {
 .hunts th .legend {
   display: block;
   font-weight: normal;
+  letter-spacing: normal;
+  text-transform: none;
   font-size: var(--optizzz-font-size-xs);
 }
 

@@ -81,7 +81,7 @@ export function PlayerTable(props: Props) {
                   {key ? (
                     <button
                       type="button"
-                      className="optizzz-button-link"
+                      className="optizzz-sort"
                       onClick={() => {
                         setSort((current) => ({
                           column: index,
@@ -91,7 +91,6 @@ export function PlayerTable(props: Props) {
                       }}
                     >
                       {label}
-                      {sort.column === index && (sort.descending ? " ▼" : " ▲")}
                     </button>
                   ) : (
                     label

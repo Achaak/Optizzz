@@ -140,7 +140,6 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
     >
       <button type="button" className="optizzz-sort" onClick={() => sortBy(key)}>
         {label}
-        {sort.key === key ? (sort.descending ? " ▼" : " ▲") : ""}
       </button>
     </th>
   );
