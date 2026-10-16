@@ -31,6 +31,7 @@ Chasse et combat
 • Simulateur de combat : depuis un bouton de la barre du haut, sur toutes les pages, ou depuis l'icône de l'extension.
 • Cibles à portée : sur Ennemies, les joueurs attaquables du plus proche au plus loin, avec le trajet, la prise possible, leur état, les pactes et les guerres.
 • Page Membres : le temps d'une attaque ou d'un convoi vers chaque membre, et son rôle dans la chaîne de TDC en couleur, deux colonnes triables.
+• Production sur les profils : ce que le TDC d'un joueur récolte par jour au plus, taxe de colonie déduite s'il est soumis.
 • Plan de flood : sur le formulaire d'attaque, les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
 
 Alliance
