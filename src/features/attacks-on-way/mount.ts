@@ -30,7 +30,7 @@ function details(doc: Document, attack: AttackLine): Node[] {
 }
 
 /**
- * The attacks on their way on Armee.php: the game's lines give way to a list with a live countdown, the arrival
+ * The attacks on their way on Armee.php or the attack form: the game's lines give way to a list with a live countdown, the arrival
  * time, the place and troops (Compte+), and a button that copies each attack as the game writes it. The game's lines
  * stay in the page, folded away (read as the game wrote them). Returns a function that stops the countdown.
  */

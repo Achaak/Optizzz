@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import armeeS5Html from "@/features/flood/__fixtures__/armee-attacks-s5.html?raw";
+import attackFormHtml from "@/features/flood/__fixtures__/attack-form.html?raw";
 import { readAttacksOnWay } from "@/features/flood/attacks";
 import { renderAttacksOnWay } from "./mount";
+import { attacksOnWay } from ".";
 
 const now = new Date(2026, 9, 16, 16, 39, 0);
 const stops: (() => void)[] = [];
@@ -75,5 +77,27 @@ describe("renderAttacksOnWay", () => {
       () => Promise.resolve(),
     )();
     expect(empty.querySelector(".optizzz-attacks")).toBeNull();
+  });
+
+  it("draws the same list on the attack form, where the game writes its attacks the same way", () => {
+    // The attack form's page (ennemie.php?Attaquer=…) ends with the same block as Armee.php (relevé S5 2026-10-16).
+    const doc = new DOMParser().parseFromString(attackFormHtml, "text/html");
+    const armee = new DOMParser().parseFromString(armeeS5Html, "text/html");
+    const block: ChildNode[] = [];
+    for (let node: ChildNode | null = armee.querySelector("#centre h3"); node; node = node.nextSibling)
+      block.push(node);
+    doc.querySelector("#centre > center")?.append(...block.map((node) => doc.importNode(node, true)));
+    stops.push(
+      renderAttacksOnWay(
+        doc,
+        () => now,
+        () => Promise.resolve(),
+      ),
+    );
+    const targets = [...doc.querySelectorAll(".optizzz-attacks .optizzz-on-way-to")].map((to) => to.textContent);
+    expect(targets).toEqual(["→ Cible_1(TAG)", "→ Cible_2"]);
+    expect(doc.querySelector<HTMLElement>(".optizzz-attacks-game")?.hidden).toBe(true);
+    expect(attacksOnWay.matches(new URL("https://s5.fourmizzz.fr/ennemie.php?Attaquer=947&lieu=1"))).toBe(true);
+    expect(attacksOnWay.matches(new URL("https://s5.fourmizzz.fr/ennemie.php"))).toBe(false);
   });
 });

@@ -102,7 +102,7 @@ export const featureCatalog = [
     id: "attacks-on-way",
     label: "Attaques en cours",
     description:
-      "Sur Armée : les attaques en cours en liste, avec le décompte, l'heure d'arrivée, le lieu et les troupes, et un bouton pour copier chacune.",
+      "Sur Armée et le formulaire d'attaque : les attaques en cours en liste, avec le décompte, l'heure d'arrivée, le lieu et les troupes, et un bouton pour copier chacune.",
     options: [],
   },
   {
