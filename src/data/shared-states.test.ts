@@ -99,7 +99,34 @@ describe("forgetting", () => {
   it("forgets the members who left the alliance", async () => {
     await importStates(ORIGIN, "ABC", [bob("2026-10-05T10:00:00Z", 11)]);
     await setManualValue(ORIGIN, "ABC", "Ann", "research.weapons", 5, at("2026-10-07T10:00:00Z"));
-    await forgetFormerMembers(ORIGIN, "ABC", ["Carl"]);
+    await forgetFormerMembers(ORIGIN, "ABC", ["Carl"], "Carl");
+    const states = await loadSharedStates(ORIGIN, "ABC");
+    expect(states.members).toEqual({});
+    expect(valueOf(states, "Ann", "research.weapons")).toBeNull();
+  });
+
+  it("keeps everything when the members list is empty", async () => {
+    await importStates(ORIGIN, "ABC", [bob("2026-10-05T10:00:00Z", 11)]);
+    await setManualValue(ORIGIN, "ABC", "Ann", "research.weapons", 5, at("2026-10-07T10:00:00Z"));
+    await forgetFormerMembers(ORIGIN, "ABC", [], "Me");
+    const states = await loadSharedStates(ORIGIN, "ABC");
+    expect(Object.keys(states.members)).toEqual(["Bob"]);
+    expect(valueOf(states, "Ann", "research.weapons")?.value).toBe(5);
+  });
+
+  it("keeps everything when I am not in the members list", async () => {
+    await importStates(ORIGIN, "ABC", [bob("2026-10-05T10:00:00Z", 11)]);
+    await setManualValue(ORIGIN, "ABC", "Ann", "research.weapons", 5, at("2026-10-07T10:00:00Z"));
+    await forgetFormerMembers(ORIGIN, "ABC", ["Carl"], "Me");
+    const states = await loadSharedStates(ORIGIN, "ABC");
+    expect(Object.keys(states.members)).toEqual(["Bob"]);
+    expect(valueOf(states, "Ann", "research.weapons")?.value).toBe(5);
+  });
+
+  it("still forgets when my pseudo is unknown and the list is not empty", async () => {
+    await importStates(ORIGIN, "ABC", [bob("2026-10-05T10:00:00Z", 11)]);
+    await setManualValue(ORIGIN, "ABC", "Ann", "research.weapons", 5, at("2026-10-07T10:00:00Z"));
+    await forgetFormerMembers(ORIGIN, "ABC", ["Carl"], null);
     const states = await loadSharedStates(ORIGIN, "ABC");
     expect(states.members).toEqual({});
     expect(valueOf(states, "Ann", "research.weapons")).toBeNull();
@@ -108,7 +135,7 @@ describe("forgetting", () => {
   it("forgets everything once the player is in another alliance", async () => {
     await importStates(ORIGIN, "ABC", [bob("2026-10-05T10:00:00Z", 11)]);
     await rememberMyShare(ORIGIN, { ...bob("2026-10-05T10:00:00Z", 11), pseudo: "Me" });
-    await forgetFormerMembers(ORIGIN, "XYZ", ["Bob"]);
+    await forgetFormerMembers(ORIGIN, "XYZ", ["Bob"], "Bob");
     expect((await loadSharedStates(ORIGIN, "XYZ")).members).toEqual({});
     expect((await loadSharedStates(ORIGIN, "ABC")).members).toEqual({});
     expect(await loadMyLastShare(ORIGIN, "ABC")).toBeNull();

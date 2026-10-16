@@ -55,10 +55,12 @@ async function mountAllianceSharing(ctx: ContentScriptContext, toggles: Toggles)
   const allianceContent = document.querySelector<HTMLElement>("#alliance");
   if (!allianceContent) return;
   const alliance = readAllianceTag(document);
+  const me = readLoggedInPseudo(document);
 
   let members: string[] | null = null;
   let root: Root | undefined;
-  const render = () => root?.render(<AllianceSharing origin={location.origin} alliance={alliance} members={members} />);
+  const render = () =>
+    root?.render(<AllianceSharing origin={location.origin} alliance={alliance} members={members} me={me} />);
 
   const ui = await createShadowRootUi<Root>(ctx, {
     name: "optizzz-alliance-sharing",

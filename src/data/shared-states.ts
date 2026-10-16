@@ -170,8 +170,17 @@ export async function setManualValue(
   await storage.setItem(key(origin), stored);
 }
 
-/** Forgets the members no longer on the members page; everything when the player is now in another alliance. */
-export async function forgetFormerMembers(origin: string, alliance: string, members: readonly string[]): Promise<void> {
+/**
+ * Forgets the members no longer on the members page; everything when the player is now in another alliance.
+ * Only when `members` looks like a full read: not empty, and with me in it when my pseudo is known.
+ */
+export async function forgetFormerMembers(
+  origin: string,
+  alliance: string,
+  members: readonly string[],
+  me: string | null,
+): Promise<void> {
+  if (members.length === 0 || (me !== null && !members.includes(me))) return;
   const stored = await readStored(origin, alliance);
   const kept = new Set(members);
   const keep = <T>(byPseudo: Partial<Record<string, T>>) =>
