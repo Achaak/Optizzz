@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { htmlElement, svgElement } from "./html";
+import { escapeHtml, htmlElement, svgElement } from "./html";
 
 describe("htmlElement", () => {
   it("builds the root element of a static template, with its content", () => {
@@ -29,5 +29,19 @@ describe("svgElement", () => {
     expect(svg.namespaceURI).toBe("http://www.w3.org/2000/svg");
     expect(svg.querySelector("circle")).not.toBeNull();
     expect(svg.ownerDocument).toBe(document);
+  });
+});
+
+describe("escapeHtml", () => {
+  it("replaces each markup character with a numeric entity", () => {
+    expect(escapeHtml("&")).toBe("&#38;");
+    expect(escapeHtml("<")).toBe("&#60;");
+    expect(escapeHtml(">")).toBe("&#62;");
+    expect(escapeHtml('"')).toBe("&#34;");
+    expect(escapeHtml("'")).toBe("&#39;");
+  });
+
+  it("leaves plain text, accents included, unchanged", () => {
+    expect(escapeHtml("Fourmi élite 42")).toBe("Fourmi élite 42");
   });
 });

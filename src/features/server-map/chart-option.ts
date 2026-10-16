@@ -3,7 +3,8 @@ import type { Player } from "@/data/exports";
 import type { Level } from "@/features/alliance-map/neighbor-table";
 import { distance, travelTime } from "@/game/travel";
 import { CHART_COLORS } from "@/theme";
-import { escapeHtml, fittedGrid, MAP_ZOOM, mapAxis, ticksFor, type MapWindow } from "@/utils/map-chart/axes";
+import { escapeHtml } from "@/utils/html";
+import { fittedGrid, MAP_ZOOM, mapAxis, ticksFor, type MapWindow } from "@/utils/map-chart/axes";
 import {
   measureName,
   NAME_HEIGHT,
