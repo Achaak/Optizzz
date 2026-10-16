@@ -1,6 +1,7 @@
 // States the alliance members share by copy-paste (docs/features/partage-alliance.md), remembered per server.
 import { storage } from "wxt/utils/storage";
 import { BUILDINGS, RESEARCH, type BuildingKey, type ResearchKey } from "@/game/levels";
+import { withStorageLock } from "@/utils/storage-lock";
 
 export interface SharedWork {
   /** As the game writes it: « Armes », « Champignonnière ». */
@@ -162,12 +163,14 @@ export async function setManualValue(
   value: number | null,
   at: Date,
 ): Promise<void> {
-  const stored = await readStored(origin, alliance);
-  const others = Object.entries(stored.manual[pseudo] ?? {}).filter(([other]) => other !== valueKey);
-  stored.manual[pseudo] = Object.fromEntries(
-    value === null ? others : [...others, [valueKey, { value, at: at.getTime() }]],
-  );
-  await storage.setItem(key(origin), stored);
+  await withStorageLock(key(origin), async () => {
+    const stored = await readStored(origin, alliance);
+    const others = Object.entries(stored.manual[pseudo] ?? {}).filter(([other]) => other !== valueKey);
+    stored.manual[pseudo] = Object.fromEntries(
+      value === null ? others : [...others, [valueKey, { value, at: at.getTime() }]],
+    );
+    await storage.setItem(key(origin), stored);
+  });
 }
 
 /**
@@ -181,17 +184,21 @@ export async function forgetFormerMembers(
   me: string | null,
 ): Promise<void> {
   if (members.length === 0 || (me !== null && !members.includes(me))) return;
-  const stored = await readStored(origin, alliance);
-  const kept = new Set(members);
-  const keep = <T>(byPseudo: Partial<Record<string, T>>) =>
-    Object.fromEntries(Object.entries(byPseudo).filter(([pseudo]) => kept.has(pseudo)));
-  await storage.setItem(key(origin), { ...stored, members: keep(stored.members), manual: keep(stored.manual) });
+  await withStorageLock(key(origin), async () => {
+    const stored = await readStored(origin, alliance);
+    const kept = new Set(members);
+    const keep = <T>(byPseudo: Partial<Record<string, T>>) =>
+      Object.fromEntries(Object.entries(byPseudo).filter(([pseudo]) => kept.has(pseudo)));
+    await storage.setItem(key(origin), { ...stored, members: keep(stored.members), manual: keep(stored.manual) });
+  });
 }
 
 /** Remembers what I copied, to show what changed in my next share. */
 export async function rememberMyShare(origin: string, state: SharedState): Promise<void> {
-  const stored = await readStored(origin, state.alliance);
-  await storage.setItem(key(origin), { ...stored, mine: toStored(state) });
+  await withStorageLock(key(origin), async () => {
+    const stored = await readStored(origin, state.alliance);
+    await storage.setItem(key(origin), { ...stored, mine: toStored(state) });
+  });
 }
 
 export async function loadMyLastShare(origin: string, alliance: string): Promise<SharedState | null> {
@@ -209,23 +216,25 @@ export interface ImportReport {
  * Keeps each member's latest state and the one before it. A state older than the latest one only replaces the one
  * before when it is newer than it.
  */
-export async function importStates(origin: string, alliance: string, states: SharedState[]): Promise<ImportReport> {
-  const stored = await readStored(origin, alliance);
-  const updated = new Set<string>();
-  const seen = new Set<string>();
-  for (const state of states) {
-    seen.add(state.pseudo);
-    const known = stored.members[state.pseudo];
-    const time = state.readAt.getTime();
-    if (!known || time > known.latest.readAt) {
-      stored.members[state.pseudo] = known
-        ? { latest: toStored(state), previous: known.latest }
-        : { latest: toStored(state) };
-      updated.add(state.pseudo);
-    } else if (time < known.latest.readAt && time > (known.previous?.readAt ?? 0)) {
-      known.previous = toStored(state);
+export function importStates(origin: string, alliance: string, states: SharedState[]): Promise<ImportReport> {
+  return withStorageLock(key(origin), async () => {
+    const stored = await readStored(origin, alliance);
+    const updated = new Set<string>();
+    const seen = new Set<string>();
+    for (const state of states) {
+      seen.add(state.pseudo);
+      const known = stored.members[state.pseudo];
+      const time = state.readAt.getTime();
+      if (!known || time > known.latest.readAt) {
+        stored.members[state.pseudo] = known
+          ? { latest: toStored(state), previous: known.latest }
+          : { latest: toStored(state) };
+        updated.add(state.pseudo);
+      } else if (time < known.latest.readAt && time > (known.previous?.readAt ?? 0)) {
+        known.previous = toStored(state);
+      }
     }
-  }
-  await storage.setItem(key(origin), stored);
-  return { updated: [...updated], unchanged: [...seen].filter((pseudo) => !updated.has(pseudo)) };
+    await storage.setItem(key(origin), stored);
+    return { updated: [...updated], unchanged: [...seen].filter((pseudo) => !updated.has(pseudo)) };
+  });
 }

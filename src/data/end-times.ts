@@ -3,6 +3,7 @@ import { storage } from "wxt/utils/storage";
 import type { Sections } from "@/features/end-times/recap";
 import { readSection, SOURCE_PAGES, type EndKind, type Section } from "@/game/pages/end-times";
 import { fetchGamePage } from "@/utils/game-page";
+import { withStorageLock } from "@/utils/storage-lock";
 
 /** Storage keeps JSON: dates are stored as timestamps. */
 interface StoredSection {
@@ -25,11 +26,9 @@ export async function loadSections(origin: string): Promise<Sections> {
   return sections;
 }
 
-// Read-modify-write: two writes at once (two tabs' features, a page read again) must not drop a section.
-let pendingWrite: Promise<void> = Promise.resolve();
-
+// Read-modify-write, one at a time across this server's tabs: a page read again must not drop another's section.
 export function storeSection(origin: string, section: Section): Promise<void> {
-  const write = pendingWrite.then(async () => {
+  return withStorageLock(key(origin), async () => {
     const stored = (await storage.getItem<Partial<Record<EndKind, StoredSection>>>(key(origin))) ?? {};
     stored[section.kind] = {
       readAt: section.readAt.getTime(),
@@ -37,8 +36,6 @@ export function storeSection(origin: string, section: Section): Promise<void> {
     };
     await storage.setItem(key(origin), stored);
   });
-  pendingWrite = write.catch(() => undefined);
-  return write;
 }
 
 /** Reads the pages of `kinds` again (one GET each, with the session cookie); a page that fails keeps its old section. */

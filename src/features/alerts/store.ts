@@ -1,6 +1,7 @@
 // The stock of each server, kept for the background script: it never reads the game itself.
 import { storage } from "wxt/utils/storage";
 import { loadCapacities, loadStoredIncome } from "@/data/income";
+import { withStorageLock } from "@/utils/storage-lock";
 import type { ServerData } from "./badge";
 
 type Stock = Omit<ServerData["stock"], "readAt">;
@@ -10,19 +11,17 @@ type StoredStocks = Partial<Record<string, Stock & { readAt: number }>>;
 
 export const STOCKS_KEY = "local:alerts:stocks";
 
-// Read-modify-write: two tabs loading at once must not drop each other's server.
-let pendingWrite: Promise<void> = Promise.resolve();
+// Read-modify-write, one at a time across this server's tabs. Tabs of two servers (two origins) can still race: the
+// loser keeps its previous stock until its next page load.
 
 /** Keeps the stock of `#data`, read on every page of `origin`. */
 export function storeStock(origin: string, stock: Stock, readAt: Date): Promise<void> {
-  const write = pendingWrite.then(async () => {
+  return withStorageLock(STOCKS_KEY, async () => {
     const stored = (await storage.getItem<StoredStocks>(STOCKS_KEY)) ?? {};
     const { food, materials, workers } = stock;
     stored[new URL(origin).host] = { food, materials, workers, readAt: readAt.getTime() };
     await storage.setItem(STOCKS_KEY, stored);
   });
-  pendingWrite = write.catch(() => undefined);
-  return write;
 }
 
 /** Every server whose stock was read, with its income and warehouses as last read. */

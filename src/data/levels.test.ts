@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import constructionHtml from "@/features/game-levels/__fixtures__/construction.html?raw";
 import laboratoryHtml from "@/features/game-levels/__fixtures__/laboratory.html?raw";
-import { loadLevels, loadLevelsOf, readLevels, storeLevels, UnknownLevelsError } from "@/data/levels";
+import { loadLevels, loadLevelsOf, loadStoredLevels, readLevels, storeLevels, UnknownLevelsError } from "@/data/levels";
 import { forgetGamePages } from "@/utils/game-page";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
@@ -99,5 +99,10 @@ describe("loadLevels", () => {
     const fetchFn = fakeGame();
     await Promise.all([loadLevelsOf(origin, ["attackSpeed"], fetchFn), loadLevelsOf(origin, ["weapons"], fetchFn)]);
     expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the levels of two stores started together", async () => {
+    await Promise.all([storeLevels(origin, { dome: 3 }), storeLevels(origin, { weapons: 7 }, "laboratoire.php")]);
+    expect(await loadStoredLevels(origin)).toMatchObject({ dome: 3, weapons: 7 });
   });
 });
