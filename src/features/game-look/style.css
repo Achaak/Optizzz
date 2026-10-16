@@ -804,7 +804,8 @@ html.optizzz-game-look {
       overflow-wrap: anywhere;
     }
 
-    & #centre :is(div, fieldset, form, center, input, select, textarea, img) {
+    /* Not the top bar, which sits inside #centre: its drop-downs are wider than the button they hang from. */
+    & #centre :is(div, fieldset, form, center, input, select, textarea, img):not(#menu *) {
       max-width: 100%;
       box-sizing: border-box;
     }
