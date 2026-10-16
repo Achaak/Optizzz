@@ -43,7 +43,7 @@
   /* Corners: boxes, controls, small marks (tags, bars, tabs), pills (chips) */
   --optizzz-radius: 8px;
   --optizzz-radius-control: 6px;
-  --optizzz-radius-small: 4px;
+  --optizzz-radius-small: 5px;
   --optizzz-radius-pill: 999px;
 
   /* Boxes, the game's parchment (table.simulateur, .boite_membre) */
@@ -343,7 +343,10 @@
   overflow-x: auto;
 }
 
-/* ---------- Table: rows ruled, header on the darker parchment, numbers to the right ---------- */
+/*
+ * ---------- Table: as the game's own data tables retouched (Membres, Pontes en cours: src/features/game-look) ----------
+ * Rows ruled, header in small capitals on the darker parchment, numbers to the right.
+ */
 .optizzz-table {
   width: 100%;
   border-collapse: collapse;
@@ -358,7 +361,10 @@
 }
 
 .optizzz-table thead th {
+  font-size: var(--optizzz-font-size-small);
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
   background: var(--optizzz-head-bg);
 }
@@ -373,9 +379,32 @@
   text-align: right;
 }
 
-/* As the game's own tables (a report, the work queue): every cell framed */
-.optizzz-table--grid :is(th, td) {
-  border: 1px solid var(--optizzz-table-border);
+/* On its own in a game page (the work queue, a report): a rounded box striped as the game's tables */
+.optizzz-table--framed {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: clip;
+  background: var(--optizzz-surface);
+  border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius-small);
+}
+
+.optizzz-table--framed :is(th, td) {
+  padding: 5px 10px;
+}
+
+.optizzz-table--framed > tbody:last-child > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* :where keeps these at a class's weight: a feature's own row colour (a failed hunt) wins over the stripes */
+.optizzz-table--framed :where(tbody tr:nth-child(even)) > td,
+.optizzz-table--striped :where(tbody tr:nth-child(even)) > td {
+  background: var(--optizzz-surface-alt);
+}
+
+.optizzz-table--framed :where(tbody tr:hover) > td {
+  background: var(--optizzz-surface-tint);
 }
 
 /* Many columns or rows: smaller and tighter */
@@ -385,10 +414,6 @@
 
 .optizzz-table--dense :is(th, td) {
   padding: var(--optizzz-space-1) var(--optizzz-space-3);
-}
-
-.optizzz-table--striped tbody tr:nth-child(even) > td {
-  background: var(--optizzz-surface-alt);
 }
 
 /* A sortable column's title: a bare button, the order shown by an arrow */

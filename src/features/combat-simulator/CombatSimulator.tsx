@@ -113,7 +113,7 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
       </h3>
       {fought ? (
         <>
-          <table className="optizzz-table optizzz-table--grid">
+          <table className="optizzz-table optizzz-table--framed">
             <thead>
               <tr>
                 <th>Unité</th>
@@ -276,7 +276,7 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
               { label: "Étable à pucerons", value: attacker.aphids, onChange: (aphids) => setAttacker({ aphids }) },
             ]}
           />
-          <table className="optizzz-table optizzz-table--grid army">
+          <table className="optizzz-table optizzz-table--framed army">
             <tbody>
               {UNITS.map((unit) => (
                 <tr key={unit.key}>
@@ -314,7 +314,7 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
               { label: "Matériaux", value: defender.materials, onChange: (materials) => setDefender({ materials }) },
             ]}
           />
-          <table className="optizzz-table optizzz-table--grid army">
+          <table className="optizzz-table optizzz-table--framed army">
             <thead>
               <tr>
                 <th></th>
