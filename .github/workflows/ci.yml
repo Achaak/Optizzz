@@ -19,6 +19,9 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm knip
       - run: pnpm vitest run
       - run: pnpm build
       - run: pnpm build:firefox
+      # Errors AMO would reject; warnings (innerHTML, new Function) come from bundled React, ECharts and zod.
+      - run: pnpm lint:firefox

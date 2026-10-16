@@ -1,0 +1,10 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/entrypoints/*.ts",
+    "src/entrypoints/*/{index,main}.{ts,tsx}",
+    "src/features/hunt-launcher/engine/engine.worker.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}"],
+  "rules": { "exports": "warn", "types": "warn" }
+}
