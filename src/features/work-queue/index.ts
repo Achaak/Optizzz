@@ -14,6 +14,12 @@ const STYLE = `
   display: inline-block; vertical-align: middle; width: 80px; height: 8px; margin-right: 6px;
   border: 1px solid var(--optizzz-table-border);
   background: linear-gradient(to right, var(--optizzz-action) var(--progress, 0%), transparent 0);
+}
+/* Phone: « Fin » says when, the remaining time goes, so that « Annuler » stays on screen. */
+@media screen and (max-width: 41em) {
+  .optizzz-work-queue th:nth-child(4), .optizzz-work-queue td:nth-child(4) { display: none; }
+  .optizzz-work-queue th, .optizzz-work-queue td { padding: 3px 4px; }
+  .optizzz-work-queue-bar { width: 40px; margin-right: 4px; }
 }`;
 
 /** Table of the buildings / research in progress, on construction.php and laboratoire.php. */

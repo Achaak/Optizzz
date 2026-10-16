@@ -28,8 +28,8 @@ pnpm format         # Prettier (format:check en lecture seule)
 - Stack UI : React 19, Apache ECharts (import modulaire `echarts/core`), zod pour valider les données externes, `wxt/utils/storage` pour mémoriser (clés préfixées par le host du serveur). Préférer une brique éprouvée à du code écrit à la main.
 - La logique pure (parsing de pages, calculs) se sépare du DOM pour être testée avec vitest. Ce que plusieurs features partagent ne vit pas dans l'une d'elles :
   - `src/game/` : règles du jeu (`army/` : unités, proies, combat ; `attack.ts` : prise, portée, créneaux ; `flood.ts`, `travel.ts`, `forecast.ts` : récoltes, famine, entrepôts ; `diplomacy.ts` : pactes et guerres) ;
-  - `src/game/pages/` : lecteurs purs des pages du jeu (en-tête et Ressources, chantiers, profils et Membres, listes de fins) ;
-  - `src/data/` : données mémorisées par serveur et relues en arrière-plan (export public, revenus, niveaux, armée, fins, attaques en route) ;
+  - `src/game/pages/` : lecteurs purs des pages du jeu (en-tête et Ressources, Reine, chantiers, profils et Membres, listes de fins) ;
+  - `src/data/` : données mémorisées par serveur et relues en arrière-plan (export public, revenus, niveaux, armée, vitesse de ponte, fins, attaques en route) ;
   - `src/theme/` : variables CSS du thème (`theme.css`) et palette des graphiques ; aucune couleur en dur dans les styles.
 - **Daltoniens** (`docs/adr/0003-daltonisme.md`) : une information ne tient jamais à la seule couleur (aussi un texte, une forme ou une légende) ; jamais rouge contre vert pour opposer deux choses ; toute nouvelle couleur vue avec d'autres se vérifie en simulant protanopie et deutéranopie, pas à l'œil.
 - L'habillage du jeu (`src/features/game-look/`, `docs/features/game-look.md`) est toujours actif, hors catalogue : une feuille sous `html.optizzz-game-look`, posée à `document_start`. Les outils suivent par les variables de `src/theme/theme.css`.

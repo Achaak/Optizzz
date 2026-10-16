@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ColonyState } from "@/game/forecast";
+import { readLayingSpeed } from "@/game/pages/queen";
 import reineHtml from "./__fixtures__/reine-form.html?raw";
 import { fromParisParts } from "@/utils/time-format";
 import {
@@ -10,7 +11,6 @@ import {
   planLaying,
   queuedWorkers,
   readLayingRows,
-  readLayingSpeed,
   readOrder,
   readUnitCost,
   type ShortcutGroup,

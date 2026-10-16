@@ -99,6 +99,17 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "research-advice",
+    label: "Conseils",
+    description:
+      "Sur Construction et Laboratoire : ce qu'il vaut mieux faire d'abord, d'après votre armée, votre ponte et vos files.",
+    options: [
+      { id: "weapons-shield", label: "Armes et Bouclier Thoracique comparés à la ponte d'unités" },
+      { id: "architecture", label: "Attendre Architecture avant une construction" },
+      { id: "analysis-room", label: "Attendre la Salle d'analyse avant une recherche" },
+    ],
+  },
+  {
     id: "attacks-on-way",
     label: "Attaques en cours",
     description:

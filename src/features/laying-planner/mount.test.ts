@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ColonyState } from "@/game/forecast";
 import reineHtml from "./__fixtures__/reine-form.html?raw";
-import { readLayingRows, readLayingSpeed, type LayingRow } from "./laying";
+import { readLayingSpeed } from "@/game/pages/queen";
+import { readLayingRows, type LayingRow } from "./laying";
 import { mountLayingPlan, settingsStore } from "./mount";
 import { DEFAULT_LAYING_SETTINGS } from "./settings";
 

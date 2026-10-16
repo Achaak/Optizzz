@@ -1,0 +1,155 @@
+import { storage } from "wxt/utils/storage";
+import { isEmptyGarrison, loadGarrison } from "@/data/garrison";
+import { loadLaying } from "@/data/laying";
+import { fetchGamePage } from "@/utils/game-page";
+import { readWholeArmy } from "./army";
+import { mountSpeedUp, SPEED_UP_STYLE } from "./speed-up-mount";
+import { queueEnd, readSpeedUp, readTimedRows, startsAt } from "./speed-up-rows";
+import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
+import type { ColonyState } from "@/game/forecast";
+import { LEVEL_TIME_GROWTH } from "@/game/speed-up";
+import { readCapacities, readCosts, readStock } from "@/game/pages/resources";
+import { readWorkQueue } from "@/game/pages/work-queue";
+import { sameName } from "@/game/levels";
+import type { Feature } from "../feature";
+import { isEnabled } from "../toggles";
+import {
+  ADVICE_STYLE,
+  DEFAULT_ADVICE_PREFS,
+  mountResearchAdvice,
+  type AdviceData,
+  type AdvicePrefs,
+  type AdvisedResearch,
+} from "./mount";
+
+const RESEARCH: Record<AdvisedResearch, string> = { shield: "Bouclier Thoracique", weapons: "Armes" };
+
+const prefsKey = (host: string) => `local:researchAdvice:${host}:prefs` as const;
+
+/** The whole army: Armee.php read now (and Ressources.php for the hunts), else the garrison last stored. */
+async function loadArmy(
+  origin: string,
+  now: Date,
+): Promise<Pick<Extract<AdviceData, { kind: "ready" }>, "army" | "armyReadAt" | "armySource"> | null> {
+  const [armee, ressources] = await Promise.all(
+    ["Armee.php", "Ressources.php"].map((page) => fetchGamePage(`${origin}/${page}`).catch(() => null)),
+  );
+  const whole = armee ? readWholeArmy(armee, ressources ?? null, now) : null;
+  if (whole) {
+    const { army, ...source } = whole;
+    return { army, armyReadAt: now, armySource: { kind: "live", ...source } };
+  }
+  const garrison = await loadGarrison(origin);
+  if (!garrison) return null;
+  const previous = isEmptyGarrison(garrison) && !!garrison.previous;
+  const { armies, readAt } = previous && garrison.previous ? garrison.previous : garrison;
+  const army = armies.field.map((count, i) => count + (armies.nest[i] ?? 0) + (armies.lodge[i] ?? 0));
+  return { army, armyReadAt: readAt, armySource: { kind: "stored", previous } };
+}
+
+/** The army, the laying speed and the units the player can lay, or what is missing. */
+async function loadData(origin: string, now: Date): Promise<AdviceData> {
+  const [army, laying] = await Promise.all([loadArmy(origin, now), loadLaying(origin, now)]);
+  if (!laying)
+    return { kind: "missing", message: "Vitesse de ponte inconnue : passez par la Reine pour qu'Optizzz la lise." };
+  if (!army) return { kind: "missing", message: "Armée inconnue : passez par la page Armée pour qu'Optizzz la lise." };
+  if (army.army.every((count) => count === 0))
+    return { kind: "missing", message: "Aucune unité dans votre armée : rien à renforcer pour l'instant." };
+  return { kind: "ready", ...army, speed: laying.speed, layable: laying.units, layingReadAt: laying.readAt };
+}
+
+/**
+ * On laboratoire.php, under Armes and Bouclier Thoracique: whether the next level brings more to the army than the
+ * units the Queen could lay while laying again the workers it costs. See docs/features/conseils-recherche.md.
+ */
+export const researchAdviceFeature: Feature = {
+  id: "research-advice",
+  toggle: "research-advice",
+  matches: (url) => url.pathname.toLowerCase() === "/laboratoire.php",
+  async run(_ctx, toggles) {
+    if (!isEnabled(toggles, "research-advice", "weapons-shield")) return;
+    const now = new Date();
+    const queue = readWorkQueue(document, now);
+    const rows = (Object.keys(RESEARCH) as AdvisedResearch[]).flatMap((research) => {
+      const cost = readCosts(document).find((row) => sameName(row.name, RESEARCH[research]));
+      const description = cost?.description;
+      const shown = /\d+/.exec(description?.querySelector(".niveau_amelioration")?.textContent ?? "");
+      if (!cost || !description || !shown || cost.cost.workers <= 0) return [];
+      // Under way: the row already shows the cost of the level after the queued one.
+      const queued = queue.items
+        .filter((item) => sameName(item.name, RESEARCH[research]))
+        .map((item) => item.targetLevel);
+      return [
+        { description, row: { research, level: Math.max(Number(shown[0]), ...queued), workers: cost.cost.workers } },
+      ];
+    });
+    if (rows.length === 0) return;
+
+    const style = document.createElement("style");
+    style.textContent = ADVICE_STYLE;
+    document.head.append(style);
+    const key = prefsKey(location.host);
+    const prefs = { ...DEFAULT_ADVICE_PREFS, ...(await storage.getItem<AdvicePrefs>(key)) };
+    const data = await loadData(location.origin, now);
+    // Both blocks share the choices: each sends only what changed.
+    let current = prefs;
+    const save = (change: Partial<AdvicePrefs>) => {
+      current = { ...current, ...change, open: { ...current.open, ...change.open } };
+      storage.setItem(key, current).catch((error: unknown) => {
+        console.error("[Optizzz] saving research advice prefs failed", error);
+      });
+    };
+    for (const { description, row } of rows) mountResearchAdvice(description, row, data, prefs, save, now);
+  },
+};
+
+/** Stock, income and warehouses, to know when a row is paid; null when unreadable (then as if paid now). */
+async function loadColonyState(origin: string, now: Date): Promise<ColonyState | null> {
+  const stock = readStock(document);
+  const income = await loadIncome(origin, INCOME_MAX_AGE, now).catch(() => null);
+  if (!stock || !income) return null;
+  return { ...stock, ...income, capacities: readCapacities(document) ?? (await loadCapacities(origin, false)) };
+}
+
+/** Each page and what speeds it up, read on the other page. */
+const PAGES = {
+  "/construction.php": { speedUp: "Architecture", other: "laboratoire.php", growth: LEVEL_TIME_GROWTH.research },
+  "/laboratoire.php": { speedUp: "Salle d'analyse", other: "construction.php", growth: LEVEL_TIME_GROWTH.construction },
+} as const;
+
+/**
+ * On construction.php and laboratoire.php: in each row, whether waiting for the next level of Architecture (or Salle
+ * d'analyse) makes it end sooner. See docs/features/conseils-recherche.md.
+ */
+export const speedUpAdvice: Feature = {
+  id: "speed-up-advice",
+  toggle: "research-advice",
+  matches: (url) => url.pathname.toLowerCase() in PAGES,
+  async run(_ctx, toggles) {
+    const path = location.pathname.toLowerCase() as keyof typeof PAGES;
+    const page = PAGES[path];
+    const on =
+      path === "/construction.php"
+        ? isEnabled(toggles, "research-advice", "architecture")
+        : isEnabled(toggles, "research-advice", "analysis-room");
+    if (!on) return;
+    const now = new Date();
+    const rows = readTimedRows(document).filter((row) => !row.locked);
+    if (rows.length === 0) return;
+    const [other, state] = await Promise.all([
+      fetchGamePage(`${location.origin}/${page.other}`).catch(() => null),
+      loadColonyState(location.origin, now),
+    ]);
+    const speedUp = other ? readSpeedUp(other, page.speedUp, page.growth, state, now) : null;
+    if (!speedUp) return;
+    const style = document.createElement("style");
+    style.textContent = SPEED_UP_STYLE;
+    document.head.append(style);
+    const ownQueueEnd = queueEnd(document, now);
+    for (const row of rows) {
+      // Started when paid, then after the queue: as « Disponible … » of the resource forecast counts it.
+      const start = startsAt(state, row.cost, ownQueueEnd, now);
+      if (start) mountSpeedUp(row, speedUp, start, now);
+    }
+  },
+};
