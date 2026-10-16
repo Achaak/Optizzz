@@ -149,3 +149,33 @@ describe("formatShare and parseShares", () => {
     expect(parseShares(channel, context).attackSpeeds).toEqual(new Map());
   });
 });
+
+describe("parseShares limits", () => {
+  const now = at("2026-10-09T12:00:00Z");
+  const minutes = (date: Date) => Math.round(date.getTime() / 60_000);
+  const line = (payload: object) => `[optizzz:v1:${btoa(JSON.stringify(payload)).replace(/=+$/, "")}]`;
+  const payload = (overrides: object = {}) => ({ s: "s5", a: "ABC", p: "Bob", t: minutes(now), ...overrides });
+
+  it("skips a share dated in the future", () => {
+    const t = minutes(new Date(now.getTime() + 60 * 60_000));
+    const parsed = parseShares(line(payload({ t })), { ...context, now });
+    expect(parsed.states).toEqual([]);
+    expect(parsed.ignored).toContain("Bob : date dans le futur");
+  });
+
+  it("accepts a share dated a few minutes ahead", () => {
+    const t = minutes(new Date(now.getTime() + 2 * 60_000));
+    expect(parseShares(line(payload({ t })), { ...context, now }).states).toHaveLength(1);
+  });
+
+  it("rejects oversized fields", () => {
+    const parsed = parseShares(line(payload({ p: "B".repeat(200) })), { ...context, now });
+    expect(parsed.states).toEqual([]);
+    expect(parsed.ignored).toContain("Ligne Optizzz illisible");
+  });
+
+  it("rejects more levels than the game has", () => {
+    const b = Array.from({ length: BUILDINGS.length + 1 }, () => 1);
+    expect(parseShares(line(payload({ b })), { ...context, now }).ignored).toContain("Ligne Optizzz illisible");
+  });
+});
