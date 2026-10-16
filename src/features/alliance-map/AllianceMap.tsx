@@ -174,9 +174,9 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
           </label>
           {bubbles && (
             <ul className="role-legend" aria-label="Rôles de la chaîne">
-              {legend(bubbles).map(({ role, color, px }) => (
+              {legend(bubbles).map(({ role, color, px, shape }) => (
                 <li key={roleKey(role)}>
-                  <span className="bubble" style={{ background: color, width: px, height: px }} />
+                  <span className="bubble" data-shape={shape} style={{ background: color, width: px, height: px }} />
                   {roleLabel(role)}
                 </li>
               ))}

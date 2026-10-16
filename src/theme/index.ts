@@ -18,16 +18,21 @@ export function injectTheme(doc: Document): void {
   doc.head.append(style);
 }
 
-/** Chart colours (ECharts draws on a canvas: it cannot read CSS variables). */
+/**
+ * Chart colours (ECharts draws on a canvas: it cannot read CSS variables). Chosen for colour blindness, checked on the
+ * raised parchment: two neighbours of `series` stay apart for a red-green colour blindness (protanopia,
+ * deuteranopia), and so do its first three all together. Never red against green alone: see docs/adr/0003-daltonisme.md.
+ */
 export const CHART_COLORS = {
-  /** Series, in order: me first. */
-  series: ["#c5130f", "#2e6da4", "#2f6b1a", "#c76b00", "#7a4a12", "#6b5d3a", "#8a3ea3", "#1d8a8a"],
+  /** Series, in order: me first. Red, blue, gold, brown, sky, orange, violet, green. */
+  series: ["#c5130f", "#0a5fa8", "#b88600", "#7d4800", "#2b86c4", "#b35900", "#5a3a9e", "#00785a"],
   selected: "#c5130f",
-  neighbor: "#c76b00",
-  member: "#2e6da4",
+  /** Apart from `selected` and `member` with a colour blindness (an orange would read as the red). */
+  neighbor: "#b88600",
+  member: "#0a5fa8",
   holiday: "#a0a0a0",
   link: "rgba(80, 80, 80, 0.35)",
-  marker: "#7a4a12",
+  marker: "#7d4800",
   text: "#000",
   muted: "#6b5d3a",
   grid: "rgba(102, 88, 50, 0.35)",
@@ -35,8 +40,9 @@ export const CHART_COLORS = {
   halo: "#f3ead0",
   /** Every player of the server under the ones chosen (server map). */
   background: "rgba(107, 93, 58, 0.2)",
-  /** Chips of the server map: my alliance is `member`; pacts and wars each get a family of hues. */
-  chips: ["#8a3ea3", "#1d8a8a", "#7a4a12", "#b0368a", "#4b5bb5", "#5f7d1f", "#a0522d", "#2b2b2b"],
-  allies: ["#2f6b1a", "#4f9a2c", "#1d6f5c", "#6d8f1d", "#3a8a5a", "#245b3a"],
-  enemies: ["#c5130f", "#c76b00", "#9c1f4a", "#e0452b", "#a33b00", "#d6336c"],
+  /** Chips of the server map: the series but red (me), then a near black. My alliance is `member`. */
+  chips: ["#0a5fa8", "#b88600", "#7d4800", "#2b86c4", "#b35900", "#5a3a9e", "#00785a", "#2e2e2e"],
+  /** Pacts and wars each get a family of hues: blues against reds and oranges, never greens against reds. */
+  allies: ["#2b86c4", "#1d6f8a", "#4b5bb5", "#3d9ad6", "#173f7a", "#0a5fa8"],
+  enemies: ["#c5130f", "#b35900", "#e0452b", "#a33b00", "#b88600", "#9c1f4a"],
 } as const;

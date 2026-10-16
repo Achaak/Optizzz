@@ -145,12 +145,14 @@ export function mountHuntReport(
     table.querySelector("tbody")?.replaceChildren(
       ...rows.map(({ fight, predicted, unknown }) => {
         const row = doc.createElement("tr");
-        if (predicted && isOffPrediction(fight, predicted)) row.className = "optizzz-hunt-report-off";
+        const off = predicted !== null && isOffPrediction(fight, predicted);
+        if (off) row.className = "optizzz-hunt-report-off";
         for (const text of [
           fight.date,
           writeArmy(fight.sent),
           writePrey(fight.prey),
-          writeLosses(fight, predicted, unknown),
+          // Written, not only coloured: the row's red alone is lost with a colour blindness.
+          `${off ? "⚠ " : ""}${writeLosses(fight, predicted, unknown)}`,
           formatNumber(fight.promoted),
           formatNumber(fight.fieldWon),
           formatNumber(fight.food),

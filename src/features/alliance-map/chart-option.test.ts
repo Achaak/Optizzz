@@ -30,16 +30,20 @@ describe("chain roles on the map", () => {
     shared: new Map(),
   };
   const nodes = (option: ReturnType<typeof buildChartOption>) =>
-    (option.series as { data: { symbolSize: number; itemStyle: { color: string; borderWidth?: number } }[] }[])[0]
-      ?.data ?? [];
+    (
+      option.series as {
+        data: { symbol?: string; symbolSize: number; itemStyle: { color: string; borderWidth?: number } }[];
+      }[]
+    )[0]?.data ?? [];
 
-  it("draws each member with its role's colour and size, the selected one ringed and a little bigger", () => {
+  it("draws each member with its role's colour, size and shape, the selected one ringed and a little bigger", () => {
     const bubbles = new Map([
-      [1, { role: { kind: "granary" } as const, color: "#111111", px: 17 }],
-      [2, { role: { kind: "hunter" } as const, color: "#222222", px: 8 }],
+      [1, { role: { kind: "granary" } as const, color: "#111111", px: 17, shape: "square" as const }],
+      [2, { role: { kind: "hunter" } as const, color: "#222222", px: 8, shape: "circle" as const }],
     ]);
     const [selected, other] = nodes(buildChartOption(members, me, 1, levels, { width: 500, height: 500 }, bubbles));
-    expect(other).toMatchObject({ symbolSize: 8, itemStyle: { color: "#222222", borderWidth: 0 } });
+    expect(other).toMatchObject({ symbol: "circle", symbolSize: 8, itemStyle: { color: "#222222", borderWidth: 0 } });
+    expect(selected).toMatchObject({ symbol: "rect" });
     expect(selected?.itemStyle.color).toBe("#111111");
     expect(selected?.symbolSize).toBeGreaterThan(17);
     expect(selected?.itemStyle.borderWidth).toBeGreaterThan(0);

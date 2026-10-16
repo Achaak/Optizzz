@@ -4,6 +4,27 @@ import { chainRoles, roleKey, type Role } from "./roles";
 
 export type BubbleSize = "small" | "medium" | "large";
 
+/**
+ * Shape of a role's bubble, fixed by the kind of role: the kind still reads without telling the colours apart
+ * (colour blindness). The passer rungs share a shape, their default colours are the ones told apart all together.
+ */
+export type BubbleShape = "square" | "diamond" | "circle" | "triangle";
+
+const SHAPES: Record<Role["kind"], BubbleShape> = {
+  granary: "square",
+  passer: "diamond",
+  hunter: "circle",
+  out: "triangle",
+};
+
+/** ECharts' symbol for each shape. */
+export const SHAPE_SYMBOLS: Record<BubbleShape, string> = {
+  square: "rect",
+  diamond: "diamond",
+  circle: "circle",
+  triangle: "triangle",
+};
+
 export interface RoleStyle {
   /** Index in the chart palette (`CHART_COLORS.series`): always readable on the parchment. */
   color: number;
@@ -21,8 +42,11 @@ export const BUBBLE_SIZES: Record<BubbleSize, { label: string; px: number }> = {
 
 export const PALETTE: readonly string[] = CHART_COLORS.series;
 
-/** Default colours of the passer rungs, from the first up; they cycle past the fifth. */
-const PASSER_COLORS = [1, 6, 7, 3, 4];
+/**
+ * Default colours of the passer rungs, from the first up (blue, gold, orange, sky, violet); they cycle past the
+ * fifth. The first three stay apart with a red-green colour blindness.
+ */
+const PASSER_COLORS = [1, 2, 5, 4, 6];
 
 function defaultStyle(role: Role): RoleStyle {
   switch (role.kind) {
@@ -31,9 +55,9 @@ function defaultStyle(role: Role): RoleStyle {
     case "passer":
       return { color: PASSER_COLORS[(role.rank - 1) % PASSER_COLORS.length] ?? 1, size: "medium" };
     case "hunter":
-      return { color: 2, size: "small" };
+      return { color: 7, size: "small" };
     case "out":
-      return { color: 5, size: "small" };
+      return { color: 3, size: "small" };
   }
 }
 
@@ -49,10 +73,11 @@ export function styleOf(role: Role, styles: RoleStyles): RoleStyle {
   return valid ? chosen : defaultStyle(role);
 }
 
-/** What the map draws: the palette colour and the size in pixels. */
-export const bubbleOf = (style: RoleStyle) => ({
+/** What the map draws: the palette colour, the size in pixels and the role's shape. */
+export const bubbleOf = (role: Role, style: RoleStyle) => ({
   color: PALETTE[style.color] ?? CHART_COLORS.member,
   px: BUBBLE_SIZES[style.size].px,
+  shape: SHAPES[role.kind],
 });
 
 const height = (role: Role) =>
@@ -68,6 +93,7 @@ export interface MemberBubble {
   role: Role;
   color: string;
   px: number;
+  shape: BubbleShape;
 }
 
 interface MapMember {
@@ -91,7 +117,7 @@ export function memberBubbles(
   return new Map(
     members.map((m) => {
       const role = roles.get(m.id) ?? { kind: "out" };
-      return [m.id, { role, ...bubbleOf(styleOf(role, styles)) }];
+      return [m.id, { role, ...bubbleOf(role, styleOf(role, styles)) }];
     }),
   );
 }

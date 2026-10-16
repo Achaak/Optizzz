@@ -27,11 +27,18 @@ describe("role styles", () => {
   });
 
   it("draws a style with the palette's colour and a size in pixels, growing with the size", () => {
-    const small = bubbleOf({ color: 1, size: "small" });
-    const large = bubbleOf({ color: 1, size: "large" });
+    const small = bubbleOf(hunter, { color: 1, size: "small" });
+    const large = bubbleOf(hunter, { color: 1, size: "large" });
     expect(small.color).toBe(CHART_COLORS.series[1]);
-    expect(large.px).toBeGreaterThan(bubbleOf({ color: 1, size: "medium" }).px);
-    expect(bubbleOf({ color: 1, size: "medium" }).px).toBeGreaterThan(small.px);
+    expect(large.px).toBeGreaterThan(bubbleOf(hunter, { color: 1, size: "medium" }).px);
+    expect(bubbleOf(hunter, { color: 1, size: "medium" }).px).toBeGreaterThan(small.px);
+  });
+
+  it("gives each kind of role its own shape, whatever its colour (colour blindness)", () => {
+    const style = { color: 0, size: "medium" as const };
+    const shapes = [granary, passer(1), hunter, { kind: "out" } as const].map((role) => bubbleOf(role, style).shape);
+    expect(new Set(shapes).size).toBe(shapes.length);
+    expect(bubbleOf(passer(1), style).shape).toBe(bubbleOf(passer(4), style).shape);
   });
 });
 
@@ -60,7 +67,8 @@ describe("member bubbles for the map", () => {
     expect(bubbles.get(1)).toEqual({
       role: granary,
       color: CHART_COLORS.series[6],
-      px: bubbleOf(styleOf(granary, styles)).px,
+      px: bubbleOf(granary, styleOf(granary, styles)).px,
+      shape: "square",
     });
     expect(bubbles.get(2)?.role).toEqual(hunter);
     expect(bubbles.get(3)?.role).toEqual({ kind: "out" });

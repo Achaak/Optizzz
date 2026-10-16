@@ -3,7 +3,7 @@ import type { Player } from "@/data/exports";
 import { levelOf, type KnownLevels } from "./neighbor-table";
 import { kNearestLinks, membersByDistance } from "./neighbors";
 import { distance, travelTime } from "@/game/travel";
-import type { MemberBubble } from "@/features/tdc-chain/role-styles";
+import { SHAPE_SYMBOLS, type MemberBubble } from "@/features/tdc-chain/role-styles";
 import { roleLabel } from "@/features/tdc-chain/roles";
 import { CHART_COLORS } from "@/theme";
 import { formatDecimal, formatNumber } from "@/utils/number-format";
@@ -63,6 +63,7 @@ export function buildChartOption(
       return {
         name: m.pseudo,
         value: [m.x, m.y],
+        symbol: SHAPE_SYMBOLS[bubble.shape],
         symbolSize: symbolSize(m),
         itemStyle: {
           color: bubble.color,

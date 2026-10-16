@@ -24,7 +24,10 @@ th.${COLUMN_CLASS} a { cursor: pointer; }
   font-size: 12px; font-weight: 600; white-space: nowrap; border-radius: 999px;
   background: color-mix(in srgb, var(--role-color) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--role-color) 45%, transparent); }
-.optizzz-members-role::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--role-color); }`;
+.optizzz-members-role::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--role-color); }
+.optizzz-members-role[data-shape="square"]::before { border-radius: 2px; }
+.optizzz-members-role[data-shape="diamond"]::before { border-radius: 0; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.optizzz-members-role[data-shape="triangle"]::before { border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }`;
 
 export interface MembersColumnsContext {
   myPseudo: string;
@@ -89,6 +92,7 @@ function roleColumn(roles: Map<string, MemberBubble>) {
       label.className = "optizzz-members-role";
       // The map's colour; one size in a table, where the bubble's size would only make the rows uneven.
       label.style.setProperty("--role-color", bubble.color);
+      label.dataset.shape = bubble.shape;
       label.textContent = roleLabel(bubble.role);
       cell.append(label);
       return order.indexOf(roleKey(bubble.role));
