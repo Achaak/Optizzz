@@ -290,7 +290,10 @@ function unitsTable(doc: Document, advice: Advice, stat: AdviceStat): HTMLElemen
   const head = el(doc, "tr");
   for (const title of ["Unité", "Pondues dans le temps", `Gain (${STATS[stat].long})`, "Recherche comparée"])
     head.append(el(doc, "th", undefined, title));
-  table.append(head);
+  const thead = el(doc, "thead");
+  thead.append(head);
+  const body = el(doc, "tbody");
+  table.append(thead, body);
   for (const option of advice.options) {
     const line = el(doc, "tr", option === advice.best ? "optizzz-advice-best" : undefined);
     const edge = advice.researchGain / option.gain - 1;
@@ -300,7 +303,7 @@ function unitsTable(doc: Document, advice: Advice, stat: AdviceStat): HTMLElemen
       el(doc, "td", undefined, signed(option.gain)),
       el(doc, "td", undefined, `${edge >= 0 ? "+" : "−"}${percent(Math.abs(edge))}`),
     );
-    table.append(line);
+    body.append(line);
   }
   units.append(table);
   return units;

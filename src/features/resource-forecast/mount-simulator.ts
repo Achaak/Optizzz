@@ -24,9 +24,9 @@ export const SIMULATOR_STYLE = `
 .${PANEL_CLASS}-bar-idle { background: repeating-linear-gradient(45deg, var(--optizzz-idle) 0 3px, var(--optizzz-idle-alt) 3px 6px); }
 .${PANEL_CLASS}-idle { grid-column: 2; text-align: center; }
 .${PANEL_CLASS}-daily { width: auto; margin: 10px 0 var(--optizzz-space-3); }
-.${PANEL_CLASS}-daily :is(th, td) { padding: 1px 10px 1px 0; text-align: right; border: none; }
-.${PANEL_CLASS}-daily tbody th:first-child, .${PANEL_CLASS}-daily thead th:first-child { text-align: left; font-weight: normal; }
-.${PANEL_CLASS}-daily thead th { font-size: var(--optizzz-font-size-small); font-weight: normal; color: var(--optizzz-text-muted); background: none; }
+.${PANEL_CLASS}-daily :is(th, td) { text-align: right; }
+.${PANEL_CLASS}-daily :is(th, td):first-child { text-align: left; }
+.${PANEL_CLASS}-daily tbody th { font-weight: normal; }
 .${PANEL_CLASS}-up { color: var(--optizzz-success-text); font-weight: bold; }
 .${PANEL_CLASS}-down { color: var(--optizzz-danger-text); font-weight: bold; }
 .${PANEL_CLASS}-outlook { margin: var(--optizzz-space-2) 0 var(--optizzz-space-4); font-weight: bold; }
