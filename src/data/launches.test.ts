@@ -66,6 +66,42 @@ describe("queued launches", () => {
     await flushQueuedLaunches(sessionStorage, ORIGIN);
     expect(await loadLaunches(ORIGIN, at(11))).toEqual([launch("Cible", at(12))]);
   });
+
+  const stored = (target: string, arrivesAt: Date) => ({
+    ...launch(target, arrivesAt),
+    arrivesAt: arrivesAt.getTime(),
+  });
+
+  it("ignores entries that are not launches", async () => {
+    sessionStorage.setItem(
+      "optizzz-flood-queue",
+      JSON.stringify([{ targetId: "x" }, 5, null, stored("Cible", at(12))]),
+    );
+    await flushQueuedLaunches(sessionStorage, ORIGIN);
+    expect(await loadLaunches(ORIGIN, at(11))).toEqual([launch("Cible", at(12))]);
+  });
+
+  it("ignores a queue that is not a list", async () => {
+    sessionStorage.setItem("optizzz-flood-queue", '{"a":1}');
+    await expect(flushQueuedLaunches(sessionStorage, ORIGIN)).resolves.toBeUndefined();
+    expect(await loadLaunches(ORIGIN, at(11))).toEqual([]);
+  });
+
+  it("keeps at most 20 queued launches", async () => {
+    sessionStorage.setItem(
+      "optizzz-flood-queue",
+      JSON.stringify(Array.from({ length: 25 }, () => stored("Cible", at(12)))),
+    );
+    await flushQueuedLaunches(sessionStorage, ORIGIN);
+    expect(await loadLaunches(ORIGIN, at(11))).toHaveLength(20);
+  });
+
+  it("ignores a launch arriving more than 30 days ahead", async () => {
+    const far = new Date(at(9).getTime() + 31 * 24 * 60 * 60_000);
+    sessionStorage.setItem("optizzz-flood-queue", JSON.stringify([stored("Cible", at(12)), stored("Loin", far)]));
+    await flushQueuedLaunches(sessionStorage, ORIGIN);
+    expect(await loadLaunches(ORIGIN, at(11))).toEqual([launch("Cible", at(12))]);
+  });
 });
 
 describe("defenses", () => {
