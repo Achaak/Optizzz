@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import type { Scores } from "./api";
-import { Controls, LoadingNote } from "./controls";
-import { formatGain, formatPercent } from "./format";
-import { HistoryChart } from "./HistoryChart";
+import { Controls, LoadingNote } from "@/utils/history-chart/controls";
+import { METRICS } from "./metrics";
+import { formatGain, formatPercent } from "@/utils/history-chart/format";
+import { HistoryChart } from "@/utils/history-chart/HistoryChart";
 import { HISTORY_LINK } from "./menu";
 import { periodProgress, playerSeries } from "./series";
 import { readHistorySettings, writeHistorySettings } from "./settings";
@@ -53,6 +54,7 @@ export function ProfileHistory({ origin, loggedInPseudo, profile, liveTime, alli
     <div className="history compact">
       <h4>Progression</h4>
       <Controls
+        metrics={METRICS}
         metric={metric}
         days={settings.days}
         onMetric={(next) => updateSettings((current) => ({ ...current, metric: next }))}

@@ -3,10 +3,15 @@ import { allianceViewHashes, showsAllianceView } from "./alliance-views";
 
 describe("alliance views", () => {
   it("lists only the views switched on", () => {
-    expect(allianceViewHashes({})).toEqual(["#carte", "#chaine", "#historique", "#partage"]);
-    expect(allianceViewHashes({ "alliance-map": false, "history.alliance": false, "alliance-sharing": false })).toEqual(
-      ["#chaine"],
-    );
+    expect(allianceViewHashes({})).toEqual(["#carte", "#chaine", "#historique", "#stats", "#partage"]);
+    expect(
+      allianceViewHashes({
+        "alliance-map": false,
+        "history.alliance": false,
+        "alliance-stats": false,
+        "alliance-sharing": false,
+      }),
+    ).toEqual(["#chaine"]);
   });
 
   it("hides the members table only for a view switched on", () => {

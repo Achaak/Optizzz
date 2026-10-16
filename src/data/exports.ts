@@ -23,7 +23,7 @@ export const playerSchema = z.object({
 
 export type Player = z.infer<typeof playerSchema>;
 
-const allianceSchema = z.object({
+export const allianceSchema = z.object({
   tag: z.string(),
   name: z.string(),
   playersCount: z.number().int(),
@@ -117,6 +117,11 @@ async function loadExport<K extends Kind, T>(
 /** Published versions of the players export, latest first. */
 export async function loadPlayersVersions(origin: string): Promise<string[]> {
   return (await loadVersions(origin)).players;
+}
+
+/** Published versions of the alliances export, latest first. */
+export async function loadAlliancesVersions(origin: string): Promise<string[]> {
+  return (await loadVersions(origin)).alliances;
 }
 
 /** Latest players export of the `origin` server (e.g. "https://s5.fourmizzz.fr"). */

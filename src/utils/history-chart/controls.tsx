@@ -1,11 +1,9 @@
-import type { Metric } from "./series";
+import type { ReactNode } from "react";
 
-export const METRICS: { id: Metric; label: string }[] = [
-  { id: "field", label: "TDC" },
-  { id: "building", label: "Fourmilière" },
-  { id: "technology", label: "Technologie" },
-  { id: "trophy", label: "Combat" },
-];
+export interface MetricTab<M extends string> {
+  id: M;
+  label: string;
+}
 
 const PERIODS: { days: number | null; label: string }[] = [
   { days: 7, label: "7 j" },
@@ -14,19 +12,22 @@ const PERIODS: { days: number | null; label: string }[] = [
   { days: null, label: "Tout" },
 ];
 
-interface Props {
-  metric: Metric;
+interface Props<M extends string> {
+  metrics: readonly MetricTab<M>[];
+  metric: M;
   days: number | null;
-  onMetric: (metric: Metric) => void;
+  onMetric: (metric: M) => void;
   onDays: (days: number | null) => void;
+  /** More buttons between the tabs and the period (Total / Moyenne). */
+  children?: ReactNode;
 }
 
-/** Score tabs and period buttons, shared by the alliance view and the profile. */
-export function Controls({ metric, days, onMetric, onDays }: Props) {
+/** Score tabs and period buttons, shared by the history views. */
+export function Controls<M extends string>({ metrics, metric, days, onMetric, onDays, children }: Props<M>) {
   return (
     <div className="toolbar">
       <div className="tabs" role="tablist">
-        {METRICS.map((m) => (
+        {metrics.map((m) => (
           <button
             key={m.id}
             role="tab"
@@ -38,12 +39,15 @@ export function Controls({ metric, days, onMetric, onDays }: Props) {
           </button>
         ))}
       </div>
-      <div className="tabs">
-        {PERIODS.map((p) => (
-          <button key={p.label} className={p.days === days ? "active" : ""} onClick={() => onDays(p.days)}>
-            {p.label}
-          </button>
-        ))}
+      <div className="toolbar-end">
+        {children}
+        <div className="tabs">
+          {PERIODS.map((p) => (
+            <button key={p.label} className={p.days === days ? "active" : ""} onClick={() => onDays(p.days)}>
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

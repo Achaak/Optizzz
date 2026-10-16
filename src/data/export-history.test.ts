@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dailyVersions, versionDate } from "./versions";
+import { dailyVersions, versionDate } from "./export-history";
 
 describe("versionDate", () => {
   it("reads the UTC date of a version", () => {
