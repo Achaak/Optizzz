@@ -174,11 +174,12 @@ html.optizzz-game-look {
     background-color: var(--look-box);
   }
 
+  /* Every data table as the Membres one, and as Optizzz's (optizzz-table--framed in src/theme/theme.css) */
   & .tableau_leger :is(td, th),
   & .boite_membre .tableau_score :is(td, th) {
     border: 0;
     border-bottom: 1px solid var(--look-line);
-    padding: 6px 12px;
+    padding: 5px 10px;
   }
 
   & .tableau_leger tr:last-child > td,
@@ -187,6 +188,8 @@ html.optizzz-game-look {
   }
 
   & .tableau_leger th,
+  /* Pontes en cours (Reine): its title row is made of <td><strong> */
+  & .tableau_leger tr:first-child:has(> td > strong) > td,
   & .boite_membre .tableau_score th,
   & #TableMessagerie th,
   & #tabChoixArmee th,
@@ -197,12 +200,15 @@ html.optizzz-game-look {
     text-align: left;
   }
 
+  & .tableau_leger th,
+  & .tableau_leger tr:first-child:has(> td > strong) > td,
+  & .boite_membre .tableau_score th,
   & #TableMessagerie th,
   & #tabChoixArmee th,
   & .tab_triable th,
   & #tabEnnemie .ligneTableau:first-of-type {
     font-variant: normal;
-    font-size: 13px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
@@ -210,6 +216,7 @@ html.optizzz-game-look {
   /* The game's zebra stripes, softened */
   & .ligne_paire,
   & .tab_triable tr.alt,
+  & .tableau_leger tr:first-child:has(> td > strong) ~ tr:nth-child(2n + 3),
   & #TableMessagerie tr:nth-of-type(4n + 4),
   & #TableMessagerie tr:nth-of-type(4n + 5),
   & #tabChoixArmee tr:nth-of-type(2n + 1),

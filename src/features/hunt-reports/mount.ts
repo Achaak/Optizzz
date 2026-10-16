@@ -79,7 +79,7 @@ export function mountHuntReport(
   const table = htmlElement(
     doc,
     "table",
-    `<table class="optizzz-table optizzz-table--grid"><thead><tr><th>Date</th><th>Armée envoyée</th><th>Proies</th><th></th>
+    `<table class="optizzz-table optizzz-table--framed"><thead><tr><th>Date</th><th>Armée envoyée</th><th>Proies</th><th></th>
     <th>Promues</th><th>cm²</th><th>Nourriture</th></tr></thead><tbody></tbody><tfoot></tfoot></table>`,
   );
   const lossesCell = table.querySelector("th:nth-child(4)");

@@ -25,7 +25,7 @@ export function mountWorkQueue(doc: Document, loadedAt: Date): MountedWorkQueue 
   const table = htmlElement(
     doc,
     "table",
-    `<table class="optizzz-work-queue optizzz-table optizzz-table--grid"><thead><tr><th>${queue.kind === "construction" ? "Construction" : "Recherche"}</th>
+    `<table class="optizzz-work-queue optizzz-table optizzz-table--framed"><thead><tr><th>${queue.kind === "construction" ? "Construction" : "Recherche"}</th>
     <th>État</th><th>Progression</th><th>Temps restant</th><th>Fin</th><th></th></tr></thead>
     <tbody></tbody><tfoot><tr><td colspan="6"></td></tr></tfoot></table>`,
   );
