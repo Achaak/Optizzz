@@ -277,6 +277,12 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
             ]}
           />
           <table className="optizzz-table optizzz-table--framed army">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Envoyées</th>
+              </tr>
+            </thead>
             <tbody>
               {UNITS.map((unit) => (
                 <tr key={unit.key}>
