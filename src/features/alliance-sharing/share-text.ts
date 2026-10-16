@@ -8,28 +8,6 @@ import { dayMonth, formatDateTime } from "@/utils/time-format";
 
 // Compact payload of the data line: levels and units as arrays in the order of BUILDINGS, RESEARCH and UNITS, a work
 // by its index in BUILDINGS then RESEARCH (its name when unknown), times in minutes since 1970.
-const levelsSchema = z.array(z.number().int().nonnegative().nullable());
-const payloadSchema = z.object({
-  s: z.string(),
-  a: z.string(),
-  p: z.string(),
-  t: z.number().int(),
-  f: z.number().int().optional(),
-  w: z.number().int().optional(),
-  b: levelsSchema.optional(),
-  r: levelsSchema.optional(),
-  c: z.array(z.tuple([z.union([z.number().int(), z.string()]), z.number().int(), z.number().int()])).optional(),
-  m: z
-    .object({
-      n: z.number().int(),
-      u: z.array(z.number().int().nonnegative()).optional(),
-      i: z.boolean(),
-      r: z.number().int().optional(),
-    })
-    .optional(),
-});
-type Payload = z.infer<typeof payloadSchema>;
-
 // Standard base64 without padding: no « _ », « * » or « ~ » that Discord would read as markdown and drop on copy.
 const DATA_LINE = /\[optizzz:v1:([A-Za-z0-9+/]+)\]/g;
 
@@ -41,6 +19,33 @@ const LEVELS = [...BUILDINGS, ...RESEARCH];
 const MINUTE = 60_000;
 const toMinutes = (date: Date) => Math.round(date.getTime() / MINUTE);
 const fromMinutes = (minutes: number) => new Date(minutes * MINUTE);
+const MIN_MINUTES = toMinutes(new Date("2020-01-01T00:00:00Z"));
+
+// Limits are generous but finite: the pasted text comes from a channel any member writes to.
+const levelsSchema = z.array(z.number().int().nonnegative().nullable());
+const payloadSchema = z.object({
+  s: z.string().max(20),
+  a: z.string().max(20),
+  p: z.string().max(50),
+  t: z.number().int().min(MIN_MINUTES),
+  f: z.number().int().optional(),
+  w: z.number().int().optional(),
+  b: levelsSchema.max(BUILDINGS.length).optional(),
+  r: levelsSchema.max(RESEARCH.length).optional(),
+  c: z
+    .array(z.tuple([z.union([z.number().int(), z.string().max(60)]), z.number().int(), z.number().int()]))
+    .max(LEVELS.length)
+    .optional(),
+  m: z
+    .object({
+      n: z.number().int(),
+      u: z.array(z.number().int().nonnegative()).max(UNITS.length).optional(),
+      i: z.boolean(),
+      r: z.number().int().optional(),
+    })
+    .optional(),
+});
+type Payload = z.infer<typeof payloadSchema>;
 
 function toBase64(text: string): string {
   return btoa(String.fromCharCode(...new TextEncoder().encode(text))).replace(/=+$/, "");
@@ -193,6 +198,8 @@ export interface ShareContext {
   alliance: string;
   /** Nicknames on the members page. */
   members: readonly string[];
+  /** Defaults to the current time. */
+  now?: Date;
 }
 
 export interface ParsedShares {
@@ -208,6 +215,7 @@ export interface ParsedShares {
  * is read in the map's former « Pseudo: level » format (to drop after one version).
  */
 export function parseShares(text: string, context: ShareContext): ParsedShares {
+  const now = context.now ?? new Date();
   const members = new Map(context.members.map((pseudo) => [pseudo.toLocaleLowerCase("fr"), pseudo]));
   const states: SharedState[] = [];
   const attackSpeeds = new Map<string, number>();
@@ -229,6 +237,7 @@ export function parseShares(text: string, context: ShareContext): ParsedShares {
     else if (state.server !== context.server) ignored.push(`${state.pseudo} : autre serveur (${state.server})`);
     else if (state.alliance !== context.alliance) ignored.push(`${state.pseudo} : autre alliance (${state.alliance})`);
     else if (!member) ignored.push(`${state.pseudo} : pas dans l'alliance`);
+    else if (state.readAt.getTime() > now.getTime() + 5 * MINUTE) ignored.push(`${member} : date dans le futur`);
     else states.push({ ...state, pseudo: member });
   }
   return { states, attackSpeeds, ignored };
