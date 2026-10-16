@@ -154,7 +154,7 @@ nav#menu .${BAR_CLASS} :is(button.${MORE_CLASS}, span.${LABEL_CLASS}) {
   nav#menu .${BAR_CLASS} button.${MORE_CLASS} {
     display: flex;
   }
-  nav#menu .${ITEMS_CLASS} {
+  nav#menu .${BAR_CLASS} .${ITEMS_CLASS} {
     display: none;
     position: absolute;
     top: 100%;
@@ -162,6 +162,7 @@ nav#menu .${BAR_CLASS} :is(button.${MORE_CLASS}, span.${LABEL_CLASS}) {
     flex-direction: column;
     height: auto;
     width: max-content;
+    max-width: none;
     padding: 4px 0;
     background: var(--optizzz-menu-bg);
     border-radius: 0 0 var(--optizzz-radius) var(--optizzz-radius);
