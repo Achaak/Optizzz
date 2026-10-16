@@ -83,6 +83,13 @@ export const featureCatalog = [
     ],
   },
   {
+    id: "profile-production",
+    label: "Production sur les profils",
+    description:
+      "Sur le profil d'un joueur, une ligne « Production max » : ce que son TDC récolte par jour avec toutes les ouvrières qu'il peut employer, taxe de colonie déduite s'il est soumis.",
+    options: [],
+  },
+  {
     id: "flood",
     label: "Plan de flood",
     description:
