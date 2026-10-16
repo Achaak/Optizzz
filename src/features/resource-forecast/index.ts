@@ -15,8 +15,9 @@ const STYLE = `
 .optizzz-forecast { margin-top: var(--optizzz-space-2); }
 .optizzz-forecast::before { content: "⏳ "; }
 .optizzz-outlook { font-size: 0.8em; line-height: 1.2; padding: 1px 0 2px; }
-.optizzz-outlook-warning { color: var(--optizzz-warning-text); font-weight: bold; }
-.optizzz-outlook-danger { color: var(--optizzz-danger-text); font-weight: bold; }
+/* On the header's dark box: the light states (the simulator, on the parchment, takes optizzz-text-*) */
+#boiteInfo .optizzz-outlook-warning { color: var(--optizzz-menu-warning); font-weight: bold; }
+#boiteInfo .optizzz-outlook-danger { color: var(--optizzz-menu-danger); font-weight: bold; }
 ${HEADER_TIP_STYLE}`;
 
 const page = (url: URL) => url.pathname.toLowerCase();

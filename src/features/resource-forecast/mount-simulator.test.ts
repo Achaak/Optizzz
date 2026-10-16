@@ -146,7 +146,7 @@ describe("mountSimulator", () => {
     const { panel, field } = setup();
     const lines = () =>
       [...panel.querySelectorAll(".optizzz-simulator-outlook > div")].map((line) => [line.className, line.textContent]);
-    expect(lines()).toEqual([["optizzz-outlook-danger", "Famine dans 5 h 00"]]);
+    expect(lines()).toEqual([["optizzz-outlook-danger optizzz-text-danger", "Famine dans 5 h 00"]]);
     type(field("optizzz-food"), "100");
     expect(lines()).toEqual([["optizzz-simulator-ok", "Pas de famine"]]);
   });

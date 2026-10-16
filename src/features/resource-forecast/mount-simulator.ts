@@ -184,7 +184,7 @@ function outlookLines(doc: Document, state: ColonyState, now: Date): HTMLElement
   const timed = (label: string, at: Date) => {
     const remaining = at.getTime() - now.getTime();
     const urgency = urgencyOf(remaining);
-    const className = urgency ? `optizzz-outlook-${urgency}` : "";
+    const className = urgency ? `optizzz-outlook-${urgency} optizzz-text-${urgency}` : "";
     return line(`${label} ${formatDuration(remaining)}`, className);
   };
 
