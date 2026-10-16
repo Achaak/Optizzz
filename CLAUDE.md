@@ -14,9 +14,12 @@ pnpm build          # → .output/chrome-mv3/
 pnpm build:firefox  # → .output/firefox-mv3/
 pnpm zip / zip:firefox
 pnpm typecheck
-pnpm test           # vitest (happy-dom)
+pnpm test           # vitest (happy-dom) ; test:coverage → coverage/index.html
 pnpm lint           # ESLint (typescript-eslint strict + type-checked, react-hooks)
 pnpm format         # Prettier (format:check en lecture seule)
+pnpm knip           # fichiers et dépendances morts (exports inutilisés : simple avertissement)
+pnpm lint:firefox   # web-ext lint sur .output/firefox-mv3 (après build:firefox) : ce qu'AMO refuserait
+pnpm analyze        # build Chrome + stats.html : ce que pèse chaque content script
 ```
 
 ## Architecture
@@ -46,7 +49,7 @@ pnpm format         # Prettier (format:check en lecture seule)
 
 ## Workflow
 
-On avance feature par feature. Les skills de Matt Pocock sont dans `.claude/skills/` (voir `SOURCE.md`) : `/grill-me` pour cadrer une feature, `tdd` pour l'implémenter. Pour l'interface : `impeccable` (critique, audit, polish) et `web-design-guidelines`, en suivant `docs/design-system.md`.
+On avance feature par feature. Les skills de Matt Pocock sont dans `.claude/skills/` (voir `SOURCE.md`) : `/grill-me` pour cadrer une feature, `tdd` pour l'implémenter. Pour l'interface : `impeccable` (critique, audit, polish) et `web-design-guidelines`, en suivant `docs/design-system.md`. Pour la stack : `wxt-browser-extensions` et `chrome-extensions` (MV3, publication), `echarts` pour les graphiques ; `improve` pour un audit qui écrit des plans dans `plans/` sans toucher au code. Ces skills sont génériques : en cas de désaccord, les ADR et ce fichier priment.
 
 Commits : Conventional Commits (`feat:`, `fix:`, `chore:`…). Le hook Husky `pre-commit` lance lint-staged (ESLint + Prettier sur les fichiers modifiés), `typecheck` et les tests : ne pas le contourner avec `--no-verify`.
 
