@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Sections } from "../end-times/recap";
 import type { ServerData } from "./badge";
-import { dueNotifications, type NotificationSettings } from "./notifications";
+import { deliverNotices, dueNotifications, type Notice, type NotificationSettings } from "./notifications";
 
 const MINUTE = 60_000;
 const now = new Date(2026, 9, 8, 16, 40);
@@ -125,5 +125,36 @@ describe("dueNotifications", () => {
     };
     expect(dueNotifications(input([], ends), now)).toHaveLength(1);
     expect(dueNotifications(input([], ends, { ...ALL, construction: false }), now)).toEqual([]);
+  });
+});
+
+describe("deliverNotices", () => {
+  const notices: Notice[] = [
+    { id: "a", message: "A", url: "https://s5.fourmizzz.fr/a" },
+    { id: "b", message: "B", url: "https://s5.fourmizzz.fr/b" },
+  ];
+
+  it("records each notice shown", async () => {
+    const create = vi.fn().mockResolvedValue(undefined);
+    const result = await deliverNotices(notices, {}, now, create);
+    expect(result).toEqual({
+      a: { at: now.getTime(), url: "https://s5.fourmizzz.fr/a" },
+      b: { at: now.getTime(), url: "https://s5.fourmizzz.fr/b" },
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
+  it("skips a notice that fails, and still records the others", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const create = vi.fn().mockRejectedValueOnce(new Error("denied")).mockResolvedValue(undefined);
+    const result = await deliverNotices(notices, {}, now, create);
+    expect(Object.keys(result)).toEqual(["b"]);
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps what was already sent", async () => {
+    const create = vi.fn().mockResolvedValue(undefined);
+    const result = await deliverNotices([], { old: { at: 1, url: "u" } }, now, create);
+    expect(result.old).toEqual({ at: 1, url: "u" });
   });
 });

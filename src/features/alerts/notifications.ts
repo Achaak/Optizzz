@@ -106,3 +106,25 @@ export function dueNotifications(input: NotificationInput, now: Date): Notice[] 
   ];
   return notices.filter((notice) => !input.sent[notice.id]);
 }
+
+/**
+ * Shows each notice with `show` and returns `sent` with the ones shown: one that fails is logged and left out,
+ * to be tried again next time, without stopping the others.
+ */
+export async function deliverNotices(
+  notices: readonly Notice[],
+  sent: SentNotifications,
+  now: Date,
+  show: (notice: Notice) => Promise<unknown>,
+): Promise<SentNotifications> {
+  const updated = { ...sent };
+  for (const notice of notices) {
+    try {
+      await show(notice);
+      updated[notice.id] = { at: now.getTime(), url: notice.url };
+    } catch (error) {
+      console.warn("[Optizzz] could not show a notification", error);
+    }
+  }
+  return updated;
+}
