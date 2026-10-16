@@ -1,6 +1,6 @@
 // History of the players' scores, from the public exports — see docs/features/historique.md.
-import { storage } from "wxt/utils/storage";
 import { z } from "zod";
+import { cachedVersion, loadEachVersion } from "@/data/export-history";
 import { getJson, playerSchema } from "@/data/exports";
 
 export interface Scores {
@@ -62,46 +62,22 @@ function fromStored(version: string, stored: StoredSnapshot): Snapshot {
   return { version, players };
 }
 
-/** One version, from the cache or downloaded then cached: a published version never changes. */
+/** One version, from the cache or downloaded then cached. */
 async function loadSnapshot(origin: string, version: string): Promise<Snapshot> {
-  const key = cacheKey(origin, version);
-  const cached = await storage.getItem<StoredSnapshot>(key);
-  if (cached) return fromStored(version, cached);
-
-  const players = z
-    .array(historyPlayerSchema)
-    .parse(await getJson(`${origin}/api/exports/players/?version=${version}`));
-  const stored = toStored(players);
-  try {
-    await storage.setItem(key, stored);
-  } catch (error) {
-    console.warn(`[Optizzz] could not cache the players export ${version}`, error);
-  }
+  const stored = await cachedVersion(cacheKey(origin, version), async () =>
+    toStored(z.array(historyPlayerSchema).parse(await getJson(`${origin}/api/exports/players/?version=${version}`))),
+  );
   return fromStored(version, stored);
 }
 
 /**
- * The scores of every player at each of `versions`, in the same order. Loaded latest first,
- * one at a time, with `onProgress` called after each; a version the API cannot give is skipped.
- * Stops downloading once `signal` is aborted (another period chosen, view closed).
+ * The scores of every player at each of `versions`, in the same order, loaded latest first (see `loadEachVersion`).
  */
-export async function loadHistory(
+export function loadHistory(
   origin: string,
   versions: readonly string[],
   onProgress?: (snapshots: Snapshot[]) => void,
   signal?: AbortSignal,
 ): Promise<Snapshot[]> {
-  const loaded = new Map<string, Snapshot>();
-  const inOrder = () => versions.flatMap((version) => loaded.get(version) ?? []);
-  for (const version of [...versions].reverse()) {
-    if (signal?.aborted) break;
-    try {
-      loaded.set(version, await loadSnapshot(origin, version));
-    } catch (error) {
-      console.warn(`[Optizzz] players export ${version} unavailable`, error);
-      continue;
-    }
-    onProgress?.(inOrder());
-  }
-  return inOrder();
+  return loadEachVersion(versions, (version) => loadSnapshot(origin, version), onProgress, signal);
 }

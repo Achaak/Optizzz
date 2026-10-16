@@ -1,16 +1,11 @@
 // Curves drawn from the history: one player, one score.
 import type { Scores, Snapshot } from "./api";
-import { versionDate } from "./versions";
+import { versionDate } from "@/data/export-history";
+import type { Point } from "@/utils/history-chart/chart-option";
 
 export type Metric = keyof Scores;
 
-export interface Point {
-  /** Epoch ms. */
-  time: number;
-  value: number;
-  /** Read in the game now rather than in an export. */
-  live: boolean;
-}
+export type { Point } from "@/utils/history-chart/chart-option";
 
 /** Scores read on the current page: the members table has no trophies. */
 export interface LiveScores {
@@ -34,22 +29,7 @@ export function playerSeries(
   return points;
 }
 
-export interface Progress {
-  first: number;
-  last: number;
-  gain: number;
-  /** Null when the first value is zero. */
-  percent: number | null;
-}
-
-/** From the first point of the series to its last. */
-export function periodProgress(series: readonly Point[]): Progress | null {
-  const first = series[0]?.value;
-  const last = series.at(-1)?.value;
-  if (first === undefined || last === undefined) return null;
-  const gain = last - first;
-  return { first, last, gain, percent: first === 0 ? null : (gain / first) * 100 };
-}
+export { periodProgress, type Progress } from "@/utils/history-chart/progress";
 
 /** Scores read on the members page, by player id. */
 export interface LiveMembers {

@@ -7,6 +7,7 @@ const ENTRY_ORDER = [
   "optizzz-alliance-map",
   "optizzz-tdc-chain",
   "optizzz-history",
+  "optizzz-alliance-stats",
   "optizzz-alliance-sharing",
 ] as const;
 

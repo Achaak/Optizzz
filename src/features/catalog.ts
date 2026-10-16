@@ -129,8 +129,18 @@ export const featureCatalog = [
     description:
       "Courbes du TDC et des scores dans le temps, d'après les exports publics de chaque nuit, pour comparer avec votre alliance.",
     options: [
-      { id: "alliance", label: "Entrée « Historique » dans le menu d'alliance" },
+      { id: "alliance", label: "Entrée « Progression » dans le menu d'alliance (chaque membre)" },
       { id: "profile", label: "Encart « Progression » sur les profils" },
+    ],
+  },
+  {
+    id: "alliance-stats",
+    label: "Statistiques d'alliance",
+    description:
+      "Entrée « Statistiques » dans le menu d'alliance : les totaux de l'alliance maintenant et dans le temps, comparés à d'autres alliances.",
+    options: [
+      { id: "alliance", label: "Entrée « Statistiques » dans le menu d'alliance (l'alliance entière)" },
+      { id: "page", label: "Encart « Progression » sur les pages d'alliance" },
     ],
   },
   {

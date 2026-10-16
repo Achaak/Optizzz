@@ -52,7 +52,8 @@ const BUILDING_CELL = 8;
 /** Each member's live field, technology and building on alliance.php?Membres, by nickname (no trophies). */
 export function readMembersScores(doc: Document): Map<string, Partial<Scores>> {
   const members = new Map<string, Partial<Scores>>();
-  for (const row of doc.querySelectorAll<HTMLTableRowElement>("#tabMembresAlliance tr")) {
+  // The header row is skipped: the game's sort script puts links in it (« PSEUDO »).
+  for (const row of doc.querySelectorAll<HTMLTableRowElement>("#tabMembresAlliance tr:not(:has(th))")) {
     const pseudo = row.cells[PSEUDO_CELL]?.querySelector("a")?.textContent.trim();
     const [field, technology, building] = [FIELD_CELL, TECHNOLOGY_CELL, BUILDING_CELL].map(
       (cell) => row.cells[cell]?.textContent,

@@ -10,7 +10,7 @@ import { ProfileHistory } from "@/features/history/ProfileHistory";
 import { isEnabled, loadToggles, type Toggles } from "@/features/toggles";
 import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
 import "@/theme/theme.css";
-import "@/features/history/style.css";
+import "@/utils/history-chart/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
 const isHistoryPage = () => location.search === "?Membres" && location.hash === HISTORY_HASH;
@@ -34,6 +34,7 @@ async function mountAllianceView(ctx: ContentScriptContext, toggles: Toggles) {
         loggedInPseudo={readLoggedInPseudo(document)}
         liveScores={liveScores}
         liveTime={liveTime}
+        allianceView={isEnabled(toggles, "alliance-stats", "alliance")}
       />,
     );
 

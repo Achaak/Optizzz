@@ -498,6 +498,12 @@ html.optizzz-game-look {
   & #tabMembresAlliance {
     width: 100%;
     font-variant-numeric: tabular-nums;
+    /*
+     * On an alliance's page (classementAlliance.php) the table is itself a rounded box: `hidden` would make it the
+     * scroller of its sticky header, which would then sit 30px down the table, over the first player. `clip` keeps
+     * the corners without that.
+     */
+    overflow: clip;
 
     & :is(td, th) {
       border-bottom: 1px solid var(--look-line);

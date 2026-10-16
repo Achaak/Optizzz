@@ -80,6 +80,12 @@ h4 {
   display: flex;
 }
 
+.toolbar-end {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 button,
 input {
   font: inherit;
@@ -89,14 +95,17 @@ button {
   cursor: pointer;
 }
 
+/* One segmented control: the theme's own button (rounded, gradient) would make a row of separate pills. */
 .tabs button {
   background: var(--optizzz-surface-raised);
   border: 1px solid var(--optizzz-border);
+  border-radius: 0;
   padding: 2px 10px;
   margin-left: -1px;
 }
 
 .tabs button:first-child {
+  margin-left: 0;
   border-radius: var(--optizzz-radius) 0 0 var(--optizzz-radius);
 }
 
@@ -166,4 +175,35 @@ a {
 
 .down {
   color: var(--optizzz-danger);
+}
+
+/* Wide tables scroll inside the box on a phone instead of widening the page. */
+.scroll {
+  overflow-x: auto;
+}
+
+.view-switch {
+  margin: 4px 0 8px;
+}
+
+.view-switch a {
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border);
+  padding: 2px 10px;
+  margin-left: -1px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.view-switch a:first-child {
+  border-radius: var(--optizzz-radius) 0 0 var(--optizzz-radius);
+}
+
+.view-switch a:last-child {
+  border-radius: 0 var(--optizzz-radius) var(--optizzz-radius) 0;
+}
+
+.view-switch a.active {
+  background: var(--optizzz-border);
+  color: var(--optizzz-action-text);
 }
