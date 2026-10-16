@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadLevels, unknownLevelsHint, type HuntLevels } from "@/data/levels";
+import { placeProbes } from "@/data/probes";
+import type { Place } from "@/game/army/battle";
+import { keepProbes, PLACE_NAMES } from "@/game/probes";
 import { createEngine } from "./engine/client";
 import { summarize, type Objective, type Plan, type PlanInput } from "./engine/planner";
 import type { Extras } from "./engine/requests";
@@ -22,6 +25,8 @@ interface Props {
   ongoing: OngoingHunt[];
   /** When the page was read: the hunts' return times count from it. */
   readAt: Date;
+  /** Places that keep a probe (« Sondes »): as many ants stay home, put back there after the launch. */
+  probes: readonly Place[];
 }
 
 const RATIOS = [1, 2, 3, 4, 5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 10];
@@ -49,7 +54,7 @@ function objectiveOf(settings: Settings): Objective {
   }
 }
 
-export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
+export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: Props) {
   const host = new URL(origin).host;
   const engine = useMemo(() => createEngine(), []);
   const [settings, updateSettings] = useStoredSettings(host, readSettings, writeSettings);
@@ -88,14 +93,18 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
   const input = useMemo<PlanInput | null>(() => {
     if (!settings || !levels || !form || form === "error" || form === "none") return null;
     return {
-      army: armyFromKeys(huntableArmy(form.available, settings.reserve)),
+      army: keepProbes(
+        armyFromKeys(huntableArmy(form.available, settings.reserve)),
+        armyFromKeys(form.available),
+        probes.length,
+      ),
       field,
       fieldAtLaunch: currentField,
       slots: Math.max(0, levels.huntSpeed + 1 - ongoing.length),
       levels,
       objective: objectiveOf(settings),
     };
-  }, [settings, levels, form, field, currentField, ongoing.length]);
+  }, [settings, levels, form, field, currentField, ongoing.length, probes.length]);
 
   // Units away come back with the hunts: known with Compte+ only.
   const waiting = useMemo(() => {
@@ -178,6 +187,12 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
       },
     });
     const all = base.map((status, i) => (i >= from && i < to ? (result[i - from] ?? status) : status));
+    // The game does not say which places the hunters leave: the probes kept home are put back on their places.
+    if (probes.length > 0 && result.includes("launched")) {
+      await placeProbes(origin, probes).catch((error: unknown) => {
+        console.warn("[Optizzz] hunt launcher: probes not put back", error);
+      });
+    }
     setBusy(false);
     if (all.every((status) => status === "launched")) setTimeout(() => location.reload(), RELOAD_DELAY_MS);
     else if (all.includes("launched")) setFrozen(true);
@@ -349,6 +364,13 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt }: Props) {
               <span className="muted"> / {formatNumber(form.available[key] ?? 0)}</span>
             </label>
           ))}
+          {probes.length > 0 && unitKeys.length > 0 && (
+            <span className="note">
+              et {probes.length > 1 ? `${String(probes.length)} sondes` : "1 sonde"} (
+              {probes.map((place) => PLACE_NAMES[place].replace(/^(le|la) /, "")).join(", ")}), remises en place après
+              le lancement
+            </span>
+          )}
         </fieldset>
       </div>
 

@@ -12,7 +12,7 @@ const click = (input: HTMLInputElement | null) => {
 };
 
 describe("buildFeaturesSection", () => {
-  it("lists every feature and option, all on by default", () => {
+  it("lists every feature and option, all on by default but the options marked offByDefault", () => {
     const section = buildFeaturesSection(document, {}, vi.fn());
     expect(section.textContent).toContain("Chantiers en cours");
     expect(section.textContent).toContain("Lanceur de chasse");
@@ -39,6 +39,10 @@ describe("buildFeaturesSection", () => {
       "profile-production",
       "flood",
       "attacks-on-way",
+      "probes",
+      "probes.field",
+      "probes.nest",
+      "probes.lodge",
       "hunt-reports",
       "combat-simulator",
       "alliance-map",
@@ -57,7 +61,8 @@ describe("buildFeaturesSection", () => {
       "hunt-launcher",
       "safe-reload",
     ]);
-    expect(boxes.every((box) => box.checked && !box.disabled)).toBe(true);
+    expect(boxes.filter((box) => !box.checked).map((box) => box.dataset.toggle)).toEqual(["probes.field"]);
+    expect(boxes.every((box) => !box.disabled)).toBe(true);
   });
 
   it("greys out the options of a switched-off feature and keeps their own state", () => {

@@ -17,6 +17,13 @@ describe("isEnabled", () => {
     expect(isEnabled(toggles, "resource-forecast", "costs")).toBe(false);
   });
 
+  it("leaves an option marked offByDefault off until it is switched on", () => {
+    expect(isEnabled({}, "probes", "field")).toBe(false);
+    expect(isEnabled({}, "probes", "nest")).toBe(true);
+    expect(isEnabled({ "probes.field": true }, "probes", "field")).toBe(true);
+    expect(isEnabled({ probes: false, "probes.field": true }, "probes", "field")).toBe(false);
+  });
+
   it("switches one option off and keeps the others", () => {
     const toggles = { "resource-forecast.costs": false };
     expect(isEnabled(toggles, "resource-forecast", "costs")).toBe(false);
@@ -38,6 +45,13 @@ describe("toggle storage", () => {
     expect(await isFeatureEnabled("hunt-launcher")).toBe(false);
     await setToggle("hunt-launcher", undefined, true);
     expect(await isFeatureEnabled("hunt-launcher")).toBe(true);
+  });
+
+  it("keeps an option marked offByDefault only while it is on", async () => {
+    await setToggle("probes", "field", true);
+    expect(await loadToggles()).toEqual({ "probes.field": true });
+    await setToggle("probes", "field", false);
+    expect(await loadToggles()).toEqual({});
   });
 
   it("keeps both changes of two quick clicks", async () => {

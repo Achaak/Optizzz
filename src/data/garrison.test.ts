@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import { armyFromKeys } from "@/game/army/units";
 import armeeHtml from "@/features/combat-simulator/__fixtures__/armee.html?raw";
+import armeeMoveHtml from "./__fixtures__/armee-move.html?raw";
 import { loadGarrison, readGarrison, storeGarrison, type Garrison } from "@/data/garrison";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
@@ -16,6 +17,15 @@ describe("readGarrison", () => {
       },
       dome: 3,
       lodge: 1,
+      field: 4496,
+    });
+  });
+
+  it("reads the counts from the clickable spans the game writes since 2026-10-16", () => {
+    expect(readGarrison(parse(armeeMoveHtml))).toEqual({
+      armies: { field: armyFromKeys({ JSN: 1500, Tk: 40 }), nest: armyFromKeys({ JSN: 2 }), lodge: armyFromKeys({}) },
+      dome: 2,
+      lodge: 0,
       field: 4496,
     });
   });

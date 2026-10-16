@@ -1,9 +1,10 @@
 import { storage } from "wxt/utils/storage";
-import type { FeatureId } from "./catalog";
+import { featureCatalog, type FeatureId } from "./catalog";
 
 /**
- * Switches of « Fonctionnalités », keyed by feature id or `featureId.optionId`. Only `false` is ever
- * meaningful: a missing key means on. Global (not per server) and synced: it is the player's choice.
+ * Switches of « Fonctionnalités », keyed by feature id or `featureId.optionId`. Only a change from the default is
+ * kept: a missing key means on, or off for an option marked `offByDefault`. Global (not per server) and synced: it is
+ * the player's choice.
  */
 export type Toggles = Partial<Record<string, boolean>>;
 
@@ -11,10 +12,18 @@ export const TOGGLES_KEY = "sync:featureToggles";
 
 const toggleKey = (feature: FeatureId, option?: string) => (option ? `${feature}.${option}` : feature);
 
+const isOnByDefault = (feature: FeatureId, option?: string) =>
+  option === undefined ||
+  !featureCatalog
+    .find((entry) => entry.id === feature)
+    ?.options.some(
+      (candidate: { id: string; offByDefault?: true }) => candidate.id === option && candidate.offByDefault,
+    );
+
 /** An option is on only when its feature is on too. */
 export function isEnabled(toggles: Toggles, feature: FeatureId, option?: string): boolean {
   if (toggles[feature] === false) return false;
-  return option === undefined || toggles[toggleKey(feature, option)] !== false;
+  return option === undefined || (toggles[toggleKey(feature, option)] ?? isOnByDefault(feature, option));
 }
 
 export async function loadToggles(): Promise<Toggles> {
@@ -35,7 +44,7 @@ export function withToggle(
 ): Toggles {
   const key = toggleKey(feature, option);
   const others = Object.fromEntries(Object.entries(toggles).filter(([other]) => other !== key));
-  return enabled ? others : { ...others, [key]: false };
+  return enabled === isOnByDefault(feature, option) ? others : { ...others, [key]: enabled };
 }
 
 // Read-modify-write: two quick clicks must not both read the old state, or the second write drops the first.
