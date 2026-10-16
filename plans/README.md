@@ -10,14 +10,14 @@ honor its STOP conditions, and update your row when done.
 
 | Plan                                        | Title                                                                      | Priority | Effort | Depends on | Status |
 | ------------------------------------------- | -------------------------------------------------------------------------- | -------- | ------ | ---------- | ------ |
-| [001](001-escape-history-tooltip.md)        | Escape player and alliance names in the history chart tooltip              | P1       | S      | —          | TODO   |
-| [002](002-guard-forget-former-members.md)   | Never wipe the alliance's shared states on an empty or broken members read | P1       | S      | —          | TODO   |
-| [003](003-notifications-partial-failure.md) | A failing notification no longer makes the others repeat every minute      | P1       | S      | —          | TODO   |
-| [004](004-cross-tab-storage-lock.md)        | Serialize read-modify-write of stored data across the tabs of a server     | P1       | M      | 002        | TODO   |
-| [005](005-keep-flood-launches.md)           | Attacks sent through the flood plan are never lost from storage            | P1       | S-M    | 004        | TODO   |
-| [006](006-harden-release-workflow.md)       | Publish to the stores only from a tag that passed every CI check           | P1       | S      | —          | TODO   |
-| [007](007-bound-untrusted-input.md)         | Check and bound pasted shares and the sessionStorage launch queue          | P2       | S      | 005        | TODO   |
-| [008](008-privacy-policy-accuracy.md)       | Make the published privacy policy match what the extension does            | P2       | S      | —          | TODO   |
+| [001](001-escape-history-tooltip.md)        | Escape player and alliance names in the history chart tooltip              | P1       | S      | —          | DONE   |
+| [002](002-guard-forget-former-members.md)   | Never wipe the alliance's shared states on an empty or broken members read | P1       | S      | —          | DONE   |
+| [003](003-notifications-partial-failure.md) | A failing notification no longer makes the others repeat every minute      | P1       | S      | —          | DONE   |
+| [004](004-cross-tab-storage-lock.md)        | Serialize read-modify-write of stored data across the tabs of a server     | P1       | M      | 002        | DONE   |
+| [005](005-keep-flood-launches.md)           | Attacks sent through the flood plan are never lost from storage            | P1       | S-M    | 004        | DONE   |
+| [006](006-harden-release-workflow.md)       | Publish to the stores only from a tag that passed every CI check           | P1       | S      | —          | DONE   |
+| [007](007-bound-untrusted-input.md)         | Check and bound pasted shares and the sessionStorage launch queue          | P2       | S      | 005        | DONE   |
+| [008](008-privacy-policy-accuracy.md)       | Make the published privacy policy match what the extension does            | P2       | S      | —          | DONE   |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
