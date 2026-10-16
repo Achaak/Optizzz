@@ -4,7 +4,7 @@ import { loadSections } from "@/data/end-times";
 import { isEnabled, loadToggles, TOGGLES_KEY, type Toggles } from "../toggles";
 import { badge, type Badge, type ServerData } from "./badge";
 import { loadNotificationSettings } from "./notification-settings";
-import { dueNotifications, type SentNotifications } from "./notifications";
+import { deliverNotices, dueNotifications, type SentNotifications } from "./notifications";
 import { isPermissionMessage, NOTIFICATIONS_PERMISSION, openGrantPage } from "./permission";
 import { loadServers, STOCKS_KEY } from "./store";
 import { URGENCY_COLORS } from "@/utils/urgency";
@@ -43,16 +43,15 @@ async function sendNotifications(toggles: Toggles, servers: ServerData[], now: D
     Object.entries(stored).filter(([, entry]) => entry && now.getTime() - entry.at < SENT_KEPT),
   );
   const notices = dueNotifications({ servers, ends, settings, sent }, now);
-  for (const notice of notices) {
-    await browser.notifications.create(notice.id, {
+  const updated = await deliverNotices(notices, sent, now, (notice) =>
+    browser.notifications.create(notice.id, {
       type: "basic",
       iconUrl: browser.runtime.getURL("/icons/128.png"),
       title: "Optizzz",
       message: notice.message,
-    });
-    sent[notice.id] = { at: now.getTime(), url: notice.url };
-  }
-  await storage.setItem(SENT_KEY, sent);
+    }),
+  );
+  await storage.setItem(SENT_KEY, updated);
 }
 
 async function update(): Promise<void> {
