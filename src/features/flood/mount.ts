@@ -10,20 +10,41 @@ import { fillAttackForm, onAttackSent } from "./page";
 import { afterOnWay, type OnWay } from "@/data/on-way";
 import type { Launch } from "@/data/launches";
 
+const C = "optizzz-flood";
+
+/** Close to Optizzz's other boxes: red italic title, figures first, rules out of the way. */
 export const FLOOD_STYLE = `
-.optizzz-flood { margin: 8px auto; width: fit-content; max-width: 100%; box-sizing: border-box; overflow-x: auto;
-  padding: 6px 10px; text-align: left; background: var(--optizzz-surface); border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius); box-shadow: var(--optizzz-panel-shadow); }
-.optizzz-flood h3 { margin: 0 0 4px; font-family: var(--optizzz-title-font); }
-.optizzz-flood p { margin: 4px 0; }
-.optizzz-flood-warning { font-style: italic; font-size: 0.85em; }
-.optizzz-flood-protected { font-weight: bold; }
-.optizzz-flood table { border-collapse: collapse; font-size: 0.9em; }
-.optizzz-flood th, .optizzz-flood td { padding: 2px 6px; white-space: nowrap; }
-.optizzz-flood td.optizzz-flood-number { text-align: right; }
-.optizzz-flood tbody tr:nth-child(even) { background: var(--optizzz-surface-alt); }
-.optizzz-flood tr.optizzz-flood-filled { font-weight: bold; }
-.optizzz-flood-defense textarea { width: 100%; box-sizing: border-box; }`;
+.${C} { margin: 8px auto; width: fit-content; min-width: min(520px, 100%); max-width: 100%; box-sizing: border-box;
+  padding: 8px 12px 10px; text-align: left; background: var(--optizzz-surface);
+  border: 1px solid var(--optizzz-border); border-radius: var(--optizzz-radius); box-shadow: var(--optizzz-panel-shadow); }
+.${C} h3 { margin: 0 0 6px; font-family: var(--optizzz-title-font); color: var(--optizzz-title); font-size: 17px;
+  font-style: italic; font-weight: bold; }
+.${C} h4 { margin: 10px 0 4px; font-size: 1em; }
+.${C} p { margin: 4px 0; }
+.${C}-callout { padding: 5px 9px; border: 1px solid var(--optizzz-warning); border-radius: 6px;
+  background: var(--optizzz-warning-bg); font-weight: bold; }
+.${C}-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.${C}-fact { display: flex; flex-direction: column; padding: 4px 10px; background: var(--optizzz-surface-tint);
+  border: 1px solid var(--optizzz-border-soft); border-radius: 6px; }
+.${C}-fact dt { font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
+.${C}-fact dd { margin: 0; font-weight: bold; white-space: nowrap; }
+.${C}-fact small { font-weight: normal; color: var(--optizzz-text-muted); }
+.${C}-note, .${C}-rules { font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
+.${C}-note:empty { display: none; }
+.${C}-scroll { overflow-x: auto; margin-top: 6px; }
+.${C} table { border-collapse: collapse; }
+.${C} th, .${C} td { white-space: nowrap; }
+.${C} .${C}-number { text-align: right; }
+.${C} tbody tr:nth-child(even) { background: var(--optizzz-surface-alt); }
+.${C} tfoot td { font-weight: bold; border-top: 1px solid var(--optizzz-border); }
+.${C} tr.${C}-filled { font-weight: bold; box-shadow: inset 3px 0 0 var(--optizzz-title); }
+.${C} tr.${C}-filled button { font-weight: bold; }
+.${C}-defense { margin-top: 4px; padding-top: 2px; border-top: 1px solid var(--optizzz-border-soft); }
+.${C}-defense-state { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.${C}-defense textarea { display: block; width: 100%; margin: 4px 0; }
+.${C}-defense-note { color: var(--optizzz-danger); font-weight: bold; }
+.${C}-rules { margin-top: 8px; }
+.${C}-rules p { margin: 4px 0 0; }`;
 
 export interface FloodContext {
   me: { field: number; weapons: number; shield: number };
@@ -57,17 +78,27 @@ const total = (army: Army) => army.reduce((sum, count) => sum + count, 0);
 
 const sameArmy = (a: Army, b: Army) => UNITS.every((_, i) => (a[i] ?? 0) === (b[i] ?? 0));
 
+const plural = (count: number, word: string) => `${formatNumber(count)} ${word}${count > 1 ? "s" : ""}`;
+
+function element<K extends keyof HTMLElementTagNameMap>(doc: Document, tag: K, className = "", text = "") {
+  const node = doc.createElement(tag);
+  if (className) node.className = className;
+  if (text) node.textContent = text;
+  return node;
+}
+
+function floodBox(doc: Document) {
+  const box = element(doc, "div", C);
+  box.append(element(doc, "h3", "", "Plan de flood"));
+  return box;
+}
+
 /** Under the game's attack form, when no plan can be made: says why. */
 export function mountFloodNotice(doc: Document, text: string) {
   const form = doc.getElementById("formulaireChoixArmee");
   if (!form) return;
-  const box = doc.createElement("div");
-  box.className = "optizzz-flood";
-  const title = doc.createElement("h3");
-  title.textContent = "Plan de flood";
-  const message = doc.createElement("p");
-  message.textContent = text;
-  box.append(title, message);
+  const box = floodBox(doc);
+  box.append(element(doc, "p", `${C}-callout`, text));
   form.after(box);
 }
 
@@ -82,67 +113,84 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
   let countLodge = context.countLodge;
   let defense = context.defense;
   let planned: PlannedAttack[] = [];
+  let filled: PlannedAttack | null = null;
   let targetLeft = context.target.field;
 
-  const box = doc.createElement("div");
-  box.className = "optizzz-flood";
-  const title = doc.createElement("h3");
-  title.textContent = "Plan de flood";
-  const warning = doc.createElement("p");
-  warning.className = "optizzz-flood-warning";
-  warning.textContent =
-    "Règles non vérifiées sur un vrai flood : 20 % de son TDC par attaque, 1 cm² par fourmi au plus, portée 50–300 % revérifiée à chaque arrivée. Vitesse d'attaque + 1 attaques en même temps (comme le simulateur de flood du jeu). Les attaques et chasses des autres joueurs peuvent changer les TDC avant l'arrivée.";
-  const protectedMe = doc.createElement("p");
-  protectedMe.className = "optizzz-flood-protected";
-  protectedMe.textContent = "Vous êtes sous protection débutant : attaquer y met fin.";
+  const box = floodBox(doc);
+  const protectedMe = element(
+    doc,
+    "p",
+    `${C}-callout ${C}-protected`,
+    "Vous êtes sous protection débutant : attaquer y met fin.",
+  );
   protectedMe.hidden = !context.protectedMe;
-  const summary = doc.createElement("p");
-  const lodgeLabel = doc.createElement("label");
-  const lodge = doc.createElement("input");
+
+  // Figures first: both fields, the free slots, the trip.
+  const facts = element(doc, "dl", `${C}-facts`);
+  const fact = (label: string) => {
+    const item = element(doc, "div", `${C}-fact`);
+    const value = element(doc, "dd");
+    item.append(element(doc, "dt", "", label), value);
+    facts.append(item);
+    return value;
+  };
+  const targetFact = fact(context.target.pseudo);
+  const meFact = fact("Vous");
+  const slotsFact = fact("Attaques possibles");
+  const tripFact = fact("Trajet");
+  const note = element(doc, "p", `${C}-note`);
+
+  const lodgeLabel = element(doc, "label");
+  const lodge = element(doc, "input", `${C}-lodge`);
   lodge.type = "checkbox";
-  lodge.className = "optizzz-flood-lodge";
   lodge.checked = countLodge;
   lodgeLabel.append(lodge, " Compter les troupes de la Loge");
-  const message = doc.createElement("p");
-  const table = doc.createElement("table");
-  const head = doc.createElement("thead");
-  const headRow = doc.createElement("tr");
-  for (const label of ["N°", "Armée", "Prise", "Son TDC après", "Mon TDC après", ""]) {
-    const th = doc.createElement("th");
-    th.textContent = label;
-    headRow.append(th);
-  }
-  head.append(headRow);
-  const body = doc.createElement("tbody");
-  table.append(head, body);
-  const totalLine = doc.createElement("p");
+  const message = element(doc, "p", `${C}-callout ${C}-message`);
 
-  const defenseBox = doc.createElement("div");
-  defenseBox.className = "optizzz-flood-defense";
-  const defenseState = doc.createElement("p");
-  const area = doc.createElement("textarea");
+  const scroll = element(doc, "div", `${C}-scroll`);
+  const table = element(doc, "table");
+  scroll.append(table);
+  const head = element(doc, "thead");
+  const headRow = element(doc, "tr");
+  head.append(headRow);
+  const body = element(doc, "tbody");
+  const foot = element(doc, "tfoot");
+  table.append(head, body, foot);
+
+  const defenseBox = element(doc, "div", `${C}-defense`);
+  const defenseState = element(doc, "div", `${C}-defense-state`);
+  const defenseText = element(doc, "span");
+  const clear = element(doc, "button", `${C}-defense-clear`, "Effacer");
+  clear.type = "button";
+  clear.title = "Oublier cette défense : elle compte de nouveau comme nulle.";
+  defenseState.append(defenseText, clear);
+  const area = element(doc, "textarea");
   area.rows = 2;
   area.placeholder = "Coller un rapport de combat ou « 300 Jeunes Soldates Naines, 2 Tanks » : son armée sur le TDC";
-  const use = doc.createElement("button");
+  const use = element(doc, "button", `${C}-defense-use`, "Utiliser cette défense");
   use.type = "button";
-  use.className = "optizzz-flood-defense-use";
-  use.textContent = "Utiliser cette défense";
   use.disabled = true;
   area.addEventListener("input", () => {
     use.disabled = area.value.trim() === "";
+    defenseNote.hidden = true;
   });
-  const clear = doc.createElement("button");
-  clear.type = "button";
-  clear.textContent = "Effacer";
-  const defenseNote = doc.createElement("p");
-  defenseNote.className = "optizzz-flood-defense-note";
+  const defenseNote = element(doc, "p", `${C}-defense-note`);
   defenseNote.hidden = true;
-  defenseBox.append(defenseState, area, use, " ", clear, defenseNote);
+  defenseBox.append(element(doc, "h4", "", "Sa défense sur le TDC"), defenseState, area, use, defenseNote);
 
-  const cell = (row: HTMLTableRowElement, text: string, number = false) => {
-    const td = doc.createElement("td");
-    td.textContent = text;
-    if (number) td.className = "optizzz-flood-number";
+  const rules = element(doc, "details", `${C}-rules`);
+  rules.append(
+    element(doc, "summary", "", "Règles utilisées (non vérifiées sur un vrai flood)"),
+    element(
+      doc,
+      "p",
+      "",
+      "20 % de son TDC par attaque, 1 cm² par fourmi au plus, portée 50–300 % revérifiée à chaque arrivée. Vitesse d'attaque + 1 attaques en même temps (comme le simulateur de flood du jeu). Les attaques et chasses des autres joueurs peuvent changer les TDC avant l'arrivée.",
+    ),
+  );
+
+  const cell = (row: HTMLTableRowElement, text: string, number = false, tag: "td" | "th" = "td") => {
+    const td = element(doc, tag, number ? `${C}-number` : "", text);
     row.append(td);
     return td;
   };
@@ -159,23 +207,35 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     const available = keepProbes(armyIn(places), armyIn(PLACES), context.probes);
     const { travelSeconds } = context;
 
-    summary.textContent = [
-      `${context.target.pseudo} : ${formatNumber(targetLeft)} cm², vous ${formatNumber(myField)}`,
-      after.onTarget > 0 ? ` (après les ${String(after.onTarget)} attaques en route)` : "",
-      ` · ${String(slots)} attaque${slots > 1 ? "s" : ""} possible${slots > 1 ? "s" : ""}`,
+    targetFact.textContent = `${formatNumber(targetLeft)} cm²`;
+    meFact.textContent = `${formatNumber(myField)} cm²`;
+    slotsFact.textContent = String(slots);
+    if (travelSeconds === null) {
+      tripFact.textContent = "inconnu";
+      tripFact.title = "L'un de vous deux est absent de l'export public.";
+    } else {
+      const arrival = element(
+        doc,
+        "small",
+        "",
+        ` · arrivée ≈ ${formatEndTimeShort(new Date(now.getTime() + travelSeconds * 1000), now)}`,
+      );
+      tripFact.replaceChildren(formatDuration(travelSeconds * 1000), arrival);
+    }
+    note.textContent = [
+      after.onTarget > 0 ? `TDC après les ${plural(after.onTarget, "attaque")} en route.` : "",
       unknownOnWay > 0
-        ? ` (${String(unknownOnWay)} attaque${unknownOnWay > 1 ? "s" : ""} lancée${unknownOnWay > 1 ? "s" : ""} sans ce plan : leur prise n'est pas comptée)`
+        ? `${plural(unknownOnWay, "attaque")} lancée${unknownOnWay > 1 ? "s" : ""} sans ce plan : leur prise n'est pas comptée.`
         : "",
-      context.probes > 0
-        ? ` · ${String(context.probes)} sonde${context.probes > 1 ? "s" : ""} gardée${context.probes > 1 ? "s" : ""}`
-        : "",
-      travelSeconds === null
-        ? " · trajet inconnu (absent de l'export)"
-        : ` · trajet ${formatDuration(travelSeconds * 1000)}, arrivée ≈ ${formatEndTimeShort(new Date(now.getTime() + travelSeconds * 1000), now)}`,
-    ].join("");
-    defenseState.textContent = defense
-      ? `Sa défense sur le TDC (relevée il y a ${formatDuration(now.getTime() - defense.readAt.getTime())}) : ${armyText(defense.army) || "aucune"}`
-      : "Sa défense sur le TDC : inconnue, comptée comme nulle.";
+      context.probes > 0 ? `${plural(context.probes, "sonde")} gardée${context.probes > 1 ? "s" : ""} au nid.` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    defenseText.textContent = defense
+      ? `${armyText(defense.army) || "aucune"} (relevée il y a ${formatDuration(now.getTime() - defense.readAt.getTime())})`
+      : "Inconnue, comptée comme nulle.";
+    clear.hidden = !defense;
 
     const plan = planAttacks({
       attackerField: myField,
@@ -196,6 +256,7 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
       levels: { weapons: context.me.weapons, shield: context.me.shield },
     });
     planned = plan.attacks;
+    if (filled && !planned.some((attack) => filled && sameArmy(attack.army, filled.army))) filled = null;
 
     const lodgeOnly = total(available) === 0 && total(context.available.lodge) > 0;
     message.textContent = !inRange(myField, targetLeft)
@@ -213,33 +274,55 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
                 : "";
     message.hidden = message.textContent === "";
 
+    // Losses only matter against a defense: a column then, nothing otherwise.
+    const withLosses = planned.some((attack) => attack.lost);
+    headRow.replaceChildren();
+    for (const [label, number] of [
+      ["N°", false],
+      ["Armée", false],
+      ...(withLosses ? [["Pertes", false] as const] : []),
+      ["Prise", true],
+      ["Son TDC après", true],
+      ["Mon TDC après", true],
+      ["", false],
+    ] as const) {
+      cell(headRow, label, number, "th");
+    }
+
     body.replaceChildren(
       ...planned.map((attack, index) => {
-        const row = doc.createElement("tr");
+        const row = element(doc, "tr");
+        const isFilled = filled !== null && sameArmy(attack.army, filled.army);
+        row.classList.toggle(`${C}-filled`, isFilled);
         cell(row, String(index + 1));
-        cell(row, armyText(attack.army)).title = attack.lost
-          ? `Pertes prévues : ${armyText(attack.lost) || "aucune"}`
-          : "";
+        cell(row, armyText(attack.army));
+        if (withLosses) cell(row, attack.lost ? armyText(attack.lost) || "aucune" : "");
         cell(row, formatNumber(attack.take), true);
         cell(row, formatNumber(attack.targetAfter), true);
         cell(row, formatNumber(attack.attackerAfter), true);
-        const fill = doc.createElement("button");
+        const fill = element(doc, "button", `${C}-fill`, isFilled ? "✓ Rempli" : "Remplir");
         fill.type = "button";
-        fill.textContent = "Remplir";
         fill.title = "Met ces unités dans le formulaire du jeu (TDC visé) : vous validez vous-même.";
         fill.addEventListener("click", () => {
           fillAttackForm(doc, attack.army);
-          for (const other of body.querySelectorAll("tr")) other.classList.remove("optizzz-flood-filled");
-          row.classList.add("optizzz-flood-filled");
+          filled = attack;
+          render();
         });
         cell(row, "").append(fill);
         return row;
       }),
     );
-    table.hidden = planned.length === 0;
-    const sum = planned.reduce((acc, attack) => acc + attack.take, 0);
-    totalLine.textContent = `Total : ${formatNumber(sum)} cm² en ${String(planned.length)} attaque${planned.length > 1 ? "s" : ""}.`;
-    totalLine.hidden = planned.length === 0;
+    const last = planned.at(-1);
+    const footRow = element(doc, "tr");
+    if (last) {
+      cell(footRow, "Total").colSpan = withLosses ? 3 : 2;
+      cell(footRow, `${formatNumber(planned.reduce((acc, attack) => acc + attack.take, 0))} cm²`, true);
+      cell(footRow, formatNumber(last.targetAfter), true);
+      cell(footRow, formatNumber(last.attackerAfter), true);
+      cell(footRow, plural(planned.length, "attaque"));
+    }
+    foot.replaceChildren(footRow);
+    scroll.hidden = planned.length === 0;
   };
 
   lodge.addEventListener("change", () => {
@@ -272,8 +355,8 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     if (ants === 0 || context.travelSeconds === null) return;
     // Whatever the place aimed at, the hunting field is fought first and taken from (game help « Attaque & Défense »).
     // An attack filled from the plan takes what was planned (after a defense, its survivors only).
-    const filled = planned.find((attack) => sameArmy(attack.army, army));
-    const take = filled ? filled.take : Math.min(ants, maxTake(targetLeft));
+    const sent = planned.find((attack) => sameArmy(attack.army, army));
+    const take = sent ? sent.take : Math.min(ants, maxTake(targetLeft));
     context.onSend({
       targetId: context.target.id,
       target: context.target.pseudo,
@@ -283,7 +366,7 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     });
   });
 
-  box.append(title, protectedMe, warning, summary, lodgeLabel, message, table, totalLine, defenseBox);
+  box.append(protectedMe, facts, note, lodgeLabel, message, scroll, defenseBox, rules);
   form.after(box);
   render();
 }

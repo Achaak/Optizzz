@@ -48,7 +48,8 @@ describe("mountFloodPlanner", () => {
       ["2", "320 JSN", "320", "1 280", "1 720", "Remplir"],
       ["3", "256 JSN", "256", "1 024", "1 976", "Remplir"],
     ]);
-    expect(text()).toContain("Total : 976 cm² en 3 attaques");
+    const foot = [...doc.querySelectorAll(".optizzz-flood tfoot td")].map((cell) => cell.textContent);
+    expect(foot).toEqual(["Total", "976 cm²", "1 024", "1 976", "3 attaques"]);
     expect(text()).toContain("arrivée ≈ 10 h 30");
   });
 
@@ -57,6 +58,16 @@ describe("mountFloodPlanner", () => {
     const buttons = [...doc.querySelectorAll<HTMLButtonElement>(".optizzz-flood tbody button")];
     buttons[1]?.click();
     expect([unit("unite1"), unit("unite5")]).toEqual(["320", "0"]);
+    // Not by its colour alone: the button says it.
+    const marked = [...doc.querySelectorAll(".optizzz-flood tbody tr")].map((row) => [
+      row.classList.contains("optizzz-flood-filled"),
+      row.querySelector("button")?.textContent,
+    ]);
+    expect(marked).toEqual([
+      [false, "Remplir"],
+      [true, "✓ Rempli"],
+      [false, "Remplir"],
+    ]);
   });
 
   it("keeps the probes home, the cheapest ants first, unless ants stay home anyway", () => {
@@ -110,6 +121,16 @@ describe("mountFloodPlanner", () => {
     expect(onDefenseChange).toHaveBeenCalledWith(armyFromKeys({ JSN: 100 }));
     // Strongest first: 50 S + 551 JSN deal 750 + 1 653 > 3 × 800 hp; 649 JSN left: 320, then 256.
     expect(rows().map((cells) => cells[1])).toEqual(["551 JSN, 50 S", "320 JSN", "256 JSN"]);
+    const heads = [...doc.querySelectorAll(".optizzz-flood thead th")].map((th) => th.textContent);
+    expect(heads[2]).toBe("Pertes");
+    expect(rows()[1]?.[2]).toBe("");
+  });
+
+  it("shows « Effacer » only for a known defense", () => {
+    const clear = (options: Partial<FloodContext>) =>
+      setup(options).doc.querySelector<HTMLButtonElement>(".optizzz-flood-defense-clear")?.hidden;
+    expect(clear({})).toBe(true);
+    expect(clear({ defense: { army: armyFromKeys({ JSN: 10 }), readAt: now } })).toBe(false);
   });
 
   it("says when my army cannot beat the defense", () => {
@@ -159,7 +180,8 @@ describe("mountFloodPlanner", () => {
     const onSend = vi.fn<(launch: unknown) => void>();
     const { doc } = setup({ onSend, defense: { army: armyFromKeys({ JSN: 10 }), readAt: now } });
     doc.querySelector<HTMLButtonElement>(".optizzz-flood tbody button")?.click();
-    const planned = doc.querySelector(".optizzz-flood tbody tr td:nth-child(3)")?.textContent;
+    const column = [...doc.querySelectorAll(".optizzz-flood thead th")].findIndex((th) => th.textContent === "Prise");
+    const planned = doc.querySelectorAll(".optizzz-flood tbody tr td")[column]?.textContent;
     const form = doc.getElementById("formulaireChoixArmee") as HTMLFormElement;
     form.addEventListener("submit", (event) => {
       event.preventDefault();
