@@ -12,6 +12,7 @@ import { historyMenu } from "./history/menu";
 import { huntReports } from "./hunt-reports";
 import { layingPlanner } from "./laying-planner";
 import { membersColumns } from "./members-columns";
+import { profileProduction } from "./profile-production";
 import { resourceForecast } from "./resource-forecast";
 import { safeReload } from "./safe-reload";
 import { settingsMenu } from "./settings";
@@ -38,6 +39,7 @@ export const features: Feature[] = [
   convoyWorkers,
   targets,
   membersColumns,
+  profileProduction,
   floodPlanner,
   combatSimulator,
   gameLevels,
