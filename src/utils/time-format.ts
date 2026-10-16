@@ -17,6 +17,26 @@ export function formatDuration(ms: number): string {
   return `${String(Math.floor(hours / 24))} j ${String(hours % 24)} h`;
 }
 
+/** A time left as the game writes it: « 1J 2H 3m 4s », « 47m 21s ». */
+export function formatGameDuration(ms: number): string {
+  let seconds = Math.max(0, Math.round(ms / 1000));
+  const parts: [number, string][] = [];
+  for (const [size, unit] of [
+    [86_400, "J"],
+    [3_600, "H"],
+    [60, "m"],
+  ] as const) {
+    parts.push([Math.floor(seconds / size), unit]);
+    seconds %= size;
+  }
+  parts.push([seconds, "s"]);
+  const first = parts.findIndex(([value]) => value > 0);
+  return parts
+    .slice(first === -1 ? parts.length - 1 : first)
+    .map(([value, unit]) => `${String(value)}${unit}`)
+    .join(" ");
+}
+
 const WEEKDAYS = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
 
 /** The game runs on Paris time: every time shown is Paris time, whatever the player's computer says. */

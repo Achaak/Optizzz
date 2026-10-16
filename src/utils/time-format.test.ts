@@ -4,6 +4,7 @@ import {
   formatDuration,
   formatEndTime,
   formatEndTimeShort,
+  formatGameDuration,
   formatPastTime,
   fromParisParts,
 } from "./time-format";
@@ -92,5 +93,14 @@ describe("formatPastTime", () => {
     expect(formatPastTime(new Date(2026, 9, 8, 12, 51), now)).toBe("aujourd'hui 12 h 51");
     expect(formatPastTime(new Date(2026, 9, 7, 12, 51), now)).toBe("hier 12 h 51");
     expect(formatPastTime(new Date(2026, 9, 5, 12, 51), now)).toBe("05/10 12 h 51");
+  });
+});
+
+describe("formatGameDuration", () => {
+  it("writes a time left as the game does", () => {
+    expect(formatGameDuration((47 * 60 + 21) * 1000)).toBe("47m 21s");
+    expect(formatGameDuration((26 * 3600 + 3 * 60 + 4) * 1000)).toBe("1J 2H 3m 4s");
+    expect(formatGameDuration(3_600_000)).toBe("1H 0m 0s");
+    expect(formatGameDuration(0)).toBe("0s");
   });
 });

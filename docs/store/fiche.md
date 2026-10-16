@@ -33,6 +33,7 @@ Chasse et combat
 • Page Membres : le temps d'une attaque ou d'un convoi vers chaque membre, et son rôle dans la chaîne de TDC en couleur, deux colonnes triables.
 • Production sur les profils : ce que le TDC d'un joueur récolte par jour au plus, taxe de colonie déduite s'il est soumis.
 • Plan de flood : sur le formulaire d'attaque, les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
+• Attaques et convois en cours : une liste lisible avec décompte, heure d'arrivée, lieu et troupes (Compte+), et un bouton pour copier chacun en une ligne.
 
 Alliance
 • Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens et, au choix, leur rôle dans la chaîne de TDC.
@@ -103,6 +104,7 @@ Hunting and combat
 • Targets in range: on the Enemies page, the players you can attack, nearest first, with travel time, possible gain, status, pacts and wars.
 • Members page: the attack or convoy time to each member, and their role in the hunting field chain in colour, two sortable columns.
 • Flood plan: on the attack form, the attacks that take the most hunting field with your army; a button fills the form, you confirm it yourself.
+• Attacks and convoys on their way: a clear list with a countdown, arrival time, place and troops (Compte+), and a button to copy each one as a single line.
 
 Alliance
 • Alliance map: members on the map, linked to their nearest neighbours, with travel times both ways and, if you wish, their role in the hunting field chain.

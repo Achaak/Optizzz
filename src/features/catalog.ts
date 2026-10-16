@@ -97,6 +97,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "attacks-on-way",
+    label: "Attaques en cours",
+    description:
+      "Sur Armée : les attaques en cours en liste, avec le décompte, l'heure d'arrivée, le lieu et les troupes, et un bouton pour copier chacune.",
+    options: [],
+  },
+  {
     id: "hunt-reports",
     label: "Rapports de chasse",
     description:

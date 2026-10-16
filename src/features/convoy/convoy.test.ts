@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import commerceHtml from "./__fixtures__/commerce.html?raw";
-import { planConvoy, readConvoysOnWay, recipients, workersAway, workersNeeded } from "./convoy";
+import { convoyMessage, planConvoy, readConvoysOnWay, recipients, workersAway, workersNeeded } from "./convoy";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const now = new Date(2026, 9, 7, 20, 31, 45);
@@ -18,6 +18,13 @@ describe("readConvoysOnWay", () => {
     ).toEqual([
       { recipient: "Messor", food: 1, materials: 0, arrivesAt: new Date(2026, 9, 7, 21, 54, 7) },
       { recipient: "Tetramorium", food: 0, materials: 12_500, arrivesAt: new Date(2026, 9, 8, 22, 34, 49) },
+    ]);
+  });
+
+  it("reads when the workers are back, which the game writes with Compte+", () => {
+    expect(readConvoysOnWay(parse(commerceHtml), now).map((convoy) => convoy.back)).toEqual([
+      "Retour le 7 oct. à 21h54",
+      null,
     ]);
   });
 
@@ -101,5 +108,27 @@ describe("workersAway", () => {
     expect(workersAway([convoy("A", 600, 600, at(10)), convoy("B", 5, 0, at(0))], 4, now)).toEqual([
       { recipient: "A", workers: 100, backAt: at(10) },
     ]);
+  });
+});
+
+describe("convoyMessage", () => {
+  const convoy = {
+    recipient: "Tetramorium",
+    food: 0,
+    materials: 350_000,
+    arrivesAt: new Date(now.getTime() + (47 * 60 + 21) * 1000),
+    back: "Retour le 9 oct. à 21h19",
+  };
+
+  it("writes the convoy as one line, the time left counted from now", () => {
+    expect(convoyMessage(convoy, now)).toBe(
+      "Vous allez livrer 0 nourriture et 350 000 matériaux à Tetramorium dans 47m 21s · arrivée aujourd'hui 21 h 19 - Retour le 9 oct. à 21h19",
+    );
+  });
+
+  it("leaves out the return without Compte+, and the time left once arrived", () => {
+    expect(convoyMessage({ ...convoy, back: null }, new Date(now.getTime() + 3_600_000))).toBe(
+      "Vous allez livrer 0 nourriture et 350 000 matériaux à Tetramorium · arrivée aujourd'hui 21 h 19",
+    );
   });
 });

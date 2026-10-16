@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCounts, unitKeyOf, unitLabel } from "./units";
+import { parseCounts, readTroops, unitKeyOf, unitLabel } from "./units";
 
 describe("parseCounts", () => {
   it("reads counts written with thousands separators, names as written", () => {
@@ -25,5 +25,15 @@ describe("unitLabel", () => {
     expect(unitLabel("Tu")).toBe("T");
     expect(unitLabel("TuE")).toBe("TE");
     expect(unitLabel("JSN")).toBe("JSN");
+  });
+});
+
+describe("readTroops", () => {
+  it("reads the troops the game writes, its « Naines d’Elites » too", () => {
+    expect(readTroops("1 488 Jeunes Soldates Naines, 485 Soldates Naines, 29 Naines d’Elites.")).toEqual({
+      JSN: 1488,
+      SN: 485,
+      NE: 29,
+    });
   });
 });

@@ -1,5 +1,5 @@
 // Reading game pages for the hunt launcher. Selectors: docs/research/fourmizzz-pages.md.
-import { UNITS } from "@/game/army/units";
+import { readTroops, UNITS } from "@/game/army/units";
 import { parseGameInteger } from "@/utils/game-number";
 
 export interface UnitPlaces {
@@ -55,21 +55,6 @@ export interface OngoingHunt {
   returnsAt: Date;
   /** Troops away, by unit key: shown with Compte+ only. */
   troops: Record<string, number> | null;
-}
-
-const normalize = (text: string) => text.replace(/['’]/g, "’").trim().toLowerCase();
-
-/** « 1 975 Jeunes Soldates Naines, 124 Soldates Naines. » → { JSN: 1975, SN: 124 } */
-export function readTroops(text: string): Record<string, number> {
-  const troops: Record<string, number> = {};
-  for (const part of text.replace(/\.\s*$/, "").split(",")) {
-    const match = /^\s*([\d\s]+?)\s+(\D+)$/.exec(part);
-    if (!match?.[1] || !match[2]) continue;
-    const name = normalize(match[2]);
-    const unit = UNITS.find((candidate) => normalize(candidate.plural) === name || normalize(candidate.name) === name);
-    if (unit) troops[unit.key] = (troops[unit.key] ?? 0) + parseGameInteger(match[1]);
-  }
-  return troops;
 }
 
 function remainingSeconds(doc: Document, id: string): number | null {
