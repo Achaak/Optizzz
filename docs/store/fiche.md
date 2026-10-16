@@ -179,7 +179,7 @@ Pour regénérer les PNG après avoir modifié un SVG : les convertir avec `shar
 Ajouter des outils d'aide au jeu Fourmizzz dans les pages du jeu : heures de fin, prévisions de ressources, ponte, convois, chasse, combat et outils d'alliance.
 
 **Justification — `storage`**
-Enregistrer localement, par serveur de jeu : les paramètres (outils activés, réglages), ce que le joueur a vu dans ses propres pages (niveaux, stocks, revenus, armée, heures de fin, attaques lancées), les défenses et les rôles d'alliance qu'il colle lui-même, les derniers exports publics des joueurs et des alliances, et les scores des exports de chaque nuit pour l'historique de progression, pour ne pas les retélécharger. Rien n'est envoyé ailleurs.
+Enregistrer localement, par serveur de jeu : les paramètres (outils activés, réglages), ce que le joueur a vu dans ses propres pages (niveaux, stocks, revenus, armée, heures de fin, attaques lancées), les défenses et les rôles d'alliance qu'il colle lui-même, les derniers exports publics des joueurs et des alliances, et les scores des exports de chaque nuit pour l'historique de progression, pour ne pas les retélécharger. Les interrupteurs des outils et les choix de notifications sont dans `storage.sync`, synchronisé par le navigateur lui-même si le joueur l'a activé. Rien n'est envoyé ailleurs.
 
 **Justification — `unlimitedStorage`**
 Les exports publics mis en cache (dont l'historique des scores, une version par nuit) dépassent la limite de 10 Mo de `storage.local` dès qu'on joue sur plusieurs serveurs (l'export des joueurs d'un gros serveur pèse 4 Mo). Ces données restent dans le navigateur ; rien n'est envoyé ailleurs.
@@ -191,7 +191,7 @@ Recalculer chaque minute le badge de l'icône de l'extension (temps avant une fa
 Demandée seulement quand le joueur active une notification dans les paramètres (famine ou entrepôt plein dans moins d'1 h, chantier terminé, chasse rentrée). Les notifications sont calculées à partir des données déjà enregistrées localement ; rien n'est envoyé ailleurs.
 
 **Justification — autorisation d'accès à l'hôte `*://*.fourmizzz.fr/*`**
-L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les pages du jeu, lit les pages du jeu et l'API publique des exports du serveur, et envoie les formulaires du jeu (lancer une chasse, appliquer une répartition) uniquement quand le joueur clique.
+L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les pages du jeu, lit les pages du jeu et l'API publique des exports du serveur, et envoie les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les sondes) uniquement quand le joueur clique.
 
 **Code distant** : Non, je n'utilise pas de code distant.
 
@@ -205,7 +205,7 @@ L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les p
 
   > Sources jointes (optizzz-X.Y.Z-sources.zip). Build : `pnpm install --frozen-lockfile && pnpm build:firefox` (Node 24, pnpm 12), résultat dans `.output/firefox-mv3/`.
   >
-  > Aucune donnée n'est transmise à un tiers : toutes les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu ne sont envoyés que sur clic du joueur.
+  > Aucune donnée n'est transmise à un tiers : toutes les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les sondes) ne sont envoyés que sur clic du joueur.
   >
   > Les avertissements restants viennent de bibliothèques, pas de notre code (qui interdit innerHTML via ESLint) : React DOM (prise en charge de `dangerouslySetInnerHTML`, non utilisé), Apache ECharts (contenu HTML des infobulles et export SVG, alimentés par du texte échappé) et zod (test `Function("")` de disponibilité d'eval, désactivé par `z.config({ jitless: true })`).
 
