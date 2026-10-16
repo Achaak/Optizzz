@@ -2,6 +2,7 @@
 // Each view's script hides the game's content while any of them is open, so they never undo each other.
 import { MAP_HASH } from "@/features/alliance-map/menu";
 import { SHARING_HASH } from "@/features/alliance-sharing/menu";
+import { STATS_HASH } from "@/features/alliance-stats/menu";
 import { HISTORY_HASH } from "@/features/history/menu";
 import { CHAIN_HASH } from "@/features/tdc-chain/menu";
 import { isEnabled, type Toggles } from "@/features/toggles";
@@ -10,6 +11,7 @@ const VIEWS = [
   { hash: MAP_HASH, on: (toggles: Toggles) => isEnabled(toggles, "alliance-map") },
   { hash: CHAIN_HASH, on: (toggles: Toggles) => isEnabled(toggles, "tdc-chain") },
   { hash: HISTORY_HASH, on: (toggles: Toggles) => isEnabled(toggles, "history", "alliance") },
+  { hash: STATS_HASH, on: (toggles: Toggles) => isEnabled(toggles, "alliance-stats", "alliance") },
   { hash: SHARING_HASH, on: (toggles: Toggles) => isEnabled(toggles, "alliance-sharing") },
 ];
 

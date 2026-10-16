@@ -1,15 +1,17 @@
 import { useCallback, useMemo, useState } from "react";
 import { formatExportVersion } from "@/utils/export-date";
 import type { Scores } from "./api";
-import type { Curve } from "./chart-option";
-import { Controls, LoadingNote, METRICS } from "./controls";
-import { formatGain, formatPercent } from "./format";
-import { HistoryChart } from "./HistoryChart";
+import type { Curve } from "@/utils/history-chart/chart-option";
+import { Controls, LoadingNote } from "@/utils/history-chart/controls";
+import { METRICS } from "./metrics";
+import { formatGain, formatPercent } from "@/utils/history-chart/format";
+import { HistoryChart } from "@/utils/history-chart/HistoryChart";
 import { averageSeries, periodProgress, playerSeries, type Progress } from "./series";
 import { readHistorySettings, writeHistorySettings } from "./settings";
 import { useHistory } from "./useHistory";
 import { formatNumber } from "@/utils/number-format";
 import { useStoredSettings } from "@/utils/useStoredSettings";
+import { ViewSwitch } from "@/utils/history-chart/ViewSwitch";
 
 interface Props {
   origin: string;
@@ -17,6 +19,8 @@ interface Props {
   /** Read on the members table, by nickname. */
   liveScores: ReadonlyMap<string, Partial<Scores>>;
   liveTime: Date;
+  /** Whether the alliance's view (« Statistiques ») is on, for the switch between the views. */
+  allianceView: boolean;
 }
 
 type SortKey = "pseudo" | "first" | "last" | "gain" | "percent";
@@ -30,7 +34,7 @@ interface Row {
 const sortValue = (row: Row, key: SortKey): number | string =>
   key === "pseudo" ? row.pseudo.toLowerCase() : (row.progress?.[key] ?? -Infinity);
 
-export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime }: Props) {
+export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, allianceView }: Props) {
   const host = new URL(origin).host;
   const [settings, updateSettings] = useStoredSettings(host, readHistorySettings, writeHistorySettings);
   const [sort, setSort] = useState<{ key: SortKey; descending: boolean }>({ key: "gain", descending: true });
@@ -116,13 +120,15 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime }
 
   return (
     <div className="history">
-      <h2>Historique de progression {me.alliance}</h2>
+      <h2>Progression des membres de {me.alliance}</h2>
+      <ViewSwitch current="members" otherOn={allianceView} />
       <p className="meta">
         Un point par jour (l'export de minuit), puis un point creux « en direct » lu sur cette page
         {metric === "trophy" ? " (le Combat n'y figure pas : il s'arrête au dernier export)" : ""}.
         {firstShown ? ` Depuis le ${formatExportVersion(firstShown.version)}.` : ""}
       </p>
       <Controls
+        metrics={METRICS}
         metric={metric}
         days={settings.days}
         onMetric={(next) => updateSettings((current) => ({ ...current, metric: next }))}

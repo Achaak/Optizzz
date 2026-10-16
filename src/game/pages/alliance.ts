@@ -7,7 +7,8 @@ const HUNTING_FIELD_CELL = 5;
 /** Each member's hunting field ("TDC", cm²), read live on alliance.php?Membres, by nickname. */
 export function readMembersHuntingField(doc: Document): Map<string, number> {
   const fields = new Map<string, number>();
-  for (const row of doc.querySelectorAll<HTMLTableRowElement>("#tabMembresAlliance tr")) {
+  // The header row is skipped: the game's sort script puts links in it (« PSEUDO »).
+  for (const row of doc.querySelectorAll<HTMLTableRowElement>("#tabMembresAlliance tr:not(:has(th))")) {
     const pseudo = row.cells[PSEUDO_CELL]?.querySelector("a")?.textContent.trim();
     const field = row.cells[HUNTING_FIELD_CELL]?.textContent;
     if (pseudo && field) fields.set(pseudo, parseGameInteger(field));

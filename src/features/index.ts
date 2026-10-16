@@ -2,6 +2,7 @@ import { alerts } from "./alerts";
 import { collect } from "./collect";
 import { allianceMapMenu } from "./alliance-map/menu";
 import { allianceSharingMenu } from "./alliance-sharing/menu";
+import { allianceStatsMenu } from "./alliance-stats/menu";
 import { combatSimulator } from "./combat-simulator";
 import { convoyPlanner, convoyWorkers } from "./convoy";
 import { endTimes } from "./end-times";
@@ -28,6 +29,7 @@ export const features: Feature[] = [
   allianceMapMenu,
   tdcChainMenu,
   historyMenu,
+  allianceStatsMenu,
   allianceSharingMenu,
   workQueue,
   endTimes,

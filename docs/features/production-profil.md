@@ -14,6 +14,7 @@ Sur le profil d'un joueur (`Membre.php`), estimer ce qu'il produit par jour à p
 - **Fourmilière soumise** : la taxe de colonie (20 % + 1 % par niveau de l'Étable à pucerons du maître, arrondie à l'inférieur comme le jeu) est déduite, et la production avant taxe rappelée dans le détail.
   - Taux connu : mon propre profil (taux de `Ressources.php`, mémorisé par les Prévisions) ou une de mes colonies (mon Étable à pucerons, `game-levels`) → « **≈ 38 794 576** par jour (taxe de 33 % déduite, 57 902 352 avant) ».
   - Sinon le niveau d'étable du maître n'est pas lisible : la taxe minimale de 20 % donne un plafond → « **≤ 46 321 882** par jour (taxe d'au moins 20 % déduite, 57 902 352 avant) ».
+- **Taxes de colonies** (2026-10-16) : quand le joueur a des colonies (dernier export, `masterPlayerId`), une ligne « Taxes de colonies : » suit, avec ce qu'elles lui versent sur leur production max : « **≥ 580 752** par jour (1 colonie, sur son TDC du dernier export) ». Taux exact sur mon profil (mon Étable à pucerons) et pour ma part sur le profil de mon maître (taux de `Ressources.php`), sinon 20 % au moins.
 - L'infobulle de la ligne rappelle le calcul. La feature se coupe dans « Fonctionnalités ».
 
 ## Limites

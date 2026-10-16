@@ -34,6 +34,12 @@ describe("readMembersScores", () => {
     expect(scores.get("Alpha")).toEqual({ field: 8691, technology: 19, building: 47 });
     expect(scores.get("Gros")?.field).toBe(1234567);
   });
+
+  it("skips the header row, even with the sort links the game adds to it", () => {
+    const doc = load("../../features/alliance-map/__fixtures__/members.html");
+    for (const th of doc.querySelectorAll("#tabMembresAlliance th")) th.innerHTML = `<a href="#">${th.textContent}</a>`;
+    expect(readMembersScores(doc).has("Pseudo")).toBe(false);
+  });
 });
 
 describe("readProfileState", () => {
