@@ -27,6 +27,8 @@ Remplacer les lignes « - Champignonnière 9 se termine dans : … » du jeu par
 - **Pied** : « Aucune construction en cours » / « Aucune recherche en cours » quand la file est vide ; « File pleine : prochaine place libre aujourd'hui 14 h 23 » quand toutes les cellules d'action sont vides alors que la file n'est pas vide. Rien quand une place est libre.
 - La lecture de la file sert aussi à `resource-forecast` (délai quand la file est pleine).
 
+- Sur téléphone (mise en page mobile du jeu, moins de 41em) : la colonne « Temps restant » est masquée (« Fin » donne l'heure) et la barre raccourcie, pour que le tableau tienne avec « Annuler » (2026-10-16).
+
 ## Hors v1
 
 Gain apporté par le niveau, durée mémorisée au lancement.

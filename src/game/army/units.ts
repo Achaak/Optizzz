@@ -15,6 +15,8 @@ export interface Unit {
   defense: number;
   /** Food needed to lay one. */
   food: number;
+  /** Seconds to lay one before the player's bonuses: the game's `tcaste` on Reine.php. */
+  layingSeconds: number;
   /** Weight in the promotion formula. */
   weight: number;
   /** Key of the unit it becomes when promoted. */
@@ -31,6 +33,7 @@ export const UNITS: readonly Unit[] = [
     attack: 3,
     defense: 2,
     food: 16,
+    layingSeconds: 300,
     weight: 85,
     promotesTo: "SN",
   },
@@ -43,6 +46,7 @@ export const UNITS: readonly Unit[] = [
     attack: 5,
     defense: 4,
     food: 20,
+    layingSeconds: 450,
     weight: 125,
     promotesTo: "NE",
   },
@@ -55,6 +59,7 @@ export const UNITS: readonly Unit[] = [
     attack: 7,
     defense: 6,
     food: 26,
+    layingSeconds: 570,
     weight: 170,
     promotesTo: null,
   },
@@ -67,6 +72,7 @@ export const UNITS: readonly Unit[] = [
     attack: 10,
     defense: 9,
     food: 30,
+    layingSeconds: 740,
     weight: 227,
     promotesTo: "S",
   },
@@ -79,6 +85,7 @@ export const UNITS: readonly Unit[] = [
     attack: 15,
     defense: 14,
     food: 36,
+    layingSeconds: 1000,
     weight: 312,
     promotesTo: "SE",
   },
@@ -91,6 +98,7 @@ export const UNITS: readonly Unit[] = [
     attack: 1,
     defense: 25,
     food: 70,
+    layingSeconds: 1410,
     weight: 434,
     promotesTo: null,
   },
@@ -103,6 +111,7 @@ export const UNITS: readonly Unit[] = [
     attack: 1,
     defense: 35,
     food: 100,
+    layingSeconds: 1560,
     weight: 592,
     promotesTo: null,
   },
@@ -115,6 +124,7 @@ export const UNITS: readonly Unit[] = [
     attack: 30,
     defense: 15,
     food: 30,
+    layingSeconds: 1440,
     weight: 295,
     promotesTo: "AE",
   },
@@ -127,6 +137,7 @@ export const UNITS: readonly Unit[] = [
     attack: 35,
     defense: 18,
     food: 34,
+    layingSeconds: 1520,
     weight: 349,
     promotesTo: null,
   },
@@ -139,6 +150,7 @@ export const UNITS: readonly Unit[] = [
     attack: 24,
     defense: 23,
     food: 44,
+    layingSeconds: 1450,
     weight: 460,
     promotesTo: null,
   },
@@ -151,6 +163,7 @@ export const UNITS: readonly Unit[] = [
     attack: 55,
     defense: 1,
     food: 100,
+    layingSeconds: 1860,
     weight: 642,
     promotesTo: null,
   },
@@ -163,6 +176,7 @@ export const UNITS: readonly Unit[] = [
     attack: 80,
     defense: 1,
     food: 150,
+    layingSeconds: 2150,
     weight: 990,
     promotesTo: null,
   },
@@ -175,6 +189,7 @@ export const UNITS: readonly Unit[] = [
     attack: 50,
     defense: 50,
     food: 80,
+    layingSeconds: 2740,
     weight: 909,
     promotesTo: "TuE",
   },
@@ -187,10 +202,14 @@ export const UNITS: readonly Unit[] = [
     attack: 55,
     defense: 55,
     food: 90,
+    layingSeconds: 2740,
     weight: 1000,
     promotesTo: null,
   },
 ];
+
+/** Seconds to lay one worker before the player's bonuses. */
+export const WORKER_LAYING_SECONDS = 60;
 
 /** Unit counts in `UNITS` order. */
 export type Army = readonly number[];

@@ -17,6 +17,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 11. **Partage d'alliance** : chacun copie son état (niveaux, chantiers, ouvrières, TDC, armée) pour un salon Discord privé, les autres l'importent dans un tableau de l'alliance ; rien ne sort de Fourmizzz par l'extension. Voir `partage-alliance.md`.
 12. **Statistiques d'alliance** : les totaux de l'alliance maintenant et dans le temps, comparés à d'autres alliances, et un encart sur la page de chaque alliance ; voir `statistiques-alliance.md`.
 13. **Carte du serveur** : situer des joueurs et des alliances (dont pactes et guerres) sur tout le serveur, avec distances et trajets ; voir `carte-serveur.md`.
+14. **Conseils** (Construction, Laboratoire) : Armes et Bouclier Thoracique comparés à la ponte d'unités, attendre Architecture ou la Salle d'analyse ; voir `conseils-recherche.md`.
 
 ## Décisions transverses
 

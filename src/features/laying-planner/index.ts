@@ -2,7 +2,8 @@ import { readSection } from "@/game/pages/end-times";
 import type { Feature } from "../feature";
 import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
 import { readStock } from "@/game/pages/resources";
-import { queuedWorkers, readLayingRows, readLayingSpeed } from "./laying";
+import { readLayingSpeed } from "@/game/pages/queen";
+import { queuedWorkers, readLayingRows } from "./laying";
 import { LAYING_STYLE, mountLayingNotice, mountLayingPlan, settingsStore } from "./mount";
 import { readLayingSettings, writeLayingSettings } from "./settings";
 

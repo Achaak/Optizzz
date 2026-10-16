@@ -4,6 +4,7 @@ import { storeSection } from "@/data/end-times";
 import { readKeptConvoys, storeConvoys } from "@/data/convoys";
 import type { Feature } from "../feature";
 import { storeLevels } from "@/data/levels";
+import { readLaying, storeLaying } from "@/data/laying";
 import { storeCapacities, storeIncome } from "@/data/income";
 import { readCapacities, readIncome } from "@/game/pages/resources";
 import { isEnabled } from "../toggles";
@@ -43,13 +44,19 @@ export const collect: Feature = {
       if (convoys) await storeConvoys(origin, convoys, now);
     }
 
-    // The army by place: combat simulator, flood plan and its « Flood max » column.
-    if (path === "/armee.php" && (on("combat-simulator") || on("flood"))) {
+    // The army by place: combat simulator, flood plan and its « Flood max » column, research advice.
+    if (path === "/armee.php" && (on("combat-simulator") || on("flood") || on("research-advice"))) {
       const garrison = readGarrison(document);
       if (garrison) {
         await storeGarrison(origin, garrison, now);
         await storeLevels(origin, { dome: garrison.dome, lodge: garrison.lodge });
       }
+    }
+
+    // The laying speed and the units the player can lay: research advice on laboratoire.php.
+    if (path === "/reine.php" && on("research-advice")) {
+      const laying = readLaying(document);
+      if (laying) await storeLaying(origin, laying, now);
     }
   },
 };

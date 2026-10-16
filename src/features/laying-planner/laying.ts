@@ -1,7 +1,7 @@
 // Laying on Reine.php: when an order ends, when it can be paid, what it costs a day. Structure of the page:
 // docs/research/fourmizzz-pages.md (« Reine.php »); upkeep: docs/research/ressources-et-entretien.md.
 import type { Place } from "@/game/army/battle";
-import { UNITS } from "@/game/army/units";
+import { UNITS, WORKER_LAYING_SECONDS } from "@/game/army/units";
 import { dailyBalance, timeToAfford, type Affordability, type ColonyState } from "@/game/forecast";
 import { parseGameDuration } from "@/game/pages/work-queue";
 import { parseGameInteger } from "@/utils/game-number";
@@ -137,33 +137,11 @@ const HOUR = 3_600_000;
 /** The longest order the game's slider offers: a week of laying. */
 export const MAX_LAYING_MS = 7 * 24 * HOUR;
 
-/** Base laying time of one unit in seconds, by row suffix: the game's `tcaste` on Reine.php, 60 for workers. */
-const BASE_SECONDS: Record<string, number> = {
-  "": 60,
-  "1": 300,
-  "2": 450,
-  "3": 570,
-  "4": 740,
-  "5": 1000,
-  "6": 1410,
-  "7": 1440,
-  "8": 1520,
-  "9": 1450,
-  "10": 1860,
-  "11": 2740,
-  "12": 2740,
-  "13": 2150,
-  "14": 1560,
-};
-
-/** The player's laying speed (bonuses included), as the page's script applies it: `temps_ponte_base*0.1094…`. */
-export function readLayingSpeed(doc: Document): number | null {
-  for (const script of doc.querySelectorAll("script:not([src])")) {
-    const match = /temps_ponte_base\s*\*\s*(\d+(?:\.\d+)?)/.exec(script.textContent);
-    if (match) return Number(match[1]);
-  }
-  return null;
-}
+/** Base laying time of one unit in seconds, by row suffix ("" for workers, "1" for `unite1`…). */
+const BASE_SECONDS: Record<string, number> = Object.fromEntries<number>([
+  ["", WORKER_LAYING_SECONDS],
+  ...UNITS.map((unit): [string, number] => [String(unit.field), unit.layingSeconds]),
+]);
 
 /** What one unit costs. */
 export interface UnitCost {

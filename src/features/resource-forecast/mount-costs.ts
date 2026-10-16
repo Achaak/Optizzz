@@ -1,5 +1,6 @@
 // The forecast line added to each row of construction.php and laboratoire.php, under its description.
 import { formatNumber } from "@/utils/number-format";
+import { placeInRow } from "@/utils/row-extras";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import type { WorkQueue } from "@/game/pages/work-queue";
 import { forecastFor, type ColonyState, type Forecast, type Resource } from "@/game/forecast";
@@ -36,10 +37,9 @@ export function renderCostForecasts(
     if (!parts[0]) continue;
 
     const line = doc.createElement("div");
-    line.className = LINE_CLASS;
     line.title = "Optizzz : estimation d'après les récoltes, la champignonnière et l'armée";
     line.textContent = parts.join(" · ");
-    description.append(line);
+    placeInRow(description, LINE_CLASS, line);
   }
 }
 
