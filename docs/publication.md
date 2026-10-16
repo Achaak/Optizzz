@@ -4,7 +4,7 @@
 
 1. Mettre à jour `version` dans `package.json` (source unique de la version), commiter.
 2. Créer et pousser le tag : `git tag v1.2.3 && git push origin v1.2.3`.
-3. Le workflow `.github/workflows/release.yml` vérifie que le tag correspond à la version, construit les zips, les soumet aux deux stores (`wxt submit`) et crée la release GitHub avec les zips.
+3. Le workflow `.github/workflows/release.yml` relance d'abord toutes les vérifications de la CI, puis vérifie que le tag correspond à la version, construit les zips, les soumet aux deux stores (`wxt submit`) et crée la release GitHub avec les zips.
 
 ## Première publication (à la main, une seule fois)
 
