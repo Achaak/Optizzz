@@ -142,6 +142,18 @@ describe("forgetting", () => {
   });
 });
 
+describe("writes started together", () => {
+  it("keep both an import and a manual value", async () => {
+    await Promise.all([
+      importStates(ORIGIN, "ABC", [bob("2026-10-05T10:00:00Z", 11)]),
+      setManualValue(ORIGIN, "ABC", "Ann", "research.attackSpeed", 5, at("2026-10-07T10:00:00Z")),
+    ]);
+    const { members, manual } = await loadSharedStates(ORIGIN, "ABC");
+    expect(members.Bob).toBeDefined();
+    expect(manual.Ann?.["research.attackSpeed"]?.value).toBe(5);
+  });
+});
+
 describe("my last share", () => {
   it("is remembered to show what changed in the next one", async () => {
     const mine = { ...bob("2026-10-05T10:00:00Z", 11), pseudo: "Me" };

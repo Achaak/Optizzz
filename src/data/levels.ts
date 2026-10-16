@@ -1,6 +1,7 @@
 // Research and building levels other features need, remembered per server as the player browses.
 import { storage } from "wxt/utils/storage";
 import { fetchGamePage } from "@/utils/game-page";
+import { withStorageLock } from "@/utils/storage-lock";
 
 export interface StoredLevels {
   weapons?: number;
@@ -55,12 +56,14 @@ export async function loadStoredLevels(origin: string): Promise<StoredLevels> {
 }
 
 /** Keeps `levels`; with the `page` they were all read on, and when, so that they can age. */
-export async function storeLevels(origin: string, levels: StoredLevels, page?: LevelsPage, readAt = new Date()) {
-  const stored = (await storage.getItem<StoredLevels>(storageKey(origin))) ?? {};
-  await storage.setItem(storageKey(origin), { ...stored, ...levels });
-  if (!page || Object.keys(levels).length === 0) return;
-  const dates = (await storage.getItem<Partial<Record<LevelsPage, number>>>(readAtKey(origin))) ?? {};
-  await storage.setItem(readAtKey(origin), { ...dates, [page]: readAt.getTime() });
+export function storeLevels(origin: string, levels: StoredLevels, page?: LevelsPage, readAt = new Date()) {
+  return withStorageLock(storageKey(origin), async () => {
+    const stored = (await storage.getItem<StoredLevels>(storageKey(origin))) ?? {};
+    await storage.setItem(storageKey(origin), { ...stored, ...levels });
+    if (!page || Object.keys(levels).length === 0) return;
+    const dates = (await storage.getItem<Partial<Record<LevelsPage, number>>>(readAtKey(origin))) ?? {};
+    await storage.setItem(readAtKey(origin), { ...dates, [page]: readAt.getTime() });
+  });
 }
 
 export interface HuntLevels {
