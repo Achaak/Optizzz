@@ -10,7 +10,7 @@ Aider une alliance à s'organiser : voir où sont les membres et qui est proche 
 
 - **Accès** : entrée « Carte » ajoutée au menu d'alliance, après « Membres ». Lien `alliance.php?Membres#carte` partageable. La vue remplace le tableau des membres tant que le hash est `#carte`.
 - **Données** : positions, grade, vacances, colonisation depuis l'API des exports (date affichée à l'heure de Paris : « positions du 07/10 à 0 h 00 »). TDC lu en direct sur la page Membres. Membres = joueurs de mon alliance dans l'export ; le filtre est isolé pour accepter d'autres tags plus tard.
-- **Graphe** : nuage de points x/y à axes de même échelle : la zone de tracé est carrée (sa hauteur suit la largeur disponible, 640 px au plus), les bornes tombent sur des graduations rondes, et un axe ne descend pas sous 0 (les coordonnées du jeu sont positives) sauf d'un cran pour décoller un joueur de l'axe. Trait entre A et B si l'un est dans les **k plus proches** de l'autre (k = 3 par défaut, réglable). Pseudos toujours affichés. Vacances grisées, colonisés préfixés par ⛓ ; ils comptent comme voisins.
+- **Graphe** : nuage de points x/y à axes de même échelle : la zone de tracé est carrée (sa hauteur suit la largeur disponible, 640 px au plus), les bornes tombent sur des graduations rondes, et un axe ne descend pas sous 0 (les coordonnées du jeu sont positives) sauf d'un cran pour décoller un joueur de l'axe. Trait entre A et B si l'un est dans les **k plus proches** de l'autre (k = 3 par défaut, réglable). Pseudos toujours affichés, sans se chevaucher : chacun prend la première place libre autour de son point (à droite, à gauche, dessus, dessous, en biais ; `src/utils/map-chart/labels.ts`, partagé avec la Carte du serveur), calculée à la vue entière, donc encore libre en zoomant. Vacances grisées, colonisés préfixés par ⛓ ; ils comptent comme voisins.
 - **Rôles de la chaîne** (quand « Chaîne de TDC » est allumée) : case « Couleurs des rôles de la chaîne », cochée par défaut. Chaque membre prend la couleur et la taille de bulle de son rôle, réglées dans la Chaîne (`chaine-tdc.md`) ; mêmes rôles que la Chaîne, proposés d'après le TDC tant qu'ils n'y sont pas choisis ; vacances et bannis hors chaîne. Le joueur sélectionné est alors cerclé et un peu plus gros (ses voisins gardent leurs traits en évidence), une légende liste les rôles présents et le survol donne le rôle. Les changements faits dans la Chaîne arrivent sans recharger la page. Décochée : l'affichage habituel.
 - **Zoom** : Ctrl + molette autour du curseur (la molette seule fait défiler la page), glisser pour se déplacer, pincer sur trackpad ou mobile, bouton « Réinitialiser le zoom ». Double-clic sur un joueur : zoom sur lui et ses voisins. Points et textes gardent leur taille.
 - **Interactions** : survol = pseudo, coordonnées, grade, TDC, distance et trajet depuis le joueur sélectionné. Clic = sélection (toi par défaut). Aucune action de jeu.
@@ -28,17 +28,17 @@ Alliés et ennemis sur la carte, actions de jeu, export image.
 
 ## Code
 
-| Fichier                                          | Rôle                                                            |
-| ------------------------------------------------ | --------------------------------------------------------------- |
-| `src/features/alliance-map/menu.ts`              | Entrée de menu (script léger, toutes les pages)                 |
-| `src/entrypoints/alliance-map.content/index.tsx` | Script dédié à `alliance.php` : monte la vue dans un Shadow DOM |
-| `src/data/exports.ts`                            | Export des joueurs + cache par version (partagé)                |
-| `src/game/pages/alliance.ts`                     | Lecture de la page Membres et de l'en-tête (partagé)            |
-| `neighbors.ts`                                   | k plus proches, liens (distance : `src/game/travel.ts`)         |
-| `neighbor-table.ts`                              | Niveaux connus/estimés, trajets dans les deux sens              |
-| `shared-levels.ts`                               | Vitesse d'attaque partagée (« Partage »), pour Carte et Chaîne  |
-| `settings.ts`, `src/utils/export-date.ts`        | Réglages mémorisés, date de l'export                            |
-| `chart-option.ts`, `MapChart.tsx`                | Option ECharts, zoom, événements                                |
-| `AllianceMap.tsx`, `NeighborTable.tsx`           | Vue React                                                       |
+| Fichier                                          | Rôle                                                                                                                                   |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/features/alliance-map/menu.ts`              | Entrée de menu (script léger, toutes les pages)                                                                                        |
+| `src/entrypoints/alliance-map.content/index.tsx` | Script dédié à `alliance.php` : monte la vue dans un Shadow DOM                                                                        |
+| `src/data/exports.ts`                            | Export des joueurs + cache par version (partagé)                                                                                       |
+| `src/game/pages/alliance.ts`                     | Lecture de la page Membres et de l'en-tête (partagé)                                                                                   |
+| `neighbors.ts`                                   | k plus proches, liens (distance : `src/game/travel.ts`)                                                                                |
+| `neighbor-table.ts`                              | Niveaux connus/estimés, trajets dans les deux sens                                                                                     |
+| `shared-levels.ts`                               | Vitesse d'attaque partagée (« Partage »), pour Carte et Chaîne                                                                         |
+| `settings.ts`, `src/utils/export-date.ts`        | Réglages mémorisés, date de l'export                                                                                                   |
+| `chart-option.ts`, `MapChart.tsx`                | Option ECharts, événements (axes, zone carrée, zoom et placement des noms : `src/utils/map-chart/`, partagés avec la Carte du serveur) |
+| `AllianceMap.tsx`, `NeighborTable.tsx`           | Vue React                                                                                                                              |
 
-Tests vitest aux interfaces : neighbors, `src/game/travel.ts`, pages (fixtures), api (fetch simulé + fakeBrowser), neighbor-table, dates, bornes et zone carrée du graphe (`chart-option`), vues d'alliance affichées selon les interrupteurs (`src/utils/alliance-views.ts`). La vue elle-même se vérifie dans le jeu.
+Tests vitest aux interfaces : neighbors, `src/game/travel.ts`, pages (fixtures), api (fetch simulé + fakeBrowser), neighbor-table, dates, bornes et zone carrée du graphe (`src/utils/map-chart/axes.ts`), vues d'alliance affichées selon les interrupteurs (`src/utils/alliance-views.ts`). La vue elle-même se vérifie dans le jeu.

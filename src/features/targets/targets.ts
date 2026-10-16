@@ -2,6 +2,9 @@
 import { inRange, maxTake } from "@/game/attack";
 import { distance, travelTime } from "@/game/travel";
 import type { Alliance, Player } from "@/data/exports";
+import { diplomacyWith, sameTag, type Diplomacy } from "@/game/diplomacy";
+
+export type { Diplomacy } from "@/game/diplomacy";
 
 /** State of an anthill, as the « Etat » column of ennemie.php writes it. */
 export type AnthillState = "free" | "colonized" | "holiday" | "banned" | "protected";
@@ -46,8 +49,6 @@ export function readEnemyTable(doc: Document): EnemyRow[] {
   });
 }
 
-export type Diplomacy = { kind: "pact"; name: string; description: string } | { kind: "war" };
-
 export interface Target {
   id: number;
   pseudo: string;
@@ -80,16 +81,6 @@ export interface TargetsInput {
   alliances: Alliance[];
   /** Rows of the game's table, live. */
   live: EnemyRow[];
-}
-
-const sameTag = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
-
-function diplomacyWith(mine: Alliance | undefined, theirs: Alliance | undefined): Diplomacy | null {
-  if (!mine || !theirs || sameTag(mine.tag, theirs.tag)) return null;
-  const pact = mine.diplomacy.pacts.find((p) => sameTag(p.tag, theirs.tag));
-  if (pact) return { kind: "pact", name: pact.name.trim(), description: pact.description.trim() };
-  const declares = (from: Alliance, to: Alliance) => from.diplomacy.wars.some((tag) => sameTag(tag, to.tag));
-  return declares(mine, theirs) || declares(theirs, mine) ? { kind: "war" } : null;
 }
 
 function exportState(player: Player, byId: Map<number, Player>): Pick<EnemyRow, "state" | "master"> {

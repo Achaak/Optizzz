@@ -24,17 +24,17 @@ Savoir avant d'attaquer (ou en se préparant à défendre) qui gagne, ce que cha
 
 ## Code
 
-| Fichier                                                      | Rôle                                                   |
-| ------------------------------------------------------------ | ------------------------------------------------------ |
-| `src/game/army/rounds.ts`                                    | Échange tour par tour, partagé avec la chasse          |
-| `src/game/army/battle.ts` (+ test)                           | Combat entre joueurs, lieux, attaque nécessaire, gains |
-| `src/game/army/units.ts` (+ test)                            | Défense des unités, lecture des effectifs écrits       |
-| `src/game/attack.ts` (+ test)                                | Portée, prise de 20 %, créneaux d'attaque              |
-| `src/data/garrison.ts` (+ test)                              | Armée par lieu sur `Armee.php`, mémoire par serveur    |
-| `src/features/combat-simulator/form.ts` (+ test)             | Pré-remplissage, rapport collé, entrée du moteur       |
-| `src/features/combat-simulator/CombatSimulator.tsx` (+ test) | La page (test de montage seulement)                    |
-| `src/features/combat-simulator/index.ts`, `open.ts`          | Bouton de la barre du haut, adresse de la page         |
-| `src/features/combat-simulator/dialog.ts` (+ test)           | Fenêtre par-dessus le jeu (iframe)                     |
-| `src/utils/menu-bar.ts` (+ test)                             | Boutons d'Optizzz dans la barre du haut                |
-| `src/entrypoints/combat-simulator/`, `background.ts`         | Page de l'extension, script d'arrière-plan             |
-| `src/features/settings/tools-section.ts`                     | Onglet « Outils »                                      |
+| Fichier                                                                        | Rôle                                                   |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| `src/game/army/rounds.ts`                                                      | Échange tour par tour, partagé avec la chasse          |
+| `src/game/army/battle.ts` (+ test)                                             | Combat entre joueurs, lieux, attaque nécessaire, gains |
+| `src/game/army/units.ts` (+ test)                                              | Défense des unités, lecture des effectifs écrits       |
+| `src/game/attack.ts` (+ test)                                                  | Portée, prise de 20 %, créneaux d'attaque              |
+| `src/data/garrison.ts` (+ test)                                                | Armée par lieu sur `Armee.php`, mémoire par serveur    |
+| `src/features/combat-simulator/form.ts` (+ test)                               | Pré-remplissage, rapport collé, entrée du moteur       |
+| `src/features/combat-simulator/CombatSimulator.tsx` (+ test)                   | La page (test de montage seulement)                    |
+| `src/features/combat-simulator/index.ts`, `open.ts`                            | Bouton de la barre du haut, adresse de la page         |
+| `src/features/combat-simulator/dialog.ts`, `src/utils/page-dialog.ts` (+ test) | Fenêtre par-dessus le jeu (iframe)                     |
+| `src/utils/menu-bar.ts` (+ test)                                               | Boutons d'Optizzz dans la barre du haut                |
+| `src/entrypoints/combat-simulator/`, `background.ts`                           | Page de l'extension, script d'arrière-plan             |
+| `src/features/settings/tools-section.ts`                                       | Onglet « Outils »                                      |

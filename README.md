@@ -22,6 +22,7 @@ Chaque outil se désactive dans les paramètres (roue dentée dans la barre du j
 - **Lanceur de chasse** : combien chasser et avec quoi, puis lancer en un clic.
 - **Rechargement sans risque** : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.
 - **Carte de l'alliance** : les membres reliés à leurs plus proches voisins, avec les temps de trajet. Les positions viennent de l'[API publique des exports](https://s5.fourmizzz.fr/developer.php).
+- **Carte du serveur** : situer des joueurs et des alliances (tes pactes, tes guerres) sur tout le serveur, avec distances et trajets.
 
 Optizzz retouche aussi l'apparence du jeu, sans changer ses couleurs ni ses images : plus lisible, et adapté au téléphone, à la tablette et aux grands écrans.
 

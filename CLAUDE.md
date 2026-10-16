@@ -27,13 +27,13 @@ pnpm format         # Prettier (format:check en lecture seule)
 - Une feature lourde (React, ECharts…) a son propre content script dans `src/entrypoints/<feature>.content/`, limité par `matches` aux pages concernées (voir `docs/adr/0001-stack-ui-carte.md`). Les UI sont montées dans un Shadow DOM (`createShadowRootUi`).
 - Stack UI : React 19, Apache ECharts (import modulaire `echarts/core`), zod pour valider les données externes, `wxt/utils/storage` pour mémoriser (clés préfixées par le host du serveur). Préférer une brique éprouvée à du code écrit à la main.
 - La logique pure (parsing de pages, calculs) se sépare du DOM pour être testée avec vitest. Ce que plusieurs features partagent ne vit pas dans l'une d'elles :
-  - `src/game/` : règles du jeu (`army/` : unités, proies, combat ; `attack.ts` : prise, portée, créneaux ; `flood.ts`, `travel.ts`, `forecast.ts` : récoltes, famine, entrepôts) ;
+  - `src/game/` : règles du jeu (`army/` : unités, proies, combat ; `attack.ts` : prise, portée, créneaux ; `flood.ts`, `travel.ts`, `forecast.ts` : récoltes, famine, entrepôts ; `diplomacy.ts` : pactes et guerres) ;
   - `src/game/pages/` : lecteurs purs des pages du jeu (en-tête et Ressources, chantiers, profils et Membres, listes de fins) ;
   - `src/data/` : données mémorisées par serveur et relues en arrière-plan (export public, revenus, niveaux, armée, fins, attaques en route) ;
   - `src/theme/` : variables CSS du thème (`theme.css`) et palette des graphiques ; aucune couleur en dur dans les styles.
 - L'habillage du jeu (`src/features/game-look/`, `docs/features/game-look.md`) est toujours actif, hors catalogue : une feuille sous `html.optizzz-game-look`, posée à `document_start`. Les outils suivent par les variables de `src/theme/theme.css`.
 - La feature `collect` (toujours active, hors catalogue) mémorise ce que montre la page courante, sans requête, pour toutes les features allumées qui en ont besoin : couper une feature n'ôte que son affichage et ses relectures.
-- Briques partagées de `src/utils/` à réutiliser plutôt que recopier : `formatNumber` / `formatDecimal` (nombres comme le jeu), `parseGameInteger`, `time-format`, `NumberField` (champ numérique React qui garde la saisie), `useStoredSettings` (réglages d'une vue React), `fetchGamePage` (relire une page du jeu en arrière-plan, partagé entre features), `alliance-menu` / `alliance-views`.
+- Briques partagées de `src/utils/` à réutiliser plutôt que recopier : `formatNumber` / `formatDecimal` (nombres comme le jeu), `parseGameInteger`, `time-format`, `NumberField` (champ numérique React qui garde la saisie), `useStoredSettings` (réglages d'une vue React), `fetchGamePage` (relire une page du jeu en arrière-plan, partagé entre features), `alliance-menu` / `alliance-views`, `map-chart/` (carte x/y à axes de même échelle et son zoom), `page-dialog` (page de l'extension dans une fenêtre par-dessus le jeu).
 - Seul hôte autorisé : `*://*.fourmizzz.fr/*`. Aucune donnée n'est envoyée ailleurs (`data_collection_permissions: none` côté Firefox) ; si ça change, mettre à jour le manifest.
 
 ## Documentation

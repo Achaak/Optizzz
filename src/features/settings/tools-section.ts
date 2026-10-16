@@ -7,21 +7,37 @@ export const TOOLS_STYLE = `
 export interface ToolsInput {
   /** Opens the combat simulator: over the game, or in a new tab from the toolbar popup. */
   openSimulator: () => void;
+  /** Opens the server map: over the game, or in a new tab from the toolbar popup. */
+  openServerMap: () => void;
 }
 
 /** « Outils » : the extension's own pages. */
 export function buildToolsSection(doc: Document, tools: ToolsInput): HTMLElement {
   const list = doc.createElement("ul");
   list.className = "tools";
-  const item = doc.createElement("li");
-  const button = doc.createElement("button");
-  button.type = "button";
-  button.textContent = "Simulateur de combat";
-  button.addEventListener("click", tools.openSimulator);
-  const description = doc.createElement("p");
-  description.className = "tool-description";
-  description.textContent = "Deux armées, un lieu : vainqueur, pertes, riposte, TDC et pillage.";
-  item.append(button, description);
-  list.append(item);
+  const tool = (label: string, text: string, onClick: () => void) => {
+    const item = doc.createElement("li");
+    const button = doc.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", onClick);
+    const description = doc.createElement("p");
+    description.className = "tool-description";
+    description.textContent = text;
+    item.append(button, description);
+    return item;
+  };
+  list.append(
+    tool(
+      "Simulateur de combat",
+      "Deux armées, un lieu : vainqueur, pertes, riposte, TDC et pillage.",
+      tools.openSimulator,
+    ),
+    tool(
+      "Carte du serveur",
+      "Situer des joueurs et des alliances sur tout le serveur, avec distances et trajets.",
+      tools.openServerMap,
+    ),
+  );
   return list;
 }

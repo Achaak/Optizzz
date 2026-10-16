@@ -31,4 +31,12 @@ export const CHART_COLORS = {
   text: "#000",
   muted: "#6b5d3a",
   grid: "rgba(102, 88, 50, 0.35)",
+  /** Outline of labels drawn over points: the raised parchment of the chart box. */
+  halo: "#f3ead0",
+  /** Every player of the server under the ones chosen (server map). */
+  background: "rgba(107, 93, 58, 0.2)",
+  /** Chips of the server map: my alliance is `member`; pacts and wars each get a family of hues. */
+  chips: ["#8a3ea3", "#1d8a8a", "#7a4a12", "#b0368a", "#4b5bb5", "#5f7d1f", "#a0522d", "#2b2b2b"],
+  allies: ["#2f6b1a", "#4f9a2c", "#1d6f5c", "#6d8f1d", "#3a8a5a", "#245b3a"],
+  enemies: ["#c5130f", "#c76b00", "#9c1f4a", "#e0452b", "#a33b00", "#d6336c"],
 } as const;

@@ -117,6 +117,17 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "server-map",
+    label: "Carte du serveur",
+    description:
+      "Bouton dans la barre du haut : situer des joueurs et des alliances (vos pactes, vos guerres) sur tout le serveur, avec distances et trajets.",
+    options: [
+      { id: "button", label: "Bouton dans la barre du haut" },
+      { id: "profile", label: "Lien « Voir sur la carte » sur les profils" },
+      { id: "alliance", label: "Lien « Voir sur la carte » sur les pages d'alliance" },
+    ],
+  },
+  {
     id: "tdc-chain",
     label: "Chaîne de TDC",
     description:
