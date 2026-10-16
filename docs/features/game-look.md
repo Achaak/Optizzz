@@ -45,6 +45,7 @@ Ma ligne en surbrillance et les colonnes « Trajet » et « Rôle » viennent de
 
 - Un tableau qui contient d'autres tableaux ou des `fieldset` est un tableau de mise en page : ses cellules s'empilent (Ennemies, profils). Un tableau de données défile dans son cadre (Membres, Ennemies, pontes en cours).
 - Reine, Construction, Laboratoire : photo et description (avec le planificateur de ponte), puis le coût. Sur la Reine, le curseur prend toute la largeur, les chiffres côte à côte, le bouton de ponte à droite.
+- Accueil déconnecté : la boîte de connexion garde le fond uni que le jeu lui donne (pas le sprite des menus, qui s'y répétait en mosaïque).
 - Sur ordinateur, une ligne d'unité reste rectangulaire et sans ombre : Chrome redessine l'arrondi et l'ombre d'un `tr` sur chaque cellule.
 
 ## Pages vérifiées (s5, 2026-10-12)

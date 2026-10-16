@@ -190,4 +190,11 @@ html.optizzz-game-look {
   & :is(.boite_connexion_titre, .boite_connexion_contenu, .boite_presentation_contenu) {
     background-image: image-set(url("./icons/bouton/sprite_menu.webp") 2x);
   }
+
+  /* On a phone, design7.css paints the logged-out login box a plain colour instead of the sprite. */
+  @media screen and (max-width: 41em) {
+    & :is(.boite_connexion_titre, .boite_connexion_contenu) {
+      background-image: none;
+    }
+  }
 }
