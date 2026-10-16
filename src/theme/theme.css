@@ -28,6 +28,9 @@
   /* The game's dark menus (top bar, left column) */
   --optizzz-menu-text: rgb(211, 217, 184);
   --optizzz-menu-bg: #3c3e31;
+  /* States on the dark menu (the header's resources): light, 5:1 at least on it (AA) */
+  --optizzz-menu-warning: #ffc46b;
+  --optizzz-menu-danger: #ff9b8f;
 
   /* Spacing: every margin, padding and gap is one of these */
   --optizzz-space-1: 2px;
