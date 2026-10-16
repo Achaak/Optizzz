@@ -130,8 +130,8 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
       : [...all].sort((a, b) => valueOfRow(b) - valueOfRow(a));
   }, [states, members, now, sort]);
 
-  if (!alliance) return <div className="alliance-sharing">Vous n'êtes dans aucune alliance.</div>;
-  if (!members || !states) return <div className="alliance-sharing">Lecture des membres…</div>;
+  if (!alliance) return <div className="alliance-sharing optizzz-panel">Vous n'êtes dans aucune alliance.</div>;
+  if (!members || !states) return <div className="alliance-sharing optizzz-panel">Lecture des membres…</div>;
 
   const importText = async () => {
     const parsed = parseShares(text, { server: new URL(origin).host.split(".")[0] ?? "", alliance, members });
@@ -174,7 +174,7 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
           {value?.manual && (
             <button
               type="button"
-              className="link"
+              className="optizzz-button-link"
               title="Revenir à la valeur partagée"
               onClick={() => void edit(row.pseudo, column.key, null)}
             >
@@ -193,7 +193,7 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
 
   const header = (column: Column) => (
     <th key={column.key} title={column.title}>
-      <button type="button" className="link" onClick={() => setSort(column.key)}>
+      <button type="button" className="optizzz-button-link" onClick={() => setSort(column.key)}>
         {column.label}
       </button>
     </th>
@@ -204,7 +204,7 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
   const memberCell = (row: MemberRow) => (
     <td>
       {row.pseudo}
-      {row.readAt === null && <span className="note"> · aucun partage</span>}
+      {row.readAt === null && <span className="optizzz-note"> · aucun partage</span>}
     </td>
   );
 
@@ -213,7 +213,7 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
   let table;
   if (group === "army") {
     table = (
-      <table>
+      <table className="optizzz-table">
         <thead>
           <tr>
             <th>Membre</th>
@@ -250,7 +250,7 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
     );
   } else if (group === "works") {
     table = (
-      <table>
+      <table className="optizzz-table">
         <thead>
           <tr>
             <th>Membre</th>
@@ -278,11 +278,11 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
   } else {
     const columns = COLUMNS[group];
     table = (
-      <table>
+      <table className="optizzz-table">
         <thead>
           <tr>
             <th>
-              <button type="button" className="link" onClick={() => setSort("pseudo")}>
+              <button type="button" className="optizzz-button-link" onClick={() => setSort("pseudo")}>
                 Membre
               </button>
             </th>
@@ -313,9 +313,9 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
   }
 
   return (
-    <div className="alliance-sharing">
-      <h2>Partage {alliance}</h2>
-      <p className="note">
+    <div className="alliance-sharing optizzz-panel">
+      <h2 className="optizzz-panel-title">Partage {alliance}</h2>
+      <p className="optizzz-note">
         Les états que les membres ont copiés depuis « Mon état » (menu Fourmilière). Collez ci-dessous le salon Discord
         où ils les partagent : Optizzz ne lit que les lignes [optizzz:…]. ↑ ↓ : changé dans les dernières 24 h ; en
         grisé : relevé de plus de 3 jours ; en italique : saisi à la main.
@@ -331,20 +331,17 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
         <button type="button" disabled={!text.trim()} onClick={() => void importText()}>
           Importer
         </button>
-        {report && <p className="note">{report}</p>}
+        {report && <p className="optizzz-note">{report}</p>}
       </div>
 
-      <div className="toolbar">
-        {GROUPS.map((g) => (
-          <button
-            key={g.id}
-            type="button"
-            className={g.id === group ? "tab active" : "tab"}
-            onClick={() => setGroup(g.id)}
-          >
-            {g.label}
-          </button>
-        ))}
+      <div className="optizzz-toolbar">
+        <div className="optizzz-segmented" role="group" aria-label="Données">
+          {GROUPS.map((g) => (
+            <button key={g.id} type="button" aria-pressed={g.id === group} onClick={() => setGroup(g.id)}>
+              {g.label}
+            </button>
+          ))}
+        </div>
         {group !== "works" && (
           <label>
             <input type="checkbox" checked={editing} onChange={(event) => setEditing(event.target.checked)} /> Corriger
@@ -353,7 +350,7 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
         )}
       </div>
 
-      <div className="table-wrap">{table}</div>
+      <div className="optizzz-scroll">{table}</div>
     </div>
   );
 }

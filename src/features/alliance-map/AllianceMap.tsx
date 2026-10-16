@@ -102,12 +102,18 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
     [settings, me?.id, shared],
   );
 
-  if (error) return <div className="alliance-map error">Impossible de charger les positions : {error}</div>;
-  if (!playersExport || !settings || !levels) return <div className="alliance-map">Chargement des positions…</div>;
+  if (error)
+    return (
+      <div className="alliance-map optizzz-panel optizzz-panel--danger">
+        Impossible de charger les positions : {error}
+      </div>
+    );
+  if (!playersExport || !settings || !levels)
+    return <div className="alliance-map optizzz-panel">Chargement des positions…</div>;
   const myMember = members.find((m) => m.id === me?.id);
   if (!myMember || !allianceTag) {
     return (
-      <div className="alliance-map">
+      <div className="alliance-map optizzz-panel">
         Votre alliance n'apparaît pas dans l'export du {formatExportVersion(playersExport.version)}. Si vous venez de la
         rejoindre, elle apparaîtra à la prochaine mise à jour de l'export, dans l'heure.
       </div>
@@ -118,9 +124,9 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
   const k = Math.min(settings.k, members.length - 1);
 
   return (
-    <div className="alliance-map">
-      <h2>Carte de l'alliance {allianceTag}</h2>
-      <p className="meta">
+    <div className="alliance-map optizzz-panel">
+      <h2 className="optizzz-panel-title">Carte de l'alliance {allianceTag}</h2>
+      <p className="optizzz-note">
         {members.length} membres · positions du {formatExportVersion(playersExport.version)} · TDC{" "}
         {liveHuntingFields.size > 0 ? "en direct (page Membres)" : "de l'export"}
       </p>
@@ -152,7 +158,7 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
             }}
           />
         </label>
-        <span className="note">
+        <span className="optizzz-note">
           Utilisée pour les membres dont on ne connaît pas la Vitesse d'attaque (actuellement niveau{" "}
           {globalLevel(levels)}). Vide = votre niveau du Laboratoire
           {settings.labLevel !== null && ` (${settings.labLevel})`}.
@@ -176,14 +182,18 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
             <ul className="role-legend" aria-label="Rôles de la chaîne">
               {legend(bubbles).map(({ role, color, px, shape }) => (
                 <li key={roleKey(role)}>
-                  <span className="bubble" data-shape={shape} style={{ background: color, width: px, height: px }} />
+                  <span
+                    className="optizzz-shape"
+                    data-shape={shape}
+                    style={{ background: color, width: px, height: px }}
+                  />
                   {roleLabel(role)}
                 </li>
               ))}
             </ul>
           )}
           {bubbles && (
-            <span className="note">
+            <span className="optizzz-note">
               Couleurs et tailles réglables dans <a href="#chaine">Chaîne</a>
               {!chainSettings?.roles && " ; rôles proposés d'après le TDC tant qu'ils n'y sont pas choisis"}.
             </span>

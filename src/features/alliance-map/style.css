@@ -1,3 +1,4 @@
+/* Alliance map: a panel of the design system (docs/design-system.md); only what is its own is here. */
 :host {
   all: initial;
   display: block;
@@ -9,50 +10,19 @@
 }
 
 .alliance-map {
-  font-family: var(--optizzz-font);
-  font-size: var(--optizzz-font-size);
-  color: var(--optizzz-text);
-  background: var(--optizzz-surface);
-  border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius);
-  box-shadow: var(--optizzz-panel-shadow);
-  padding: 12px 16px;
-  margin: 8px auto;
   max-width: 900px;
-  box-sizing: border-box;
-}
-
-.alliance-map h2 {
-  font-size: 16px;
-  font-style: italic;
-  color: var(--optizzz-title);
-  font-family: var(--optizzz-title-font);
-  margin: 0 0 4px;
-}
-
-.meta,
-.note {
-  color: var(--optizzz-text-muted);
-  font-size: 11px;
-  margin: 4px 0;
-}
-
-.error {
-  color: var(--optizzz-danger);
 }
 
 .settings {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
+  gap: var(--optizzz-space-4) 20px;
   align-items: center;
   margin: 10px 0;
 }
 
 input[type="number"] {
   width: 52px;
-  padding: 2px 4px;
-  font: inherit;
 }
 
 input.level {
@@ -66,70 +36,35 @@ input::placeholder {
   font-weight: normal;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
-}
-
-.chart {
-  background: var(--optizzz-surface-raised);
-  border: 1px solid var(--optizzz-border-soft);
-  border-radius: var(--optizzz-radius);
-  padding: 6px;
-}
-
 .chart-toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: var(--optizzz-space-4);
 }
 
-.hint {
-  color: var(--optizzz-text-muted);
-  font-size: 11px;
+.chart-toolbar .optizzz-note {
+  margin: 0;
 }
 
 .neighbor-table {
+  margin-top: var(--optizzz-space-5);
   overflow-x: auto;
-  margin-top: 12px;
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th,
-td {
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--optizzz-border-soft);
+.optizzz-table :is(th, td) {
   text-align: right;
   white-space: nowrap;
 }
 
-th:nth-child(2),
-td:nth-child(2) {
+.optizzz-table :is(th, td):nth-child(2) {
   text-align: left;
 }
 
-thead th {
-  background: var(--optizzz-surface-alt);
-}
-
 tr.within-k td {
-  background: var(--optizzz-warning-bg);
   font-weight: bold;
-}
-
-button.link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--optizzz-link);
-  text-decoration: underline;
-  font-weight: inherit;
+  background: var(--optizzz-warning-bg);
 }
 
 a {
@@ -137,10 +72,7 @@ a {
   text-decoration: none;
 }
 
-.estimated {
-  color: var(--optizzz-text-muted);
-}
-
+.estimated,
 .holiday {
   color: var(--optizzz-text-muted);
   font-weight: normal;
@@ -149,35 +81,15 @@ a {
 .role-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: var(--optizzz-space-2) var(--optizzz-space-5);
   align-items: center;
-  list-style: none;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .role-legend li {
   display: inline-flex;
-  gap: 4px;
+  gap: var(--optizzz-space-2);
   align-items: center;
-}
-
-.role-legend .bubble {
-  display: inline-block;
-  border-radius: 50%;
-}
-
-/* The shape of each kind of role (role-styles.ts), told apart without the colours. */
-.role-legend .bubble[data-shape="square"] {
-  border-radius: 2px;
-}
-
-.role-legend .bubble[data-shape="diamond"] {
-  border-radius: 0;
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-}
-
-.role-legend .bubble[data-shape="triangle"] {
-  border-radius: 0;
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }

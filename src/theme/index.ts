@@ -33,8 +33,8 @@ export const CHART_COLORS = {
   holiday: "#a0a0a0",
   link: "rgba(80, 80, 80, 0.35)",
   marker: "#7d4800",
-  text: "#000",
-  muted: "#6b5d3a",
+  text: "#241c0c",
+  muted: "#5a4c2e",
   grid: "rgba(102, 88, 50, 0.35)",
   /** Outline of labels drawn over points: the raised parchment of the chart box. */
   halo: "#f3ead0",

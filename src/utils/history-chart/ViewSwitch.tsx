@@ -11,19 +11,11 @@ interface Props {
 export function ViewSwitch({ current, otherOn }: Props) {
   if (!otherOn) return null;
   return (
-    <nav className="tabs view-switch" aria-label="Vues de l'alliance">
-      <a
-        href={STATS_LINK}
-        className={current === "alliance" ? "active" : ""}
-        aria-current={current === "alliance" ? "page" : undefined}
-      >
+    <nav className="optizzz-segmented view-switch" aria-label="Vues de l'alliance">
+      <a href={STATS_LINK} aria-current={current === "alliance" ? "page" : undefined}>
         L'alliance
       </a>
-      <a
-        href={HISTORY_LINK}
-        className={current === "members" ? "active" : ""}
-        aria-current={current === "members" ? "page" : undefined}
-      >
+      <a href={HISTORY_LINK} aria-current={current === "members" ? "page" : undefined}>
         Chaque membre
       </a>
     </nav>

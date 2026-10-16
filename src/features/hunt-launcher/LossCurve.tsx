@@ -69,7 +69,7 @@ export function LossCurve({ curve, amount, onPick }: Props) {
   const last = curve.at(-1)?.amount ?? first;
 
   return (
-    <div className="curve">
+    <div className="curve optizzz-well">
       <ReactECharts echarts={echarts} option={option} lazyUpdate style={{ width: "100%", height: 200 }} />
       <label className="slider">
         Surface par chasse : <strong>{formatNumber(shown)} cm²</strong>

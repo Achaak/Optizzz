@@ -53,7 +53,7 @@ export function NeighborTable({ selected, rows, playerLevels, defaultLevel, leve
       <p>
         Vitesse d'attaque ({selected.pseudo}) : {levelInput(selected)}
       </p>
-      <table>
+      <table className="optizzz-table">
         <thead>
           <tr>
             <th>#</th>
@@ -72,7 +72,7 @@ export function NeighborTable({ selected, rows, playerLevels, defaultLevel, leve
               <td>
                 <button
                   type="button"
-                  className="link"
+                  className="optizzz-button-link"
                   onClick={() => onSelect(row.player.id)}
                   title="Afficher les trajets depuis ce membre"
                 >
@@ -97,7 +97,7 @@ export function NeighborTable({ selected, rows, playerLevels, defaultLevel, leve
           ))}
         </tbody>
       </table>
-      <p className="note">
+      <p className="optizzz-note">
         En gras : les membres reliés à {selected.pseudo} sur la carte. ≈ : Vitesse d'attaque inconnue, temps estimé avec
         le niveau par défaut ({defaultLevel}). Renseignez-la dans la dernière colonne pour un temps exact.
       </p>

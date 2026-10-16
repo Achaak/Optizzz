@@ -56,9 +56,9 @@ export function MapChart({ members, selected, k, levels, bubbles, onSelect }: Pr
   };
 
   return (
-    <div className="chart">
+    <div className="chart optizzz-well">
       <div className="chart-toolbar">
-        <span className="hint">
+        <span className="optizzz-note">
           Ctrl + molette ou pincer : zoom · Glisser : déplacer · Double-clic : zoomer sur un joueur
         </span>
         <button type="button" onClick={resetZoom}>

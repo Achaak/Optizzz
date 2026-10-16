@@ -34,8 +34,8 @@ const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatNum
 export function HuntTable({ plan, unitKeys, statuses, busy, frozen, launchBlocked, now, onEdit, onLaunch }: Props) {
   const units = UNITS.filter((unit) => unitKeys.includes(unit.key));
   return (
-    <div className="table-wrap">
-      <table className="hunts">
+    <div className="optizzz-scroll">
+      <table className="optizzz-table optizzz-table--dense hunts">
         <thead>
           <tr>
             <th>#</th>
@@ -127,10 +127,10 @@ export function HuntTable({ plan, unitKeys, statuses, busy, frozen, launchBlocke
                   {round1(hunt.outcome.lostUnits.mean)} · {formatNumber(hunt.outcome.lostUnits.p90)} ·{" "}
                   {formatNumber(hunt.outcome.lostUnits.max)}
                   {hunt.outcome.winChance < 1 && (
-                    <span className="danger"> · échec {formatChance(1 - hunt.outcome.winChance)}</span>
+                    <span className="optizzz-text-danger"> · échec {formatChance(1 - hunt.outcome.winChance)}</span>
                   )}
                 </td>
-                <td className="muted">
+                <td className="optizzz-muted">
                   {Number.isNaN(hunt.calystene.average) ? "—" : `≈ ${round1(hunt.calystene.average)}`}
                 </td>
                 <td className="xp">{promoted || "—"}</td>

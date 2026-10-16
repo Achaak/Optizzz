@@ -14,37 +14,19 @@ const C = "optizzz-flood";
 
 /** Close to Optizzz's other boxes: red italic title, figures first, rules out of the way. */
 export const FLOOD_STYLE = `
-.${C} { margin: 8px auto; width: fit-content; min-width: min(520px, 100%); max-width: 100%; box-sizing: border-box;
-  padding: 8px 12px 10px; text-align: left; background: var(--optizzz-surface);
-  border: 1px solid var(--optizzz-border); border-radius: var(--optizzz-radius); box-shadow: var(--optizzz-panel-shadow); }
-.${C} h3 { margin: 0 0 6px; font-family: var(--optizzz-title-font); color: var(--optizzz-title); font-size: 17px;
-  font-style: italic; font-weight: bold; }
-.${C} h4 { margin: 10px 0 4px; font-size: 1em; }
-.${C} p { margin: 4px 0; }
-.${C}-callout { padding: 5px 9px; border: 1px solid var(--optizzz-warning); border-radius: 6px;
-  background: var(--optizzz-warning-bg); font-weight: bold; }
-.${C}-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-.${C}-fact { display: flex; flex-direction: column; padding: 4px 10px; background: var(--optizzz-surface-tint);
-  border: 1px solid var(--optizzz-border-soft); border-radius: 6px; }
-.${C}-fact dt { font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
-.${C}-fact dd { margin: 0; font-weight: bold; white-space: nowrap; }
+.${C} { width: fit-content; min-width: min(520px, 100%); }
+.${C}-facts { margin: var(--optizzz-space-3) 0; }
+.${C}-fact dd { margin: 0; }
 .${C}-fact small { font-weight: normal; color: var(--optizzz-text-muted); }
-.${C}-note, .${C}-rules { font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
-.${C}-note:empty { display: none; }
-.${C}-scroll { overflow-x: auto; margin-top: 6px; }
-.${C} table { border-collapse: collapse; }
-.${C} th, .${C} td { white-space: nowrap; }
-.${C} .${C}-number { text-align: right; }
-.${C} tbody tr:nth-child(even) { background: var(--optizzz-surface-alt); }
-.${C} tfoot td { font-weight: bold; border-top: 1px solid var(--optizzz-border); }
+.${C}-scroll { margin-top: var(--optizzz-space-3); }
+.${C} :is(th, td) { white-space: nowrap; }
 .${C} tr.${C}-filled { font-weight: bold; box-shadow: inset 3px 0 0 var(--optizzz-title); }
 .${C} tr.${C}-filled button { font-weight: bold; }
-.${C}-defense { margin-top: 4px; padding-top: 2px; border-top: 1px solid var(--optizzz-border-soft); }
-.${C}-defense-state { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.${C}-defense textarea { display: block; width: 100%; margin: 4px 0; }
-.${C}-defense-note { color: var(--optizzz-danger); font-weight: bold; }
-.${C}-rules { margin-top: 8px; }
-.${C}-rules p { margin: 4px 0 0; }`;
+.${C}-defense { margin-top: var(--optizzz-space-2); padding-top: var(--optizzz-space-1); border-top: 1px solid var(--optizzz-border-soft); }
+.${C}-defense-state { display: flex; flex-wrap: wrap; align-items: center; gap: var(--optizzz-space-4); }
+.${C}-defense textarea { display: block; width: 100%; margin: var(--optizzz-space-2) 0; }
+.${C}-rules { margin-top: var(--optizzz-space-4); font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
+.${C}-rules p { margin: var(--optizzz-space-2) 0 0; }`;
 
 export interface FloodContext {
   me: { field: number; weapons: number; shield: number };
@@ -88,8 +70,8 @@ function element<K extends keyof HTMLElementTagNameMap>(doc: Document, tag: K, c
 }
 
 function floodBox(doc: Document) {
-  const box = element(doc, "div", C);
-  box.append(element(doc, "h3", "", "Plan de flood"));
+  const box = element(doc, "div", `${C} optizzz-panel`);
+  box.append(element(doc, "h3", "optizzz-panel-title", "Plan de flood"));
   return box;
 }
 
@@ -98,7 +80,7 @@ export function mountFloodNotice(doc: Document, text: string) {
   const form = doc.getElementById("formulaireChoixArmee");
   if (!form) return;
   const box = floodBox(doc);
-  box.append(element(doc, "p", `${C}-callout`, text));
+  box.append(element(doc, "p", `${C}-callout optizzz-callout optizzz-callout--warning`, text));
   form.after(box);
 }
 
@@ -120,17 +102,17 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
   const protectedMe = element(
     doc,
     "p",
-    `${C}-callout ${C}-protected`,
+    `${C}-callout ${C}-protected optizzz-callout optizzz-callout--warning`,
     "Vous êtes sous protection débutant : attaquer y met fin.",
   );
   protectedMe.hidden = !context.protectedMe;
 
   // Figures first: both fields, the free slots, the trip.
-  const facts = element(doc, "dl", `${C}-facts`);
+  const facts = element(doc, "dl", `${C}-facts optizzz-stats`);
   const fact = (label: string) => {
-    const item = element(doc, "div", `${C}-fact`);
-    const value = element(doc, "dd");
-    item.append(element(doc, "dt", "", label), value);
+    const item = element(doc, "div", `${C}-fact optizzz-stat`);
+    const value = element(doc, "dd", "optizzz-stat-value");
+    item.append(element(doc, "dt", "optizzz-stat-label", label), value);
     facts.append(item);
     return value;
   };
@@ -138,17 +120,17 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
   const meFact = fact("Vous");
   const slotsFact = fact("Attaques possibles");
   const tripFact = fact("Trajet");
-  const note = element(doc, "p", `${C}-note`);
+  const note = element(doc, "p", `${C}-note optizzz-note`);
 
   const lodgeLabel = element(doc, "label");
   const lodge = element(doc, "input", `${C}-lodge`);
   lodge.type = "checkbox";
   lodge.checked = countLodge;
   lodgeLabel.append(lodge, " Compter les troupes de la Loge");
-  const message = element(doc, "p", `${C}-callout ${C}-message`);
+  const message = element(doc, "p", `${C}-callout ${C}-message optizzz-callout optizzz-callout--warning`);
 
-  const scroll = element(doc, "div", `${C}-scroll`);
-  const table = element(doc, "table");
+  const scroll = element(doc, "div", `${C}-scroll optizzz-scroll`);
+  const table = element(doc, "table", "optizzz-table optizzz-table--striped");
   scroll.append(table);
   const head = element(doc, "thead");
   const headRow = element(doc, "tr");
@@ -174,11 +156,17 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     use.disabled = area.value.trim() === "";
     defenseNote.hidden = true;
   });
-  const defenseNote = element(doc, "p", `${C}-defense-note`);
+  const defenseNote = element(doc, "p", `${C}-defense-note optizzz-text-danger`);
   defenseNote.hidden = true;
-  defenseBox.append(element(doc, "h4", "", "Sa défense sur le TDC"), defenseState, area, use, defenseNote);
+  defenseBox.append(
+    element(doc, "h4", "optizzz-subtitle", "Sa défense sur le TDC"),
+    defenseState,
+    area,
+    use,
+    defenseNote,
+  );
 
-  const rules = element(doc, "details", `${C}-rules`);
+  const rules = element(doc, "details", `${C}-rules optizzz-disclosure`);
   rules.append(
     element(doc, "summary", "", "Règles utilisées (non vérifiées sur un vrai flood)"),
     element(
@@ -190,7 +178,7 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
   );
 
   const cell = (row: HTMLTableRowElement, text: string, number = false, tag: "td" | "th" = "td") => {
-    const td = element(doc, tag, number ? `${C}-number` : "", text);
+    const td = element(doc, tag, number ? `${C}-number optizzz-num` : "", text);
     row.append(td);
     return td;
   };

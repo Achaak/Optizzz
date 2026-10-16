@@ -6,8 +6,8 @@ import { svgElement } from "@/utils/html";
 export const ABOUT_STYLE = `
 .about-header { display: flex; align-items: center; gap: 10px; }
 .about-header svg { width: 40px; height: 40px; flex: none; }
-.about-name { font-size: 15px; font-weight: bold; margin: 0; }
-.about-version { color: var(--optizzz-text-muted); font-size: 11px; margin: 2px 0 0; }
+.about-name { font-size: var(--optizzz-font-size-value); font-weight: bold; margin: 0; }
+.about-version { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); margin: var(--optizzz-space-1) 0 0; }
 .about-text { margin: 10px 0; }
 .about-links { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
 .about-links a { color: var(--optizzz-link); }`;

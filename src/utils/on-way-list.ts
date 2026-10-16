@@ -20,29 +20,21 @@ export interface OnWayItem {
 }
 
 export const ON_WAY_STYLE = `
-.optizzz-on-way {
-  margin: 6px 0 10px;
-  text-align: left;
-  background: var(--optizzz-surface-tint);
-  border: 1px solid var(--optizzz-border-soft);
-  border-radius: var(--optizzz-radius);
-  box-shadow: var(--optizzz-panel-shadow);
-  overflow: hidden;
-}
+.optizzz-on-way { margin: var(--optizzz-space-3) 0 10px; padding: 0; overflow: hidden; }
 .optizzz-on-way-row {
   display: grid;
   grid-template-columns: minmax(8em, 1.2fr) minmax(12em, 1.4fr) minmax(12em, 1.6fr) auto;
   align-items: center;
-  gap: 4px 14px;
-  padding: 6px 10px;
+  gap: var(--optizzz-space-2) 14px;
+  padding: var(--optizzz-space-3) 10px;
 }
 .optizzz-on-way-row + .optizzz-on-way-row { border-top: 1px solid var(--optizzz-border-soft); }
 .optizzz-on-way-row:nth-child(even) { background: var(--optizzz-surface-tint); }
 .optizzz-on-way-to { font-weight: bold; overflow-wrap: anywhere; }
-.optizzz-on-way-details { display: flex; flex-wrap: wrap; gap: 2px 12px; font-variant-numeric: tabular-nums; }
+.optizzz-on-way-details { display: flex; flex-wrap: wrap; gap: var(--optizzz-space-1) var(--optizzz-space-5); font-variant-numeric: tabular-nums; }
 .optizzz-on-way-time { display: flex; flex-direction: column; line-height: 1.3; }
 .optizzz-on-way-left { font-weight: bold; font-variant-numeric: tabular-nums; }
-.optizzz-on-way-arrived { color: var(--optizzz-success); }
+.optizzz-on-way-arrived { color: var(--optizzz-success-text); }
 .optizzz-on-way-when { font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
 .optizzz-on-way-copy { white-space: nowrap; }
 @media (max-width: 700px) {
@@ -97,7 +89,7 @@ export function renderOnWayList(
 ): { list: HTMLElement; stop: () => void } {
   const now = clock();
   const list = doc.createElement("div");
-  list.className = `optizzz-on-way ${className}`;
+  list.className = `optizzz-on-way optizzz-panel optizzz-panel--inset ${className}`;
   const timers: { arrivesAt: Date; left: HTMLElement }[] = [];
   for (const item of items) {
     const left = span(doc, "optizzz-on-way-left");

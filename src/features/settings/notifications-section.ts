@@ -7,8 +7,8 @@ export const NOTIFICATIONS_STYLE = `
 .notifications { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
 .notifications label { display: flex; gap: 6px; align-items: baseline; cursor: pointer; }
 .notifications input { margin: 0; }
-.notifications-blocked { margin: 12px 0 0; color: var(--optizzz-danger); }
-.notifications-off, .notifications-needs { margin: 0 0 10px; color: var(--optizzz-warning); font-size: var(--optizzz-font-size-small); }
+.notifications-blocked { margin: var(--optizzz-space-5) 0 0; color: var(--optizzz-danger-text); }
+.notifications-off, .notifications-needs { margin: 0 0 10px; color: var(--optizzz-warning-text); font-size: var(--optizzz-font-size-small); }
 .notifications input:disabled + span { opacity: 0.6; }
 .notifications-blocked button { margin-left: 6px; font: inherit; cursor: pointer; }`;
 

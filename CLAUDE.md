@@ -30,7 +30,7 @@ pnpm format         # Prettier (format:check en lecture seule)
   - `src/game/` : règles du jeu (`army/` : unités, proies, combat ; `attack.ts` : prise, portée, créneaux ; `flood.ts`, `travel.ts`, `forecast.ts` : récoltes, famine, entrepôts ; `diplomacy.ts` : pactes et guerres) ;
   - `src/game/pages/` : lecteurs purs des pages du jeu (en-tête et Ressources, Reine, chantiers, profils et Membres, listes de fins) ;
   - `src/data/` : données mémorisées par serveur et relues en arrière-plan (export public, revenus, niveaux, armée, vitesse de ponte, fins, attaques en route) ;
-  - `src/theme/` : variables CSS du thème (`theme.css`) et palette des graphiques ; aucune couleur en dur dans les styles.
+  - `src/theme/` : design système (`theme.css` : jetons et composants `optizzz-panel`, `optizzz-note`, `optizzz-table`… ; `docs/design-system.md`) et palette des graphiques. Une vue se construit avec ces composants ; sa feuille ne garde que ce qui lui est propre, sans couleur, taille ni marge en dur.
 - **Daltoniens** (`docs/adr/0003-daltonisme.md`) : une information ne tient jamais à la seule couleur (aussi un texte, une forme ou une légende) ; jamais rouge contre vert pour opposer deux choses ; toute nouvelle couleur vue avec d'autres se vérifie en simulant protanopie et deutéranopie, pas à l'œil.
 - L'habillage du jeu (`src/features/game-look/`, `docs/features/game-look.md`) est toujours actif, hors catalogue : une feuille sous `html.optizzz-game-look`, posée à `document_start`. Les outils suivent par les variables de `src/theme/theme.css`.
 - La feature `collect` (toujours active, hors catalogue) mémorise ce que montre la page courante, sans requête, pour toutes les features allumées qui en ont besoin : couper une feature n'ôte que son affichage et ses relectures.
@@ -46,7 +46,7 @@ pnpm format         # Prettier (format:check en lecture seule)
 
 ## Workflow
 
-On avance feature par feature. Les skills de Matt Pocock sont dans `.claude/skills/` (voir `SOURCE.md`) : `/grill-me` pour cadrer une feature, `tdd` pour l'implémenter.
+On avance feature par feature. Les skills de Matt Pocock sont dans `.claude/skills/` (voir `SOURCE.md`) : `/grill-me` pour cadrer une feature, `tdd` pour l'implémenter. Pour l'interface : `impeccable` (critique, audit, polish) et `web-design-guidelines`, en suivant `docs/design-system.md`.
 
 Commits : Conventional Commits (`feat:`, `fix:`, `chore:`…). Le hook Husky `pre-commit` lance lint-staged (ESLint + Prettier sur les fichiers modifiés), `typecheck` et les tests : ne pas le contourner avec `--no-verify`.
 

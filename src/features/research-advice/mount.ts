@@ -6,41 +6,25 @@ import { placeInRow } from "@/utils/row-extras";
 import { formatDuration, formatPastTime } from "@/utils/time-format";
 import { researchAdvice, verdictOf, type Advice, type AdviceStat } from "./advice";
 
-/** The « Conseil » tag every advice starts with. */
-export const ADVICE_TAG_STYLE = `
-.optizzz-advice-tag { flex: none; padding: 0 5px; border: 1px solid var(--optizzz-border-soft); border-radius: var(--optizzz-radius); background: var(--optizzz-surface-raised); color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); font-weight: normal; }`;
-
 export const ADVICE_STYLE = `
-${ADVICE_TAG_STYLE}
 tr.ligneAmelioration:has(.optizzz-advice[open]) > td { vertical-align: top !important; }
-.optizzz-advice { margin-top: 6px; border: 1px solid var(--optizzz-border-soft); border-left: 4px solid var(--optizzz-border); border-radius: var(--optizzz-radius); background: var(--optizzz-surface-tint); font-family: var(--optizzz-font); font-size: var(--optizzz-font-size); line-height: 1.4; color: var(--optizzz-text); }
+.optizzz-advice { margin-top: var(--optizzz-space-3); border: 1px solid var(--optizzz-border-soft); border-left: 3px solid var(--optizzz-border); border-radius: var(--optizzz-radius-small); background: var(--optizzz-surface-tint); font-family: var(--optizzz-font); font-size: var(--optizzz-font-size); line-height: var(--optizzz-line-height); color: var(--optizzz-text); }
 .optizzz-advice[data-verdict="research"] { border-left-color: var(--optizzz-success); }
 .optizzz-advice[data-verdict="laying"] { border-left-color: var(--optizzz-link); }
-.optizzz-advice > summary { display: flex; align-items: baseline; gap: 6px; padding: 4px 8px; cursor: pointer; list-style: none; }
-.optizzz-advice > summary::-webkit-details-marker { display: none; }
-.optizzz-advice > summary::before { content: "▸"; color: var(--optizzz-text-muted); }
-.optizzz-advice[open] > summary::before { content: "▾"; }
-.optizzz-advice > summary:focus-visible { outline: 2px solid var(--optizzz-focus-ring); outline-offset: -2px; }
+.optizzz-advice > summary { padding: var(--optizzz-space-2) var(--optizzz-space-4); font-weight: normal; }
 .optizzz-advice-more { margin-left: auto; color: var(--optizzz-link); font-size: var(--optizzz-font-size-small); }
 .optizzz-advice[open] .optizzz-advice-more { display: none; }
-.optizzz-advice-body { padding: 2px 8px 8px; }
-.optizzz-advice-body p { margin: 4px 0; }
-.optizzz-advice-switch { display: flex; align-items: center; gap: 4px; margin: 2px 0 6px; font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
-.optizzz-advice-switch button { font: inherit; padding: 1px 8px; cursor: pointer; color: var(--optizzz-text); background: var(--optizzz-surface-raised); border: 1px solid var(--optizzz-border-soft); border-radius: var(--optizzz-radius); }
-.optizzz-advice-switch button[aria-pressed="true"] { border-color: var(--optizzz-border); background: var(--optizzz-surface-alt); font-weight: bold; }
-.optizzz-advice-bars { display: grid; gap: 4px; margin: 4px 0 6px; }
-.optizzz-advice-bar-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; }
-.optizzz-advice-bar { height: 10px; border-radius: var(--optizzz-radius); background: var(--optizzz-surface-alt); overflow: hidden; }
-.optizzz-advice-bar > span { display: block; height: 100%; background: var(--optizzz-link); }
+.optizzz-advice-body { padding: var(--optizzz-space-1) var(--optizzz-space-4) var(--optizzz-space-4); }
+.optizzz-advice-body p { margin: var(--optizzz-space-2) 0; }
+.optizzz-advice-switch { display: flex; align-items: center; gap: var(--optizzz-space-3); margin: var(--optizzz-space-1) 0 var(--optizzz-space-3); font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
+.optizzz-advice-bars { display: grid; gap: var(--optizzz-space-2); margin: var(--optizzz-space-2) 0 var(--optizzz-space-3); }
+.optizzz-advice-bar-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--optizzz-space-4); }
 .optizzz-advice-bar-research > span { background: var(--optizzz-success); }
 .optizzz-advice-value { font-weight: bold; font-variant-numeric: tabular-nums; }
-.optizzz-advice-units summary { cursor: pointer; font-weight: bold; }
-.optizzz-advice-units { overflow-x: auto; }
-.optizzz-advice-units table { border-collapse: collapse; margin-top: 4px; font-size: var(--optizzz-font-size-small); }
-.optizzz-advice-units th, .optizzz-advice-units td { padding: 1px 8px; border-bottom: 1px solid var(--optizzz-border-soft); text-align: right; font-variant-numeric: tabular-nums; }
-.optizzz-advice-units th:first-child, .optizzz-advice-units td:first-child { text-align: left; }
-.optizzz-advice-units tr.optizzz-advice-best td { font-weight: bold; }
-.optizzz-advice-note { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }`;
+.optizzz-advice-units table { width: auto; margin-top: var(--optizzz-space-2); }
+.optizzz-advice-units :is(th, td) { text-align: right; }
+.optizzz-advice-units :is(th, td):first-child { text-align: left; }
+.optizzz-advice-units tr.optizzz-advice-best td { font-weight: bold; }`;
 
 /** Numbers that never wrap in the middle: « 19 284 » stays on one line. */
 const formatNumber = (value: number) => formatSpaced(value).replace(/ /g, "\u00a0");
@@ -140,7 +124,7 @@ export function mountResearchAdvice(
 ): HTMLDetailsElement {
   const doc = description.ownerDocument;
 
-  const details = el(doc, "details", "optizzz-advice");
+  const details = el(doc, "details", "optizzz-advice optizzz-disclosure");
   details.open = prefs.open[row.research] ?? false;
   details.addEventListener("toggle", () => {
     savePrefs({ open: { [row.research]: details.open } });
@@ -151,7 +135,7 @@ export function mountResearchAdvice(
     const stat: AdviceStat = row.research === "shield" ? "hp" : prefs.weaponsStat;
     details.replaceChildren();
     const summary = el(doc, "summary");
-    summary.append(el(doc, "span", "optizzz-advice-tag", "Conseil"));
+    summary.append(el(doc, "span", "optizzz-advice-tag optizzz-tag", "Conseil"));
     details.append(summary);
     if (data.kind === "missing") {
       delete details.dataset.verdict;
@@ -161,7 +145,7 @@ export function mountResearchAdvice(
         el(
           doc,
           "p",
-          "optizzz-advice-note",
+          "optizzz-advice-note optizzz-note",
           "Le conseil compare la recherche à la ponte d'unités pendant le temps de repondre ses ouvrières.",
         ),
       );
@@ -207,6 +191,8 @@ function renderBody(
     const group = el(doc, "div", "optizzz-advice-switch");
     group.setAttribute("role", "group");
     group.append("Comparer sur :");
+    const choices = el(doc, "span", "optizzz-segmented");
+    group.append(choices);
     for (const [value, label] of [
       ["attack", "l'attaque"],
       ["defense", "la défense"],
@@ -215,7 +201,7 @@ function renderBody(
       button.type = "button";
       button.setAttribute("aria-pressed", String(stat === value));
       button.addEventListener("click", () => chooseStat(value));
-      group.append(button);
+      choices.append(button);
     }
     body.append(group);
   }
@@ -224,7 +210,7 @@ function renderBody(
   const top = Math.max(advice.researchGain, best?.gain ?? 0, 1);
   const bars = el(doc, "div", "optizzz-advice-bars");
   const bar = (label: string, value: number, research: boolean) => {
-    const track = el(doc, "div", `optizzz-advice-bar${research ? " optizzz-advice-bar-research" : ""}`);
+    const track = el(doc, "div", `optizzz-advice-bar optizzz-bar${research ? " optizzz-advice-bar-research" : ""}`);
     const fill = el(doc, "span");
     fill.style.width = `${String((value / top) * 100)}%`;
     track.append(fill);
@@ -272,7 +258,7 @@ function renderBody(
     el(
       doc,
       "p",
-      "optizzz-advice-note",
+      "optizzz-advice-note optizzz-note",
       `Gains en ${STATS[stat].long} de base, avec le bonus actuel pour les unités pondues, sans XP ni bonus de Dôme ou de Loge. Repondre les ouvrières coûte aussi ${formatNumber(row.workers * 5)} nourriture ; Laboratoire et Reine travaillent en parallèle. D'après : ${army}, vitesse de ponte lue ${formatPastTime(data.layingReadAt, now)}.`,
     ),
   );
@@ -298,9 +284,9 @@ function armyNote(source: ArmySource, readAt: Date, now: Date): string {
 }
 
 function unitsTable(doc: Document, advice: Advice, stat: AdviceStat): HTMLElement {
-  const units = el(doc, "details", "optizzz-advice-units");
+  const units = el(doc, "details", "optizzz-advice-units optizzz-disclosure optizzz-scroll");
   units.append(el(doc, "summary", undefined, "Comparer les unités débloquées"));
-  const table = el(doc, "table");
+  const table = el(doc, "table", "optizzz-table optizzz-table--dense");
   const head = el(doc, "tr");
   for (const title of ["Unité", "Pondues dans le temps", `Gain (${STATS[stat].long})`, "Recherche comparée"])
     head.append(el(doc, "th", undefined, title));

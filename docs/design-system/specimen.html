@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Optizzz · Design système</title>
+    <!-- Planche du design système (docs/design-system.md) : le vrai thème, servi depuis la racine du dépôt. -->
+    <link rel="stylesheet" href="../../src/theme/theme.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: var(--optizzz-space-6);
+        background: #c9ad63;
+        font-family: var(--optizzz-font);
+        font-size: var(--optizzz-font-size);
+        color: var(--optizzz-text);
+      }
+      .specimen {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .swatches {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--optizzz-space-4);
+      }
+      .swatches figure {
+        margin: 0;
+        width: 110px;
+        font-size: var(--optizzz-font-size-xs);
+      }
+      .swatches span {
+        display: block;
+        height: 36px;
+        margin-bottom: var(--optizzz-space-1);
+        border: 1px solid var(--optizzz-border-soft);
+        border-radius: var(--optizzz-radius-small);
+      }
+      .spaces {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--optizzz-space-5);
+      }
+      .spaces span:not(.optizzz-note) {
+        display: block;
+        background: var(--optizzz-link);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--optizzz-space-3) var(--optizzz-space-5);
+      }
+      .game-box {
+        padding: var(--optizzz-space-4) var(--optizzz-space-5);
+        background: var(--optizzz-surface);
+        border: 1px solid var(--optizzz-border);
+        border-radius: var(--optizzz-radius);
+      }
+    </style>
+  </head>
+  <body class="optizzz-specimen">
+    <main class="specimen">
+      <section class="optizzz-panel">
+        <h1 class="optizzz-panel-title optizzz-panel-title--large">Design système d'Optizzz</h1>
+        <p class="optizzz-note">
+          Les jetons et composants de <code>src/theme/theme.css</code>, rendus tels quels. Voir
+          <code>docs/design-system.md</code>.
+        </p>
+
+        <h3 class="optizzz-subtitle">Couleurs</h3>
+        <div class="swatches">
+          <figure><span style="background: var(--optizzz-surface)"></span>surface</figure>
+          <figure><span style="background: var(--optizzz-surface-alt)"></span>surface-alt</figure>
+          <figure><span style="background: var(--optizzz-surface-raised)"></span>surface-raised</figure>
+          <figure><span style="background: var(--optizzz-head-bg)"></span>head-bg</figure>
+          <figure><span style="background: var(--optizzz-text)"></span>text</figure>
+          <figure><span style="background: var(--optizzz-text-muted)"></span>text-muted</figure>
+          <figure><span style="background: var(--optizzz-title)"></span>title</figure>
+          <figure><span style="background: var(--optizzz-link)"></span>link</figure>
+          <figure><span style="background: var(--optizzz-selected)"></span>selected</figure>
+          <figure><span style="background: var(--optizzz-action)"></span>action</figure>
+          <figure><span style="background: var(--optizzz-danger-text)"></span>danger-text</figure>
+          <figure><span style="background: var(--optizzz-warning-text)"></span>warning-text</figure>
+          <figure><span style="background: var(--optizzz-success-text)"></span>success-text</figure>
+        </div>
+
+        <h3 class="optizzz-subtitle">Texte</h3>
+        <p class="optizzz-panel-title optizzz-panel-title--large">Titre de fenêtre — 18 px</p>
+        <p class="optizzz-panel-title">Titre de panneau — 16 px</p>
+        <p class="optizzz-subtitle">Sous-titre — 13 px gras</p>
+        <p>Texte courant — 13 px. La ponte de 1 250 Jeunes Soldates Naines finit aujourd'hui 13 h 36.</p>
+        <p class="optizzz-note">Note — 12 px, gris lisible (5:1 sur le parchemin).</p>
+        <p>
+          États dits en mot et en gras : <span class="optizzz-text-success">possible</span> ·
+          <span class="optizzz-text-warning">dans 2 h 55</span> · <span class="optizzz-text-danger">jamais</span>
+        </p>
+
+        <h3 class="optizzz-subtitle">Espacements</h3>
+        <div class="spaces">
+          <span style="width: var(--optizzz-space-1); height: var(--optizzz-space-1)"></span>
+          <span style="width: var(--optizzz-space-2); height: var(--optizzz-space-2)"></span>
+          <span style="width: var(--optizzz-space-3); height: var(--optizzz-space-3)"></span>
+          <span style="width: var(--optizzz-space-4); height: var(--optizzz-space-4)"></span>
+          <span style="width: var(--optizzz-space-5); height: var(--optizzz-space-5)"></span>
+          <span style="width: var(--optizzz-space-6); height: var(--optizzz-space-6)"></span>
+          <span class="optizzz-note">2 · 4 · 6 · 8 · 12 · 16 px</span>
+        </div>
+      </section>
+
+      <section class="optizzz-panel">
+        <h2 class="optizzz-panel-title">Plan de flood</h2>
+        <p class="optizzz-callout optizzz-callout--warning">Vous êtes sous protection débutant : attaquer y met fin.</p>
+        <dl class="optizzz-stats">
+          <div class="optizzz-stat">
+            <dt class="optizzz-stat-label">Cible</dt>
+            <dd class="optizzz-stat-value">48 210 cm²</dd>
+          </div>
+          <div class="optizzz-stat">
+            <dt class="optizzz-stat-label">Vous</dt>
+            <dd class="optizzz-stat-value">61 900 cm²</dd>
+          </div>
+          <div class="optizzz-stat">
+            <dt class="optizzz-stat-label">Attaques possibles</dt>
+            <dd class="optizzz-stat-value">3</dd>
+          </div>
+          <div class="optizzz-stat">
+            <dt class="optizzz-stat-label">Trajet</dt>
+            <dd class="optizzz-stat-value">2 h 55</dd>
+            <dd class="optizzz-stat-note">arrivée aujourd'hui 13 h 36</dd>
+          </div>
+        </dl>
+        <div class="optizzz-toolbar">
+          <div class="optizzz-segmented" role="group" aria-label="Période">
+            <button type="button" aria-pressed="false">7 j</button>
+            <button type="button" aria-pressed="true">14 j</button>
+            <button type="button" aria-pressed="false">30 j</button>
+            <button type="button" aria-pressed="false">Tout</button>
+          </div>
+          <label><input type="checkbox" checked /> Compter les troupes de la Loge</label>
+          <input type="number" value="1250" style="width: 80px" />
+          <select>
+            <option>Ratio TDC</option>
+          </select>
+          <button type="button">Effacer</button>
+          <button type="button" class="optizzz-button-primary">Lancer les chasses</button>
+          <button type="button" class="optizzz-button-link">tout afficher</button>
+        </div>
+        <div class="optizzz-scroll">
+          <table class="optizzz-table optizzz-table--striped">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th><button type="button" class="optizzz-sort">Armée</button></th>
+                <th aria-sort="descending" class="optizzz-num">
+                  <button type="button" class="optizzz-sort">Prise</button>
+                </th>
+                <th class="optizzz-num">TDC après</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>400 Jeunes Soldates Naines</td>
+                <td class="optizzz-num">9 642</td>
+                <td class="optizzz-num">38 568</td>
+                <td><button type="button">Remplir</button></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>320 Jeunes Soldates Naines</td>
+                <td class="optizzz-num">7 714</td>
+                <td class="optizzz-num">30 854</td>
+                <td><button type="button">Remplir</button></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>256 Jeunes Soldates Naines</td>
+                <td class="optizzz-num">6 171</td>
+                <td class="optizzz-num">24 683</td>
+                <td><button type="button">Remplir</button></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2">Total</td>
+                <td class="optizzz-num">23 527 cm²</td>
+                <td class="optizzz-num">24 683</td>
+                <td>3 attaques</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="optizzz-callout optizzz-callout--danger">Le jeu n'a pas pris le déplacement. Rechargez la page.</p>
+        <p class="optizzz-callout optizzz-callout--success">Chasses lancées : 4 sur 4.</p>
+        <p class="optizzz-callout">20 % de son TDC par attaque, portée 50–300 % revérifiée à chaque arrivée.</p>
+        <details class="optizzz-disclosure" open>
+          <summary>Règles utilisées</summary>
+          <p class="optizzz-note">
+            Les attaques et chasses des autres joueurs peuvent changer les TDC avant l'arrivée.
+          </p>
+        </details>
+      </section>
+
+      <details class="optizzz-panel optizzz-disclosure">
+        <summary class="optizzz-panel-title">Cibles à portée (42)</summary>
+        <p class="optizzz-note">Un panneau repliable : son titre seul quand il est fermé.</p>
+      </details>
+
+      <section class="optizzz-panel">
+        <h2 class="optizzz-panel-title">Pastilles, étiquettes, barres</h2>
+        <ul class="optizzz-chips">
+          <li><button type="button" class="optizzz-chip" aria-pressed="true">Naines × 1 000</button></li>
+          <li><button type="button" class="optizzz-chip" aria-pressed="false">Naines × 5 000</button></li>
+          <li>
+            <button type="button" class="optizzz-chip">+ ALLY <span class="optizzz-muted">(voisine)</span></button>
+          </li>
+        </ul>
+        <p class="row">
+          <span class="optizzz-tag">Conseil</span> Armes 12 avant Bouclier 9
+          <span class="optizzz-shape" data-shape="square" style="width: 10px; height: 10px; background: #0a5fa8"></span>
+          <span
+            class="optizzz-shape"
+            data-shape="diamond"
+            style="width: 12px; height: 12px; background: #b88600"
+          ></span>
+          <span
+            class="optizzz-shape"
+            data-shape="triangle"
+            style="width: 12px; height: 12px; background: #c5130f"
+          ></span>
+        </p>
+        <div class="optizzz-bar" style="max-width: 300px"><span style="width: 62%"></span></div>
+        <div class="optizzz-well" style="margin-top: var(--optizzz-space-4)">
+          Un encart dans un panneau (graphique, aperçu, filtre).
+        </div>
+      </section>
+
+      <section class="game-box">
+        <b>Une boîte du jeu</b> (Reine, Ressources)
+        <div class="optizzz-panel optizzz-panel--inset">
+          <p class="optizzz-panel-title">Simulation de répartition</p>
+          Un panneau posé dans une boîte du jeu : plus clair, sans ombre.
+        </div>
+      </section>
+
+      <div class="optizzz-panel optizzz-panel--danger">
+        Impossible de charger les positions : l'export ne répond pas.
+      </div>
+    </main>
+  </body>
+</html>

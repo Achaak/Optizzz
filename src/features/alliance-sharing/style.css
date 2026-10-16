@@ -1,3 +1,4 @@
+/* Alliance sharing: a panel of the design system (docs/design-system.md); only what is its own is here. */
 :host {
   all: initial;
   display: block;
@@ -9,76 +10,20 @@
 }
 
 .alliance-sharing {
-  font-family: var(--optizzz-font);
-  font-size: var(--optizzz-font-size);
-  color: var(--optizzz-text);
-  background: var(--optizzz-surface);
-  border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius);
-  box-shadow: var(--optizzz-panel-shadow);
-  padding: 12px 16px;
-  margin: 8px auto;
   max-width: 900px;
-  box-sizing: border-box;
-}
-
-h2 {
-  font-size: 16px;
-  font-style: italic;
-  color: var(--optizzz-title);
-  font-family: var(--optizzz-title-font);
-  margin: 0 0 4px;
-}
-
-.note {
-  color: var(--optizzz-text-muted);
-  font-size: var(--optizzz-font-size-small);
-  margin: 4px 0;
-}
-
-.warning {
-  color: var(--optizzz-warning);
-  margin: 6px 0;
-}
-
-button,
-select,
-input,
-textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-button.link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--optizzz-link);
-  text-decoration: underline;
-  font-weight: inherit;
-}
-
-button.tab.active {
-  font-weight: bold;
-  background: var(--optizzz-surface-raised);
 }
 
 .choices,
-.toolbar {
+.import {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 16px;
+  gap: var(--optizzz-space-3) var(--optizzz-space-6);
   align-items: center;
-  margin: 8px 0;
+  margin: var(--optizzz-space-4) 0;
 }
 
 .preview {
-  background: var(--optizzz-surface-raised);
-  border: 1px solid var(--optizzz-border-soft);
-  padding: 6px 8px;
+  margin: var(--optizzz-space-3) 0;
   white-space: pre-wrap;
   word-break: break-all;
   font-size: var(--optizzz-font-size-small);
@@ -86,37 +31,18 @@ button.tab.active {
 
 textarea {
   width: 100%;
-  box-sizing: border-box;
+  margin: var(--optizzz-space-3) 0;
   font-family: monospace;
-  margin: 6px 0;
 }
 
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th,
-td {
-  padding: 4px 6px;
-  border-bottom: 1px solid var(--optizzz-border-soft);
+.optizzz-table :is(th, td) {
   text-align: right;
   white-space: nowrap;
 }
 
-th:first-child,
-td:first-child,
-th.left,
-td.left {
+.optizzz-table :is(th, td):first-child,
+.optizzz-table :is(th, td).left {
   text-align: left;
-}
-
-thead th {
-  background: var(--optizzz-surface-alt);
 }
 
 tr.stale td {
@@ -124,8 +50,8 @@ tr.stale td {
 }
 
 td.changed {
-  background: var(--optizzz-success-bg);
   font-weight: bold;
+  background: var(--optizzz-success-bg);
 }
 
 td.manual {
@@ -138,5 +64,5 @@ td .done {
 
 input.value {
   width: 56px;
-  padding: 1px 2px;
+  padding: 1px var(--optizzz-space-1);
 }

@@ -3,13 +3,11 @@
 import { bestSpeedUp } from "@/game/speed-up";
 import { placeInRow } from "@/utils/row-extras";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
-import { ADVICE_TAG_STYLE } from "./mount";
 import type { SpeedUpSource, TimedRow } from "./speed-up-rows";
 
 export const SPEED_UP_STYLE = `
-${ADVICE_TAG_STYLE}
-.optizzz-speed-up { margin-top: 4px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; }
-.optizzz-speed-up strong { color: var(--optizzz-success); }
+.optizzz-speed-up { margin-top: var(--optizzz-space-2); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--optizzz-space-3); }
+.optizzz-speed-up strong { color: var(--optizzz-success-text); }
 .optizzz-speed-up-when { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }`;
 
 /** « d'Architecture 8 », « de la Salle d'analyse 4 ». */
@@ -44,7 +42,7 @@ export function mountSpeedUp(row: TimedRow, speedUp: SpeedUpSource, rowStartsAt:
   const line = doc.createElement("div");
   line.title = `Optizzz : ${text.title}. Chaque niveau de ${speedUp.name} réduit le temps de 10 %, et dure plus longtemps que le précédent ; le temps est fixé à la commande. Ce que coûte ${speedUp.name} n'est pas déduit des ressources de la ligne.`;
   const tag = doc.createElement("span");
-  tag.className = "optizzz-advice-tag";
+  tag.className = "optizzz-advice-tag optizzz-tag";
   tag.textContent = "Conseil";
   const strong = doc.createElement("strong");
   strong.textContent = text.strong;

@@ -1,81 +1,28 @@
-/* Close to the game: parchment background, olive titles, thin dark table borders. */
+/* The combat simulator's page: the design system (docs/design-system.md) on the game's parchment. */
 body {
   margin: 0;
   background: var(--optizzz-surface);
   font-family: var(--optizzz-font);
   font-size: var(--optizzz-font-size);
+  line-height: var(--optizzz-line-height);
   color: var(--optizzz-text);
 }
 
 .simulator {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 16px;
-}
-
-h1,
-h2,
-h3 {
-  color: var(--optizzz-title);
-  font-weight: normal;
-  margin: 0 0 8px;
-}
-
-h1 {
-  font-size: 22px;
-}
-
-h2 {
-  font-size: 16px;
-}
-
-h3 {
-  font-size: 14px;
-}
-
-.note {
-  color: var(--optizzz-text-muted);
-  margin: 4px 0;
-}
-
-.warning {
-  background: var(--optizzz-warning-bg);
-  border: 1px solid var(--optizzz-warning);
-  border-radius: var(--optizzz-radius);
-  padding: 6px 10px;
-  margin: 8px 0;
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin: 12px 0;
+  padding: var(--optizzz-space-6);
 }
 
 fieldset {
-  border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius);
   display: flex;
-  gap: 12px;
-}
-
-button,
-select,
-input,
-textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
+  gap: var(--optizzz-space-5);
 }
 
 .sides {
   display: grid;
   grid-template-columns: 1fr 1.6fr;
-  gap: 16px;
+  gap: var(--optizzz-space-6);
 }
 
 @media (max-width: 800px) {
@@ -86,10 +33,7 @@ button {
 
 .side,
 .results {
-  background: var(--optizzz-surface-raised);
-  border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius);
-  padding: 12px;
+  padding: var(--optizzz-space-5);
 }
 
 /* A narrow window scrolls the defender's table (3 places × 14 units) instead of overflowing. */
@@ -99,40 +43,27 @@ button {
 }
 
 .results {
-  margin-top: 16px;
+  margin-top: var(--optizzz-space-6);
 }
 
 .levels {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 12px;
-  margin-bottom: 8px;
+  gap: var(--optizzz-space-4) var(--optizzz-space-5);
+  margin-bottom: var(--optizzz-space-4);
 }
 
 .levels label {
   display: grid;
-  gap: 2px;
+  gap: var(--optizzz-space-1);
 }
 
 .levels input {
   width: 80px;
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th,
-td {
-  border: 1px solid var(--optizzz-table-border);
-  padding: 2px 6px;
-  text-align: left;
-}
-
 .army input {
   width: 90px;
-  box-sizing: border-box;
 }
 
 .results td:nth-child(n + 2) {
@@ -141,10 +72,10 @@ td {
 
 .paste {
   display: flex;
-  gap: 6px;
-  align-items: flex-start;
   flex-wrap: wrap;
-  margin-top: 8px;
+  align-items: flex-start;
+  gap: var(--optizzz-space-3);
+  margin-top: var(--optizzz-space-4);
 }
 
 .paste textarea {
@@ -152,32 +83,32 @@ td {
   min-width: 200px;
 }
 
-.paste .note {
+.paste .optizzz-note {
   flex-basis: 100%;
 }
 
 .paste-place {
   display: block;
-  margin-top: 8px;
+  margin-top: var(--optizzz-space-4);
 }
 
 .verdict {
+  font-size: var(--optizzz-font-size-value);
   font-weight: bold;
-  font-size: 14px;
 }
 
 .won h3,
 .verdict.won {
-  color: var(--optizzz-success);
+  color: var(--optizzz-success-text);
 }
 
 .lost h3,
 .verdict.lost {
-  color: var(--optizzz-danger);
+  color: var(--optizzz-danger-text);
 }
 
 .stage {
-  margin-top: 12px;
+  margin-top: var(--optizzz-space-5);
 }
 
 .reply {

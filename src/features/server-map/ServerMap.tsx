@@ -150,19 +150,19 @@ export function ServerMap({ origin, target, embedded, sharing }: Props) {
 
   if (error) {
     return (
-      <div className="optizzz-server-map server-map error">
+      <div className="optizzz-server-map server-map optizzz-panel optizzz-panel--danger">
         Impossible de charger les positions : l'export public de Fourmizzz ne répond pas. Réessayez dans quelques
         minutes.
       </div>
     );
   }
   if (!playersExport || !storedChips)
-    return <div className="optizzz-server-map server-map">Chargement des positions…</div>;
+    return <div className="optizzz-server-map server-map optizzz-panel">Chargement des positions…</div>;
 
   return (
-    <div className="optizzz-server-map server-map">
-      <h2>Carte du serveur {host.split(".")[0]?.toUpperCase()}</h2>
-      <p className="meta">
+    <div className="optizzz-server-map server-map optizzz-panel">
+      <h2 className="optizzz-panel-title">Carte du serveur {host.split(".")[0]?.toUpperCase()}</h2>
+      <p className="optizzz-note">
         {formatNumber(players.length)} joueurs · positions du {formatExportVersion(playersExport.version)}
         {!me && " · connectez-vous au jeu sur ce serveur pour vous situer sur la carte"}
       </p>
@@ -218,7 +218,7 @@ export function ServerMap({ origin, target, embedded, sharing }: Props) {
           onReferenceMe={me && reference.id !== me.id ? () => setReferenceId(null) : undefined}
         />
       ) : (
-        <p className="note">Cliquez sur un joueur de la carte pour mesurer les distances depuis lui.</p>
+        <p className="optizzz-note">Cliquez sur un joueur de la carte pour mesurer les distances depuis lui.</p>
       )}
     </div>
   );

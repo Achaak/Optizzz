@@ -74,7 +74,7 @@ function Paste({ onPaste }: { onPaste: (text: string) => string[] }) {
       >
         Remplir
       </button>
-      {unknown.length > 0 && <p className="note">Unités inconnues ignorées : {unknown.join(", ")}</p>}
+      {unknown.length > 0 && <p className="optizzz-note">Unités inconnues ignorées : {unknown.join(", ")}</p>}
     </div>
   );
 }
@@ -102,7 +102,7 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
   const fought = rows.some((row) => row.present > 0);
   return (
     <section className={stage.won ? "stage won" : "stage lost"}>
-      <h3>
+      <h3 className="optizzz-subtitle">
         {PLACE_LABELS[stage.place]} : {stage.won ? "victoire" : "défaite"}
         {fought && (
           <span className="reply">
@@ -113,7 +113,7 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
       </h3>
       {fought ? (
         <>
-          <table>
+          <table className="optizzz-table optizzz-table--grid">
             <thead>
               <tr>
                 <th>Unité</th>
@@ -135,13 +135,13 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
               ))}
             </tbody>
           </table>
-          <p className="note">
+          <p className="optizzz-note">
             Attaque {formatNumber(attack)} ; pour une riposte à 50 % : plus de {formatNumber(needed.half)}, à 30 % :
             plus de {formatNumber(needed.thirty)}, à 10 % : plus de {formatNumber(needed.ten)}.
           </p>
         </>
       ) : (
-        <p className="note">Personne à cet endroit.</p>
+        <p className="optizzz-note">Personne à cet endroit.</p>
       )}
     </section>
   );
@@ -217,25 +217,25 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
   const attackSent = total(attacker.army) > 0;
 
   return (
-    <main className="simulator">
+    <main className="simulator optizzz-simulator-page">
       <header>
-        {!embedded && <h1>Simulateur de combat</h1>}
-        <p className="note">
+        {!embedded && <h1 className="optizzz-panel-title optizzz-panel-title--large">Simulateur de combat</h1>}
+        <p className="optizzz-note">
           {server ? `Serveur ${server}` : "Aucun serveur connu : passez sur la page Armée du jeu pour pré-remplir."}
           {armyNote && ` · ${armyNote}`}
         </p>
         {levelsUnknown && (
-          <p className="warning">
+          <p className="optizzz-callout optizzz-callout--warning">
             Armes et Bouclier inconnus : passez par le Laboratoire du jeu pour qu'Optizzz les lise (comptés à 0).
           </p>
         )}
-        <p className="warning">
+        <p className="optizzz-callout optizzz-callout--warning">
           Règles non vérifiées sur un vrai combat entre joueurs (tutoriel officiel, Outiiil, Calystene) : à prendre
           comme une estimation.
         </p>
       </header>
 
-      <div className="toolbar">
+      <div className="optizzz-toolbar">
         <fieldset>
           <legend>Lieu attaqué</legend>
           {PLACES.map((place) => (
@@ -266,8 +266,8 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
       </div>
 
       <div className="sides">
-        <section className="side">
-          <h2>Attaquant{side === "attack" && server ? " (vous)" : ""}</h2>
+        <section className="side optizzz-well">
+          <h2 className="optizzz-panel-title">Attaquant{side === "attack" && server ? " (vous)" : ""}</h2>
           <Levels
             fields={[
               { label: "Armes", value: attacker.weapons, onChange: (weapons) => setAttacker({ weapons }) },
@@ -276,7 +276,7 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
               { label: "Étable à pucerons", value: attacker.aphids, onChange: (aphids) => setAttacker({ aphids }) },
             ]}
           />
-          <table className="army">
+          <table className="optizzz-table optizzz-table--grid army">
             <tbody>
               {UNITS.map((unit) => (
                 <tr key={unit.key}>
@@ -301,8 +301,8 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
           />
         </section>
 
-        <section className="side">
-          <h2>Défenseur{side === "defend" && server ? " (vous)" : ""}</h2>
+        <section className="side optizzz-well">
+          <h2 className="optizzz-panel-title">Défenseur{side === "defend" && server ? " (vous)" : ""}</h2>
           <Levels
             fields={[
               { label: "Armes", value: defender.weapons, onChange: (weapons) => setDefender({ weapons }) },
@@ -314,7 +314,7 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
               { label: "Matériaux", value: defender.materials, onChange: (materials) => setDefender({ materials }) },
             ]}
           />
-          <table className="army">
+          <table className="optizzz-table optizzz-table--grid army">
             <thead>
               <tr>
                 <th></th>
@@ -365,15 +365,15 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
         </section>
       </div>
 
-      <section className="results">
-        <h2>Résultat</h2>
+      <section className="results optizzz-well">
+        <h2 className="optizzz-panel-title">Résultat</h2>
         {outOfRange && (
-          <p className="warning">
+          <p className="optizzz-callout optizzz-callout--warning">
             Le TDC du défenseur doit être entre 50 % et 300 % de celui de l'attaquant : cette attaque est impossible.
           </p>
         )}
         {!attackSent ? (
-          <p className="note">Ajoutez des unités à l'attaquant.</p>
+          <p className="optizzz-note">Ajoutez des unités à l'attaquant.</p>
         ) : (
           <>
             <p className={result.fought.won ? "verdict won" : "verdict lost"}>

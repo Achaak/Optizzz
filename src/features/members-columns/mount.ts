@@ -17,11 +17,11 @@ export const MEMBERS_COLUMNS_STYLE = `
 th.${COLUMN_CLASS} a { cursor: pointer; }
 #tabMembresAlliance .optizzz-members-trips { text-align: right; white-space: nowrap; }
 #tabMembresAlliance .optizzz-members-roles { text-align: left; }
-#tabMembresAlliance .optizzz-members-none { color: var(--optizzz-text-muted); font-style: italic; font-size: 0.9em; }
+#tabMembresAlliance .optizzz-members-none { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
 #tabMembresAlliance tr.${ME_CLASS} > td { background-color: var(--optizzz-surface-tint); }
 #tabMembresAlliance tr.${ME_CLASS} > td:first-child { box-shadow: inset 3px 0 0 var(--optizzz-title); }
-.optizzz-members-role { display: inline-flex; align-items: center; gap: 6px; padding: 1px 9px 1px 7px;
-  font-size: 12px; font-weight: 600; white-space: nowrap; border-radius: 999px;
+.optizzz-members-role { display: inline-flex; align-items: center; gap: var(--optizzz-space-3); padding: 1px 9px 1px 7px;
+  font-size: var(--optizzz-font-size-small); font-weight: 600; white-space: nowrap; border-radius: var(--optizzz-radius-pill);
   background: color-mix(in srgb, var(--role-color) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--role-color) 45%, transparent); }
 .optizzz-members-role::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--role-color); }

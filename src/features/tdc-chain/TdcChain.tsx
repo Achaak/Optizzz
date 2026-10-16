@@ -198,12 +198,16 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
   const slots = schedule(arrival, travels);
   const usedPairs = new Set(hits.map((hit) => `${String(hit.attackerId)}-${String(hit.targetId)}`));
 
-  if (error) return <div className="tdc-chain error">Impossible de charger les joueurs : {error}</div>;
+  if (error)
+    return (
+      <div className="tdc-chain optizzz-panel optizzz-panel--danger">Impossible de charger les joueurs : {error}</div>
+    );
   const unassigned = storedRoles ? members.filter((m) => !(m.id in storedRoles)) : [];
-  if (!playersExport || !settings || !levels) return <div className="tdc-chain">Chargement de l'alliance…</div>;
+  if (!playersExport || !settings || !levels)
+    return <div className="tdc-chain optizzz-panel">Chargement de l'alliance…</div>;
   if (!me || !allianceTag) {
     return (
-      <div className="tdc-chain">
+      <div className="tdc-chain optizzz-panel">
         Votre alliance n'apparaît pas dans l'export du {formatExportVersion(playersExport.version)}. Si vous venez de la
         rejoindre, elle apparaîtra à la prochaine mise à jour de l'export, dans l'heure.
       </div>
@@ -272,21 +276,21 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
   };
 
   return (
-    <div className="tdc-chain">
-      <h2>Chaîne de TDC {allianceTag}</h2>
-      <p className="meta">
+    <div className="tdc-chain optizzz-panel">
+      <h2 className="optizzz-panel-title">Chaîne de TDC {allianceTag}</h2>
+      <p className="optizzz-note">
         {chainMembers.length} membres dans la chaîne · positions du {formatExportVersion(playersExport.version)} · TDC{" "}
         {liveHuntingFields.size > 0 ? "en direct (page Membres)" : "de l'export"} · membres en vacances ou bannis exclus
       </p>
-      <p className="rules">
+      <p className="rules optizzz-callout">
         Règles supposées : une attaque gagnée prend 20 % du TDC de la cible, 1 cm² par fourmi au plus ; la cible doit
         rester entre 50 % (+1 % de marge) et 300 % du TDC de l'attaquant à chaque arrivée ; Vitesse d'attaque + 1
         attaques en route à la fois. On suppose que <b>personne ne défend son Terrain de Chasse</b>.
       </p>
 
       <section>
-        <h3>Rôles</h3>
-        <div className="toolbar">
+        <h3 className="optizzz-subtitle">Rôles</h3>
+        <div className="optizzz-toolbar">
           <button
             type="button"
             onClick={() => updateSettings((s) => ({ ...s, roles: Object.fromEntries(proposeRoles(fields, MARGIN)) }))}
@@ -294,16 +298,18 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
           >
             Proposer des rôles
           </button>
-          {!settings.roles && <span className="note">Rôles proposés d'après le TDC : modifiez-les ou gardez-les.</span>}
+          {!settings.roles && (
+            <span className="optizzz-note">Rôles proposés d'après le TDC : modifiez-les ou gardez-les.</span>
+          )}
         </div>
         {unassigned.length > 0 && (
-          <p className="warning">
+          <p className="optizzz-callout optizzz-callout--warning">
             {unassigned.length === 1 ? "1 membre n'a" : `${String(unassigned.length)} membres n'ont`} pas encore de rôle
             ({unassigned.map((m) => m.pseudo).join(", ")}) : hors chaîne tant que vous ne le choisissez pas.
           </p>
         )}
-        <div className="table-wrap">
-          <table className="roles">
+        <div className="optizzz-scroll">
+          <table className="optizzz-table roles">
             <thead>
               <tr>
                 <th>Membre</th>
@@ -394,13 +400,13 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
       </section>
 
       <section>
-        <h3>Qui peut prendre à qui</h3>
-        <p className="note">
+        <h3 className="optizzz-subtitle">Qui peut prendre à qui</h3>
+        <p className="optizzz-note">
           Ligne : l'attaquant ; colonne : la cible. Chaque case donne ce qu'une attaque gagnée prend (20 % de la cible)
           ; vide hors de portée. En couleur : les floods du plan.
         </p>
-        <div className="matrix">
-          <table>
+        <div className="matrix optizzz-scroll">
+          <table className="optizzz-table optizzz-table--dense">
             <thead>
               <tr>
                 <th />
@@ -418,7 +424,8 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                 return (
                   <tr key={attacker.id}>
                     <th>
-                      {pseudo(attacker.id)} <span className="note">{roleLabel(roles.get(attacker.id) ?? OUT)}</span>
+                      {pseudo(attacker.id)}{" "}
+                      <span className="optizzz-note">{roleLabel(roles.get(attacker.id) ?? OUT)}</span>
                     </th>
                     {row.map((take, j) => {
                       const target = ordered[j];
@@ -438,8 +445,8 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
       </section>
 
       <section>
-        <h3>Ordre de passage</h3>
-        <div className="toolbar">
+        <h3 className="optizzz-subtitle">Ordre de passage</h3>
+        <div className="optizzz-toolbar">
           <label>
             <input type="radio" checked={mode === "chain"} onChange={() => setMode("chain")} /> Toute la chaîne
           </label>
@@ -448,12 +455,12 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
           </label>
         </div>
         {mode === "chain" ? (
-          <p className="note">
+          <p className="optizzz-note">
             Le TDC de chaque chasseur au-dessus de son « TDC à garder » monte vers le plus petit grenier qu'il peut
             atteindre, par les passeurs. Les passeurs finissent comme ils ont commencé.
           </p>
         ) : (
-          <div className="toolbar">
+          <div className="optizzz-toolbar">
             <label>
               De{" "}
               <select
@@ -500,20 +507,20 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
         )}
 
         {plan.gaps.map((gap) => (
-          <p key={gap.from} className="error">
+          <p key={gap.from} className="optizzz-callout optizzz-callout--danger">
             {gapText(gap)}
           </p>
         ))}
 
         {hits.length === 0 ? (
-          <p className="note">
+          <p className="optizzz-note">
             {mode === "chain"
               ? "Rien à faire monter : saisissez le « TDC à garder » des chasseurs."
               : "Choisissez qui donne et qui reçoit."}
           </p>
         ) : (
           <>
-            <div className="toolbar">
+            <div className="optizzz-toolbar">
               <label>
                 Première arrivée :{" "}
                 <input
@@ -525,7 +532,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
               {(firstArrival ?? anyLate) && (
                 <button
                   type="button"
-                  className="link"
+                  className="optizzz-button-link"
                   onClick={() => {
                     setFirstArrival(null);
                     setPlannedAt(new Date());
@@ -534,13 +541,13 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                   au plus tôt
                 </button>
               )}
-              <span className="note">
+              <span className="optizzz-note">
                 Une arrivée par minute, dans l'ordre des N°. Calculée à l'ouverture de la vue : elle ne bouge plus
                 ensuite, et deux membres ne la retrouvent que s'ils fixent la même heure ici.
               </span>
             </div>
             <PlanSummary transfers={plan.transfers} pseudo={pseudo} />
-            <div className="toolbar">
+            <div className="optizzz-toolbar">
               <label>
                 <input type="radio" checked={sortBy === "departure"} onChange={() => setSortBy("departure")} /> Trier
                 par départ
@@ -549,8 +556,8 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                 <input type="radio" checked={sortBy === "arrival"} onChange={() => setSortBy("arrival")} /> par arrivée
               </label>
             </div>
-            <div className="table-wrap">
-              <table className="plan">
+            <div className="optizzz-scroll">
+              <table className="optizzz-table plan">
                 <thead>
                   <tr>
                     <th title="Ordre d'arrivée : le plan tient si les attaques arrivent dans cet ordre">N°</th>
@@ -607,11 +614,11 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                 </tbody>
               </table>
             </div>
-            <div className="toolbar">
+            <div className="optizzz-toolbar">
               <button type="button" onClick={() => void copyPlan()}>
                 Copier le plan
               </button>
-              {message && <span className="note">{message}</span>}
+              {message && <span className="optizzz-note">{message}</span>}
             </div>
             {copyText && <textarea readOnly rows={Math.min(12, launches.length + 2)} value={copyText} />}
           </>
@@ -675,9 +682,9 @@ function RoleSharing({
   };
 
   return (
-    <details className="sharing">
+    <details className="sharing optizzz-disclosure">
       <summary>Partager les rôles</summary>
-      <p className="note">
+      <p className="optizzz-note">
         Format : une ligne « Pseudo: rôle » par membre (Chasseur, Passeur 1, Passeur 2…, Grenier, Hors chaîne). Avec les
         mêmes rôles, chaque membre retrouve le même plan.
       </p>
@@ -695,7 +702,7 @@ function RoleSharing({
           Importer
         </button>
       </div>
-      {message && <p className="note">{message}</p>}
+      {message && <p className="optizzz-note">{message}</p>}
     </details>
   );
 }
@@ -713,14 +720,14 @@ function RoleBubbles({
   onReset: () => void;
 }) {
   return (
-    <details className="role-bubbles">
+    <details className="role-bubbles optizzz-disclosure">
       <summary>Couleurs des rôles sur la Carte</summary>
-      <p className="note">
+      <p className="optizzz-note">
         Sur la Carte, cochez « Couleurs des rôles de la chaîne » pour voir chaque membre avec la bulle de son rôle. La
         forme suit le type de rôle (grenier carré, passeur losange, chasseur rond, hors chaîne triangle) : les rôles
         restent reconnaissables sans distinguer les couleurs.
       </p>
-      <table>
+      <table className="optizzz-table">
         <thead>
           <tr>
             <th>Rôle</th>
@@ -767,7 +774,7 @@ function RoleBubbles({
                 </td>
                 <td className="preview">
                   <span
-                    className="bubble"
+                    className="optizzz-shape"
                     data-shape={bubble.shape}
                     style={{ background: bubble.color, width: bubble.px, height: bubble.px }}
                   />

@@ -10,8 +10,8 @@ const style = document.createElement("style");
 style.textContent = `
 ${THEME_CSS}
 ${PAGE_BASE_CSS}
-.popup { width: 340px; padding-top: 8px; }
-.tab-panel { padding: 12px 16px; }
+.popup { width: 340px; padding-top: var(--optizzz-space-4); }
+.tab-panel { padding: var(--optizzz-space-5) var(--optizzz-space-6); }
 ${TABS_STYLE}`;
 document.head.append(style);
 
@@ -58,6 +58,6 @@ const tabs = settingsTabs(
 );
 
 const popup = document.createElement("main");
-popup.className = "popup";
+popup.className = "popup optizzz-popup";
 popup.append(buildTabs(document, tabs));
 document.body.append(popup);

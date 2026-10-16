@@ -1,7 +1,6 @@
 /*
- * The look of the alliance map (src/features/alliance-map/style.css): a parchment panel, an olive-red italic title,
- * small muted notes, the chart in a raised box, tables ruled by rows. Buttons and fields take the theme's controls
- * (`optizzz-controls` in theme.css) through the root's `optizzz-` class.
+ * The server map: a panel of the design system (docs/design-system.md, src/theme/theme.css), as the alliance map.
+ * Buttons and fields take the theme's controls through the root's `optizzz-` class. Only what is its own is here.
  */
 body {
   margin: 0;
@@ -12,56 +11,15 @@ body {
 }
 
 .server-map {
-  background: var(--optizzz-surface);
-  border: 1px solid var(--optizzz-border);
-  border-radius: var(--optizzz-radius);
-  box-shadow: var(--optizzz-panel-shadow);
-  padding: 12px 16px;
-  margin: 16px auto;
   max-width: 1060px;
-  box-sizing: border-box;
+  margin: var(--optizzz-space-6) auto;
 }
 
 /* Framed in the in-game dialog: the dialog is the panel. */
 .embedded .server-map {
+  margin: 0 auto;
   border: none;
   box-shadow: none;
-  margin: 0 auto;
-}
-
-h2 {
-  font-size: 16px;
-  font-style: italic;
-  color: var(--optizzz-title);
-  font-family: var(--optizzz-title-font);
-  font-weight: normal;
-  margin: 0 0 4px;
-}
-
-.meta,
-.note {
-  color: var(--optizzz-text-muted);
-  font-size: 11px;
-  margin: 4px 0;
-}
-
-.error {
-  color: var(--optizzz-danger);
-}
-
-button,
-input {
-  font: inherit;
-}
-
-button.link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--optizzz-link);
-  text-decoration: underline;
-  font-weight: inherit;
-  text-align: left;
 }
 
 a {
@@ -74,7 +32,7 @@ a {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--optizzz-space-4);
   margin: 10px 0;
 }
 
@@ -95,7 +53,7 @@ a {
   left: 0;
   right: 0;
   margin: 0;
-  padding: 4px 0;
+  padding: var(--optizzz-space-2) 0;
   list-style: none;
   background: var(--optizzz-surface-raised);
   border: 1px solid var(--optizzz-border);
@@ -106,49 +64,35 @@ a {
 .suggestions li {
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  padding: 3px 8px;
-  cursor: pointer;
+  gap: var(--optizzz-space-3);
+  padding: 3px var(--optizzz-space-4);
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .suggestions li[aria-selected="true"] {
   background: var(--optizzz-surface-alt);
 }
 
+.suggestions :is(.detail, .kind) {
+  font-size: var(--optizzz-font-size-small);
+  color: var(--optizzz-text-muted);
+}
+
 .suggestions .detail {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--optizzz-text-muted);
-  font-size: 11px;
-}
-
-.suggestions .kind {
-  color: var(--optizzz-text-muted);
-  font-size: 11px;
-  font-style: italic;
 }
 
 .chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
   flex-basis: 100%;
+  margin: 0;
 }
 
-/* As the compared alliances of the statistics (src/features/alliance-stats/style.css). */
+/* A chip carries its colour, its filter and a remove button: tighter on the right. */
 .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 1px 2px 1px 8px;
-  background: var(--optizzz-surface-raised);
-  border: 1px solid var(--optizzz-border-soft);
-  border-radius: var(--optizzz-radius);
+  padding-right: var(--optizzz-space-1);
 }
 
 .swatch {
@@ -163,37 +107,38 @@ a {
 .swatch input {
   position: absolute;
   inset: 0;
-  opacity: 0;
   width: 100%;
   height: 100%;
   padding: 0;
   border: none;
+  opacity: 0;
   cursor: pointer;
 }
 
 .chip .remove {
   padding: 0 5px;
-  background: none;
-  border: none;
-  color: var(--optizzz-text-muted);
   font-size: 14px;
   line-height: 1;
+  color: var(--optizzz-text-muted);
+  background: none;
+  border: none;
 }
 
 .chip .remove:hover {
-  color: var(--optizzz-danger);
+  color: var(--optizzz-danger-text);
 }
 
 /* A chip's filter: its summary in the chip, its bounds below the chips. */
 .chip .filter-summary {
+  font-size: var(--optizzz-font-size-small);
   color: var(--optizzz-text-muted);
-  font-size: 11px;
 }
 
 .chip .filter-toggle {
-  padding: 1px 6px;
-  font-size: 11px;
+  padding: 0 var(--optizzz-space-3);
+  font-size: var(--optizzz-font-size-small);
   line-height: 1.4;
+  border-radius: var(--optizzz-radius-pill);
 }
 
 .chip .filter-toggle.active {
@@ -203,15 +148,12 @@ a {
 .chip-filter {
   flex-basis: 100%;
   margin: 0;
-  padding: 6px 10px 8px;
-  border: 1px solid var(--optizzz-border-soft);
-  border-radius: var(--optizzz-radius);
-  background: var(--optizzz-surface-raised);
+  padding: var(--optizzz-space-3) 10px var(--optizzz-space-4);
 }
 
 .chip-filter legend {
-  padding: 0 4px;
-  font-weight: bold;
+  float: none;
+  color: var(--optizzz-text);
 }
 
 /* One row per criterion: name, min « à » max, then « à ma portée » for the TDC. */
@@ -219,12 +161,11 @@ a {
   display: grid;
   grid-template-columns: max-content 7em max-content 7em max-content;
   align-items: center;
-  gap: 4px 6px;
+  gap: var(--optizzz-space-2) var(--optizzz-space-3);
 }
 
 .chip-filter input {
   width: 100%;
-  box-sizing: border-box;
 }
 
 .chip-filter .to {
@@ -234,36 +175,29 @@ a {
 .chip-filter .footer {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
+  gap: var(--optizzz-space-3);
+  margin-top: var(--optizzz-space-4);
 }
 
-.chip-filter .footer .note {
+.chip-filter .footer .optizzz-note {
   flex: 1;
   margin: 0;
 }
 
 /* Chart, as on the alliance map. */
-.chart {
-  background: var(--optizzz-surface-raised);
-  border: 1px solid var(--optizzz-border-soft);
-  border-radius: var(--optizzz-radius);
-  padding: 6px;
-}
-
 .chart-toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: var(--optizzz-space-4);
 }
 
 .chart-toolbar .display {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 14px;
+  gap: var(--optizzz-space-2) 14px;
   margin: 0 auto 0 0;
   padding: 0;
   border: none;
@@ -273,69 +207,44 @@ a {
 .chart-toolbar .display legend {
   float: left;
   padding: 0;
-  font-weight: 600;
-  color: var(--optizzz-text-muted);
 }
 
 .zoom-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--optizzz-space-4);
 }
 
-.chart .hint {
-  margin: 4px 0 0;
-  color: var(--optizzz-text-muted);
-  font-size: 11px;
+.chart > .optizzz-note {
+  margin: var(--optizzz-space-2) 0 0;
 }
 
 .display label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--optizzz-space-2);
   white-space: nowrap;
 }
 
 /* Table, as the alliance map's: rows ruled, numbers to the right. */
 .player-table {
-  margin-top: 12px;
+  margin-top: var(--optizzz-space-5);
 }
 
-.player-table .scroll {
+.player-table .optizzz-scroll {
   max-height: 360px;
   overflow: auto;
   border: 1px solid var(--optizzz-border-soft);
   border-radius: var(--optizzz-radius);
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th,
-td {
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--optizzz-border-soft);
-  text-align: left;
+.optizzz-table :is(th, td) {
   white-space: nowrap;
 }
 
-.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-thead th {
+.optizzz-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--optizzz-surface-alt);
-}
-
-thead th button.link {
-  color: inherit;
-  text-decoration: none;
-  font-weight: 600;
 }
 
 tbody tr:hover td {
@@ -352,10 +261,10 @@ tbody tr:hover td {
 
 button.icon {
   display: inline-flex;
-  padding: 2px;
+  padding: var(--optizzz-space-1);
+  color: var(--optizzz-link);
   background: none;
   border: none;
-  color: var(--optizzz-link);
 }
 
 .estimated {
@@ -370,7 +279,7 @@ button.icon {
 @media (pointer: coarse) {
   .chip .filter-toggle {
     min-height: 28px;
-    padding: 2px 10px;
+    padding: var(--optizzz-space-1) 10px;
   }
 
   .hint-mouse {
@@ -421,8 +330,8 @@ button.icon {
     display: none;
   }
 
-  table {
-    font-size: 12px;
+  .optizzz-table {
+    font-size: var(--optizzz-font-size-small);
   }
 
   /* Long pseudos are cut: the whole name stays in the tooltip of the map and on the profile. */
@@ -432,8 +341,7 @@ button.icon {
     text-overflow: ellipsis;
   }
 
-  th,
-  td {
-    padding: 4px;
+  .optizzz-table :is(th, td) {
+    padding: var(--optizzz-space-2);
   }
 }

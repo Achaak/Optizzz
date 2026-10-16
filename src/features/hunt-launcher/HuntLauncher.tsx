@@ -206,11 +206,11 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
       aria-expanded={settings.open}
       onClick={() => updateSettings((s) => ({ ...s, open: !s.open }))}
     >
-      <span className="title">🐜 Lanceur de chasse</span>
+      <span className="title optizzz-panel-title">🐜 Lanceur de chasse</span>
       <span className="summary">{summaryText(plan, now, computing)}</span>
     </button>
   );
-  if (!settings.open) return <div className="hunt-launcher closed">{header}</div>;
+  if (!settings.open) return <div className="hunt-launcher optizzz-panel closed">{header}</div>;
 
   const ongoingList = ongoing.length > 0 && (
     <div className="ongoing">
@@ -221,7 +221,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
             +{formatNumber(hunt.fieldGain)} cm² · retour dans{" "}
             {formatDuration(Math.max(0, hunt.returnsAt.getTime() - now.getTime()))} (
             {formatEndTime(hunt.returnsAt, now)})
-            {hunt.troops && <span className="muted"> · {unitsText(hunt.troops)}</span>}
+            {hunt.troops && <span className="optizzz-muted"> · {unitsText(hunt.troops)}</span>}
           </li>
         ))}
       </ul>
@@ -230,9 +230,9 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
 
   if (form === "error" || levelsError) {
     return (
-      <div className="hunt-launcher">
+      <div className="hunt-launcher optizzz-panel">
         {header}
-        <p className="error">
+        <p className="optizzz-callout optizzz-callout--danger">
           {levelsError ?? "Impossible de lire le formulaire de chasse (AcquerirTerrain.php)."} Aucune chasse n'est
           calculée.
         </p>
@@ -242,18 +242,18 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   }
   if (form === "none") {
     return (
-      <div className="hunt-launcher">
+      <div className="hunt-launcher optizzz-panel">
         {header}
-        <p className="note">Aucune unité à envoyer : votre armée est en chasse, ou vous n'en avez pas.</p>
+        <p className="optizzz-note">Aucune unité à envoyer : votre armée est en chasse, ou vous n'en avez pas.</p>
         {ongoingList}
       </div>
     );
   }
   if (!form || !levels || !input) {
     return (
-      <div className="hunt-launcher">
+      <div className="hunt-launcher optizzz-panel">
         {header}
-        <p className="note">Lecture de votre armée et de vos niveaux…</p>
+        <p className="optizzz-note">Lecture de votre armée et de vos niveaux…</p>
       </div>
     );
   }
@@ -269,7 +269,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   const objective = OBJECTIVES.find((o) => o.kind === settings.objective);
 
   return (
-    <div className="hunt-launcher">
+    <div className="hunt-launcher optizzz-panel">
       {header}
 
       <div className="inputs">
@@ -316,7 +316,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
               </select>
             </label>
           )}
-          <span className="note">{objective?.hint}</span>
+          <span className="optizzz-note">{objective?.hint}</span>
         </fieldset>
 
         <fieldset>
@@ -335,11 +335,11 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
             cm²
           </label>
           {field !== currentField + ongoingGain && (
-            <button type="button" className="link" onClick={() => setField(currentField + ongoingGain)}>
+            <button type="button" className="optizzz-button-link" onClick={() => setField(currentField + ongoingGain)}>
               revenir à {formatNumber(currentField + ongoingGain)}
             </button>
           )}
-          <span className="note">
+          <span className="optizzz-note">
             Armes {levels.weapons} · Bouclier {levels.shield} · Vitesse de chasse {levels.huntSpeed} · Étable à
             cochenilles {levels.cochineal} · {input.slots} créneau{input.slots > 1 ? "x" : ""} libre
             {input.slots > 1 ? "s" : ""}
@@ -348,7 +348,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
 
         <fieldset>
           <legend>Réserve (unités gardées à la maison)</legend>
-          {unitKeys.length === 0 && <span className="note">Aucune unité disponible.</span>}
+          {unitKeys.length === 0 && <span className="optizzz-note">Aucune unité disponible.</span>}
           {unitKeys.map((key) => (
             <label key={key} title={UNITS.find((u) => u.key === key)?.name}>
               {unitLabel(key)}{" "}
@@ -361,11 +361,11 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
                   updateSettings((s) => ({ ...s, reserve: { ...s.reserve, [key]: count ?? 0 } }));
                 }}
               />
-              <span className="muted"> / {formatNumber(form.available[key] ?? 0)}</span>
+              <span className="optizzz-muted"> / {formatNumber(form.available[key] ?? 0)}</span>
             </label>
           ))}
           {probes.length > 0 && unitKeys.length > 0 && (
-            <span className="note">
+            <span className="optizzz-note">
               et {probes.length > 1 ? `${String(probes.length)} sondes` : "1 sonde"} (
               {probes.map((place) => PLACE_NAMES[place].replace(/^(le|la) /, "")).join(", ")}), remises en place après
               le lancement
@@ -374,14 +374,16 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
         </fieldset>
       </div>
 
-      {input.slots === 0 && <p className="warning">Tous vos créneaux de chasse sont pris.</p>}
-      {computing && <p className="note">Calcul…</p>}
+      {input.slots === 0 && (
+        <p className="optizzz-callout optizzz-callout--warning">Tous vos créneaux de chasse sont pris.</p>
+      )}
+      {computing && <p className="optizzz-note">Calcul…</p>}
       {frozen && (
-        <p className="warning">
+        <p className="optizzz-callout optizzz-callout--warning">
           Des chasses sont parties : ce plan n'est plus recalculé, l'armée disponible a changé.{" "}
           <button
             type="button"
-            className="link"
+            className="optizzz-button-link"
             onClick={() => {
               location.reload();
             }}
@@ -393,7 +395,9 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
       )}
 
       {answer?.hunts.length === 0 && input.slots > 0 && (
-        <p className="warning">Aucune chasse possible avec ces unités et cet objectif.</p>
+        <p className="optizzz-callout optizzz-callout--warning">
+          Aucune chasse possible avec ces unités et cet objectif.
+        </p>
       )}
 
       {plan && plan.hunts.length > 0 && (
@@ -409,10 +413,10 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
             onEdit={editHunt}
             onLaunch={(i) => void launch(i, i + 1)}
           />
-          <div className="actions">
+          <div className="actions optizzz-toolbar">
             <button
               type="button"
-              className="primary"
+              className="optizzz-button-primary"
               disabled={busy || computing || pendingCount === 0}
               onClick={() => void launch(Math.max(0, firstPending), plan.hunts.length)}
             >
@@ -421,7 +425,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
                 : `Lancer les ${String(pendingCount)} chasses restantes`}
             </button>
             {override && !frozen && (
-              <button type="button" className="link" onClick={() => setOverride(null)}>
+              <button type="button" className="optizzz-button-link" onClick={() => setOverride(null)}>
                 revenir au plan conseillé
               </button>
             )}
@@ -431,15 +435,17 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
             {formatNumber(plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.food, 0))} de nourriture rapportée
           </p>
           {emptiesGarrison && (
-            <p className="warning">Ce plan envoie toute votre armée : rien ne reste pour défendre la fourmilière.</p>
+            <p className="optizzz-callout optizzz-callout--warning">
+              Ce plan envoie toute votre armée : rien ne reste pour défendre la fourmilière.
+            </p>
           )}
-          <p className="note">{stepNotice(field, plan.totalAmount)}</p>
+          <p className="optizzz-note">{stepNotice(field, plan.totalAmount)}</p>
 
           {extras && extras.curve.length > 1 && !frozen && (
             <LossCurve curve={extras.curve} amount={plan.hunts[0]?.amount ?? 0} onPick={pickAmount} />
           )}
           {override && extras && (
-            <p className="note">
+            <p className="optizzz-note">
               La courbe et les conseils ci-dessous portent sur le plan conseillé, à surfaces égales.
             </p>
           )}
@@ -456,7 +462,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
           )}
 
           {answer && extras?.waiting && waiting && (
-            <p className="note">
+            <p className="optizzz-note">
               En attendant le retour des chasses en cours ({formatDuration(waiting.waitSeconds * 1000)}) :{" "}
               {huntsText(extras.waiting.plan)}, soit {formatNumber(extras.waiting.fieldPerHour)} cm²/h attente comprise,
               contre {formatNumber(answer.fieldPerHour)} cm²/h en lançant maintenant.
@@ -467,7 +473,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
 
       {ongoingList}
 
-      <p className="meta">
+      <p className="optizzz-note">
         Pertes simulées sur 10 000 tirages de proies, une unité blessée à plus de la moitié de sa vie comptant comme
         perdue. Colonne Calystene : tables de pertes du simulateur de chasse de Calystene.
       </p>

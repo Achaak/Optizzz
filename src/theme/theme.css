@@ -1,20 +1,47 @@
 /*
- * Optizzz's design tokens: the game's colours (parchment, brown borders, red titles, olive menus), retouched as the
- * game itself is (src/features/game-look/style.css). Defined on :root: on the game's pages, a Shadow DOM inherits
- * them, and WXT rewrites `:root` into `:host` in a tool's own CSS anyway. On the extension's pages, :root is the page.
+ * Optizzz's design system (docs/design-system.md): the tokens below, the native controls restyled, then the shared
+ * components (`optizzz-panel`, `optizzz-note`, `optizzz-table`…). The game's colours (parchment, brown borders, red
+ * titles, olive menus), retouched as the game itself is (src/features/game-look/style.css). Defined on :root: on the
+ * game's pages, a Shadow DOM inherits them, and WXT rewrites `:root` into `:host` in a tool's own CSS anyway. On the
+ * extension's pages, :root is the page.
  */
 :root {
-  /* Text */
+  /* Text: one sans-serif, five sizes. The serif is only for titles. */
   --optizzz-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --optizzz-font-size: 13px;
+  --optizzz-title-font: Georgia, "Palatino Linotype", Palatino, "Book Antiqua", serif;
+  /* Dense data only: a matrix, a chart's legend */
+  --optizzz-font-size-xs: 11px;
+  /* Notes, labels, secondary figures */
   --optizzz-font-size-small: 12px;
-  --optizzz-text: #000;
-  --optizzz-text-muted: #6b5d3a;
+  --optizzz-font-size: 13px;
+  /* A key figure (a stat tile) */
+  --optizzz-font-size-value: 15px;
+  /* A panel's title; a dialog's or a page's */
+  --optizzz-font-size-title: 16px;
+  --optizzz-font-size-title-large: 18px;
+  --optizzz-line-height: 1.4;
+  --optizzz-text: #241c0c;
+  /* 5:1 on the parchment (AA) */
+  --optizzz-text-muted: #5a4c2e;
   --optizzz-title: #b3120e;
   --optizzz-link: #1d4f85;
   /* The game's dark menus (top bar, left column) */
   --optizzz-menu-text: rgb(211, 217, 184);
   --optizzz-menu-bg: #3c3e31;
+
+  /* Spacing: every margin, padding and gap is one of these */
+  --optizzz-space-1: 2px;
+  --optizzz-space-2: 4px;
+  --optizzz-space-3: 6px;
+  --optizzz-space-4: 8px;
+  --optizzz-space-5: 12px;
+  --optizzz-space-6: 16px;
+
+  /* Corners: boxes, controls, small marks (tags, bars, tabs), pills (chips) */
+  --optizzz-radius: 8px;
+  --optizzz-radius-control: 6px;
+  --optizzz-radius-small: 4px;
+  --optizzz-radius-pill: 999px;
 
   /* Boxes, the game's parchment (table.simulateur, .boite_membre) */
   --optizzz-surface: #dccb94;
@@ -28,17 +55,25 @@
   /* Workers with no work, in the split bar */
   --optizzz-idle: #bbb;
   --optizzz-idle-alt: #eee;
-  --optizzz-radius: 8px;
   --optizzz-shadow: 0 6px 24px rgba(40, 30, 5, 0.3);
+  /* Boxes, slightly raised */
+  --optizzz-panel-shadow: 0 1px 2px rgba(60, 45, 10, 0.12), 0 3px 10px rgba(60, 45, 10, 0.08);
   --optizzz-overlay: rgba(0, 0, 0, 0.5);
+  /* The chosen one of a group (segmented control, chip): filled, and in bold */
+  --optizzz-selected: #5c4a22;
+  --optizzz-selected-text: #fff;
 
-  /* States: the same red and orange as the urgency scale (src/utils/urgency.ts) */
+  /* States: the same red and orange as the urgency scale (src/utils/urgency.ts), for borders, bars and tints */
   --optizzz-danger: #cc0000;
   --optizzz-warning: #c76b00;
   --optizzz-success: #2f6b1a;
   --optizzz-danger-bg: rgba(204, 0, 0, 0.15);
   --optizzz-warning-bg: rgba(199, 107, 0, 0.18);
   --optizzz-success-bg: rgba(47, 107, 26, 0.15);
+  /* …and darker for text, 4.5:1 on the parchment and on their tint (AA) */
+  --optizzz-danger-text: #960000;
+  --optizzz-warning-text: #7e3e00;
+  --optizzz-success-text: #1f5214;
   --optizzz-war-bg: rgba(200, 40, 40, 0.25);
   --optizzz-pact-bg: rgba(40, 90, 200, 0.2);
 
@@ -53,10 +88,6 @@
   --optizzz-food: rgb(0, 120, 0);
   --optizzz-materials: rgb(139, 90, 43);
 
-  /* Titles of Optizzz's boxes: red and italic as the game's, in a serif */
-  --optizzz-title-font: Georgia, "Palatino Linotype", Palatino, "Book Antiqua", serif;
-  /* Boxes, slightly raised */
-  --optizzz-panel-shadow: 0 1px 2px rgba(60, 45, 10, 0.12), 0 3px 10px rgba(60, 45, 10, 0.08);
   /* Fields, table headers, focus (the controls below) */
   --optizzz-field-bg: #fbf6e6;
   --optizzz-head-bg: #c6ab62;
@@ -77,7 +108,7 @@
     background: linear-gradient(180deg, var(--optizzz-surface-raised), var(--optizzz-surface));
     border: 1px solid var(--optizzz-border);
     border-bottom-color: rgba(60, 45, 10, 0.75);
-    border-radius: 6px;
+    border-radius: var(--optizzz-radius-control);
     cursor: pointer;
   }
 
@@ -101,7 +132,7 @@
     color: var(--optizzz-text);
     background: var(--optizzz-field-bg);
     border: 1px solid var(--optizzz-border);
-    border-radius: 5px;
+    border-radius: var(--optizzz-radius-control);
     box-shadow: inset 0 1px 2px rgba(60, 45, 10, 0.12);
   }
 
@@ -118,13 +149,15 @@
 
   :host fieldset,
   body [class*="optizzz-"] fieldset {
+    margin: 0;
+    padding: var(--optizzz-space-2) var(--optizzz-space-4) var(--optizzz-space-4);
     border: 1px solid var(--optizzz-border-soft);
-    border-radius: 8px;
+    border-radius: var(--optizzz-radius);
   }
 
   :host legend,
   body [class*="optizzz-"] legend {
-    padding: 0 4px;
+    padding: 0 var(--optizzz-space-2);
     font-weight: 600;
     color: var(--optizzz-text-muted);
   }
@@ -147,5 +180,492 @@
   :host summary,
   body [class*="optizzz-"] summary {
     cursor: pointer;
+  }
+}
+
+/*
+ * Shared components (docs/design-system.md), the same in a Shadow DOM, on the game's pages and on the extension's.
+ * Unlayered, so that the game's own rules do not beat them; a tool's own rule, loaded later, still wins a tie.
+ */
+
+/* ---------- Panel: a box of Optizzz, raised over the page ---------- */
+.optizzz-panel {
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: var(--optizzz-space-4) auto;
+  padding: 10px 14px;
+  text-align: left;
+  font-family: var(--optizzz-font);
+  font-size: var(--optizzz-font-size);
+  line-height: var(--optizzz-line-height);
+  color: var(--optizzz-text);
+  background: var(--optizzz-surface);
+  border: 1px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius);
+  box-shadow: var(--optizzz-panel-shadow);
+}
+
+/* Inside a game box (a row of Reine, Ressources' form): lighter, flat */
+.optizzz-panel--inset {
+  margin: var(--optizzz-space-4) 0;
+  padding: var(--optizzz-space-3) 10px;
+  background: var(--optizzz-surface-tint);
+  border-color: var(--optizzz-border-soft);
+  box-shadow: none;
+}
+
+/* A panel that could not be drawn: says why, framed as an error */
+.optizzz-panel--danger {
+  border-left: 3px solid var(--optizzz-danger);
+}
+
+/* A box inside a panel: the chart, a preview, a filter */
+.optizzz-well {
+  padding: var(--optizzz-space-3);
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border-soft);
+  border-radius: var(--optizzz-radius);
+}
+
+/* ---------- Text ---------- */
+.optizzz-panel-title {
+  margin: 0 0 var(--optizzz-space-3);
+  font-family: var(--optizzz-title-font);
+  font-size: var(--optizzz-font-size-title);
+  font-style: italic;
+  font-weight: bold;
+  line-height: 1.25;
+  color: var(--optizzz-title);
+}
+
+.optizzz-panel-title--large {
+  font-size: var(--optizzz-font-size-title-large);
+}
+
+.optizzz-subtitle {
+  margin: var(--optizzz-space-5) 0 var(--optizzz-space-2);
+  font-family: var(--optizzz-font);
+  font-size: var(--optizzz-font-size);
+  font-style: normal;
+  font-weight: bold;
+  color: var(--optizzz-text);
+}
+
+.optizzz-note {
+  margin: var(--optizzz-space-2) 0;
+  font-size: var(--optizzz-font-size-small);
+  font-style: normal;
+  color: var(--optizzz-text-muted);
+}
+
+.optizzz-note:empty {
+  display: none;
+}
+
+.optizzz-muted {
+  color: var(--optizzz-text-muted);
+}
+
+.optizzz-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A state said in a word: also in bold, never by the colour alone */
+.optizzz-text-danger,
+.optizzz-text-warning,
+.optizzz-text-success {
+  font-weight: bold;
+}
+
+.optizzz-text-danger {
+  color: var(--optizzz-danger-text);
+}
+
+.optizzz-text-warning {
+  color: var(--optizzz-warning-text);
+}
+
+.optizzz-text-success {
+  color: var(--optizzz-success-text);
+}
+
+/* ---------- Callout: a message that stands out (a warning, an error, a rule) ---------- */
+.optizzz-callout {
+  margin: var(--optizzz-space-3) 0;
+  padding: var(--optizzz-space-3) 10px;
+  color: var(--optizzz-text);
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border-soft);
+  border-left: 3px solid var(--optizzz-border);
+  border-radius: var(--optizzz-radius-small);
+}
+
+.optizzz-callout > :first-child {
+  margin-top: 0;
+}
+
+.optizzz-callout > :last-child {
+  margin-bottom: 0;
+}
+
+.optizzz-callout--warning {
+  background: var(--optizzz-warning-bg);
+  border-color: var(--optizzz-warning);
+}
+
+.optizzz-callout--danger {
+  background: var(--optizzz-danger-bg);
+  border-color: var(--optizzz-danger);
+}
+
+.optizzz-callout--success {
+  background: var(--optizzz-success-bg);
+  border-color: var(--optizzz-success);
+}
+
+/* ---------- Layout ---------- */
+.optizzz-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--optizzz-space-3) var(--optizzz-space-5);
+  margin: var(--optizzz-space-4) 0;
+}
+
+/* A wide table scrolls inside its box instead of widening the page */
+.optizzz-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* ---------- Table: rows ruled, header on the darker parchment, numbers to the right ---------- */
+.optizzz-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.optizzz-table :is(th, td) {
+  padding: var(--optizzz-space-2) var(--optizzz-space-4);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--optizzz-border-soft);
+}
+
+.optizzz-table thead th {
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--optizzz-head-bg);
+}
+
+.optizzz-table tfoot td {
+  font-weight: bold;
+  border-top: 1px solid var(--optizzz-border);
+  border-bottom: none;
+}
+
+.optizzz-table :is(th, td).optizzz-num {
+  text-align: right;
+}
+
+/* As the game's own tables (a report, the work queue): every cell framed */
+.optizzz-table--grid :is(th, td) {
+  border: 1px solid var(--optizzz-table-border);
+}
+
+/* Many columns or rows: smaller and tighter */
+.optizzz-table--dense {
+  font-size: var(--optizzz-font-size-small);
+}
+
+.optizzz-table--dense :is(th, td) {
+  padding: var(--optizzz-space-1) var(--optizzz-space-3);
+}
+
+.optizzz-table--striped tbody tr:nth-child(even) > td {
+  background: var(--optizzz-surface-alt);
+}
+
+/* A sortable column's title: a bare button, the order shown by an arrow */
+.optizzz-sort {
+  padding: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.optizzz-sort:hover {
+  text-decoration: underline;
+}
+
+[aria-sort="descending"] > .optizzz-sort::after {
+  content: " ▼";
+}
+
+[aria-sort="ascending"] > .optizzz-sort::after {
+  content: " ▲";
+}
+
+/* ---------- Buttons (the plain one is the theme's control, above) ---------- */
+.optizzz-button-primary {
+  padding: var(--optizzz-space-2) 14px;
+  font-weight: bold;
+  color: var(--optizzz-action-text);
+  background: var(--optizzz-action);
+  border: 1px solid var(--optizzz-action-border);
+  border-radius: var(--optizzz-radius-control);
+}
+
+.optizzz-button-primary:disabled {
+  background: var(--optizzz-action-disabled);
+  border-color: var(--optizzz-action-disabled-border);
+  opacity: 1;
+}
+
+/* An action that reads as a link (« copier », « tout afficher ») */
+.optizzz-button-link {
+  display: inline;
+  padding: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: var(--optizzz-link);
+  text-align: inherit;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+/* ---------- Segmented control: one choice among a few (a period, a view) ---------- */
+.optizzz-segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
+.optizzz-segmented > :is(button, a) {
+  margin: 0 0 0 -1px;
+  padding: var(--optizzz-space-1) 10px;
+  font: inherit;
+  color: var(--optizzz-text);
+  text-decoration: none;
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border);
+  border-radius: 0;
+  filter: none;
+  cursor: pointer;
+}
+
+.optizzz-segmented > :is(button, a):first-child {
+  margin-left: 0;
+  border-radius: var(--optizzz-radius-control) 0 0 var(--optizzz-radius-control);
+}
+
+.optizzz-segmented > :is(button, a):last-child {
+  border-radius: 0 var(--optizzz-radius-control) var(--optizzz-radius-control) 0;
+}
+
+.optizzz-segmented > :is(button, a):hover {
+  background: var(--optizzz-surface-alt);
+}
+
+.optizzz-segmented > :is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"]),
+.optizzz-segmented > :is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"]):hover {
+  position: relative;
+  font-weight: bold;
+  color: var(--optizzz-selected-text);
+  background: var(--optizzz-selected);
+  border-color: var(--optizzz-selected);
+}
+
+/* ---------- Chip: an item of a list one adds to, or a toggle among many ---------- */
+.optizzz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--optizzz-space-2);
+  padding: 1px var(--optizzz-space-4);
+  font: inherit;
+  line-height: 1.5;
+  color: var(--optizzz-text);
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border-soft);
+  border-radius: var(--optizzz-radius-pill);
+  filter: none;
+}
+
+button.optizzz-chip:hover:not(:disabled) {
+  border-color: var(--optizzz-border);
+  background: var(--optizzz-surface-alt);
+}
+
+.optizzz-chip[aria-pressed="true"],
+button.optizzz-chip[aria-pressed="true"]:hover {
+  font-weight: bold;
+  color: var(--optizzz-selected-text);
+  background: var(--optizzz-selected);
+  border-color: var(--optizzz-selected);
+}
+
+.optizzz-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--optizzz-space-2);
+  margin: var(--optizzz-space-2) 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A small label next to a title (« conseil »): not clickable */
+.optizzz-tag {
+  display: inline-block;
+  flex: none;
+  padding: 0 5px;
+  font-size: var(--optizzz-font-size-small);
+  font-style: normal;
+  font-weight: normal;
+  color: var(--optizzz-text-muted);
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border-soft);
+  border-radius: var(--optizzz-radius-small);
+}
+
+/* ---------- Stat tiles: a few key figures side by side ---------- */
+.optizzz-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--optizzz-space-3);
+  margin: var(--optizzz-space-3) 0;
+  padding: 0;
+}
+
+.optizzz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  margin: 0;
+  padding: var(--optizzz-space-2) 10px;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: var(--optizzz-surface-raised);
+  border: 1px solid var(--optizzz-border-soft);
+  border-radius: var(--optizzz-radius);
+}
+
+/* A tile that picks what the rest shows (a metric): chosen, its border is the selected colour */
+button.optizzz-stat {
+  cursor: pointer;
+}
+
+button.optizzz-stat:hover {
+  border-color: var(--optizzz-border);
+}
+
+.optizzz-stat:is([aria-selected="true"], [aria-pressed="true"]) {
+  border-color: var(--optizzz-selected);
+  box-shadow: inset 0 0 0 1px var(--optizzz-selected);
+}
+
+.optizzz-stat-label,
+.optizzz-stat-note {
+  margin: 0;
+  font-size: var(--optizzz-font-size-small);
+  font-weight: normal;
+  color: var(--optizzz-text-muted);
+}
+
+.optizzz-stat-value {
+  margin: 0;
+  font-size: var(--optizzz-font-size-value);
+  font-weight: bold;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Disclosure: a part one opens (details > summary) ---------- */
+.optizzz-disclosure > summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--optizzz-space-3);
+  font-weight: bold;
+  list-style: none;
+  cursor: pointer;
+}
+
+.optizzz-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.optizzz-disclosure > summary::before {
+  content: "▸";
+  flex: none;
+  color: var(--optizzz-text-muted);
+}
+
+.optizzz-disclosure[open] > summary::before {
+  content: "▾";
+}
+
+/* A closed panel is its title alone */
+.optizzz-disclosure:not([open]) > summary {
+  margin-bottom: 0;
+}
+
+.optizzz-disclosure > summary.optizzz-panel-title::before {
+  font-family: var(--optizzz-font);
+  font-style: normal;
+}
+
+.optizzz-disclosure > summary:focus-visible {
+  outline: 2px solid var(--optizzz-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Bar: a share of a whole (a span inside, its width set) ---------- */
+.optizzz-bar {
+  height: var(--optizzz-space-4);
+  overflow: hidden;
+  background: var(--optizzz-border-soft);
+  border-radius: var(--optizzz-radius-pill);
+}
+
+.optizzz-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--optizzz-link);
+}
+
+/* ---------- Shape of a role (role-styles.ts): told apart without the colours ---------- */
+.optizzz-shape {
+  display: inline-block;
+  flex: none;
+  border-radius: 50%;
+}
+
+.optizzz-shape[data-shape="square"] {
+  border-radius: 2px;
+}
+
+.optizzz-shape[data-shape="diamond"] {
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.optizzz-shape[data-shape="triangle"] {
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+/* ---------- Phone: the panels take less room ---------- */
+@media (max-width: 600px) {
+  .optizzz-panel {
+    padding: var(--optizzz-space-4) 10px;
   }
 }

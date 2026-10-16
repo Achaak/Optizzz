@@ -13,30 +13,21 @@ import {
 import { clockValue, parseClock, parseHours, type LayingSettings } from "./settings";
 
 export const LAYING_STYLE = `
-.optizzz-laying { margin-top: 8px; padding: 6px 8px; border: 1px solid var(--optizzz-border-soft); border-radius: var(--optizzz-radius); background: var(--optizzz-surface-tint); font-size: var(--optizzz-font-size); line-height: 1.4; }
-.optizzz-laying-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 0; }
+.optizzz-laying { margin-top: var(--optizzz-space-4); }
+.optizzz-laying-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--optizzz-space-2); margin: var(--optizzz-space-1) 0; }
 .optizzz-laying-group-label { width: 100px; flex: none; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
-.optizzz-laying-chip { font: inherit; padding: 1px 6px; cursor: pointer; color: var(--optizzz-text); background: var(--optizzz-surface-raised); border: 1px solid var(--optizzz-border-soft); border-radius: var(--optizzz-radius); }
-.optizzz-laying-chip:hover, .optizzz-laying-chip:focus-visible { border-color: var(--optizzz-border); background: var(--optizzz-surface-alt); }
-.optizzz-laying-chip[aria-pressed="true"] { border-color: var(--optizzz-border); background: var(--optizzz-surface-alt); font-weight: bold; }
-.optizzz-laying-count { margin-left: 4px; font-weight: bold; }
-.optizzz-laying-limit { margin-left: 4px; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
-.optizzz-laying-empty { padding: 1px 0; color: var(--optizzz-text-muted); font-style: italic; }
-.optizzz-laying-summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 6px; min-height: 54px; }
-.optizzz-laying-summary-empty { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; padding: 0 8px; border: 1px dashed var(--optizzz-border-soft); border-radius: var(--optizzz-radius); color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); text-align: center; }
-.optizzz-laying-tile { padding: 2px 6px; border: 1px solid var(--optizzz-border-soft); border-radius: var(--optizzz-radius); background: var(--optizzz-surface-raised); min-width: 0; }
+.optizzz-laying-count { font-weight: bold; }
+.optizzz-laying-limit { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); font-weight: normal; }
+.optizzz-laying-chip[aria-pressed="true"] .optizzz-laying-limit { color: inherit; }
+.optizzz-laying-empty { padding: 1px 0; color: var(--optizzz-text-muted); }
+.optizzz-laying-summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: var(--optizzz-space-3); min-height: 54px; }
+.optizzz-laying-summary-empty { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; padding: 0 var(--optizzz-space-4); border: 1px dashed var(--optizzz-border-soft); border-radius: var(--optizzz-radius); color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); text-align: center; }
+.optizzz-laying-tile-value { font-size: var(--optizzz-font-size); }
 .optizzz-laying-preview .optizzz-laying-tile { border-style: dashed; }
-.optizzz-laying-tile-label { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
-.optizzz-laying-tile-value { font-weight: bold; }
-.optizzz-laying-tile-note { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
-.optizzz-laying-positive { color: var(--optizzz-success); }
-.optizzz-laying-waiting { color: var(--optizzz-warning); }
-.optizzz-laying-negative { color: var(--optizzz-danger); }
-.optizzz-laying-notice { font-style: italic; }
-.optizzz-laying-link { margin-left: auto; align-self: flex-start; font: inherit; font-size: var(--optizzz-font-size-small); padding: 0; border: none; background: none; color: var(--optizzz-link); cursor: pointer; text-decoration: underline; }
-.optizzz-laying-settings { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: center; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--optizzz-border-soft); font-size: var(--optizzz-font-size-small); }
+.optizzz-laying-link { margin-left: auto; align-self: flex-start; font-size: var(--optizzz-font-size-small); }
+.optizzz-laying-settings { display: grid; grid-template-columns: auto 1fr; gap: var(--optizzz-space-2) var(--optizzz-space-4); align-items: center; margin-top: var(--optizzz-space-2); padding-top: var(--optizzz-space-3); border-top: 1px solid var(--optizzz-border-soft); font-size: var(--optizzz-font-size-small); }
 .optizzz-laying-settings[hidden] { display: none; }
-.optizzz-laying-settings input { font: inherit; width: 90px; }
+.optizzz-laying-settings input { width: 90px; }
 .optizzz-laying-settings p { grid-column: 1 / -1; margin: 0; color: var(--optizzz-text-muted); }`;
 
 /** The player's shortcut settings, shared by every row: a change redraws them all. */
@@ -62,7 +53,15 @@ export function settingsStore(initial: LayingSettings, save: (settings: LayingSe
 
 const signed = (value: number) => (value < 0 ? `−${formatNumber(-value)}` : `+${formatNumber(value)}`);
 
-function payable(affordability: Affordability, now: Date): { text: string; note?: string; tone?: string } {
+/** A tone said in bold as well as in colour (docs/design-system.md). */
+type Tone = "positive" | "waiting" | "negative";
+const TONE_CLASS: Record<Tone, string> = {
+  positive: "optizzz-text-success",
+  waiting: "optizzz-text-warning",
+  negative: "optizzz-text-danger",
+};
+
+function payable(affordability: Affordability, now: Date): { text: string; note?: string; tone?: Tone } {
   switch (affordability.kind) {
     case "now":
       return { text: "maintenant", tone: "positive" };
@@ -84,7 +83,7 @@ function payable(affordability: Affordability, now: Date): { text: string; note?
 export function mountLayingNotice(row: LayingRow | undefined, text: string) {
   if (!row) return;
   const note = row.input.ownerDocument.createElement("div");
-  note.className = "optizzz-laying optizzz-laying-notice";
+  note.className = "optizzz-laying optizzz-laying-notice optizzz-panel optizzz-panel--inset";
   note.textContent = text;
   row.panel.append(note);
 }
@@ -117,10 +116,10 @@ export function mountLayingPlan(
     return element;
   };
 
-  const block = el("div", "optizzz-laying");
+  const block = el("div", "optizzz-laying optizzz-panel optizzz-panel--inset");
   const shortcuts = el("div", "optizzz-laying-shortcuts");
-  const summary = el("div", "optizzz-laying-summary");
-  const toggle = el("button", "optizzz-laying-link", "Régler");
+  const summary = el("div", "optizzz-laying-summary optizzz-stats");
+  const toggle = el("button", "optizzz-laying-link optizzz-button-link", "Régler");
   toggle.type = "button";
   const form = buildSettingsForm(doc, options.settings);
   form.hidden = true;
@@ -143,12 +142,15 @@ export function mountLayingPlan(
     row.input.dispatchEvent(new Event("input", { bubbles: true }));
   };
 
-  const tile = (label: string, value: string | Node, note?: string, tone?: string) => {
-    const box = el("div", "optizzz-laying-tile");
-    const valueBox = el("div", `optizzz-laying-tile-value${tone ? ` optizzz-laying-${tone}` : ""}`);
+  const tile = (label: string, value: string | Node, note?: string, tone?: Tone) => {
+    const box = el("div", "optizzz-laying-tile optizzz-stat");
+    const valueBox = el(
+      "div",
+      `optizzz-laying-tile-value optizzz-stat-value${tone ? ` optizzz-laying-${tone} ${TONE_CLASS[tone]}` : ""}`,
+    );
     valueBox.append(value);
-    box.append(el("div", "optizzz-laying-tile-label", label), valueBox);
-    if (note) box.append(el("div", "optizzz-laying-tile-note", note));
+    box.append(el("div", "optizzz-laying-tile-label optizzz-stat-label", label), valueBox);
+    if (note) box.append(el("div", "optizzz-laying-tile-note optizzz-stat-note", note));
     return box;
   };
 
@@ -207,7 +209,7 @@ export function mountLayingPlan(
             line.append(empty);
             continue;
           }
-          const chip = el("button", "optizzz-laying-chip", shortcut.label);
+          const chip = el("button", "optizzz-laying-chip optizzz-chip", shortcut.label);
           chip.type = "button";
           chip.title = `${shortcut.title} Un clic remplit le formulaire du jeu.`;
           chip.setAttribute("aria-pressed", String(order.count > 0 && shortcut.count === order.count));

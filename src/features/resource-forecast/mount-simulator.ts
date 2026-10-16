@@ -10,31 +10,29 @@ const PANEL_CLASS = "optizzz-simulator";
 const FOOD_ICON = "/images/icone/icone_pomme.png";
 const MATERIALS_ICON = "/images/icone/icone_bois.png";
 
-/** Close to the game's boxes: brown border, red italic title, Verdana inherited. */
+/** An inset panel of the design system (docs/design-system.md), inside the game's Ressources box. */
 export const SIMULATOR_STYLE = `
-.${PANEL_CLASS} { margin: 14px 0 6px; padding: 10px 12px; border: 1px solid var(--optizzz-border); border-radius: var(--optizzz-radius); background: var(--optizzz-surface-tint); box-shadow: var(--optizzz-panel-shadow); }
-.${PANEL_CLASS}-title { display: block; margin-bottom: 6px; font-family: var(--optizzz-title-font); color: var(--optizzz-title); font-size: 17px; font-style: italic; font-weight: bold; }
-.${PANEL_CLASS}-split { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px; }
-.${PANEL_CLASS}-split label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.${PANEL_CLASS} { margin: var(--optizzz-space-5) 0 var(--optizzz-space-3); }
+.${PANEL_CLASS}-split { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--optizzz-space-2) 10px; }
+.${PANEL_CLASS}-split label { display: flex; align-items: center; gap: var(--optizzz-space-2); white-space: nowrap; }
 .${PANEL_CLASS}-split img { width: 18px; height: 18px; }
 .${PANEL_CLASS}-split input[type="number"] { width: 80px; }
 .${PANEL_CLASS}-split input[type="range"] { width: 100%; accent-color: var(--optizzz-materials); }
-.${PANEL_CLASS}-bar { grid-column: 2; display: flex; height: 8px; border: 1px solid var(--optizzz-border); background: var(--optizzz-surface-raised); }
+.${PANEL_CLASS}-bar { grid-column: 2; display: flex; height: var(--optizzz-space-4); overflow: hidden; border: 1px solid var(--optizzz-border); border-radius: var(--optizzz-radius-pill); background: var(--optizzz-surface-raised); }
 .${PANEL_CLASS}-bar-food { background: var(--optizzz-title); }
 .${PANEL_CLASS}-bar-materials { background: var(--optizzz-materials); }
 .${PANEL_CLASS}-bar-idle { background: repeating-linear-gradient(45deg, var(--optizzz-idle) 0 3px, var(--optizzz-idle-alt) 3px 6px); }
-.${PANEL_CLASS}-idle { grid-column: 2; text-align: center; font-size: 0.85em; font-style: italic; }
-.${PANEL_CLASS}-idle:empty { display: none; }
-.${PANEL_CLASS}-daily { margin: 10px 0 6px; border-collapse: collapse; }
-.${PANEL_CLASS}-daily th, .${PANEL_CLASS}-daily td { padding: 1px 10px 1px 0; text-align: right; }
-.${PANEL_CLASS}-daily th:first-child { text-align: left; font-weight: normal; }
-.${PANEL_CLASS}-daily thead th { font-size: 0.85em; font-weight: normal; font-style: italic; }
-.${PANEL_CLASS}-up { color: var(--optizzz-food); font-weight: bold; }
-.${PANEL_CLASS}-down { color: var(--optizzz-danger); font-weight: bold; }
-.${PANEL_CLASS}-outlook { margin: 4px 0 8px; font-weight: bold; }
-.${PANEL_CLASS}-ok { color: var(--optizzz-success); }
-.${PANEL_CLASS}-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.${PANEL_CLASS}-actions button:last-child { margin-left: auto; font-weight: bold; }`;
+.${PANEL_CLASS}-idle { grid-column: 2; text-align: center; }
+.${PANEL_CLASS}-daily { width: auto; margin: 10px 0 var(--optizzz-space-3); }
+.${PANEL_CLASS}-daily :is(th, td) { padding: 1px 10px 1px 0; text-align: right; border: none; }
+.${PANEL_CLASS}-daily tbody th:first-child, .${PANEL_CLASS}-daily thead th:first-child { text-align: left; font-weight: normal; }
+.${PANEL_CLASS}-daily thead th { font-size: var(--optizzz-font-size-small); font-weight: normal; color: var(--optizzz-text-muted); background: none; }
+.${PANEL_CLASS}-up { color: var(--optizzz-success-text); font-weight: bold; }
+.${PANEL_CLASS}-down { color: var(--optizzz-danger-text); font-weight: bold; }
+.${PANEL_CLASS}-outlook { margin: var(--optizzz-space-2) 0 var(--optizzz-space-4); font-weight: bold; }
+.${PANEL_CLASS}-ok { color: var(--optizzz-success-text); }
+.${PANEL_CLASS}-actions { display: flex; gap: var(--optizzz-space-3); flex-wrap: wrap; }
+.${PANEL_CLASS}-actions button:last-child { margin-left: auto; }`;
 
 const signed = (value: number) => `${value < 0 ? "−" : "+"}${formatNumber(Math.abs(value))}`;
 
@@ -49,8 +47,8 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
   const panel = htmlElement(
     doc,
     "div",
-    `<div class="${PANEL_CLASS}">
-    <span class="${PANEL_CLASS}-title">Simulation de répartition</span>
+    `<div class="${PANEL_CLASS} optizzz-panel optizzz-panel--inset">
+    <div class="${PANEL_CLASS}-title optizzz-panel-title">Simulation de répartition</div>
     <div class="${PANEL_CLASS}-split">
       <label><img src="${FOOD_ICON}" alt="" />Nourriture
         <input type="number" name="optizzz-food" min="0" max="${max}" /></label>
@@ -62,9 +60,9 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
         <div class="${PANEL_CLASS}-bar-materials"></div>
         <div class="${PANEL_CLASS}-bar-idle"></div>
       </div>
-      <div class="${PANEL_CLASS}-idle"></div>
+      <div class="${PANEL_CLASS}-idle optizzz-note"></div>
     </div>
-    <table class="${PANEL_CLASS}-daily">
+    <table class="${PANEL_CLASS}-daily optizzz-table">
       <thead><tr><th>Par jour</th><th>Actuel</th><th>Simulé</th><th></th></tr></thead>
       <tbody>
         <tr><th>Nourriture</th><td></td><td></td><td></td></tr>
@@ -75,7 +73,7 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
     <div class="${PANEL_CLASS}-actions">
       <button type="button">Équilibre nourriture</button>
       <button type="button">Revenir à l'actuel</button>
-      <button type="button">Appliquer</button>
+      <button type="button" class="optizzz-button-primary">Appliquer</button>
     </div>
   </div>`,
   );

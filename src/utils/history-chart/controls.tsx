@@ -25,25 +25,19 @@ interface Props<M extends string> {
 /** Score tabs and period buttons, shared by the history views. */
 export function Controls<M extends string>({ metrics, metric, days, onMetric, onDays, children }: Props<M>) {
   return (
-    <div className="toolbar">
-      <div className="tabs" role="tablist">
+    <div className="optizzz-toolbar">
+      <div className="optizzz-segmented" role="tablist">
         {metrics.map((m) => (
-          <button
-            key={m.id}
-            role="tab"
-            aria-selected={m.id === metric}
-            className={m.id === metric ? "active" : ""}
-            onClick={() => onMetric(m.id)}
-          >
+          <button key={m.id} role="tab" aria-selected={m.id === metric} onClick={() => onMetric(m.id)}>
             {m.label}
           </button>
         ))}
       </div>
       <div className="toolbar-end">
         {children}
-        <div className="tabs">
+        <div className="optizzz-segmented" role="group" aria-label="Période">
           {PERIODS.map((p) => (
-            <button key={p.label} className={p.days === days ? "active" : ""} onClick={() => onDays(p.days)}>
+            <button key={p.label} aria-pressed={p.days === days} onClick={() => onDays(p.days)}>
               {p.label}
             </button>
           ))}
@@ -62,7 +56,7 @@ interface LoadingProps {
 export function LoadingNote({ loaded, total, loading }: LoadingProps) {
   if (!loading || total === 0) return null;
   return (
-    <p className="meta">
+    <p className="optizzz-note">
       Chargement des exports : {loaded} / {total} (chacun n'est téléchargé qu'une fois)
       <progress value={loaded} max={total} />
     </p>

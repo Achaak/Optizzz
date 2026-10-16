@@ -153,7 +153,7 @@ export function ServerMapChart(props: Props) {
   };
 
   return (
-    <div className="chart">
+    <div className="chart optizzz-well">
       <div className="chart-toolbar">
         <fieldset className="display">
           <legend>Afficher :</legend>
@@ -205,7 +205,7 @@ export function ServerMapChart(props: Props) {
           />
         )}
       </div>
-      <p className="hint">
+      <p className="optizzz-note">
         <span className="hint-mouse">
           Ctrl + molette : zoom · Glisser : déplacer · Clic : distances depuis ce joueur · Double-clic : profil
         </span>
