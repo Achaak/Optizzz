@@ -185,6 +185,10 @@ export function ServerMap({ origin, target, embedded, sharing }: Props) {
         onColor={(chip, color) =>
           setChips(chips.map((other) => (sameTarget(other, chip) ? { ...other, color } : other)))
         }
+        myField={me?.field ?? null}
+        onFilter={(chip, filter) =>
+          setChips(chips.map((other) => (sameTarget(other, chip) ? { ...other, filter } : other)))
+        }
       />
       <ServerMapChart
         players={players}

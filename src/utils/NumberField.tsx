@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type InputHTMLAttributes } from "react";
+import { formatNumber } from "./number-format";
 import { parseNumberField, type NumberFieldRules } from "./number-field";
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type" | "min" | "max">;
@@ -15,24 +16,24 @@ interface Props extends InputProps, NumberFieldRules {
  * A number input that keeps what the player types while they type: the value it shows is never rewritten by a
  * computation that answers later, and only a valid, clamped number is passed on.
  */
-export function NumberField({ value, onCommit, min, max, integer, allowEmpty, commitDelayMs = 600, ...input }: Props) {
+export function NumberField(props: Props) {
+  const { value, onCommit, min, max, integer, allowEmpty, amount, commitDelayMs = 600, ...input } = props;
   const [draft, setDraft] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const commit = (text: string) => {
     clearTimeout(timer.current);
-    const parsed = parseNumberField(text, { min, max, integer, allowEmpty });
+    const parsed = parseNumberField(text, { min, max, integer, allowEmpty, amount });
     if (parsed !== undefined && parsed !== value) onCommit(parsed);
   };
 
   return (
     <input
       {...input}
-      type="number"
-      min={min}
-      max={max}
-      value={draft ?? value ?? ""}
+      // An amount is text, to take « 10 000 » or « 10k »; shown as the game writes it.
+      {...(amount ? { type: "text", inputMode: "decimal" as const } : { type: "number", min, max })}
+      value={draft ?? (value === null ? "" : amount ? formatNumber(value) : value)}
       onChange={(event) => {
         const text = event.target.value;
         setDraft(text);

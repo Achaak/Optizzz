@@ -9,12 +9,14 @@ export interface OpenServerMapMessage {
   target: ChipTarget | null;
 }
 
-/** `target` in an address: "player:123" or "alliance:TAG". */
+/** `target` in an address: "player:123", "alliance:TAG" or "unaffiliated". */
 export function encodeTarget(target: ChipTarget): string {
-  return target.kind === "player" ? `player:${String(target.id)}` : `alliance:${target.tag}`;
+  if (target.kind === "player") return `player:${String(target.id)}`;
+  return target.kind === "alliance" ? `alliance:${target.tag}` : "unaffiliated";
 }
 
 export function decodeTarget(text: string | null | undefined): ChipTarget | null {
+  if (text === "unaffiliated") return { kind: "unaffiliated" };
   const match = /^(player|alliance):(.+)$/.exec(text ?? "");
   if (!match?.[2]) return null;
   if (match[1] === "alliance") return { kind: "alliance", tag: match[2] };
