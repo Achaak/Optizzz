@@ -36,7 +36,7 @@ Repris le 2026-10-15 :
 - titres de colonnes au-dessus de leurs valeurs : les nombres (Terrain, Technologie, Fourmilière) alignés à droite en chiffres de même largeur, Terrain décalé de la cellule d'icône qu'il couvre ;
 - position et grade en retrait (gris, plus petits), pseudo en gras ;
 - cellules d'icônes étroites et centrées ;
-- en-tête collé sous la barre du haut au défilement (le cadre passe en `overflow: clip`, qui garde les coins arrondis sans devenir un conteneur de défilement) ;
+- en-tête collé sous la barre du haut au défilement (le cadre passe en `overflow: clip`, qui garde les coins arrondis sans devenir un conteneur de défilement). Pas sur téléphone : le tableau y défile dans son propre cadre, l'en-tête s'y collerait 30 px plus bas, sur la première ligne ;
 - légende plus discrète, « Ajouter tous les membres à ma liste d'amis » en petit bouton.
 
 Ma ligne en surbrillance et les colonnes « Trajet » et « Rôle » viennent de `colonnes-membres.md`.

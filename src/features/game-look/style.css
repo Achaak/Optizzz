@@ -800,6 +800,11 @@ html.optizzz-game-look {
       overscroll-behavior-x: contain;
     }
 
+    /* Membres: the table scrolls inside itself, so its header would stick 30px down that frame, over the first row */
+    & #tabMembresAlliance th {
+      position: static;
+    }
+
     /* Messagerie: one conversation per row, as in a mail app: participants, then the subject below. */
     & #table_liste_conversations,
     & #table_liste_conversations > tbody {
