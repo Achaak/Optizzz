@@ -315,6 +315,24 @@ html.optizzz-game-look {
     line-height: 1.45;
   }
 
+  /* Messagerie, search bar: the field sits inside a 24px bar, and the game styles it inline */
+  & #messagerie #groupe_recherche {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  & #messagerie #recherche_champs {
+    height: auto;
+    padding: 2px 0;
+  }
+
+  & #messagerie #rechercher {
+    min-height: 20px;
+    height: auto;
+    padding: 0 8px !important;
+    top: 0 !important;
+  }
+
   & #centre :is(input, select, textarea):not(body [class*="optizzz"], body [class*="optizzz"] *):focus-visible {
     outline: none;
     border-color: var(--look-title);
@@ -968,6 +986,10 @@ html.optizzz-game-look {
       ) {
       min-height: 38px;
       font-size: 16px; /* below 16px, iOS zooms in on focus */
+    }
+
+    & #messagerie #rechercher {
+      min-height: 34px;
     }
 
     & .boite_amelioration {
