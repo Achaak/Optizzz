@@ -192,8 +192,8 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
   };
 
   const header = (column: Column) => (
-    <th key={column.key} title={column.title}>
-      <button type="button" className="optizzz-button-link" onClick={() => setSort(column.key)}>
+    <th key={column.key} title={column.title} aria-sort={sort === column.key ? "descending" : undefined}>
+      <button type="button" className="optizzz-sort" onClick={() => setSort(column.key)}>
         {column.label}
       </button>
     </th>
@@ -281,8 +281,8 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
       <table className="optizzz-table">
         <thead>
           <tr>
-            <th>
-              <button type="button" className="optizzz-button-link" onClick={() => setSort("pseudo")}>
+            <th aria-sort={sort === "pseudo" ? "ascending" : undefined}>
+              <button type="button" className="optizzz-sort" onClick={() => setSort("pseudo")}>
                 Membre
               </button>
             </th>

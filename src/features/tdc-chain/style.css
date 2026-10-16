@@ -75,6 +75,11 @@ tr.out td,
   background: var(--optizzz-warning-bg);
 }
 
+/* The long « TDC après (attaquant / cible) » wraps rather than push the table out of its box */
+.plan thead th {
+  white-space: normal;
+}
+
 .plan :is(th, td):first-child {
   text-align: right;
 }

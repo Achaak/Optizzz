@@ -220,7 +220,6 @@ export function AllianceStats({
     >
       <button type="button" className="optizzz-sort" onClick={() => sortBy(key)}>
         {label}
-        {sort.key === key ? (sort.descending ? " ▼" : " ▲") : ""}
       </button>
     </th>
   );

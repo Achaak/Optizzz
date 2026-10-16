@@ -412,7 +412,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                 <th />
                 {ordered.map((m) => (
                   <th key={m.id} className="vertical">
-                    <span>{pseudo(m.id)}</span>
+                    <span className="optizzz-name">{pseudo(m.id)}</span>
                   </th>
                 ))}
               </tr>

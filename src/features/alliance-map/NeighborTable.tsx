@@ -60,8 +60,12 @@ export function NeighborTable({ selected, rows, playerLevels, defaultLevel, leve
             <th>Membre</th>
             <th>Distance</th>
             <th>TDC</th>
-            <th title={`Envoyé par ${selected.pseudo}, avec sa Vitesse d'attaque`}>{selected.pseudo} → membre</th>
-            <th title="Envoyé par le membre, avec sa Vitesse d'attaque">Membre → {selected.pseudo}</th>
+            <th title={`Envoyé par ${selected.pseudo}, avec sa Vitesse d'attaque`}>
+              <span className="optizzz-name">{selected.pseudo}</span> → membre
+            </th>
+            <th title="Envoyé par le membre, avec sa Vitesse d'attaque">
+              Membre → <span className="optizzz-name">{selected.pseudo}</span>
+            </th>
             <th>Vitesse d'attaque du membre</th>
           </tr>
         </thead>

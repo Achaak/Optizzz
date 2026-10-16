@@ -269,6 +269,12 @@
   color: var(--optizzz-text-muted);
 }
 
+/* A pseudo or an alliance's tag in a header in capitals: a name keeps its case */
+.optizzz-name {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 .optizzz-num {
   text-align: right;
   white-space: nowrap;
@@ -375,7 +381,13 @@
   border-bottom: none;
 }
 
-.optizzz-table :is(th, td).optizzz-num {
+.optizzz-table :is(th, td)/* A pseudo or an alliance's tag in a header in capitals: a name keeps its case */
+.optizzz-name {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.optizzz-num {
   text-align: right;
 }
 
@@ -421,6 +433,9 @@
   padding: 0;
   font: inherit;
   font-weight: inherit;
+  /* A button keeps neither by default: the title stays in the header's small capitals */
+  letter-spacing: inherit;
+  text-transform: inherit;
   color: inherit;
   text-align: inherit;
   background: none;

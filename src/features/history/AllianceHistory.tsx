@@ -104,7 +104,6 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, 
     >
       <button type="button" className="optizzz-sort" onClick={() => sortBy(key)}>
         {label}
-        {sort.key === key ? (sort.descending ? " ▼" : " ▲") : ""}
       </button>
     </th>
   );
