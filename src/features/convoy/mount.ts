@@ -1,14 +1,19 @@
 import { formatDecimal, formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import { distance } from "@/game/travel";
-import { planConvoy, readConvoysOnWay, recipients, type MapPlayer } from "./convoy";
+import { convoyMessage, planConvoy, readConvoysOnWay, recipients, type MapPlayer } from "./convoy";
+import { ON_WAY_STYLE, renderOnWayList, span, type Copy } from "@/utils/on-way-list";
 import { parseGameInteger } from "@/utils/game-number";
 
 export const CONVOY_STYLE = `
 .optizzz-convoy { margin: 8px 0; }
 .optizzz-convoy p { margin: 2px 0; }
 .optizzz-convoy-note { font-style: italic; font-size: 0.9em; }
-.optizzz-convoy-arrival { font-weight: normal; font-style: italic; }`;
+.optizzz-convoys img { height: 1.1em; vertical-align: -0.2em; margin-right: 3px; }
+.optizzz-convoy-food { color: var(--optizzz-food); font-weight: bold; white-space: nowrap; }
+.optizzz-convoy-materials { color: var(--optizzz-materials); font-weight: bold; white-space: nowrap; }
+.optizzz-convoy-unit { margin-left: 3px; font-weight: normal; font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
+${ON_WAY_STYLE}`;
 
 export interface ConvoyContext {
   /** The sender's pseudo. */
@@ -28,28 +33,72 @@ export interface ConvoyContext {
 /** Beyond the alliance, only the nearest players are suggested: the whole server is too long a list. */
 const NEAREST_SUGGESTED = 100;
 
-/** The arrival time after each convoy on its way: read on the page alone, written before anything is loaded. */
-export function annotateConvoysOnWay(doc: Document, now: Date) {
-  for (const convoy of readConvoysOnWay(doc, now)) {
-    if (convoy.element.querySelector(".optizzz-convoy-arrival")) continue;
-    const arrival = doc.createElement("span");
-    arrival.className = "optizzz-convoy-arrival";
-    arrival.textContent = ` · arrivée ${formatEndTime(convoy.arrivesAt, now)}`;
-    convoy.element.append(arrival);
+const LIST_CLASS = "optizzz-convoys";
+
+/** One resource of the load: the game's icon, its number, its name for who does not see the icon's colour. */
+function load(doc: Document, className: string, icon: Element | null, amount: number, name: string) {
+  const image = icon?.cloneNode() ?? null;
+  if (image instanceof HTMLImageElement) image.alt = "";
+  return span(doc, className, ...(image ? [image] : []), formatNumber(amount), span(doc, "optizzz-convoy-unit", name));
+}
+
+/**
+ * The convoys on their way, read on the page alone (written before anything is loaded): the game's lines give way to
+ * a list with a live countdown, the arrival time, and a button that copies each convoy as a line of text.
+ * Returns a function that stops the countdown.
+ */
+export function renderConvoysOnWay(doc: Document, clock: () => Date, copy: Copy): () => void {
+  const convoys = readConvoysOnWay(doc, clock());
+  const first = convoys[0];
+  if (!first || doc.querySelector(`.${LIST_CLASS}`)) return () => undefined;
+
+  const { list, stop } = renderOnWayList(
+    doc,
+    LIST_CLASS,
+    convoys.map((convoy) => {
+      const icons = convoy.element.querySelectorAll("img");
+      return {
+        to: convoy.element.querySelector("a")?.cloneNode(true) ?? doc.createTextNode(convoy.recipient),
+        details: [
+          load(doc, "optizzz-convoy-food", icons[0] ?? null, convoy.food, "nourriture"),
+          load(doc, "optizzz-convoy-materials", icons[1] ?? null, convoy.materials, "matériaux"),
+        ],
+        arrivesAt: convoy.arrivesAt,
+        notes: convoy.back ? [convoy.back] : [],
+        message: (now: Date) => convoyMessage(convoy, now),
+        copyTitle: "Copier ce convoi en une ligne de texte",
+      };
+    }),
+    clock,
+    copy,
+  );
+
+  // The game's lines stay in the page, hidden: the page is still read as the game wrote it.
+  const lines = new Set(convoys.map((convoy) => convoy.element));
+  for (let node: ChildNode | null = first.element; node; node = node.nextSibling) {
+    if (node instanceof HTMLElement) {
+      if (!lines.has(node) && node.tagName !== "SMALL" && node.tagName !== "BR") break;
+      node.hidden = true;
+    } else if (node.nodeType === Node.TEXT_NODE) {
+      // The « - » before the game's « Retour le … ».
+      node.textContent = "";
+    }
   }
+  first.element.before(list);
+  return stop;
 }
 
 const DATALIST_ID = "optizzz-convoy-recipients";
 
 /**
  * Under the convoy form: the trip to the recipient typed and the workers it takes; suggestions on the recipient
- * field; the arrival time after each convoy on its way. Call `render` after each change of the form.
+ * field; the convoys on their way as a list. Call `render` after each change of the form.
  */
-export function mountConvoyPlanner(doc: Document, context: ConvoyContext, clock: () => Date) {
+export function mountConvoyPlanner(doc: Document, context: ConvoyContext, clock: () => Date, copy: Copy) {
   const pseudoInput = doc.getElementById("pseudo_convoi") as HTMLInputElement | null;
   const value = (id: string) => (doc.getElementById(id) as HTMLInputElement | null)?.value ?? "";
 
-  annotateConvoysOnWay(doc, clock());
+  const stopCountdown = renderConvoysOnWay(doc, clock, copy);
 
   const players = context.players ?? [];
   const byPseudo = new Map(players.map((player) => [player.pseudo.toLowerCase(), player]));
@@ -145,5 +194,5 @@ export function mountConvoyPlanner(doc: Document, context: ConvoyContext, clock:
   // The game fills the fields to the maximum when their titles are clicked.
   form?.addEventListener("click", later);
   render();
-  return { render };
+  return { render, stopCountdown };
 }

@@ -236,15 +236,26 @@ export function armyFood(army: Army): number {
   return food;
 }
 
+/** A unit's name compared loosely: apostrophes alike, and no plural « s » (Armee.php writes « Naines d’Elites »). */
+const looseName = (name: string) => name.replace(/'/g, "’").trim().toLowerCase().replace(/s\b/g, "");
+
 /** Unit key from its name as the game writes it, singular or plural; `undefined` when unknown. */
 export function unitKeyOf(name: string): string | undefined {
-  const normalized = name.replace(/'/g, "’").trim().toLowerCase();
+  const loose = looseName(name);
+  const key = name.trim().toLowerCase();
   return UNITS.find(
-    (unit) =>
-      unit.plural.toLowerCase() === normalized ||
-      unit.name.toLowerCase() === normalized ||
-      unit.key.toLowerCase() === normalized,
+    (unit) => looseName(unit.plural) === loose || looseName(unit.name) === loose || unit.key.toLowerCase() === key,
   )?.key;
+}
+
+/** « 1 975 Jeunes Soldates Naines, 124 Soldates Naines. » → { JSN: 1975, SN: 124 }. Unknown names are left out. */
+export function readTroops(text: string): Record<string, number> {
+  const troops: Record<string, number> = {};
+  for (const [name, count] of parseCounts(text)) {
+    const key = unitKeyOf(name);
+    if (key) troops[key] = (troops[key] ?? 0) + count;
+  }
+  return troops;
 }
 
 /** « 1 921 Jeunes Soldates Naines, 119 Soldates Naines » → name → count, names as written. */

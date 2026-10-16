@@ -4,7 +4,7 @@ import type { Feature } from "../feature";
 import { loadLevelsOf, unknownLevelsHint } from "@/data/levels";
 import { INCOME_MAX_AGE, loadIncome } from "@/data/income";
 import { readStock } from "@/game/pages/resources";
-import { annotateConvoysOnWay, CONVOY_STYLE, mountConvoyPlanner } from "./mount";
+import { CONVOY_STYLE, mountConvoyPlanner, renderConvoysOnWay } from "./mount";
 import { isEnabled } from "../toggles";
 import { CONVOYS_MAX_AGE, loadConvoys, refreshConvoys, type KeptConvoys } from "@/data/convoys";
 import { loadStoredLevels } from "@/data/levels";
@@ -20,12 +20,16 @@ export const convoyPlanner: Feature = {
   id: "convoy",
   toggle: "convoy",
   matches: (url) => url.pathname.toLowerCase() === "/commerce.php",
-  async run() {
+  async run(ctx) {
     const me = readLoggedInPseudo(document);
     const stock = readStock(document);
     if (!me || !stock || !document.getElementById("pseudo_convoi")) return;
+    const style = document.createElement("style");
+    style.textContent = CONVOY_STYLE;
+    document.head.append(style);
+    const copy = (text: string) => navigator.clipboard.writeText(text);
     // Read on the page alone: written before anything is loaded, whatever fails next.
-    annotateConvoysOnWay(document, new Date());
+    ctx.onInvalidated(renderConvoysOnWay(document, () => new Date(), copy));
 
     const now = new Date();
     const [playersExport, levels, income] = await Promise.all([
@@ -43,9 +47,6 @@ export const convoyPlanner: Feature = {
     const working = income ? income.foodWorkers + income.materialWorkers : stock.workers;
     const known = "error" in levels ? null : levels;
 
-    const style = document.createElement("style");
-    style.textContent = CONVOY_STYLE;
-    document.head.append(style);
     mountConvoyPlanner(
       document,
       {
@@ -58,6 +59,7 @@ export const convoyPlanner: Feature = {
         ...("error" in levels ? { levelsHint: unknownLevelsHint(levels.error) } : {}),
       },
       () => new Date(),
+      copy,
     );
   },
 };

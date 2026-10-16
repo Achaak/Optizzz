@@ -4,6 +4,8 @@ import { distance, travelTime } from "@/game/travel";
 import { parseGameDuration } from "@/game/pages/work-queue";
 import { HARVESTS_PER_DAY } from "@/game/forecast";
 import { parseGameInteger } from "@/utils/game-number";
+import { formatNumber } from "@/utils/number-format";
+import { formatEndTime, formatGameDuration } from "@/utils/time-format";
 
 const DAY = 24 * 60 * 60_000;
 
@@ -19,7 +21,9 @@ export interface ConvoyOnWay {
   food: number;
   materials: number;
   arrivesAt: Date;
-  /** The game's line, to write the arrival time after it. */
+  /** With Compte+, when the workers are back: « Retour le 7 oct. à 21h54 », as the game writes it. */
+  back: string | null;
+  /** The game's line. */
   element: Element;
 }
 
@@ -31,8 +35,14 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
   if (!title) return [];
   const convoys: ConvoyOnWay[] = [];
   for (let element = title.nextElementSibling; element; element = element.nextElementSibling) {
+    // Optizzz's own list of the convoys, written after the title.
+    if (element.tagName === "BR" || element.classList.contains("optizzz-convoys")) continue;
     // With Compte+, « - Retour le 13 oct. à 21h59 » follows each line, in a <small>.
-    if (element.tagName === "BR" || element.tagName === "SMALL") continue;
+    if (element.tagName === "SMALL") {
+      const last = convoys.at(-1);
+      if (last) last.back = element.textContent.replace(/\s+/g, " ").trim() || null;
+      continue;
+    }
     const match = ON_WAY.exec(element.textContent.replace(/\s+/g, " ").trim());
     const left = parseGameDuration(match?.[4] ?? "");
     if (!match || left === null) break;
@@ -41,10 +51,26 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
       food: parseGameInteger(match[1]),
       materials: parseGameInteger(match[2]),
       arrivesAt: new Date(now.getTime() + left),
+      back: null,
       element,
     });
   }
   return convoys;
+}
+
+/**
+ * The convoy as a line to paste elsewhere: « Vous allez livrer 0 nourriture et 350 000 matériaux à X dans 47m 21s
+ * · arrivée aujourd'hui 17 h 13 - Retour le 16 oct. à 17h13 ». The time left counts from `now`.
+ */
+export function convoyMessage(
+  convoy: Pick<ConvoyOnWay, "recipient" | "food" | "materials" | "arrivesAt" | "back">,
+  now: Date,
+): string {
+  const left = convoy.arrivesAt.getTime() - now.getTime();
+  const load = `${formatNumber(convoy.food)} nourriture et ${formatNumber(convoy.materials)} matériaux`;
+  const sent = `Vous allez livrer ${load} à ${convoy.recipient}${left > 0 ? ` dans ${formatGameDuration(left)}` : ""}`;
+  const line = `${sent} · arrivée ${formatEndTime(convoy.arrivesAt, now)}`;
+  return convoy.back ? `${line} - ${convoy.back}` : line;
 }
 
 /** Resources one worker carries: 10, plus 5 % per Étable à pucerons level (help of commerce.php). */

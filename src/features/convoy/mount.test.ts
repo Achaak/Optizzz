@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import commerceHtml from "./__fixtures__/commerce.html?raw";
 import { mountConvoyPlanner, type ConvoyContext } from "./mount";
 
@@ -12,11 +12,21 @@ const context: ConvoyContext = { me: "Achak", players, attackSpeed: 0, aphids: 0
 
 const setup = (overrides: Partial<ConvoyContext> = {}) => {
   const doc = new DOMParser().parseFromString(commerceHtml, "text/html");
-  const planner = mountConvoyPlanner(doc, { ...context, ...overrides }, () => now);
+  const copied: string[] = [];
+  const copy = (text: string) => {
+    copied.push(text);
+    return Promise.resolve();
+  };
+  const planner = mountConvoyPlanner(doc, { ...context, ...overrides }, () => now, copy);
+  stops.push(planner.stopCountdown);
   const input = (id: string) => doc.getElementById(id) as HTMLInputElement;
   const lines = () => [...doc.querySelectorAll(".optizzz-convoy p")].map((line) => line.textContent);
-  return { doc, planner, input, lines };
+  return { doc, planner, input, lines, copied };
 };
+const stops: (() => void)[] = [];
+afterEach(() => {
+  for (const stop of stops.splice(0)) stop();
+});
 
 describe("mountConvoyPlanner", () => {
   it("suggests the alliance first, nearest first, on the game's recipient field", () => {
@@ -63,7 +73,7 @@ describe("mountConvoyPlanner", () => {
 
   it("still writes the convoys' arrival, and says why, without the export or the levels", () => {
     const { doc, input, planner, lines } = setup({ players: null });
-    expect(doc.querySelectorAll(".optizzz-convoy-arrival")).toHaveLength(2);
+    expect(doc.querySelectorAll(".optizzz-on-way-row")).toHaveLength(2);
     input("pseudo_convoi").value = "Osirus_jack";
     planner.render();
     expect(lines()).toEqual(["L'export public de Fourmizzz ne répond pas : pas de temps de trajet."]);
@@ -81,11 +91,62 @@ describe("mountConvoyPlanner", () => {
     expect(lines()[1]).toBe("500 ouvrières, dont 200 au travail : ≈ 318 de récolte perdue pendant le trajet");
   });
 
-  it("writes the arrival time after each convoy on its way", () => {
+  it("lists the convoys on their way in place of the game's lines, with their arrival", () => {
     const { doc } = setup();
-    expect([...doc.querySelectorAll(".optizzz-convoy-arrival")].map((span) => span.textContent)).toEqual([
-      " · arrivée aujourd'hui 21 h 54",
-      " · arrivée demain 22 h 34",
+    const rows = [...doc.querySelectorAll(".optizzz-on-way-row")];
+    expect(rows.map((row) => row.querySelector(".optizzz-on-way-to")?.textContent)).toEqual([
+      "→ Osirus_jack",
+      "→ Hardware",
     ]);
+    expect(rows.map((row) => row.querySelector(".optizzz-on-way-left")?.textContent)).toEqual([
+      "dans 1H 22m 22s",
+      "dans 1J 2H 3m 4s",
+    ]);
+    expect(rows.map((row) => row.querySelector(".optizzz-on-way-when")?.textContent)).toEqual([
+      "arrivée aujourd'hui 21 h 54Retour le 7 oct. à 21h54",
+      "arrivée demain 22 h 34",
+    ]);
+    expect(rows[1]?.querySelector(".optizzz-convoy-materials")?.textContent).toBe("12 500matériaux");
+    const gameLines = [...doc.querySelectorAll("strong, small")].filter((line) =>
+      /livrer|Retour/.test(line.textContent),
+    );
+    expect(gameLines).toHaveLength(3);
+    expect(gameLines.every((line) => (line as HTMLElement).hidden)).toBe(true);
+    expect(doc.querySelector(".Bas")?.hasAttribute("hidden")).toBe(false);
+  });
+
+  it("copies a convoy as one line of text", async () => {
+    const { doc, copied } = setup();
+    const button = doc.querySelector<HTMLButtonElement>(".optizzz-on-way-copy");
+    button?.click();
+    await vi.waitFor(() => {
+      expect(button?.textContent).toBe("Copié !");
+    });
+    expect(copied).toEqual([
+      "Vous allez livrer 1 nourriture et 0 matériaux à Osirus_jack dans 1H 22m 22s · arrivée aujourd'hui 21 h 54 - Retour le 7 oct. à 21h54",
+    ]);
+  });
+
+  it("counts the time left down", () => {
+    vi.useFakeTimers();
+    try {
+      let at = now;
+      const doc = new DOMParser().parseFromString(commerceHtml, "text/html");
+      const planner = mountConvoyPlanner(
+        doc,
+        context,
+        () => at,
+        () => Promise.resolve(),
+      );
+      at = new Date(now.getTime() + 2000);
+      vi.advanceTimersByTime(1000);
+      expect(doc.querySelector(".optizzz-on-way-left")?.textContent).toBe("dans 1H 22m 20s");
+      at = new Date(now.getTime() + 2 * 3_600_000);
+      vi.advanceTimersByTime(1000);
+      expect(doc.querySelector(".optizzz-on-way-left")?.textContent).toBe("arrivé");
+      planner.stopCountdown();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

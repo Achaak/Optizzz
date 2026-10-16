@@ -3,6 +3,7 @@ import { collect } from "./collect";
 import { allianceMapMenu } from "./alliance-map/menu";
 import { allianceSharingMenu } from "./alliance-sharing/menu";
 import { allianceStatsMenu } from "./alliance-stats/menu";
+import { attacksOnWay } from "./attacks-on-way";
 import { combatSimulator } from "./combat-simulator";
 import { convoyPlanner, convoyWorkers } from "./convoy";
 import { endTimes } from "./end-times";
@@ -44,6 +45,7 @@ export const features: Feature[] = [
   membersColumns,
   profileProduction,
   floodPlanner,
+  attacksOnWay,
   combatSimulator,
   serverMap,
   gameLevels,

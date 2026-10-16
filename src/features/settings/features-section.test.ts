@@ -38,6 +38,7 @@ describe("buildFeaturesSection", () => {
       "members-columns.roles",
       "profile-production",
       "flood",
+      "attacks-on-way",
       "hunt-reports",
       "combat-simulator",
       "alliance-map",

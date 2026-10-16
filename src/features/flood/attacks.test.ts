@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import armeeHtml from "./__fixtures__/armee-attacks.html?raw";
-import { readAttacksOnWay, reconcileLaunches } from "./attacks";
+import armeeS5Html from "./__fixtures__/armee-attacks-s5.html?raw";
+import { gameAttackText, readAttackLines, readAttacksOnWay, reconcileLaunches } from "./attacks";
 
 const now = new Date(2026, 9, 8, 10, 0, 0);
 const at = (minutes: number, seconds = 0) => new Date(now.getTime() + (minutes * 60 + seconds) * 1000);
@@ -17,6 +18,54 @@ describe("readAttacksOnWay", () => {
 
   it("reads none when nothing is on its way", () => {
     expect(readAttacksOnWay(new DOMParser().parseFromString("<div id='centre'></div>", "text/html"), now)).toEqual([]);
+  });
+});
+
+describe("readAttackLines", () => {
+  it("reads the target's alliance, the place and, with Compte+, the troops", () => {
+    const doc = new DOMParser().parseFromString(armeeS5Html, "text/html");
+    expect(
+      readAttackLines(doc, now).map(({ target, alliance, place, troops, arrivesAt }) => ({
+        target,
+        alliance,
+        place,
+        troops,
+        arrivesAt,
+      })),
+    ).toEqual([
+      {
+        target: "Cible_1",
+        alliance: "TAG",
+        place: "Terrain de chasse",
+        troops: "Troupes en attaques : 4 047 Jeunes Soldates Naines.",
+        arrivesAt: at(195),
+      },
+      {
+        target: "Cible_2",
+        alliance: null,
+        place: "Fourmilière",
+        troops: "Troupes en attaques : 1 488 Jeunes Soldates Naines, 485 Soldates Naines, 29 Naines d’Elites.",
+        arrivesAt: at(195, 3),
+      },
+    ]);
+  });
+
+  it("reads no place nor troops where the game writes none", () => {
+    const doc = new DOMParser().parseFromString(armeeHtml, "text/html");
+    expect(readAttackLines(doc, now).map(({ alliance, place, troops }) => ({ alliance, place, troops }))).toEqual([
+      { alliance: "EE", place: null, troops: null },
+      { alliance: null, place: null, troops: null },
+    ]);
+  });
+});
+
+describe("gameAttackText", () => {
+  it("writes the attack as the game does, its countdown as shown now, without the note where there is none", () => {
+    const [first, second] = readAttackLines(new DOMParser().parseFromString(armeeHtml, "text/html"), now);
+    if (!first || !second) throw new Error("two attacks expected");
+    first.countdown.textContent = "9 minutes 2 secondes";
+    expect(gameAttackText(first)).toBe("Vous allez attaquer Cible_1(EE) dans 9 minutes 2 secondes");
+    expect(gameAttackText(second)).toBe("Vous allez attaquer Cible_2 dans 1 heure 2 minutes");
   });
 });
 
