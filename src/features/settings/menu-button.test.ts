@@ -19,7 +19,7 @@ describe("insertSettingsButton", () => {
     const onClick = vi.fn();
     const button = insertSettingsButton(doc, onClick);
 
-    expect(button?.nextElementSibling?.id).toBe("boutonDeconnexion");
+    expect(button?.closest(".optizzz-bar")?.nextElementSibling?.id).toBe("boutonDeconnexion");
     expect(doc.querySelector<HTMLElement>("#menu_horizontal")?.style.marginRight).toBe("90px");
     button?.click();
     expect(onClick).toHaveBeenCalledOnce();
