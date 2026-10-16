@@ -1,5 +1,6 @@
 import { buildTabs, settingsTabs, TABS_STYLE } from "@/features/settings/dialog";
 import { simulatorUrl } from "@/features/combat-simulator/open";
+import { serverMapUrl } from "@/features/server-map/open";
 import { loadNotificationSettings, setNotification } from "@/features/alerts/notification-settings";
 import { NOTIFICATIONS_PERMISSION, openGrantPage } from "@/features/alerts/permission";
 import { loadToggles, setToggle } from "@/features/toggles";
@@ -29,6 +30,12 @@ const tabs = settingsTabs(
     openSimulator: () => {
       // No server here: the page takes the one whose army was read last.
       void browser.tabs.create({ url: simulatorUrl(null, "attack") }).then(() => {
+        window.close();
+      });
+    },
+    openServerMap: () => {
+      // No server here: the page takes the one of the last game tab.
+      void browser.tabs.create({ url: serverMapUrl(null, null) }).then(() => {
         window.close();
       });
     },

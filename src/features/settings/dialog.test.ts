@@ -43,7 +43,13 @@ describe("buildSettingsDialog", () => {
   it("shows the version and the issue links in « À propos »", () => {
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator: vi.fn() }, notifications()),
+      settingsTabs(
+        "1.2.3",
+        "Firefox/142",
+        features(),
+        { openSimulator: vi.fn(), openServerMap: vi.fn() },
+        notifications(),
+      ),
       vi.fn(),
     );
     tabButton(dialog, "À propos")?.click();
@@ -56,7 +62,7 @@ describe("buildSettingsDialog", () => {
     const input = features();
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", input, { openSimulator: vi.fn() }, notifications()),
+      settingsTabs("1.2.3", "Firefox/142", input, { openSimulator: vi.fn(), openServerMap: vi.fn() }, notifications()),
       vi.fn(),
     );
     const box = () => dialog.querySelector<HTMLInputElement>('input[data-toggle="work-queue"]');
@@ -72,23 +78,27 @@ describe("buildSettingsDialog", () => {
     expect(box()?.checked).toBe(false);
   });
 
-  it("opens the combat simulator from « Outils »", () => {
-    const openSimulator = vi.fn();
+  it("opens the combat simulator and the server map from « Outils »", () => {
+    const tools = { openSimulator: vi.fn(), openServerMap: vi.fn() };
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator }, notifications()),
+      settingsTabs("1.2.3", "Firefox/142", features(), tools, notifications()),
       vi.fn(),
     );
     tabButton(dialog, "Outils")?.click();
-    dialog.querySelector<HTMLButtonElement>(".tools button")?.click();
-    expect(openSimulator).toHaveBeenCalledOnce();
+    const [simulator, map] = dialog.querySelectorAll<HTMLButtonElement>(".tools button");
+    simulator?.click();
+    expect(tools.openSimulator).toHaveBeenCalledOnce();
+    expect(map?.textContent).toBe("Carte du serveur");
+    map?.click();
+    expect(tools.openServerMap).toHaveBeenCalledOnce();
   });
 
   it("keeps a notification change when coming back to « Notifications »", () => {
     const input = notifications();
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator: vi.fn() }, input),
+      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator: vi.fn(), openServerMap: vi.fn() }, input),
       vi.fn(),
     );
     tabButton(dialog, "Notifications")?.click();

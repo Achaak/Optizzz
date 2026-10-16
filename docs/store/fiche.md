@@ -36,6 +36,7 @@ Chasse et combat
 
 Alliance
 • Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens et, au choix, leur rôle dans la chaîne de TDC.
+• Carte du serveur : situez des joueurs et des alliances, vos pactes et vos guerres, sur tout le serveur, avec distances et trajets ; depuis la barre du haut ou « Voir sur la carte » sur un profil ou une alliance.
 • Chaîne de TDC : qui peut prendre à qui, les rôles (chasseur, passeur, grenier) et l'ordre des floods pour faire monter le TDC.
 • Historique de progression : les courbes du TDC et des scores jour après jour, pour vous, votre alliance et sur chaque profil.
 • Partage d'alliance : copiez vos niveaux, chantiers et armée pour les coller sur le Discord de votre alliance, et lisez ceux des autres membres.
@@ -105,6 +106,7 @@ Hunting and combat
 
 Alliance
 • Alliance map: members on the map, linked to their nearest neighbours, with travel times both ways and, if you wish, their role in the hunting field chain.
+• Server map: place players and alliances, your pacts and your wars, on the whole server, with distances and travel times; from the top bar or « Voir sur la carte » on a profile or an alliance page.
 • Hunting field chain: who can take from whom, the roles (hunter, passer, granary) and the flood order to move hunting field up the chain.
 • Progress history: hunting field and score curves day by day, for you, your alliance and on every profile.
 • Alliance sharing: copy your levels, work and army to paste them on your alliance's Discord, and read the other members' ones.

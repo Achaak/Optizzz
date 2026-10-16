@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { CombatSimulator } from "@/features/combat-simulator/CombatSimulator";
 import { loadLastServer } from "@/data/garrison";
-import { CLOSE_SIMULATOR_MESSAGE } from "@/features/combat-simulator/open";
+import { closeOnEscapeWhenFramed } from "@/utils/page-dialog-frame";
 import "@/theme/theme.css";
 import "./style.css";
 
@@ -12,9 +12,7 @@ const server = query.get("server") ?? (await loadLastServer());
 const embedded = query.has("embedded");
 if (embedded) {
   document.documentElement.classList.add("embedded");
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") window.parent.postMessage(CLOSE_SIMULATOR_MESSAGE, "*");
-  });
+  closeOnEscapeWhenFramed();
 }
 
 const root = document.getElementById("root");

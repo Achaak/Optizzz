@@ -16,6 +16,7 @@ import { membersColumns } from "./members-columns";
 import { profileProduction } from "./profile-production";
 import { resourceForecast } from "./resource-forecast";
 import { safeReload } from "./safe-reload";
+import { serverMap } from "./server-map";
 import { settingsMenu } from "./settings";
 import { tdcChainMenu } from "./tdc-chain/menu";
 import { targets } from "./targets";
@@ -44,6 +45,7 @@ export const features: Feature[] = [
   profileProduction,
   floodPlanner,
   combatSimulator,
+  serverMap,
   gameLevels,
   safeReload,
 ];

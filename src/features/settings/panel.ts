@@ -3,6 +3,7 @@ import type { ShadowRootContentScriptUi } from "wxt/utils/content-script-ui/shad
 import { loadNotificationSettings, setNotification } from "../alerts/notification-settings";
 import { askGrantPage, askNotificationsPermitted } from "../alerts/permission";
 import { simulatorDialog } from "../combat-simulator/dialog";
+import { serverMapDialog } from "../server-map";
 import { loadToggles, setToggle } from "../toggles";
 import { buildSettingsDialog, DIALOG_STYLE, settingsTabs } from "./dialog";
 import { BUTTON_CLASS } from "./menu-button";
@@ -49,6 +50,14 @@ export function createSettingsPanel(ctx: ContentScriptContext) {
                 .open()
                 .catch((error: unknown) => {
                   console.error("[Optizzz] combat simulator dialog failed", error);
+                });
+            },
+            openServerMap: () => {
+              close();
+              serverMapDialog(ctx)
+                .open()
+                .catch((error: unknown) => {
+                  console.error("[Optizzz] server map dialog failed", error);
                 });
             },
           },

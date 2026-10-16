@@ -8,6 +8,8 @@ import { roleLabel } from "@/features/tdc-chain/roles";
 import { CHART_COLORS } from "@/theme";
 import { formatDecimal, formatNumber } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
+import { bounds, escapeHtml, MAP_ZOOM, mapAxis, squareGrid } from "@/utils/map-chart/axes";
+import { measureName, NAME_HEIGHT, placeLabels, plotProjection, spotLabel } from "@/utils/map-chart/labels";
 
 export interface MapMember extends Player {
   /** Hunting field read live on the members page, otherwise the export's. */
@@ -16,52 +18,7 @@ export interface MapMember extends Player {
 
 const COLORS = { ...CHART_COLORS, selectedLink: CHART_COLORS.selected };
 
-const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-/** Squares kept free around the outermost players. */
-const MARGIN = 2;
-/** Tick steps, the smallest one giving at most 10 ticks is used. */
-const NICE_STEPS = [5, 10, 20, 25, 50, 100, 200, 250, 500];
-
-/**
- * Same range on both axes, so distances are not distorted, starting and ending on a tick. Map coordinates are
- * never negative: an axis only goes below 0 by one step, to keep a player at 0 off the axis line.
- */
-export function bounds(members: readonly Pick<MapMember, "x" | "y">[]) {
-  const xs = members.map((m) => m.x);
-  const ys = members.map((m) => m.y);
-  const extent = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 4) + 2 * MARGIN;
-  const step = NICE_STEPS.find((candidate) => extent / candidate <= 10) ?? 1000;
-  const fit = (values: number[]) => {
-    const min = Math.min(...values);
-    const start = Math.floor((min - MARGIN) / step) * step;
-    return { start, needed: Math.ceil((Math.max(...values) + MARGIN - start) / step) * step, min };
-  };
-  const fits = { x: fit(xs), y: fit(ys) };
-  const size = Math.max(fits.x.needed, fits.y.needed);
-  const axis = ({ start, needed, min }: ReturnType<typeof fit>) => {
-    const centered = start - Math.floor((size - needed) / 2 / step) * step;
-    const from = Math.max(min >= MARGIN ? 0 : -step, centered);
-    return [from, from + size] as const;
-  };
-  return { x: axis(fits.x), y: axis(fits.y), step };
-}
-
-const GRID = { left: 40, top: 16, bottom: 32, labels: 90 };
-
-/** Chart height for a width, so that the plot area is square (same scale on both axes). */
-export const chartHeightFor = (width: number, maxHeight: number) =>
-  Math.min(maxHeight, Math.max(160, width - GRID.left - GRID.labels) + GRID.top + GRID.bottom);
-
-/** Grid leaving a square plot area, centered; labels sit to the right of the points. */
-export function squareGrid(width: number, height: number) {
-  const plot = Math.max(100, Math.min(width - GRID.left - GRID.labels, height - GRID.top - GRID.bottom));
-  const extra = Math.max(0, width - GRID.left - GRID.labels - plot) / 2;
-  return { left: GRID.left + extra, right: GRID.labels + extra, top: GRID.top, bottom: height - GRID.top - plot };
-}
-
-/** Whole, non-negative coordinates only: no « 69.5 » after a zoom, no « −5 ». */
-const coordinateLabel = (value: number) => (Number.isInteger(value) && value >= 0 ? String(value) : "");
+const nameOf = (m: MapMember) => `${m.masterPlayerId !== null ? "⛓ " : ""}${m.pseudo}`;
 
 export function buildChartOption(
   members: readonly MapMember[],
@@ -79,6 +36,25 @@ export function buildChartOption(
   );
   const indexById = new Map(members.map((m, i) => [m.id, i]));
   const { x, y, step } = bounds(members);
+  const grid = squareGrid(size.width, size.height);
+  const symbolSize = (m: MapMember) => {
+    const bubble = bubbles?.get(m.id);
+    if (bubble) return bubble.px + (m.id === selected.id ? 4 : 0);
+    return m.id === selected.id ? 16 : 11;
+  };
+
+  // Every pseudo is written, the selected player's first: placed at the full view, they stay apart when zooming in.
+  const { area, toPixel } = plotProjection({ x, y }, grid, size);
+  const spots = placeLabels(
+    [selected, ...members.filter((m) => m.id !== selected.id)].map((m) => ({
+      id: m.id,
+      ...toPixel(m),
+      width: measureName(nameOf(m), m.id === selected.id),
+      height: NAME_HEIGHT,
+      radius: symbolSize(m) / 2,
+    })),
+    { area, everyName: true },
+  );
 
   const nodes = members.map((m) => {
     const isSelected = m.id === selected.id;
@@ -87,7 +63,7 @@ export function buildChartOption(
       return {
         name: m.pseudo,
         value: [m.x, m.y],
-        symbolSize: bubble.px + (isSelected ? 4 : 0),
+        symbolSize: symbolSize(m),
         itemStyle: {
           color: bubble.color,
           opacity: m.onHoliday ? 0.55 : 1,
@@ -95,7 +71,8 @@ export function buildChartOption(
           borderWidth: isSelected ? 2.5 : 0,
         },
         label: {
-          formatter: `${m.masterPlayerId !== null ? "⛓ " : ""}${m.pseudo}`,
+          ...spotLabel(spots.get(m.id)),
+          formatter: nameOf(m),
           fontWeight: isSelected ? "bold" : "normal",
           color: m.onHoliday ? COLORS.holiday : COLORS.text,
         },
@@ -111,10 +88,11 @@ export function buildChartOption(
     return {
       name: m.pseudo,
       value: [m.x, m.y],
-      symbolSize: isSelected ? 16 : 11,
+      symbolSize: symbolSize(m),
       itemStyle: { color, opacity: m.onHoliday ? 0.55 : 1 },
       label: {
-        formatter: `${m.masterPlayerId !== null ? "⛓ " : ""}${m.pseudo}`,
+        ...spotLabel(spots.get(m.id)),
+        formatter: nameOf(m),
         fontWeight: isSelected ? "bold" : "normal",
         color: m.onHoliday ? COLORS.holiday : COLORS.text,
       },
@@ -135,30 +113,12 @@ export function buildChartOption(
   });
 
   const selectedLevel = levelOf(selected.id, levels);
-  const dashedGrid = { lineStyle: { type: "dashed", opacity: 0.4 } };
-  const axis = (range: readonly [number, number]) => ({
-    type: "value",
-    min: range[0],
-    max: range[1],
-    interval: step,
-    minInterval: 1,
-    splitLine: dashedGrid,
-    // At the edge of the plot, not through 0: a player at 0 stays off the line.
-    axisLine: { onZero: false },
-    axisLabel: { formatter: coordinateLabel },
-  });
-  // The wheel alone scrolls the page; Ctrl (or a trackpad pinch) + wheel zooms.
-  const zoom = { type: "inside", filterMode: "none", zoomOnMouseWheel: "ctrl", moveOnMouseWheel: false };
-
   return {
     animation: false,
-    grid: squareGrid(size.width, size.height),
-    xAxis: axis(x),
-    yAxis: axis(y),
-    dataZoom: [
-      { ...zoom, xAxisIndex: 0 },
-      { ...zoom, yAxisIndex: 0 },
-    ],
+    grid,
+    xAxis: mapAxis(x, step),
+    yAxis: mapAxis(y, step),
+    dataZoom: MAP_ZOOM,
     tooltip: {
       confine: true,
       formatter: (params: { dataType?: string; dataIndex: number }) => {
