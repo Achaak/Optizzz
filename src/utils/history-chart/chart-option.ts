@@ -1,6 +1,7 @@
 // ECharts option of the history curves (players, alliances).
 import type { EChartsCoreOption } from "echarts/core";
 import { CHART_COLORS } from "@/theme";
+import { escapeHtml } from "@/utils/html";
 import { formatNumber } from "@/utils/number-format";
 import { formatDateTime } from "@/utils/time-format";
 
@@ -38,7 +39,7 @@ export function buildHistoryOption(curves: readonly Curve[], compact: boolean): 
       trigger: "item",
       formatter: (param: TooltipParam) =>
         `${formatDateTime(new Date(param.data.value[0]))}${param.data.live ? " · en direct" : ""}<br>` +
-        `${param.marker}${param.seriesName} : <b>${formatNumber(param.data.value[1])}</b>`,
+        `${param.marker}${escapeHtml(param.seriesName)} : <b>${formatNumber(param.data.value[1])}</b>`,
     },
     xAxis: { type: "time", axisLabel: { formatter: (value: number) => day.format(value), hideOverlap: true } },
     yAxis: { type: "value", scale: true, axisLabel: { formatter: (value: number) => formatNumber(value) } },

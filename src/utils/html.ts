@@ -17,3 +17,6 @@ export function svgElement(doc: Document, svg: string): SVGSVGElement {
   const root = new DOMParser().parseFromString(svg, "image/svg+xml").documentElement;
   return doc.importNode(root, true) as unknown as SVGSVGElement;
 }
+
+/** Text safe to put inside HTML markup (ECharts tooltips): player and game data go through it. */
+export const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);

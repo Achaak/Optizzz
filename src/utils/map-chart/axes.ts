@@ -151,7 +151,5 @@ export const MAP_ZOOM = [
   { ...ZOOM, yAxisIndex: 0 },
 ];
 
-export const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
 /** About one tick every 70 pixels: a narrow map (a phone) gets fewer, readable ones. */
 export const ticksFor = (pixels: number) => Math.max(3, Math.min(8, Math.round(pixels / 70)));

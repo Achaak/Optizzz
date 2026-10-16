@@ -8,7 +8,8 @@ import { roleLabel } from "@/features/tdc-chain/roles";
 import { CHART_COLORS } from "@/theme";
 import { formatDecimal, formatNumber } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
-import { bounds, escapeHtml, MAP_ZOOM, mapAxis, squareGrid } from "@/utils/map-chart/axes";
+import { escapeHtml } from "@/utils/html";
+import { bounds, MAP_ZOOM, mapAxis, squareGrid } from "@/utils/map-chart/axes";
 import { measureName, NAME_HEIGHT, placeLabels, plotProjection, spotLabel } from "@/utils/map-chart/labels";
 
 export interface MapMember extends Player {
