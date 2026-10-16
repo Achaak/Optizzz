@@ -66,9 +66,32 @@ export const recordLaunch = (origin: string, launch: Launch) => recordLaunches(o
 // written synchronously in the tab's sessionStorage, then moved at the next page load.
 const QUEUE_KEY = "optizzz-flood-queue";
 
+/** More cannot be sent between two page loads: anything beyond is not ours. */
+const MAX_QUEUED = 20;
+const MAX_AHEAD = 30 * 24 * 60 * 60_000;
+
+const isStoredLaunch = (value: unknown, now: number): value is StoredLaunch => {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    Number.isSafeInteger(v.targetId) &&
+    typeof v.target === "string" &&
+    v.target.length <= 100 &&
+    Number.isSafeInteger(v.ants) &&
+    (v.ants as number) >= 0 &&
+    Number.isSafeInteger(v.take) &&
+    (v.take as number) >= 0 &&
+    typeof v.arrivesAt === "number" &&
+    v.arrivesAt <= now + MAX_AHEAD
+  );
+};
+
 const readQueue = (session: Storage): StoredLaunch[] => {
   try {
-    return JSON.parse(session.getItem(QUEUE_KEY) ?? "[]") as StoredLaunch[];
+    const parsed: unknown = JSON.parse(session.getItem(QUEUE_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    const now = Date.now();
+    return parsed.filter((value: unknown) => isStoredLaunch(value, now)).slice(0, MAX_QUEUED);
   } catch {
     return [];
   }
