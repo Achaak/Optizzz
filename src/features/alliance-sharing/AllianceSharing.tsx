@@ -22,6 +22,8 @@ interface Props {
   alliance: string | null;
   /** Nicknames of the members page; null until it is read. */
   members: string[] | null;
+  /** The logged-in player's pseudo; null when unreadable. */
+  me: string | null;
 }
 
 interface Column {
@@ -95,7 +97,7 @@ const COLUMNS: Record<Exclude<Group, "army" | "works">, Column[]> = {
 /** Sorting: by nickname, or by a value, highest first. */
 type Sort = "pseudo" | ValueKey;
 
-export function AllianceSharing({ origin, alliance, members }: Props) {
+export function AllianceSharing({ origin, alliance, members, me }: Props) {
   const [states, setStates] = useState<SharedStates | null>(null);
   const [group, setGroup] = useState<Group>("summary");
   const [sort, setSort] = useState<Sort>("pseudo");
@@ -114,12 +116,12 @@ export function AllianceSharing({ origin, alliance, members }: Props) {
   useEffect(() => {
     if (!alliance || !members) return;
     void (async () => {
-      await forgetFormerMembers(origin, alliance, members);
+      await forgetFormerMembers(origin, alliance, members, me);
       const mine = await loadMyLastShare(origin, alliance);
       if (mine) await importStates(origin, alliance, [mine]);
       await reload();
     })();
-  }, [origin, alliance, members, reload]);
+  }, [origin, alliance, members, me, reload]);
 
   const rows = useMemo(() => {
     if (!states || !members) return [];
