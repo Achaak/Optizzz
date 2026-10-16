@@ -1,9 +1,16 @@
-// ECharts option of the history curves.
+// ECharts option of the history curves (players, alliances).
 import type { EChartsCoreOption } from "echarts/core";
 import { CHART_COLORS } from "@/theme";
 import { formatNumber } from "@/utils/number-format";
 import { formatDateTime } from "@/utils/time-format";
-import type { Point } from "./series";
+
+export interface Point {
+  /** Epoch ms. */
+  time: number;
+  value: number;
+  /** Read in the game now rather than in an export. */
+  live: boolean;
+}
 
 export interface Curve {
   name: string;

@@ -10,7 +10,7 @@ const HISTORY_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height=
   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
   <path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/></svg>`;
 
-/** Adds a « Historique » entry to the alliance menu, after the other Optizzz views (or « Membres »). */
+/** Adds a « Progression » entry (each member's curves) to the alliance menu, after the other Optizzz views (or « Membres »). */
 export const historyMenu: Feature = {
   id: "history-menu",
   toggle: "history",
@@ -20,7 +20,7 @@ export const historyMenu: Feature = {
     addAllianceMenuEntry(document, {
       className: "optizzz-history",
       href: HISTORY_LINK,
-      label: "Historique",
+      label: "Progression",
       icon: HISTORY_ICON,
     });
   },

@@ -142,6 +142,18 @@ Relevé le 2026-10-07 sur s5 (sans Compte+).
 - Le jeu donne parfois l'heure lui-même après la ligne : « Arrivée à 12h39 » (chasse, Compte+), « Terminé à 13h06 » (recherche).
 - Le 2026-10-07, aucune attaque ni aucun convoi en cours : `Armee.php` et `commerce.php` sans `reste()`.
 
+## classementAlliance.php (classement et page d'une alliance)
+
+Relevé le 2026-10-16 sur S5.
+
+- **Sans paramètre** : le classement des alliances, en 3 pages. Critère au choix (Terrain, Technologie, Fourmilière, Nombre de membres ; pas de Combat), « Votre alliance est classée 19ième en Terrain », puis PLACE | TAG | NOM | TERRAIN | TECHNOLOGIE | FOURMILIERE | MEMBRES.
+- **Ce classement est moins frais que la page d'une alliance** : V y avait 2 167 103 de Terrain quand sa page affichait 2 541 586. Optizzz ne le lit pas.
+- **`?alliance=TAG`** (tag sans la casse : `xyz` = `XYZ`) : la page publique d'une alliance. Dans `#centre` : `h2` = nom de l'alliance, `div.contenuJoueur` (description), puis des `center` :
+  - `<h2>Classement</h2>` suivi de `table.simulateur.tab_triable` : en-tête `th` vide | Score | Classement, puis une ligne par score, `<td>Terrain|Fourmilière|Technologie|Combat|Membres</td><td>2 545 127</td><td>1</td>`. Valeurs en direct (elles bougent d'une minute à l'autre), rangs du jeu ;
+  - `<h2>Les membres de l’Alliance</h2>` et `table#tabMembresAlliance` (RANG | grade | PSEUDO | TERRAIN | TECHNOLOGIE | FOURMILIERE) ;
+  - `<h2>Diplomatie</h2>` : pactes avec leur type, guerres.
+- **Tag inconnu** : la page répond quand même, avec un `h2` vide et des scores à 0 (rangs en dernier). Le `h2` vide signale l'absence de l'alliance.
+
 ## colonies.php et profil
 
 - Colonisé : `div.simulateur` avec `<h2>Vous êtes colonisés par …</h2>`, la force d'occupation, un lien « Déclencher une rebellion ».

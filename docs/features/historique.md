@@ -25,34 +25,34 @@ Voir en courbes le TDC et les scores (Fourmilière, Technologie, Combat) dans le
 ## Comportement
 
 - **Période** : 7 j / 14 j / 30 j / Tout, **14 j par défaut**. Onglets TDC / Fourmilière / Technologie / Combat (les mots du jeu).
-- **Vue d'alliance** : entrée « Historique » du menu d'alliance, après « Chaîne » (ou « Carte », ou « Membres »), `alliance.php?Membres#historique` ; remplace le tableau des membres tant que le hash est `#historique`.
+- **Vue d'alliance** : entrée « Progression » du menu d'alliance (« Historique » jusqu'au 2026-10-16, renommée pour la distinguer des Statistiques d'alliance), après « Chaîne » (ou « Carte », ou « Membres »), `alliance.php?Membres#historique` ; remplace le tableau des membres tant que le hash est `#historique`.
   - Une ligne par membre coché ; par défaut moi seul (en gras). Case « Moyenne de l'alliance » (pointillés) : moyenne des membres actuels présents à chaque export.
   - Tableau « Progression sur la période » : chaque membre, valeur de début, maintenant (« Dernier export » sur l'onglet Combat, absent du tableau Membres), gain et %, triable sur toutes ces colonnes (gain décroissant par défaut) ; les en-têtes sont des boutons, la colonne active porte ▲ ou ▼. La case de chaque ligne affiche sa courbe.
   - Le bandeau « Depuis le … » date le début des courbes affichées (un membre arrivé plus tard commence plus tard).
-  - Titre « Historique de progression TAG », comme « Carte de l'alliance TAG » et « Chaîne de TDC TAG ».
+  - Titre « Progression des membres de TAG ». Sous le titre, un sélecteur « L'alliance / Chaque membre » mène aux Statistiques d'alliance (`statistiques-alliance.md`) quand elles sont allumées.
   - Sans alliance dans le dernier export : un message. Export injoignable : un message en clair, le détail en console.
 - **Profil** (`Membre.php`, le mien ou celui d'un autre) : encart « Progression » sous « Informations », une seule courbe, et « Sur la période : +N (+x %) ». Lien « Comparer avec l'alliance » quand le joueur est de mon alliance (pas sur mon propre profil : je suis déjà la courbe par défaut) : il l'ajoute aux courbes de la vue d'alliance et l'ouvre. Joueur pas encore exporté : un message.
 - **Mémorisé par serveur** (`local:history:<host>:settings`) : membres cochés, moyenne, période, onglet (partagés entre la vue et le profil).
-- Interrupteur « Historique de progression », options « Entrée « Historique » dans le menu d'alliance » et « Encart « Progression » sur les profils ».
+- Interrupteur « Historique de progression », options « Entrée « Progression » dans le menu d'alliance (chaque membre) » et « Encart « Progression » sur les profils ».
 
 ## Plus tard
 
-- Comparer avec des joueurs hors de l'alliance (rivaux), ou entre alliances (export des alliances).
+- Comparer avec des joueurs hors de l'alliance (rivaux). Entre alliances : voir `statistiques-alliance.md`.
 - Points horaires sur les dernières 24 h.
 
 ## Code
 
-| Fichier                                                                                       | Rôle                                                                        |
-| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `src/features/history/versions.ts` (+ test)                                                   | Date d'une version, une version par jour de Paris sur la période            |
-| `src/features/history/api.ts` (+ test)                                                        | Historique de tous les joueurs, cache compact par version                   |
-| `src/features/history/series.ts` (+ test)                                                     | Courbe d'un joueur, moyenne, progression sur la période                     |
-| `src/game/pages/scores.ts` (+ test)                                                           | Scores en direct : profil (`table.tableau_score`), tableau Membres          |
-| `src/features/history/settings.ts`                                                            | Réglages mémorisés                                                          |
-| `src/features/history/chart-option.ts`, `HistoryChart.tsx`                                    | Graphique ECharts (ligne, axe temps)                                        |
-| `src/features/history/useHistory.ts`                                                          | Chargement progressif de la période                                         |
-| `src/features/history/AllianceHistory.tsx`, `ProfileHistory.tsx`, `controls.tsx`, `style.css` | Vues React                                                                  |
-| `src/features/history/menu.ts`                                                                | Entrée de menu (script léger, toutes les pages)                             |
-| `src/entrypoints/history.content/index.tsx`                                                   | Script dédié à `alliance.php` et `Membre.php` : monte les vues (Shadow DOM) |
+| Fichier                                                                        | Rôle                                                                                                                          |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `src/data/export-history.ts` (+ test)                                          | Date d'une version, une version par jour de Paris, cache et chargement progressif (partagés avec les Statistiques d'alliance) |
+| `src/features/history/api.ts` (+ test)                                         | Historique de tous les joueurs, cache compact par version                                                                     |
+| `src/features/history/series.ts` (+ test)                                      | Courbe d'un joueur, moyenne, progression sur la période                                                                       |
+| `src/game/pages/scores.ts` (+ test)                                            | Scores en direct : profil (`table.tableau_score`), tableau Membres                                                            |
+| `src/features/history/settings.ts`                                             | Réglages mémorisés                                                                                                            |
+| `src/utils/history-chart/`                                                     | Graphique ECharts (ligne, axe temps), onglets et période, progression, `style.css` (partagés)                                 |
+| `src/features/history/useHistory.ts`                                           | Chargement progressif de la période                                                                                           |
+| `src/features/history/AllianceHistory.tsx`, `ProfileHistory.tsx`, `metrics.ts` | Vues React                                                                                                                    |
+| `src/features/history/menu.ts`                                                 | Entrée de menu (script léger, toutes les pages)                                                                               |
+| `src/entrypoints/history.content/index.tsx`                                    | Script dédié à `alliance.php` et `Membre.php` : monte les vues (Shadow DOM)                                                   |
 
 Vérifié dans le jeu (S5, 2026-10-08) : profil (le mien, un joueur sans alliance), vue d'alliance (15 membres, courbes cochées, moyenne, onglet Combat, retour à Membres).
