@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import { armyFromKeys } from "@/game/army/units";
 import {
@@ -16,6 +16,13 @@ const ORIGIN = "https://s5.fourmizzz.fr";
 const at = (hour: number, minute = 0) => new Date(2026, 9, 8, hour, minute);
 const launch = (target: string, arrivesAt: Date) => ({ targetId: 7, target, ants: 100, take: 100, arrivesAt });
 
+// Writes drop the launches arrived by the real clock: pin it before the dates used here.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(at(9));
+});
+afterEach(() => vi.useRealTimers());
+
 describe("launches", () => {
   beforeEach(() => fakeBrowser.reset());
 
@@ -23,6 +30,13 @@ describe("launches", () => {
     await recordLaunch(ORIGIN, launch("Cible", at(10, 30)));
     await recordLaunch(ORIGIN, launch("Cible", at(12)));
     expect((await loadLaunches(ORIGIN, at(11))).map((sent) => sent.arrivesAt)).toEqual([at(12)]);
+  });
+
+  it("does not write when read", async () => {
+    await recordLaunch(ORIGIN, launch("Cible", at(10, 30)));
+    const set = vi.spyOn(fakeBrowser.storage.local, "set");
+    await loadLaunches(ORIGIN, at(11));
+    expect(set).not.toHaveBeenCalled();
   });
 
   it("keeps one list per server", async () => {
@@ -40,6 +54,15 @@ describe("queued launches", () => {
   it("keeps a launch through the page change, then moves it to the extension's storage", async () => {
     queueLaunch(sessionStorage, launch("Cible", at(12)));
     await flushQueuedLaunches(sessionStorage, ORIGIN);
+    await flushQueuedLaunches(sessionStorage, ORIGIN);
+    expect(await loadLaunches(ORIGIN, at(11))).toEqual([launch("Cible", at(12))]);
+  });
+
+  it("keeps the queue when storing fails", async () => {
+    queueLaunch(sessionStorage, launch("Cible", at(12)));
+    vi.spyOn(fakeBrowser.storage.local, "set").mockRejectedValueOnce(new Error("quota"));
+    await expect(flushQueuedLaunches(sessionStorage, ORIGIN)).rejects.toThrow("quota");
+    expect(sessionStorage.getItem("optizzz-flood-queue")).not.toBeNull();
     await flushQueuedLaunches(sessionStorage, ORIGIN);
     expect(await loadLaunches(ORIGIN, at(11))).toEqual([launch("Cible", at(12))]);
   });

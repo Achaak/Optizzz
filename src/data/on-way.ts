@@ -1,8 +1,9 @@
 // The attacks on their way, shared by the flood plan and the « Flood max » column of the targets.
 import { attackSlots } from "@/game/attack";
 import { readAttacksOnWay, reconcileLaunches } from "@/features/flood/attacks";
-import { loadLaunches, saveLaunches, type Launch } from "@/data/launches";
+import { launchesLock, loadLaunches, sameLaunch, writeLaunches, type Launch } from "@/data/launches";
 import { fetchGamePage } from "@/utils/game-page";
+import { withStorageLock } from "@/utils/storage-lock";
 
 export interface OnWay {
   /** Attacks sent through the form and still on their way, all targets, matched with the game's list. */
@@ -16,16 +17,23 @@ export interface OnWay {
  * background): a cancelled attack is forgotten, one sent without this plan is counted in `unknown`.
  */
 export async function checkLaunches(origin: string, now: Date, doc?: Document): Promise<OnWay> {
-  const launches = await loadLaunches(origin, now);
+  const before = await loadLaunches(origin, now);
   try {
     const page = doc ?? (await fetchGamePage("/Armee.php"));
     if (!page) throw new Error("Fourmizzz: error status on Armee.php");
-    const checked = reconcileLaunches(launches, readAttacksOnWay(page, now));
-    await saveLaunches(origin, checked.launches);
-    return checked;
+    const onWay = readAttacksOnWay(page, now);
+    return await withStorageLock(launchesLock(origin), async () => {
+      // Launches recorded by another tab while the page was read are kept as they are: the page may predate them.
+      const current = await loadLaunches(origin, now);
+      const added = current.filter((launch) => !before.some((known) => sameLaunch(known, launch)));
+      const checked = reconcileLaunches(before, onWay);
+      const launches = [...checked.launches, ...added];
+      await writeLaunches(origin, launches);
+      return { launches, unknown: Math.max(0, checked.unknown - added.length) };
+    });
   } catch (error) {
     console.warn("[Optizzz] could not check the attacks on their way", error);
-    return { launches, unknown: 0 };
+    return { launches: before, unknown: 0 };
   }
 }
 

@@ -2,6 +2,7 @@
 // targets, and whether the lodge counts.
 import { storage } from "wxt/utils/storage";
 import type { Army } from "@/game/army/units";
+import { withStorageLock } from "@/utils/storage-lock";
 
 export interface Launch {
   targetId: number;
@@ -23,26 +24,43 @@ const lodgeKey = (origin: string) => `local:flood:${host(origin)}:countLodge` as
 
 const fromStored = (stored: StoredLaunch): Launch => ({ ...stored, arrivesAt: new Date(stored.arrivesAt) });
 
-/** The attacks still on their way; the ones arrived are forgotten. */
+/** The attacks still on their way (the ones arrived are left out; they are dropped at the next write). */
 export async function loadLaunches(origin: string, now: Date): Promise<Launch[]> {
   const stored = (await storage.getItem<StoredLaunch[]>(launchesKey(origin))) ?? [];
-  const pending = stored.filter((launch) => launch.arrivesAt > now.getTime());
-  if (pending.length !== stored.length) await storage.setItem(launchesKey(origin), pending);
-  return pending.map(fromStored);
+  return stored.filter((launch) => launch.arrivesAt > now.getTime()).map(fromStored);
 }
 
-/** Replaces the launches on their way, once matched with the game's list. */
-export async function saveLaunches(origin: string, launches: Launch[]): Promise<void> {
+/** The same attack, as stored by one tab and read by another. */
+export const sameLaunch = (a: Launch, b: Launch) =>
+  a.targetId === b.targetId &&
+  a.take === b.take &&
+  a.ants === b.ants &&
+  a.arrivesAt.getTime() === b.arrivesAt.getTime();
+
+/** The storage lock of a server's launches: take it around a read-modify-write, and write with `writeLaunches`. */
+export const launchesLock = launchesKey;
+
+/** Writes the launches without taking the lock: for a caller already holding `launchesLock`. */
+export async function writeLaunches(origin: string, launches: Launch[]): Promise<void> {
   await storage.setItem(
     launchesKey(origin),
     launches.map((launch) => ({ ...launch, arrivesAt: launch.arrivesAt.getTime() })),
   );
 }
 
-export async function recordLaunch(origin: string, launch: Launch): Promise<void> {
-  const stored = (await storage.getItem<StoredLaunch[]>(launchesKey(origin))) ?? [];
-  await storage.setItem(launchesKey(origin), [...stored, { ...launch, arrivesAt: launch.arrivesAt.getTime() }]);
+/** Adds attacks to the ones on their way, dropping the ones arrived. */
+async function recordLaunches(origin: string, launches: Launch[]): Promise<void> {
+  await withStorageLock(launchesKey(origin), async () => {
+    const stored = (await storage.getItem<StoredLaunch[]>(launchesKey(origin))) ?? [];
+    const pending = stored.filter((launch) => launch.arrivesAt > Date.now());
+    await storage.setItem(launchesKey(origin), [
+      ...pending,
+      ...launches.map((launch) => ({ ...launch, arrivesAt: launch.arrivesAt.getTime() })),
+    ]);
+  });
 }
+
+export const recordLaunch = (origin: string, launch: Launch) => recordLaunches(origin, [launch]);
 
 // The game leaves the page as soon as the form is sent: an asynchronous write could be lost. The launch is first
 // written synchronously in the tab's sessionStorage, then moved at the next page load.
@@ -70,8 +88,9 @@ export function queueLaunch(session: Storage, launch: Launch) {
 export async function flushQueuedLaunches(session: Storage, origin: string): Promise<void> {
   const queued = readQueue(session);
   if (queued.length === 0) return;
+  // Removed only once stored: a duplicate is dropped at the next check of Armee.php, a lost launch is not found again.
+  await recordLaunches(origin, queued.map(fromStored));
   session.removeItem(QUEUE_KEY);
-  for (const launch of queued) await recordLaunch(origin, fromStored(launch));
 }
 
 interface StoredDefense {
