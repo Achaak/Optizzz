@@ -166,3 +166,18 @@ a {
   display: inline-block;
   border-radius: 50%;
 }
+
+/* The shape of each kind of role (role-styles.ts), told apart without the colours. */
+.role-legend .bubble[data-shape="square"] {
+  border-radius: 2px;
+}
+
+.role-legend .bubble[data-shape="diamond"] {
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.role-legend .bubble[data-shape="triangle"] {
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}

@@ -716,7 +716,9 @@ function RoleBubbles({
     <details className="role-bubbles">
       <summary>Couleurs des rôles sur la Carte</summary>
       <p className="note">
-        Sur la Carte, cochez « Couleurs des rôles de la chaîne » pour voir chaque membre avec la bulle de son rôle.
+        Sur la Carte, cochez « Couleurs des rôles de la chaîne » pour voir chaque membre avec la bulle de son rôle. La
+        forme suit le type de rôle (grenier carré, passeur losange, chasseur rond, hors chaîne triangle) : les rôles
+        restent reconnaissables sans distinguer les couleurs.
       </p>
       <table>
         <thead>
@@ -730,7 +732,7 @@ function RoleBubbles({
         <tbody>
           {roles.map((role) => {
             const style = styleOf(role, styles);
-            const bubble = bubbleOf(style);
+            const bubble = bubbleOf(role, style);
             return (
               <tr key={roleKey(role)}>
                 <td>{roleLabel(role)}</td>
@@ -764,7 +766,11 @@ function RoleBubbles({
                   </select>
                 </td>
                 <td className="preview">
-                  <span className="bubble" style={{ background: bubble.color, width: bubble.px, height: bubble.px }} />
+                  <span
+                    className="bubble"
+                    data-shape={bubble.shape}
+                    style={{ background: bubble.color, width: bubble.px, height: bubble.px }}
+                  />
                 </td>
               </tr>
             );
