@@ -3,6 +3,8 @@ export interface FeatureOption {
   /** Stable: part of the storage key. */
   id: string;
   label: string;
+  /** Off until the player switches it on. */
+  offByDefault?: true;
 }
 
 /** A feature the player can switch off in « Fonctionnalités ». */
@@ -102,6 +104,17 @@ export const featureCatalog = [
     description:
       "Sur Armée : les attaques en cours en liste, avec le décompte, l'heure d'arrivée, le lieu et les troupes, et un bouton pour copier chacune.",
     options: [],
+  },
+  {
+    id: "probes",
+    label: "Sondes",
+    description:
+      "Une fourmi gardée sur chaque lieu, pour qu'une attaque y livre combat et que le rapport montre l'armée de l'attaquant. Sur Armée : un avertissement et un bouton pour les placer ; le Lanceur de chasse et le Plan de flood les laissent à la maison, et elles sont replacées après l'envoi.",
+    options: [
+      { id: "field", label: "Terrain de chasse", offByDefault: true },
+      { id: "nest", label: "Dôme" },
+      { id: "lodge", label: "Loge" },
+    ],
   },
   {
     id: "hunt-reports",

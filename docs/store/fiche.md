@@ -34,6 +34,7 @@ Chasse et combat
 • Production sur les profils : ce que le TDC d'un joueur récolte par jour au plus, taxe de colonie déduite s'il est soumis.
 • Plan de flood : sur le formulaire d'attaque, les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
 • Attaques et convois en cours : une liste lisible avec décompte, heure d'arrivée, lieu et troupes (Compte+), et un bouton pour copier chacun en une ligne.
+• Sondes : une fourmi gardée sur le Dôme et la Loge (et le Terrain au choix), pour que le rapport d'une attaque montre l'armée de l'attaquant ; un avertissement et un bouton sur Armée, et le Lanceur de chasse comme le Plan de flood les laissent à la maison.
 
 Alliance
 • Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens et, au choix, leur rôle dans la chaîne de TDC.
@@ -42,7 +43,7 @@ Alliance
 • Historique de progression : les courbes du TDC et des scores jour après jour, pour vous, votre alliance et sur chaque profil.
 • Partage d'alliance : copiez vos niveaux, chantiers et armée pour les coller sur le Discord de votre alliance, et lisez ceux des autres membres.
 
-Optizzz ne joue jamais à votre place : une chasse n'est lancée, une répartition appliquée et un formulaire d'attaque rempli que lorsque vous cliquez.
+Optizzz ne joue jamais à votre place : une chasse n'est lancée, une répartition appliquée et un formulaire d'attaque rempli que lorsque vous cliquez ; les sondes ne sont déplacées qu'à votre clic ou juste après une chasse ou une attaque que vous avez envoyée.
 
 Respect de votre vie privée : aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur ; le partage d'alliance passe uniquement par votre copier-coller. Code source ouvert (licence MIT) : https://github.com/Achaak/Optizzz
 

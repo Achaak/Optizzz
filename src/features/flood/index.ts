@@ -18,6 +18,7 @@ import {
   saveDefense,
 } from "@/data/launches";
 import { fetchGamePage } from "@/utils/game-page";
+import { watchedPlaces } from "../probes";
 
 /** Kept above the 50 % limit: other attacks and hunts may move the fields before arrival. */
 export const FLOOD_MARGIN = 0.01;
@@ -40,7 +41,7 @@ export const floodPlanner: Feature = {
   toggle: "flood",
   // Every page: the game may land anywhere after an attack is sent, and the queued launch must be stored.
   matches: () => true,
-  async run() {
+  async run(_ctx, toggles) {
     const origin = location.origin;
     await flushQueuedLaunches(sessionStorage, origin);
     const path = location.pathname.toLowerCase();
@@ -96,6 +97,7 @@ export const floodPlanner: Feature = {
         onWay: launches,
         defense,
         countLodge,
+        probes: watchedPlaces(toggles).length,
         protectedMe: isUnderBeginnerProtection(document),
         margin: FLOOD_MARGIN,
         onCountLodgeChange: (count) => void saveCountLodge(origin, count),

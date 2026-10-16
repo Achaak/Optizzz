@@ -21,6 +21,7 @@ const setup = (options: Partial<FloodContext> = {}) => {
     onWay: { launches: [], unknown: 0 },
     defense: null,
     countLodge: false,
+    probes: 0,
     margin: 0,
     onCountLodgeChange: () => undefined,
     onDefenseChange: () => undefined,
@@ -56,6 +57,17 @@ describe("mountFloodPlanner", () => {
     const buttons = [...doc.querySelectorAll<HTMLButtonElement>(".optizzz-flood tbody button")];
     buttons[1]?.click();
     expect([unit("unite1"), unit("unite5")]).toEqual(["320", "0"]);
+  });
+
+  it("keeps the probes home, the cheapest ants first, unless ants stay home anyway", () => {
+    const { rows, text } = setup({
+      available: { field: armyFromKeys({ JSN: 2, S: 50 }), nest: emptyArmy(), lodge: emptyArmy() },
+      probes: 3,
+    });
+    expect(rows().map((cells) => cells[1])).toEqual(["49 S"]);
+    expect(text()).toContain("3 sondes gardées");
+    // The 5 000 JSN of the lodge, left out, stay home.
+    expect(setup({ probes: 3 }).rows()[0]?.[1]).toBe("400 JSN");
   });
 
   it("counts the attacks already on their way", () => {

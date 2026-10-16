@@ -38,6 +38,7 @@ Ces règles vivent dans `src/game/attack.ts` (prise, portée avec marge, prise �
   - une attaque listée mais pas notée a été lancée sans le plan : elle prend un créneau, sa prise n'est pas comptée (l'encart le dit) ;
   - l'heure d'arrivée du jeu remplace celle estimée.
 - **Cibles à portée** : colonne « Flood max », triable, d'après l'armée mémorisée sur `Armee.php` (Terrain + Dôme, + Loge si la case est cochée), les défenses collées et les mêmes attaques en route que ce plan (`src/data/on-way.ts`).
+- **Sondes** (`sondes.md`) : l'armée planifiée garde une fourmi par lieu surveillé.
 - Interrupteur « Plan de flood » : coupé, rien sur le formulaire, pas de colonne, aucune lecture.
 
 ## Hors v1

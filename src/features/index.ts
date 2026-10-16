@@ -14,6 +14,7 @@ import { historyMenu } from "./history/menu";
 import { huntReports } from "./hunt-reports";
 import { layingPlanner } from "./laying-planner";
 import { membersColumns } from "./members-columns";
+import { probes } from "./probes";
 import { profileProduction } from "./profile-production";
 import { resourceForecast } from "./resource-forecast";
 import { safeReload } from "./safe-reload";
@@ -46,6 +47,7 @@ export const features: Feature[] = [
   profileProduction,
   floodPlanner,
   attacksOnWay,
+  probes,
   combatSimulator,
   serverMap,
   gameLevels,

@@ -18,8 +18,9 @@ export interface Garrison {
 export const isEmptyGarrison = (garrison: Pick<Garrison, "armies">) =>
   Object.values(garrison.armies).every((army) => army.every((count) => count === 0));
 
-// Each count is a `<span id="(1200,'unite1',1)">`: count, the unit's `uniteN` field, then the place.
-const COUNT_ID = /^\((\d+),'unite(\d+)',(\d)\)$/;
+// Each count is a `<span onClick="remplirFormulaire(1200,'unite1',1,3);">` (2026-10-16), formerly a
+// `<span id="(1200,'unite1',1)">`: count, the unit's `uniteN` field, then the place.
+const COUNT = /^(?:remplirFormulaire)?\((\d+),'unite(\d+)',(\d)[,)]/;
 const PLACE_NUMBERS: Record<string, Place> = { "1": "field", "2": "nest", "3": "lodge" };
 
 /** The « Troupes en Garnison » table; null on another page. */
@@ -30,8 +31,8 @@ export function readGarrison(doc: Document): Garrison | null {
   if (!table) return null;
 
   const armies: Record<Place, number[]> = { field: emptyArmy(), nest: emptyArmy(), lodge: emptyArmy() };
-  for (const span of table.querySelectorAll("span[id]")) {
-    const [, count, field, placeNumber] = COUNT_ID.exec(span.id) ?? [];
+  for (const span of table.querySelectorAll("span[id], span[onclick]")) {
+    const [, count, field, placeNumber] = COUNT.exec(span.getAttribute("onclick") ?? span.id) ?? [];
     const unit = UNITS.findIndex((candidate) => String(candidate.field) === field);
     const place = PLACE_NUMBERS[placeNumber ?? ""];
     if (unit >= 0 && place) armies[place][unit] = Number(count);

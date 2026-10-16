@@ -19,6 +19,7 @@ Chaque outil se désactive dans les paramètres (roue dentée dans la barre du j
 - **Planificateur de ponte** : raccourcis de ponte avec aperçu (tout payer, durée, bilan à zéro), fin, date de paiement et entretien sur la Reine.
 - **Rapports de chasse** : tableau des combats de chaque chasse dans la messagerie, avec les pertes prévues.
 - **Attaques et convois en cours** : une liste lisible avec décompte et heure d'arrivée, et un bouton pour copier chacun en une ligne.
+- **Sondes** : une fourmi gardée sur le Dôme et la Loge (et le Terrain si vous le voulez) pour voir l'armée de qui vous attaque ; un bouton pour les placer sur Armée, et le Lanceur de chasse comme le Plan de flood les laissent à la maison.
 - **Simulateur de combat** : depuis la page Armée ou le popup de l'extension.
 - **Lanceur de chasse** : combien chasser et avec quoi, puis lancer en un clic.
 - **Rechargement sans risque** : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.

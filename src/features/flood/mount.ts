@@ -2,6 +2,7 @@ import type { Place } from "@/game/army/battle";
 import { armyFromKeys, unitLabel, UNITS, type Army } from "@/game/army/units";
 import { inRange, maxTake } from "@/game/attack";
 import { planAttacks, type PlannedAttack } from "@/game/flood";
+import { keepProbes, PLACES } from "@/game/probes";
 import { formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import { readArmyText } from "../combat-simulator/form";
@@ -36,6 +37,8 @@ export interface FloodContext {
   /** The target's army on its hunting field, when pasted. */
   defense: { army: Army; readAt: Date } | null;
   countLodge: boolean;
+  /** Ants kept home as probes (« Sondes »), put back on their places once the attack is sent. */
+  probes: number;
   /** I am under the beginner protection: attacking ends it. */
   protectedMe?: boolean;
   /** Kept above the 50 % limit. */
@@ -151,7 +154,9 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     targetLeft = after.targetField;
     const unknownOnWay = context.onWay.unknown;
     const places: Place[] = countLodge ? ["field", "nest", "lodge"] : ["field", "nest"];
-    const available = UNITS.map((_, i) => places.reduce((sum, place) => sum + (context.available[place][i] ?? 0), 0));
+    const armyIn = (from: readonly Place[]) =>
+      UNITS.map((_, i) => from.reduce((count, place) => count + (context.available[place][i] ?? 0), 0));
+    const available = keepProbes(armyIn(places), armyIn(PLACES), context.probes);
     const { travelSeconds } = context;
 
     summary.textContent = [
@@ -160,6 +165,9 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
       ` · ${String(slots)} attaque${slots > 1 ? "s" : ""} possible${slots > 1 ? "s" : ""}`,
       unknownOnWay > 0
         ? ` (${String(unknownOnWay)} attaque${unknownOnWay > 1 ? "s" : ""} lancée${unknownOnWay > 1 ? "s" : ""} sans ce plan : leur prise n'est pas comptée)`
+        : "",
+      context.probes > 0
+        ? ` · ${String(context.probes)} sonde${context.probes > 1 ? "s" : ""} gardée${context.probes > 1 ? "s" : ""}`
         : "",
       travelSeconds === null
         ? " · trajet inconnu (absent de l'export)"
