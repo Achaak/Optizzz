@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
+import { storage } from "wxt/utils/storage";
 import { loadHistory } from "./api";
 
 const ORIGIN = "https://s5.fourmizzz.fr";
 
-const player = (id: number, field: number) => ({
+const player = (id: number, field: number, alliance: string | null = "XYZ") => ({
   id,
   pseudo: `P${String(id)}`,
-  alliance: "XYZ",
+  alliance,
   masterPlayerId: null,
   x: 1,
   y: 2,
@@ -22,7 +23,7 @@ const player = (id: number, field: number) => ({
 
 const exports: Record<string, unknown> = {
   "202610052200": [player(1, 100), player(2, 50)],
-  "202610062200": [player(1, 150)],
+  "202610062200": [player(1, 150), player(3, 10, null)],
 };
 
 function fakeApi() {
@@ -44,6 +45,26 @@ describe("loadHistory", () => {
     expect(history[0]?.players.get(2)).toEqual({ field: 50, building: 30, technology: 15, trophy: 2 });
     expect(history[1]?.players.get(1)?.field).toBe(150);
     expect(history[1]?.players.has(2)).toBe(false);
+  });
+
+  it("gives each player's alliance per version, null without one", async () => {
+    vi.stubGlobal("fetch", fakeApi());
+    const history = await loadHistory(ORIGIN, ["202610062200"]);
+    expect(history[0]?.alliances.get(1)).toBe("XYZ");
+    expect(history[0]?.alliances.get(3)).toBeNull();
+  });
+
+  it("downloads again a version stored before the alliances were kept", async () => {
+    const fetch = fakeApi();
+    vi.stubGlobal("fetch", fetch);
+    const old = { ids: [1], field: [100], building: [30], technology: [15], trophy: [2] };
+    await storage.setItem(`local:history:s5.fourmizzz.fr:202610052200`, old);
+    const history = await loadHistory(ORIGIN, ["202610052200"]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(history[0]?.alliances.get(2)).toBe("XYZ");
+    const again = await loadHistory(ORIGIN, ["202610052200"]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(again[0]?.alliances.get(1)).toBe("XYZ");
   });
 
   it("stops downloading once aborted", async () => {

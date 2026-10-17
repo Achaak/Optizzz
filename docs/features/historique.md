@@ -17,7 +17,7 @@ Voir en courbes le TDC et les scores (Fourmilière, Technologie, Combat) dans le
 
 ## Cache
 
-- Une entrée par version et par serveur, `local:history:<host>:<version>` : **tous les joueurs** en colonnes (id, TDC, Fourmilière, Technologie, Combat), sans pseudo ni alliance. Environ 25 Ko par version sur S5, 500 Ko sur S2 (l'export brut pèse 225 Ko / 4,2 Mo). Tient grâce à `unlimitedStorage`, déjà demandée pour la Carte.
+- Une entrée par version et par serveur, `local:history:<host>:<version>` : **tous les joueurs** en colonnes (id, TDC, Fourmilière, Technologie, Combat, alliance), sans pseudo. L'alliance est un numéro dans la liste des tags de la version (ajoutée le 2026-10-17 : une version enregistrée avant est retéléchargée une fois). Environ 30 Ko par version sur S5, 600 Ko sur S2 (l'export brut pèse 225 Ko / 4,2 Mo). Tient grâce à `unlimitedStorage`, déjà demandée pour la Carte.
 - Une version n'est téléchargée qu'une fois ; une version que l'API ne donne pas est sautée. Jamais purgé.
 - Pseudos et alliances viennent du dernier export (cache de la Carte) : un joueur s'identifie par son id, un membre arrivé récemment a donc tout son historique.
 - Chargement du plus récent au plus ancien, une version à la fois, avec une barre de progression ; la courbe se remplit au fur et à mesure. Changer de période ou quitter la vue arrête les téléchargements en cours. La liste des versions (`/api/exports/`) n'est demandée qu'une fois quand plusieurs lectures la veulent en même temps.
@@ -32,6 +32,7 @@ Voir en courbes le TDC et les scores (Fourmilière, Technologie, Combat) dans le
   - Titre « Progression des membres de TAG ». Sous le titre, un sélecteur « L'alliance / Chaque membre » mène aux Statistiques d'alliance (`statistiques-alliance.md`) quand elles sont allumées.
   - Sans alliance dans le dernier export : un message. Export injoignable : un message en clair, le détail en console.
 - **Profil** (`Membre.php`, le mien ou celui d'un autre) : encart « Progression » sous « Informations », une seule courbe, et « Sur la période : +N (+x %) ». Lien « Comparer avec l'alliance » quand le joueur est de mon alliance (pas sur mon propre profil : je suis déjà la courbe par défaut) : il l'ajoute aux courbes de la vue d'alliance et l'ouvre. Joueur pas encore exporté : un message.
+- **Changements d'alliance** (profil, sous « Sur la période ») : « Changements d'alliance sur la période : » puis un changement par ligne, le plus récent d'abord, la date en gras en tête : « **14/10** · a quitté ABC pour XYZ », « **09/10** · a rejoint ABC », « **du 03/10 au 05/10** · a quitté OLD » quand des exports manquent. Tags cliquables vers la page de l'alliance. Sans changement, en discret : « Toujours dans XYZ sur la période. » ou « Sans alliance sur toute la période. ». Comparaison sans la casse, exports sans le joueur sautés. Le dernier export horaire clôt la série : un changement du jour est vu dans l'heure. Daté au jour de Paris (l'export de minuit sépare les jours).
 - **Mémorisé par serveur** (`local:history:<host>:settings`) : membres cochés, moyenne, période, onglet (partagés entre la vue et le profil).
 - Interrupteur « Historique de progression », options « Entrée « Progression » dans le menu d'alliance (chaque membre) » et « Encart « Progression » sur les profils ».
 
@@ -47,6 +48,7 @@ Voir en courbes le TDC et les scores (Fourmilière, Technologie, Combat) dans le
 | `src/data/export-history.ts` (+ test)                                          | Date d'une version, une version par jour de Paris, cache et chargement progressif (partagés avec les Statistiques d'alliance) |
 | `src/features/history/api.ts` (+ test)                                         | Historique de tous les joueurs, cache compact par version                                                                     |
 | `src/features/history/series.ts` (+ test)                                      | Courbe d'un joueur, moyenne, progression sur la période                                                                       |
+| `src/features/history/alliance-moves.ts` (+ test)                              | Changements d'alliance d'un joueur, et leur jour                                                                              |
 | `src/game/pages/scores.ts` (+ test)                                            | Scores en direct : profil (`table.tableau_score`), tableau Membres                                                            |
 | `src/features/history/settings.ts`                                             | Réglages mémorisés                                                                                                            |
 | `src/utils/history-chart/`                                                     | Graphique ECharts (ligne, axe temps), onglets et période, progression, `style.css` (partagés)                                 |
