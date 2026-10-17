@@ -89,7 +89,7 @@ describe("buildSettingsDialog", () => {
     const [simulator, map] = dialog.querySelectorAll<HTMLButtonElement>(".tools button");
     simulator?.click();
     expect(tools.openSimulator).toHaveBeenCalledOnce();
-    expect(map?.textContent).toBe("Carte du serveur");
+    expect(map?.querySelector(".tool-name")?.textContent).toBe("Carte du serveur");
     map?.click();
     expect(tools.openServerMap).toHaveBeenCalledOnce();
   });

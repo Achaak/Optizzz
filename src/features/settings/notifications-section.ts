@@ -5,17 +5,15 @@ import { loadLossPercent, setLossPercent } from "../watchlist/settings";
 
 /** Styles of « Notifications », shared by the in-game dialog and the toolbar popup. */
 export const NOTIFICATIONS_STYLE = `
-.notifications-intro { margin: 0 0 10px; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
-.notifications { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
-.notifications label { display: flex; gap: 6px; align-items: baseline; cursor: pointer; }
+.notifications-intro { margin: 0 0 var(--optizzz-space-4); }
+.notifications { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--optizzz-space-3); }
+.notifications label { display: flex; gap: var(--optizzz-space-3); align-items: center; cursor: pointer; }
 .notifications input { margin: 0; }
-.notifications-blocked { margin: var(--optizzz-space-5) 0 0; color: var(--optizzz-danger-text); }
-.notifications-off, .notifications-needs { margin: 0 0 10px; color: var(--optizzz-warning-text); font-size: var(--optizzz-font-size-small); }
 .notifications input:disabled + span { opacity: 0.6; }
-.notifications-blocked button { margin-left: 6px; font: inherit; cursor: pointer; }
-.notifications-group { margin: var(--optizzz-space-5) 0 var(--optizzz-space-3); font-weight: bold; }
-.notifications-percent { display: inline-flex; gap: var(--optizzz-space-2); align-items: baseline; }
-.notifications-percent input { width: 4em; margin: 0; }`;
+.notifications-blocked { display: flex; flex-wrap: wrap; align-items: center; gap: var(--optizzz-space-3) var(--optizzz-space-5); }
+.notifications-section .optizzz-subtitle:first-of-type { margin-top: var(--optizzz-space-4); }
+.notifications-percent { display: inline-flex; gap: var(--optizzz-space-2); align-items: center; }
+.notifications-percent input { width: 4.5em; margin: 0; }`;
 
 const KINDS: { kind: NotificationKind; label: string }[] = [
   { kind: "famine", label: "Famine dans moins d'1 h" },
@@ -48,6 +46,7 @@ export interface NotificationsTabInput {
 /** « Notifications » : one checkbox per kind, all off by default; switching one on asks for the permission. */
 export function buildNotificationsSection(doc: Document, input: NotificationsTabInput): HTMLElement {
   const section = doc.createElement("div");
+  section.className = "notifications-section";
   const settings = { ...input.settings };
   const toggles = input.toggles ?? {};
   const switchedOn = isEnabled(toggles, "alerts", "notifications");
@@ -56,33 +55,35 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
   let permission = input.permitted();
 
   const intro = doc.createElement("p");
-  intro.className = "notifications-intro";
+  intro.className = "notifications-intro optizzz-note";
   intro.textContent =
     "Pour tous vos serveurs, même quand le jeu est fermé, tant que le navigateur est ouvert. Calculées depuis les pages lues ; celles des Suivis, depuis l'export public relevé chaque heure.";
 
   const off = doc.createElement("p");
-  off.className = "notifications-off";
+  off.className = "notifications-off optizzz-callout optizzz-callout--warning";
   off.textContent =
     "Notifications coupées dans « Fonctionnalités » (Alertes › Notifications) : rien ne part, quelles que soient ces cases.";
 
   // « Chantier terminé » and « Chasse rentrée » come from the end times « Heures de fin » keeps.
   const needs = doc.createElement("p");
-  needs.className = "notifications-needs";
+  needs.className = "notifications-needs optizzz-callout optizzz-callout--warning";
   needs.textContent =
     "« Chantier terminé » et « Chasse rentrée » ont besoin de « Heures de fin », coupée dans « Fonctionnalités ».";
 
   // Never asked yet, or refused: the browser has not allowed them so far.
   const blocked = doc.createElement("p");
-  blocked.className = "notifications-blocked";
+  blocked.className = "notifications-blocked optizzz-callout optizzz-callout--warning";
+  blocked.setAttribute("role", "status");
   blocked.textContent = "Notifications pas encore autorisées par le navigateur.";
   const allow = doc.createElement("button");
   allow.type = "button";
+  allow.className = "optizzz-button-primary";
   allow.textContent = "Autoriser";
   allow.addEventListener("click", input.grant);
   blocked.append(allow);
 
   const watchOff = doc.createElement("p");
-  watchOff.className = "notifications-needs";
+  watchOff.className = "notifications-needs optizzz-callout optizzz-callout--warning";
   watchOff.textContent = "Suivis coupés dans « Fonctionnalités » : aucun relevé, donc rien à notifier.";
 
   /** The percent of lost field from which « Perte de TDC » notifies. */
@@ -110,7 +111,8 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
 
   const showBlocked = () => {
     const wanted = Object.values(settings).some(Boolean);
-    if (permitted === false && wanted) section.append(blocked);
+    // Right under the intro: the first thing to fix, whatever the length of the lists.
+    if (permitted === false && wanted) intro.after(blocked);
     else blocked.remove();
   };
 
@@ -139,12 +141,15 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
     return item;
   };
 
+  const gameTitle = doc.createElement("h3");
+  gameTitle.className = "optizzz-subtitle";
+  gameTitle.textContent = "Vos fourmilières";
   const list = doc.createElement("ul");
   list.className = "notifications";
   for (const { kind, label } of KINDS) list.append(checkboxRow(kind, label));
 
-  const watchTitle = doc.createElement("p");
-  watchTitle.className = "notifications-group";
+  const watchTitle = doc.createElement("h3");
+  watchTitle.className = "optizzz-subtitle";
   watchTitle.textContent = "Suivis";
   const watchList = doc.createElement("ul");
   watchList.className = "notifications";
@@ -158,7 +163,7 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
   section.append(intro);
   if (!switchedOn) section.append(off);
   else if (!isEnabled(toggles, "end-times")) section.append(needs);
-  section.append(list, watchTitle);
+  section.append(gameTitle, list, watchTitle);
   if (!isEnabled(toggles, "watchlist")) section.append(watchOff);
   section.append(watchList);
 

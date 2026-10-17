@@ -112,6 +112,41 @@ describe("buildFeaturesSection", () => {
     expect(reload).toHaveBeenCalledOnce();
   });
 
+  it("counts the features switched on", () => {
+    const section = buildFeaturesSection(document, { "work-queue": false }, vi.fn());
+    const count = () => section.querySelector(".features-count")?.textContent;
+    expect(count()).toMatch(/^\d+ sur \d+ activées$/);
+    const [on, all] = (count() ?? "").split(" sur ").map((part) => parseInt(part, 10));
+    expect(on).toBe((all ?? 0) - 1);
+
+    click(checkbox(section, "work-queue"));
+    expect(count()).toBe(`${String(all)} sur ${String(all)} activées`);
+  });
+
+  it("filters the features by name, description or option, accents aside", () => {
+    const section = buildFeaturesSection(document, {}, vi.fn());
+    const filter = section.querySelector<HTMLInputElement>('input[type="search"]');
+    const shown = () =>
+      [...section.querySelectorAll<HTMLLIElement>(".features > li:not([hidden])")].map(
+        (item) => item.querySelector<HTMLInputElement>("input")?.dataset.toggle,
+      );
+    const type = (text: string) => {
+      if (!filter) throw new Error("filter not found");
+      filter.value = text;
+      filter.dispatchEvent(new Event("input"));
+    };
+
+    type("prevision");
+    expect(shown()).toEqual(["resource-forecast"]);
+    type("Prochaines fins");
+    expect(shown()).toEqual(["end-times"]);
+    type("zzzz");
+    expect(shown()).toEqual([]);
+    expect(section.querySelector<HTMLElement>(".features-empty")?.hidden).toBe(false);
+    type("");
+    expect(shown()).toHaveLength(section.querySelectorAll(".features > li").length);
+  });
+
   it("asks to reload the game pages when it cannot do it itself", () => {
     const section = buildFeaturesSection(document, {}, vi.fn());
     click(checkbox(section, "work-queue"));
