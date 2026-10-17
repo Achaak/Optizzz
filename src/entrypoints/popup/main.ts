@@ -12,9 +12,12 @@ const style = document.createElement("style");
 style.textContent = `
 ${THEME_CSS}
 ${PAGE_BASE_CSS}
-.popup { width: 340px; padding-top: var(--optizzz-space-4); }
-.tab-panel { padding: var(--optizzz-space-5) var(--optizzz-space-6); }
+.popup { width: 380px; padding-top: var(--optizzz-space-4); }
 ${TABS_STYLE}
+.tab-panel { padding: var(--optizzz-space-5) var(--optizzz-space-6); }
+/* The four tabs on one line. */
+.tab-list { padding: 0 var(--optizzz-space-3); }
+.tab { padding: var(--optizzz-space-3) var(--optizzz-space-4); }
 ${WATCH_SUMMARY_STYLE}`;
 document.head.append(style);
 
