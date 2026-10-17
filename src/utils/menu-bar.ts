@@ -2,10 +2,11 @@ import { svgElement } from "./html";
 
 /** Marks every button Optizzz adds to the game's top bar (the game look styles their hover). */
 const BAR_BUTTON_ATTRIBUTE = "data-optizzz-bar-button";
-const BAR_CLASS = "optizzz-bar";
-const ITEMS_CLASS = "optizzz-bar-items";
-const MORE_CLASS = "optizzz-bar-more";
-const LABEL_CLASS = "optizzz-bar-label";
+// Not `optizzz-bar`: that is the design system's gauge (theme.css), whose `overflow: hidden` clipped the drop-down.
+const BAR_CLASS = "optizzz-menu-bar";
+const ITEMS_CLASS = "optizzz-menu-bar-items";
+const MORE_CLASS = "optizzz-menu-bar-more";
+const LABEL_CLASS = "optizzz-menu-bar-label";
 const OPEN_ATTRIBUTE = "data-open";
 const BUTTON_WIDTH_PX = 45;
 /** The game's phone breakpoint (design7.css): the tabs already shrink there, so our buttons fold into one. */
@@ -79,7 +80,7 @@ function insertBar(doc: Document, tabs: HTMLElement, logOut: HTMLElement): HTMLE
 
   const items = doc.createElement("div");
   items.className = ITEMS_CLASS;
-  items.id = "optizzz-bar-items";
+  items.id = "optizzz-menu-bar-items";
 
   const more = doc.createElement("button");
   more.type = "button";
