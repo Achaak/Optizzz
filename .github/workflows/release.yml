@@ -58,11 +58,13 @@ jobs:
       - run: pnpm zip
       - run: pnpm zip:firefox
 
+      # Chrome refuses an upload while a version is in review: the new version replaces it.
       - name: Submit to Chrome Web Store and Firefox Add-ons
         run: >
           pnpm wxt submit
           --chrome-zip .output/*-chrome.zip
           --chrome-api-version v2
+          --chrome-cancel-pending
           --firefox-zip .output/*-firefox.zip
           --firefox-sources-zip .output/*-sources.zip
           --firefox-compatibility firefox,android

@@ -204,6 +204,21 @@ clean_path() {
 
 banner "Optizzz : secrets de publication Chrome et Firefox"
 
+# check_amo_credentials prints the HTTP status AMO answers to a signed, read-only request for the add-on.
+check_amo_credentials() {
+  FIREFOX_JWT_ISSUER="$FIREFOX_JWT_ISSUER" FIREFOX_JWT_SECRET="$FIREFOX_JWT_SECRET" node --input-type=module -e '
+    import { createHmac, randomUUID } from "node:crypto";
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+    const now = Math.floor(Date.now() / 1000);
+    const unsigned = `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ iss: process.env.FIREFOX_JWT_ISSUER, jti: randomUUID(), iat: now, exp: now + 60 })}`;
+    const signature = createHmac("sha256", process.env.FIREFOX_JWT_SECRET).update(unsigned).digest("base64url");
+    const res = await fetch("https://addons.mozilla.org/api/v5/addons/addon/optizzz@achaak.github.io/", {
+      headers: { Authorization: `JWT ${unsigned}.${signature}` },
+    });
+    console.log(res.status);
+  '
+}
+
 # ──────────────────────────────────────────────────────────────────────────
 stage "Chrome : identifiants de l'extension"
 say "Deux identifiants publics : celui de l'extension et celui de l'éditeur."
@@ -276,6 +291,13 @@ step "Copiez l'« Émetteur JWT » (user:12345:678)."
 ask FIREFOX_JWT_ISSUER "Émetteur JWT :"
 step "Copiez le « Secret JWT » (il ne s'affiche qu'une fois)."
 ask_secret FIREFOX_JWT_SECRET "Secret JWT (saisie masquée) :"
+until amo_status=$(check_amo_credentials) && [[ "$amo_status" == 200 ]]; do
+  warn "AMO refuse ces clés (réponse ${amo_status:-sans réseau}) : secret mal copié ou clés régénérées depuis."
+  confirm "Les saisir de nouveau ?" || break
+  ask FIREFOX_JWT_ISSUER "Émetteur JWT :"
+  ask_secret FIREFOX_JWT_SECRET "Secret JWT (saisie masquée) :"
+done
+[[ "$amo_status" == 200 ]] && printf '  %s✓ clés acceptées par AMO%s\n' "$GREEN" "$RESET"
 write_env FIREFOX_JWT_ISSUER "$FIREFOX_JWT_ISSUER"
 write_env FIREFOX_JWT_SECRET "$FIREFOX_JWT_SECRET"
 set_secret FIREFOX_JWT_ISSUER "$FIREFOX_JWT_ISSUER"
