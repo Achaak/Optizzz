@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bestSpeedUp, SPEED_UP_FACTOR, speedUpFirst, speedUpLevels } from "./speed-up";
+import { bestSpeedUp, levelsAhead, SPEED_UP_FACTOR, speedUpFirst, speedUpLevels } from "./speed-up";
 
 const now = new Date("2026-10-16T12:00:00Z");
 const at = (minutes: number) => new Date(now.getTime() + minutes * 60_000);
@@ -110,5 +110,16 @@ describe("bestSpeedUp", () => {
         [plans[0], { levels: 2, ready: at(270) }].flatMap((plan) => plan ?? []),
       )?.plan.levels,
     ).toBe(2);
+  });
+});
+
+describe("levelsAhead", () => {
+  it("adds up the cost (× 2 a level) and the time (× growth a level) of the next levels", () => {
+    const cost = { food: 100, materials: 1000, workers: 10 };
+    expect(levelsAhead({ cost, duration: 60_000, growth: 1.5, count: 3 })).toEqual([
+      { levels: 1, cost, duration: 60_000 },
+      { levels: 2, cost: { food: 300, materials: 3000, workers: 30 }, duration: 150_000 },
+      { levels: 3, cost: { food: 700, materials: 7000, workers: 70 }, duration: 285_000 },
+    ]);
   });
 });

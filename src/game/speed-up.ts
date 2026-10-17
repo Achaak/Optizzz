@@ -2,6 +2,8 @@
 // time, × 0.9 per level, as the game's level-0 times show (docs/research/fourmizzz-pages.md, « Temps des chantiers »).
 // Is it worth waiting for the next level before ordering a building or a research?
 
+import type { Cost } from "./pages/resources";
+
 export const SPEED_UP_FACTOR = 0.9;
 
 export interface SpeedUpInput {
@@ -92,4 +94,38 @@ export function bestSpeedUp(
     if (result.saved > (best?.saved ?? 0) + SIGNIFICANT_MS) best = { ...result, plan };
   }
   return best;
+}
+
+export interface LevelsAheadInput {
+  /** Cost of the next level, as the game shows it. */
+  cost: Cost;
+  /** Time of the next level, as the game shows it (current bonus included). */
+  duration: number;
+  growth: number;
+  count: number;
+}
+
+export interface LevelsAhead {
+  /** Levels gained. */
+  levels: number;
+  /** All of them together. */
+  cost: Cost;
+  /** One after the other, at the current bonus. */
+  duration: number;
+}
+
+/** The cost and time of the next one, two… `count` levels, all together. */
+export function levelsAhead({ cost, duration, growth, count }: LevelsAheadInput): LevelsAhead[] {
+  const result: LevelsAhead[] = [];
+  let total = 0;
+  for (let levels = 1; levels <= count; levels++) {
+    total += Math.round(duration * growth ** (levels - 1));
+    const share = (LEVEL_COST_GROWTH ** levels - 1) / (LEVEL_COST_GROWTH - 1);
+    result.push({
+      levels,
+      cost: { food: cost.food * share, materials: cost.materials * share, workers: cost.workers * share },
+      duration: total,
+    });
+  }
+  return result;
 }

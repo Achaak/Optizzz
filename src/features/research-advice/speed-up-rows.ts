@@ -1,45 +1,10 @@
-// The rows of construction.php and laboratoire.php the speed-up advice needs: time, cost, level, requirements, and
-// when each could start (paid, then its queue free), as the resource forecast counts it.
+// What the speed-up advice needs from construction.php and laboratoire.php: when each row could start (paid, then
+// its queue free), as the resource forecast counts it, and how the speed-up itself can be raised.
 import { timeToAfford, type ColonyState } from "@/game/forecast";
 import { speedUpLevels, type SpeedUpLevel } from "@/game/speed-up";
 import { sameName } from "@/game/levels";
-import { readCosts, type Cost } from "@/game/pages/resources";
-import { parseGameDuration, readWorkQueue } from "@/game/pages/work-queue";
-
-export interface TimedRow {
-  name: string;
-  /** Highest level shown (« niveau 14 -> 15 » while under way: 15). */
-  level: number;
-  /** Time of the next level, as the game shows it. */
-  duration: number;
-  cost: Cost;
-  /** A requirement is missing. */
-  locked: boolean;
-  /** Where the advice goes. */
-  description: Element;
-}
-
-export function readTimedRows(doc: Document): TimedRow[] {
-  const costs = readCosts(doc);
-  return [...doc.querySelectorAll(".ligneAmelioration")].flatMap((row) => {
-    const description = row.querySelector(".desciption_amelioration");
-    const name = description?.querySelector("h2")?.textContent.trim();
-    const duration = parseGameDuration(row.querySelector(".cout_amelioration .temps")?.textContent ?? "");
-    const levels = [...(row.querySelector(".niveau_amelioration")?.textContent ?? "").matchAll(/\d+/g)].map(Number);
-    const cost = costs.find((candidate) => candidate.description === description)?.cost;
-    if (!description || !name || duration === null || !cost) return [];
-    return [
-      {
-        name,
-        level: Math.max(0, ...levels),
-        duration,
-        cost,
-        locked: !!row.querySelector(".verificationNonOK"),
-        description,
-      },
-    ];
-  });
-}
+import { readTimedRows, type Cost } from "@/game/pages/resources";
+import { readWorkQueue } from "@/game/pages/work-queue";
 
 /** When the page's queue frees up: the end of its last item, now when idle. */
 export function queueEnd(doc: Document, now: Date): Date {

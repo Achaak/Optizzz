@@ -5,6 +5,7 @@ import type { ColonyState } from "@/game/forecast";
 import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
 import { renderCostForecasts } from "./mount-costs";
 import { renderOutlook } from "./mount-outlook";
+import { LEVELS_STYLE, renderLevelsAhead } from "./mount-levels";
 import { HEADER_TIP_STYLE } from "@/utils/header-tip";
 import { mountSimulator, SIMULATOR_STYLE } from "./mount-simulator";
 import { readCapacities, readIncome, readStock, type Income } from "@/game/pages/resources";
@@ -42,8 +43,9 @@ export const resourceForecast: Feature = {
     const showOutlook = isEnabled(toggles, "resource-forecast", "outlook");
     const showCosts = isEnabled(toggles, "resource-forecast", "costs") && (onConstruction || onLaboratory);
     const showSimulator = isEnabled(toggles, "resource-forecast", "simulator") && onResources;
+    const showLevels = isEnabled(toggles, "resource-forecast", "levels") && (onConstruction || onLaboratory);
     // Nothing to show here: no background fetch. What the page shows is kept by the collect feature.
-    if (!showOutlook && !showCosts && !showSimulator) return;
+    if (!showOutlook && !showCosts && !showSimulator && !showLevels) return;
 
     let income: Income | null;
     if (onResources) {
@@ -51,10 +53,12 @@ export const resourceForecast: Feature = {
     } else {
       // Costs pages want fresh figures; elsewhere, the header can live with a few minutes old ones. Without them
       // (session expired, game in maintenance, nothing remembered yet), nothing is shown.
-      income = await loadIncome(url.origin, showCosts ? 0 : INCOME_MAX_AGE, readAt).catch((error: unknown) => {
-        console.warn("[Optizzz] resource forecast: income unreadable", error);
-        return null;
-      });
+      income = await loadIncome(url.origin, showCosts || showLevels ? 0 : INCOME_MAX_AGE, readAt).catch(
+        (error: unknown) => {
+          console.warn("[Optizzz] resource forecast: income unreadable", error);
+          return null;
+        },
+      );
     }
     if (!income) return;
 
@@ -63,7 +67,7 @@ export const resourceForecast: Feature = {
 
     const state: ColonyState = { ...stock, ...income, capacities };
     const style = document.createElement("style");
-    style.textContent = STYLE + SIMULATOR_STYLE;
+    style.textContent = STYLE + SIMULATOR_STYLE + LEVELS_STYLE;
     document.head.append(style);
 
     const queue = showCosts ? readWorkQueue(document, readAt) : null;
@@ -72,6 +76,7 @@ export const resourceForecast: Feature = {
       if (queue) renderCostForecasts(document, state, queue, readAt, now);
     };
     render(readAt);
+    if (showLevels) renderLevelsAhead(document, state, onConstruction ? "construction" : "research", readAt);
     ctx.setInterval(() => {
       render(new Date());
     }, REFRESH_MS);

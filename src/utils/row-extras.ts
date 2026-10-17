@@ -1,8 +1,8 @@
 // What Optizzz adds in the description of a row of construction.php or laboratoire.php, always in the same order,
 // whichever feature draws first or redraws later.
 
-/** First to last: when it can be paid, then the advice line, then the advice block. */
-const ORDER = ["optizzz-forecast", "optizzz-speed-up", "optizzz-advice"] as const;
+/** First to last: when it can be paid, then the advice line, then the advice block, then the next levels. */
+const ORDER = ["optizzz-forecast", "optizzz-speed-up", "optizzz-advice", "optizzz-levels"] as const;
 
 export type RowExtra = (typeof ORDER)[number];
 

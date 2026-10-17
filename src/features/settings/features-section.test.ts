@@ -24,6 +24,7 @@ describe("buildFeaturesSection", () => {
       "end-times.recap",
       "resource-forecast",
       "resource-forecast.costs",
+      "resource-forecast.levels",
       "resource-forecast.outlook",
       "resource-forecast.simulator",
       "alerts",

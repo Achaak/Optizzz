@@ -1,5 +1,6 @@
 // Reading game pages. Selectors are documented in docs/research/fourmizzz-pages.md.
 import { parseGameInteger } from "@/utils/game-number";
+import { parseGameDuration } from "./work-queue";
 
 export interface Stock {
   food: number;
@@ -150,6 +151,42 @@ export function readCosts(doc: Document): CostRow[] {
         cost: { food: amount(".nourriture"), materials: amount(".materiaux"), workers: amount(".ouvriere") },
         locked: !!row.querySelector(".verificationNonOK"),
         description: row.querySelector(".desciption_amelioration"),
+      },
+    ];
+  });
+}
+
+export interface TimedRow {
+  name: string;
+  /** Highest level shown (« niveau 14 -> 15 » while under way: 15). */
+  level: number;
+  /** Time of the next level, as the game shows it. */
+  duration: number;
+  cost: Cost;
+  /** A requirement is missing. */
+  locked: boolean;
+  /** Where the advice goes. */
+  description: Element;
+}
+
+/** The rows with their time and level: what is needed to plan several levels or wait for a speed-up. */
+export function readTimedRows(doc: Document): TimedRow[] {
+  const costs = readCosts(doc);
+  return [...doc.querySelectorAll(".ligneAmelioration")].flatMap((row) => {
+    const description = row.querySelector(".desciption_amelioration");
+    const name = description?.querySelector("h2")?.textContent.trim();
+    const duration = parseGameDuration(row.querySelector(".cout_amelioration .temps")?.textContent ?? "");
+    const levels = [...(row.querySelector(".niveau_amelioration")?.textContent ?? "").matchAll(/\d+/g)].map(Number);
+    const cost = costs.find((candidate) => candidate.description === description)?.cost;
+    if (!description || !name || duration === null || !cost) return [];
+    return [
+      {
+        name,
+        level: Math.max(0, ...levels),
+        duration,
+        cost,
+        locked: !!row.querySelector(".verificationNonOK"),
+        description,
       },
     ];
   });
