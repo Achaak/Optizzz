@@ -45,7 +45,7 @@ pnpm analyze        # build Chrome + stats.html : ce que pèse chaque content sc
 - `docs/research/` : ce qu'on sait du jeu (API des exports, sélecteurs des pages, formule du temps de trajet). À mettre à jour à chaque découverte.
 - `docs/features/` : une page par feature (décisions de cadrage, fichiers).
 - `docs/adr/` : décisions d'architecture.
-- `docs/publication.md` : publier une version (tag `vX.Y.Z` → workflow `release.yml`) et la première soumission manuelle ; `docs/store/fiche.md` : textes des fiches Chrome Web Store / AMO.
+- `docs/publication.md` : publier une version (nouvelle version de `package.json` poussée sur `main` → workflow `release.yml`, qui pose le tag `vX.Y.Z`) et la première soumission manuelle ; `docs/store/fiche.md` : textes des fiches Chrome Web Store / AMO.
 
 ## Workflow
 
