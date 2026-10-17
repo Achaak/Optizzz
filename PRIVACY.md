@@ -23,7 +23,7 @@ Seulement sur une action de votre part : le formulaire du jeu pour lancer une ch
 
 ## Ce que l'extension enregistre
 
-Dans le stockage local de votre navigateur (`storage.local`), et nulle part ailleurs, à une exception près : les outils activés et les choix de notifications sont dans `storage.sync`, que votre navigateur synchronise entre vos appareils si vous avez activé sa synchronisation (compte Google ou Firefox) ; ils ne passent par aucun serveur d'Optizzz. Le reste :
+Dans le stockage local de votre navigateur (`storage.local`), et nulle part ailleurs, à une exception près : les outils activés, les choix de notifications et votre liste de Suivis (les joueurs et alliances suivis, et où vous en étiez de chacun) sont dans `storage.sync`, que votre navigateur synchronise entre vos appareils si vous avez activé sa synchronisation (compte Google ou Firefox) ; ils ne passent par aucun serveur d'Optizzz. Le reste :
 
 - vos paramètres (outils activés, réglages de chaque outil) ;
 - les niveaux et heures de fin lus dans le jeu, pour les afficher sur les autres pages ;
@@ -31,6 +31,7 @@ Dans le stockage local de votre navigateur (`storage.local`), et nulle part aill
 - pour l'Historique de progression : les scores de tous les joueurs (TDC, Fourmilière, Technologie, Combat) de l'export de chaque nuit déjà téléchargé, pour tracer les courbes sans le retélécharger ;
 - pour le Plan de flood : vos attaques envoyées en cours de route et les armées adverses que vous collez ;
 - pour les Alertes : votre stock de nourriture, de matériaux et d'ouvrières lu sur chaque page du jeu, un par serveur, pour calculer le badge de l'icône, les notifications que vous avez activées et celles déjà affichées (gardées 2 jours, pour ne pas les répéter) ;
+- pour les Suivis : l'état des joueurs et alliances suivis au dernier relevé (alliance, TDC, vacances, membres, guerres et pactes) et le journal de leurs changements des 30 derniers jours, un par serveur ;
 - pour le Partage d'alliance : les états que vous collez depuis le salon de votre alliance, les valeurs que vous saisissez à la main, et votre dernier partage.
 
 Une attaque que vous envoyez avec le Plan de flood est notée un instant dans le stockage de session de l'onglet du jeu (`sessionStorage`), le temps que la page change, puis déplacée dans le stockage local ci-dessus.
@@ -39,10 +40,10 @@ Désinstaller l'extension efface ces données.
 
 ## Permissions
 
-- `storage` : enregistrer les paramètres et le cache décrits ci-dessus (stockage local, et synchronisé pour les interrupteurs des outils et les notifications).
+- `storage` : enregistrer les paramètres et le cache décrits ci-dessus (stockage local, et synchronisé pour les interrupteurs des outils, les notifications et la liste de Suivis).
 - `unlimitedStorage` : lever la limite de 10 Mo de ce stockage, que les exports d'un gros serveur (4 Mo pour les joueurs de S2) suffisent à remplir quand on joue sur plusieurs serveurs. Rien d'autre n'est stocké, et rien ne sort de votre navigateur.
-- `alarms` : recalculer chaque minute le badge de l'icône (temps avant une famine ou un entrepôt plein) à partir des données déjà enregistrées. L'extension n'interroge pas le jeu en arrière-plan pour cela.
-- `notifications` (facultative) : demandée seulement si vous activez une notification (famine, entrepôt plein, chantier terminé, chasse rentrée). Les notifications sont affichées par votre navigateur, à partir des données déjà enregistrées ; rien n'est envoyé ailleurs.
+- `alarms` : recalculer chaque minute le badge de l'icône (temps avant une famine ou un entrepôt plein) à partir des données déjà enregistrées, sans interroger le jeu ; et, si vous suivez des joueurs ou des alliances, télécharger chaque heure l'export public du serveur concerné (la même API publique de Fourmizzz que la Carte et les Cibles) pour noter leurs changements.
+- `notifications` (facultative) : demandée seulement si vous activez une notification (famine, entrepôt plein, chantier terminé, chasse rentrée, changements de vos Suivis). Les notifications sont affichées par votre navigateur, à partir des données déjà enregistrées ou de l'export public de Fourmizzz ; rien n'est envoyé ailleurs.
 - Accès à `*.fourmizzz.fr` : afficher les outils dans les pages du jeu et lire l'API publique du serveur.
 
 ## Contact

@@ -4,7 +4,7 @@ import { loadSections } from "@/data/end-times";
 import { isEnabled, loadToggles, TOGGLES_KEY, type Toggles } from "../toggles";
 import { badge, type Badge, type ServerData } from "./badge";
 import { loadNotificationSettings } from "./notification-settings";
-import { deliverNotices, dueNotifications, type SentNotifications } from "./notifications";
+import { deliverNotices, dueNotifications, type Notice, type SentNotifications } from "./notifications";
 import { isPermissionMessage, NOTIFICATIONS_PERMISSION, openGrantPage } from "./permission";
 import { loadServers, STOCKS_KEY } from "./store";
 import { URGENCY_COLORS } from "@/utils/urgency";
@@ -74,6 +74,33 @@ function refresh() {
       console.error("[Optizzz] could not update the alerts", error);
     });
   });
+}
+
+/**
+ * Sends one notification decided elsewhere (the watch list's readings), in the same queue as the alerts': it is
+ * remembered with the others, so that a click opens `notice.url`. Nothing when the notifications are switched off or
+ * not permitted.
+ */
+export function sendNotice(notice: Notice): Promise<void> {
+  const send = running.then(async () => {
+    if (!isEnabled(await loadToggles(), "alerts", "notifications")) return;
+    if (!(await browser.permissions.contains(NOTIFICATIONS_PERMISSION))) return;
+    const now = new Date();
+    const sent = (await storage.getItem<SentNotifications>(SENT_KEY)) ?? {};
+    const updated = await deliverNotices([notice], sent, now, (item) =>
+      browser.notifications.create(item.id, {
+        type: "basic",
+        iconUrl: browser.runtime.getURL("/icons/128.png"),
+        title: "Optizzz",
+        message: item.message,
+      }),
+    );
+    await storage.setItem(SENT_KEY, updated);
+  });
+  running = send.catch((error: unknown) => {
+    console.error("[Optizzz] could not send a notification", error);
+  });
+  return running;
 }
 
 /** A click on a notification opens the game page it is about. */

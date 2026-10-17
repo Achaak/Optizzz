@@ -23,6 +23,7 @@ import { serverMap } from "./server-map";
 import { settingsMenu } from "./settings";
 import { tdcChainMenu } from "./tdc-chain/menu";
 import { targets } from "./targets";
+import { watchlist } from "./watchlist";
 import { workQueue } from "./work-queue";
 
 /** Registry of lightweight features, loaded on every page: register each new feature here. */
@@ -53,6 +54,7 @@ export const features: Feature[] = [
   probes,
   combatSimulator,
   serverMap,
+  watchlist,
   gameLevels,
   safeReload,
 ];

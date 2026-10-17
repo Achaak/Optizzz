@@ -1,5 +1,7 @@
 import type { NotificationKind, NotificationSettings } from "../alerts/notifications";
 import { isEnabled, type Toggles } from "../toggles";
+import { DEFAULT_LOSS_PERCENT, type WatchNotificationKind } from "../watchlist/describe";
+import { loadLossPercent, setLossPercent } from "../watchlist/settings";
 
 /** Styles of « Notifications », shared by the in-game dialog and the toolbar popup. */
 export const NOTIFICATIONS_STYLE = `
@@ -10,13 +12,26 @@ export const NOTIFICATIONS_STYLE = `
 .notifications-blocked { margin: var(--optizzz-space-5) 0 0; color: var(--optizzz-danger-text); }
 .notifications-off, .notifications-needs { margin: 0 0 10px; color: var(--optizzz-warning-text); font-size: var(--optizzz-font-size-small); }
 .notifications input:disabled + span { opacity: 0.6; }
-.notifications-blocked button { margin-left: 6px; font: inherit; cursor: pointer; }`;
+.notifications-blocked button { margin-left: 6px; font: inherit; cursor: pointer; }
+.notifications-group { margin: var(--optizzz-space-5) 0 var(--optizzz-space-3); font-weight: bold; }
+.notifications-percent { display: inline-flex; gap: var(--optizzz-space-2); align-items: baseline; }
+.notifications-percent input { width: 4em; margin: 0; }`;
 
 const KINDS: { kind: NotificationKind; label: string }[] = [
   { kind: "famine", label: "Famine dans moins d'1 h" },
   { kind: "full", label: "Entrepôt plein dans moins d'1 h" },
   { kind: "construction", label: "Chantier terminé (construction ou recherche)" },
   { kind: "hunt", label: "Chasse rentrée" },
+];
+
+/** The watch list's, summed up in one notification per hourly reading. */
+const WATCH_KINDS: { kind: WatchNotificationKind; label: string }[] = [
+  { kind: "watch-field", label: "TDC perdu d'au moins" },
+  { kind: "watch-alliance", label: "Changement d'alliance d'un joueur" },
+  { kind: "watch-holiday", label: "Départ ou retour de vacances" },
+  { kind: "watch-war", label: "Nouvelle guerre d'une alliance" },
+  { kind: "watch-pact", label: "Pacte rompu par une alliance" },
+  { kind: "watch-members", label: "Membre arrivé ou parti d'une alliance" },
 ];
 
 export interface NotificationsTabInput {
@@ -43,7 +58,7 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
   const intro = doc.createElement("p");
   intro.className = "notifications-intro";
   intro.textContent =
-    "Pour tous vos serveurs, même quand le jeu est fermé, tant que le navigateur est ouvert. Calculées depuis les pages lues, sans interroger le jeu.";
+    "Pour tous vos serveurs, même quand le jeu est fermé, tant que le navigateur est ouvert. Calculées depuis les pages lues ; celles des Suivis, depuis l'export public relevé chaque heure.";
 
   const off = doc.createElement("p");
   off.className = "notifications-off";
@@ -66,15 +81,40 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
   allow.addEventListener("click", input.grant);
   blocked.append(allow);
 
+  const watchOff = doc.createElement("p");
+  watchOff.className = "notifications-needs";
+  watchOff.textContent = "Suivis coupés dans « Fonctionnalités » : aucun relevé, donc rien à notifier.";
+
+  /** The percent of lost field from which « Perte de TDC » notifies. */
+  const lossField = () => {
+    const wrap = doc.createElement("span");
+    wrap.className = "notifications-percent";
+    const field = doc.createElement("input");
+    field.type = "number";
+    field.min = "1";
+    field.max = "100";
+    field.value = String(DEFAULT_LOSS_PERCENT);
+    field.disabled = !switchedOn;
+    field.setAttribute("aria-label", "Perte de TDC notifiée, en pourcentage");
+    void loadLossPercent().then((percent) => {
+      field.value = String(percent);
+    });
+    field.addEventListener("change", () => {
+      const percent = Math.round(Number(field.value));
+      if (percent >= 1 && percent <= 100) void setLossPercent(percent);
+    });
+    wrap.title = "Perte entre deux relevés horaires.";
+    wrap.append(field, "%");
+    return wrap;
+  };
+
   const showBlocked = () => {
     const wanted = Object.values(settings).some(Boolean);
     if (permitted === false && wanted) section.append(blocked);
     else blocked.remove();
   };
 
-  const list = doc.createElement("ul");
-  list.className = "notifications";
-  for (const { kind, label } of KINDS) {
+  const checkboxRow = (kind: NotificationKind, label: string) => {
     const item = doc.createElement("li");
     const row = doc.createElement("label");
     const box = doc.createElement("input");
@@ -96,12 +136,31 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
     text.textContent = label;
     row.append(box, text);
     item.append(row);
-    list.append(item);
+    return item;
+  };
+
+  const list = doc.createElement("ul");
+  list.className = "notifications";
+  for (const { kind, label } of KINDS) list.append(checkboxRow(kind, label));
+
+  const watchTitle = doc.createElement("p");
+  watchTitle.className = "notifications-group";
+  watchTitle.textContent = "Suivis";
+  const watchList = doc.createElement("ul");
+  watchList.className = "notifications";
+  for (const { kind, label } of WATCH_KINDS) {
+    const item = checkboxRow(kind, label);
+    // In the same line as its box: « TDC perdu d'au moins [20] % ».
+    if (kind === "watch-field") item.querySelector("span")?.append(" ", lossField());
+    watchList.append(item);
   }
+
   section.append(intro);
   if (!switchedOn) section.append(off);
   else if (!isEnabled(toggles, "end-times")) section.append(needs);
-  section.append(list);
+  section.append(list, watchTitle);
+  if (!isEnabled(toggles, "watchlist")) section.append(watchOff);
+  section.append(watchList);
 
   const check = () => {
     permission

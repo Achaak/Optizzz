@@ -8,7 +8,7 @@ Voir sans ouvrir le jeu que la famine approche ou qu'un entrepôt va être plein
 
 ## 1. Badge de l'icône (option « Badge de l'icône »)
 
-- Calculé par le background script à partir des données mémorisées, **sans jamais interroger le jeu**. Recalcul toutes les minutes (alarme `alarms`), et tout de suite quand une page mémorise un nouveau stock ou qu'un interrupteur change.
+- Calculé par le background script à partir des données mémorisées, **sans jamais interroger le jeu**. Seule exception dans le background : le relevé horaire des Suivis télécharge l'export public (`suivis.md`), jamais une page du jeu ; ses notifications passent par la même file (`sendNotice`) pour que le clic ouvre la bonne page. Recalcul toutes les minutes (alarme `alarms`), et tout de suite quand une page mémorise un nouveau stock ou qu'un interrupteur change.
 - Par serveur, le premier problème : famine, entrepôt de nourriture plein ou entrepôt de matériaux plein (`outlook()` des Prévisions de ressources), calculé à partir du moment où le stock a été lu.
 - Le badge montre le pire serveur :
   - même échelle que l'en-tête des Prévisions (`src/utils/urgency.ts`) : rouge en dessous de 6 h, orange en dessous de 24 h, avec les mêmes couleurs ;

@@ -35,6 +35,17 @@ describe("buildNotificationsSection", () => {
     expect(checkbox(section, "hunt").checked).toBe(true);
   });
 
+  it("lists the watch list's kinds apart, with the lost field's percent, and says when the watch list is off", async () => {
+    const { section } = build({ toggles: { watchlist: false } });
+    expect(section.textContent).toContain("Suivis");
+    expect(checkbox(section, "watch-war").checked).toBe(false);
+    expect(section.textContent).toContain("Suivis coupés");
+    const percent = section.querySelector<HTMLInputElement>(".notifications-percent input");
+    await vi.waitFor(() => {
+      expect(percent?.value).toBe("20");
+    });
+  });
+
   it("saves a change", () => {
     const { input, section } = build();
     click(checkbox(section, "famine"));

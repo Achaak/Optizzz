@@ -9,7 +9,9 @@ const NOTICE_BEFORE = 60 * MINUTE;
 /** Anything older was missed (browser closed): saying it now would only be noise. */
 const MISSED_AFTER = 15 * MINUTE;
 
-export type NotificationKind = "famine" | "full" | "construction" | "hunt";
+import type { WatchNotificationKind } from "../watchlist/describe";
+
+export type NotificationKind = "famine" | "full" | "construction" | "hunt" | WatchNotificationKind;
 
 /** All off unless switched on: a missing key means off. */
 export type NotificationSettings = Partial<Record<NotificationKind, boolean>>;
