@@ -31,7 +31,8 @@ function details(doc: Document, attack: AttackLine): Node[] {
 
 /**
  * The attacks on their way on Armee.php or the attack form: the game's lines give way to a list with a live countdown, the arrival
- * time, the place and troops (Compte+), and a button that copies each attack as the game writes it. The game's lines
+ * time, the place and troops (Compte+), the game's « Annuler » link while it is offered, and a button that copies each
+ * attack as the game writes it. The game's lines
  * stay in the page, folded away (read as the game wrote them). Returns a function that stops the countdown.
  */
 export function renderAttacksOnWay(doc: Document, clock: () => Date, copy: Copy): () => void {
@@ -49,6 +50,7 @@ export function renderAttacksOnWay(doc: Document, clock: () => Date, copy: Copy)
       notes: [],
       message: () => gameAttackText(attack),
       copyTitle: "Copier cette attaque telle que le jeu l'écrit",
+      cancel: attack.cancel,
     })),
     clock,
     copy,

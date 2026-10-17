@@ -1,5 +1,6 @@
 // Convoys on commerce.php: their trip, the workers they take, those on their way. Structure of the page and game
 // rules: docs/research/fourmizzz-pages.md (« commerce.php »), docs/research/temps-de-trajet.md.
+import { isCancelLink } from "@/features/flood/attacks";
 import { distance, travelTime } from "@/game/travel";
 import { parseGameDuration } from "@/game/pages/work-queue";
 import { HARVESTS_PER_DAY } from "@/game/forecast";
@@ -25,6 +26,8 @@ export interface ConvoyOnWay {
   back: string | null;
   /** The game's line. */
   element: Element;
+  /** The game's « Annuler » link, in or after the line, while the convoy can still be cancelled. */
+  cancel: HTMLAnchorElement | null;
 }
 
 // « - Vous allez livrer 1 et 0 à Messor dans 1H 22m 22s »: the time left is written once, with no countdown.
@@ -37,6 +40,12 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
   for (let element = title.nextElementSibling; element; element = element.nextElementSibling) {
     // Optizzz's own list of the convoys, written after the title.
     if (element.tagName === "BR" || element.classList.contains("optizzz-convoys")) continue;
+    // The game's « Annuler », after the line it cancels.
+    if (isCancelLink(element)) {
+      const last = convoys.at(-1);
+      if (last) last.cancel ??= element;
+      continue;
+    }
     // With Compte+, « - Retour le 13 oct. à 21h59 » follows each line, in a <small>.
     if (element.tagName === "SMALL") {
       const last = convoys.at(-1);
@@ -53,6 +62,7 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
       arrivesAt: new Date(now.getTime() + left),
       back: null,
       element,
+      cancel: [...element.querySelectorAll("a")].find(isCancelLink) ?? null,
     });
   }
   return convoys;

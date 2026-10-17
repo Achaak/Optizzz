@@ -48,6 +48,14 @@ describe("renderAttacksOnWay", () => {
     expect(readAttacksOnWay(doc, now).map((attack) => attack.target)).toEqual(["Cible_1", "Cible_2"]);
   });
 
+  it("keeps the game's « Annuler » link in the row of the attack it cancels, while the game offers it", () => {
+    const { rows } = setup();
+    const cancels = rows.map((row) => row.querySelector<HTMLAnchorElement>(".optizzz-on-way-actions a"));
+    expect(cancels.map((link) => link?.getAttribute("href"))).toEqual([undefined, "/Armee.php?annuler=34251"]);
+    expect(cancels[1]?.textContent).toBe("Annuler");
+    expect(cancels[1]?.closest("[hidden]")).toBeNull();
+  });
+
   it("copies an attack as the game writes it", async () => {
     const { rows, copied } = setup();
     const button = rows[0]?.querySelector("button");

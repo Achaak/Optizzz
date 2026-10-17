@@ -17,6 +17,8 @@ export interface OnWayItem {
   message: (now: Date) => string;
   /** The copy button's tooltip. */
   copyTitle: string;
+  /** The game's own link to cancel it (« Annuler »), moved into the row; null when the game offers none. */
+  cancel?: HTMLAnchorElement | null;
 }
 
 export const ON_WAY_STYLE = `
@@ -36,7 +38,7 @@ export const ON_WAY_STYLE = `
 .optizzz-on-way-left { font-weight: bold; font-variant-numeric: tabular-nums; }
 .optizzz-on-way-arrived { color: var(--optizzz-success-text); }
 .optizzz-on-way-when { font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
-.optizzz-on-way-copy { white-space: nowrap; }
+.optizzz-on-way-actions { display: flex; align-items: center; gap: var(--optizzz-space-3); white-space: nowrap; }
 @media (max-width: 700px) {
   .optizzz-on-way-row { grid-template-columns: 1fr auto; }
   .optizzz-on-way-details, .optizzz-on-way-time { grid-column: 1; }
@@ -103,7 +105,7 @@ export function renderOnWayList(
       span(doc, "optizzz-on-way-to", "→ ", item.to),
       span(doc, "optizzz-on-way-details", ...item.details),
       span(doc, "optizzz-on-way-time", left, when),
-      copyButton(doc, item, clock, copy),
+      span(doc, "optizzz-on-way-actions", ...(item.cancel ? [item.cancel] : []), copyButton(doc, item, clock, copy)),
     );
     list.append(row);
   }

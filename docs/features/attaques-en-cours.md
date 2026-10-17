@@ -10,6 +10,7 @@ Lire d'un coup d'œil les attaques parties, et pouvoir en coller une (Discord de
 
 - **Où** : sous le titre « Attaque(s) en cours », sur `Armee.php` et sur le formulaire d'attaque (`ennemie.php?Attaquer=<id>`), où le jeu écrit la liste de la même façon (feature légère, interrupteur « Attaques en cours »).
 - **Une ligne par attaque** : « → cible(TAG) » (liens du jeu), le lieu (« Terrain de chasse », « Fourmilière »…), les troupes avec Compte+ abrégées comme le jeu (« 1 488 JSN, 485 SN, 29 NE », le texte du jeu au survol ou s'il contient une unité inconnue), un compte à rebours « dans 3H 14m 54s » au format du jeu (« arrivé » une fois là) et « arrivée aujourd'hui 19 h 54 ».
+- **« Annuler »** : tant que le jeu le propose (un temps après l'envoi), son lien passe dans la ligne de l'attaque, à côté de « Copier ».
 - **Bouton « Copier »** : l'attaque telle que le jeu l'écrit, avec son décompte au moment du clic, puis la note Compte+ ligne par ligne : « Vous allez attaquer X(TAG) (Terrain de chasse) dans 3 heures 14 minutes 54 secondes », « Troupes en attaques : 4 047 Jeunes Soldates Naines. », « Arrivée à 19h54 ». Sans Compte+, la première ligne seule.
 - Les lignes du jeu restent dans la page, repliées dans un bloc masqué : le Plan de flood, le partage d'alliance et le décompte du jeu les lisent comme avant.
 - Rien n'est chargé : tout vient de la page.

@@ -66,6 +66,7 @@ export function renderConvoysOnWay(doc: Document, clock: () => Date, copy: Copy)
         notes: convoy.back ? [convoy.back] : [],
         message: (now: Date) => convoyMessage(convoy, now),
         copyTitle: "Copier ce convoi en une ligne de texte",
+        cancel: convoy.cancel,
       };
     }),
     clock,
