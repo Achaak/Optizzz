@@ -1,23 +1,51 @@
 name: Release
 
-# Push a tag vX.Y.Z (matching package.json's version): the CI checks run, then both stores get it.
+# A push to main that changes package.json's version publishes it: the CI checks run, both stores get it,
+# and the GitHub release creates the tag vX.Y.Z. Run it by hand to publish a version whose tag is missing.
 # The store listings must already exist: the first submission is done by hand.
 on:
   push:
-    tags: ["v*.*.*"]
+    branches: [main]
+    paths: [package.json]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      unpublished: ${{ steps.version.outputs.unpublished }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Is this version already tagged?
+        id: version
+        run: |
+          tag="v$(node -p 'require("./package.json").version')"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            echo "$tag is already published"
+            echo "unpublished=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "unpublished=true" >> "$GITHUB_OUTPUT"
+          fi
+
   check:
+    needs: version
+    if: needs.version.outputs.unpublished == 'true'
     uses: ./.github/workflows/ci.yml
 
   release:
-    needs: check
+    needs: [version, check]
     runs-on: ubuntu-latest
     permissions:
-      contents: write # the GitHub release with the zips
+      contents: write # the tag and the GitHub release with the zips
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
@@ -26,9 +54,6 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-
-      - name: Check tag matches package.json version
-        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
 
       - run: pnpm zip
       - run: pnpm zip:firefox
@@ -50,7 +75,10 @@ jobs:
           FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
           FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
 
-      - name: Attach the store packages to the GitHub release
-        run: gh release create "$GITHUB_REF_NAME" .output/*.zip --title "$GITHUB_REF_NAME" --generate-notes
+      - name: Tag and attach the store packages to the GitHub release
+        run: >
+          gh release create "$TAG" .output/*.zip
+          --target "$GITHUB_SHA" --title "$TAG" --generate-notes
         env:
+          TAG: ${{ needs.version.outputs.tag }}
           GH_TOKEN: ${{ github.token }}
