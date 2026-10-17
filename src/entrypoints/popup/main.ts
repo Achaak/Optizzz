@@ -3,7 +3,9 @@ import { simulatorUrl } from "@/features/combat-simulator/open";
 import { serverMapUrl } from "@/features/server-map/open";
 import { loadNotificationSettings, setNotification } from "@/features/alerts/notification-settings";
 import { NOTIFICATIONS_PERMISSION, openGrantPage } from "@/features/alerts/permission";
-import { loadToggles, setToggle } from "@/features/toggles";
+import { isEnabled, loadToggles, setToggle } from "@/features/toggles";
+import { buildWatchSummary, loadWatchSummaries, WATCH_SUMMARY_STYLE } from "@/features/watchlist/popup";
+import { watchlistPageUrl } from "@/features/watchlist/settings";
 import { PAGE_BASE_CSS, THEME_CSS } from "@/theme";
 
 const style = document.createElement("style");
@@ -12,14 +14,16 @@ ${THEME_CSS}
 ${PAGE_BASE_CSS}
 .popup { width: 340px; padding-top: var(--optizzz-space-4); }
 .tab-panel { padding: var(--optizzz-space-5) var(--optizzz-space-6); }
-${TABS_STYLE}`;
+${TABS_STYLE}
+${WATCH_SUMMARY_STYLE}`;
 document.head.append(style);
 
+const toggles = await loadToggles();
 const tabs = settingsTabs(
   browser.runtime.getManifest().version,
   navigator.userAgent,
   {
-    toggles: await loadToggles(),
+    toggles,
     onChange: (feature, option, enabled) => {
       setToggle(feature, option, enabled).catch((error: unknown) => {
         console.error("[Optizzz] saving a feature toggle failed", error);
@@ -59,5 +63,14 @@ const tabs = settingsTabs(
 
 const popup = document.createElement("main");
 popup.className = "popup optizzz-popup";
+// What changed among the watched players and alliances, above the settings.
+const summary = isEnabled(toggles, "watchlist", "popup")
+  ? buildWatchSummary(document, await loadWatchSummaries(new Date()), (origin) => {
+      void browser.tabs.create({ url: watchlistPageUrl(origin) }).then(() => {
+        window.close();
+      });
+    })
+  : null;
+if (summary) popup.append(summary);
 popup.append(buildTabs(document, tabs));
 document.body.append(popup);

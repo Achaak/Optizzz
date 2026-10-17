@@ -1,0 +1,68 @@
+/*
+ * The « Suivis » page: a panel of the design system (docs/design-system.md, src/theme/theme.css). Buttons and fields
+ * take the theme's controls through the root's `optizzz-` class. Only what is its own is here.
+ */
+body {
+  margin: 0;
+  background: var(--optizzz-surface);
+  font-family: var(--optizzz-font);
+  font-size: var(--optizzz-font-size);
+  color: var(--optizzz-text);
+}
+
+.watchlist {
+  max-width: 1060px;
+  margin: var(--optizzz-space-6) auto;
+}
+
+/* Framed in the in-game dialog: the dialog is the panel. */
+.embedded .watchlist {
+  margin: 0 auto;
+  border: none;
+  box-shadow: none;
+}
+
+a {
+  color: var(--optizzz-link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.add input {
+  width: 16em;
+}
+
+.toolbar-end {
+  margin-left: auto;
+}
+
+section + section {
+  margin-top: var(--optizzz-space-6);
+}
+
+/* What changed since « seen »: one a line, latest first. */
+.changes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.changes li + li {
+  margin-top: var(--optizzz-space-1);
+}
+
+tr.is-new td:first-child {
+  font-weight: bold;
+}
+
+.actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.actions button + button {
+  margin-left: var(--optizzz-space-3);
+}

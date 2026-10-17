@@ -45,6 +45,7 @@ describe("feature catalog", () => {
           `./${id}/menu.ts`,
           "./alerts/background.ts",
           "./settings/notifications-section.ts",
+          "../entrypoints/popup/main.ts",
         ].flatMap((path) => {
           try {
             return [source(path)];

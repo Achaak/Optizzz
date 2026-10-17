@@ -21,6 +21,7 @@ Votre fourmilière
 • Heures de fin : l'heure de fin des chasses, pontes, chantiers et convois à côté des décomptes, et un encart « Prochaines fins ».
 • Prévisions de ressources : quand vous pourrez payer, quand vous tomberez en famine, quand un entrepôt sera plein, et un simulateur de répartition des ouvrières.
 • Alertes : sur l'icône de l'extension, le temps avant une famine ou un entrepôt plein pour tous vos serveurs, et des notifications au choix (famine, entrepôt plein, chantier terminé, chasse rentrée).
+• Suivis : suivez des joueurs et des alliances, et voyez ce qui a changé depuis votre dernière visite (alliance, TDC, vacances, membres, guerres, pactes), relevé chaque heure depuis l'export public, avec un résumé dans le popup et des notifications au choix.
 • Planificateur de ponte : sur la Reine, des raccourcis (tout payer, durée de ponte, bilan à zéro) avec un aperçu au survol, et la fin, le paiement et l'entretien de la ponte choisie.
 • Calculateur de convoi : trajet, heure d'arrivée, récolte perdue pendant le trajet et destinataires proposés, du plus proche au plus loin ; dans l'en-tête, le total de vos ouvrières, convois en route compris.
 • Rechargement sans risque : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.
@@ -94,6 +95,7 @@ Your anthill
 • End times: the end time of hunts, egg laying, work and convoys next to the game's countdowns, plus a "Prochaines fins" (upcoming ends) box.
 • Resource forecasts: when you will be able to pay, when you will run out of food, when a warehouse will be full, and a worker split simulator.
 • Alerts: on the extension icon, the time left before running out of food or filling a warehouse on all your servers, and optional notifications (famine, full warehouse, finished work, hunt back home).
+• Watch list: follow players and alliances and see what changed since your last visit (alliance, hunting field, holidays, members, wars, pacts), read every hour from the public export, with a summary in the popup and optional notifications.
 • Laying planner: on the Queen page, shortcuts (pay everything, laying time, zero balance) with a preview on hover, and the end, payment date and upkeep of the chosen laying.
 • Convoy calculator: travel time, arrival, harvest lost during the trip and suggested recipients, nearest first; in the header, your total of workers, convoys on their way included.
 • Safe reload: reloading a page or going back no longer replays an egg laying, a hunt or a construction.
@@ -179,16 +181,16 @@ Pour regénérer les PNG après avoir modifié un SVG : les convertir avec `shar
 Ajouter des outils d'aide au jeu Fourmizzz dans les pages du jeu : heures de fin, prévisions de ressources, ponte, convois, chasse, combat et outils d'alliance.
 
 **Justification — `storage`**
-Enregistrer localement, par serveur de jeu : les paramètres (outils activés, réglages), ce que le joueur a vu dans ses propres pages (niveaux, stocks, revenus, armée, heures de fin, attaques lancées), les défenses et les rôles d'alliance qu'il colle lui-même, les derniers exports publics des joueurs et des alliances, et les scores des exports de chaque nuit pour l'historique de progression, pour ne pas les retélécharger. Les interrupteurs des outils et les choix de notifications sont dans `storage.sync`, synchronisé par le navigateur lui-même si le joueur l'a activé. Rien n'est envoyé ailleurs.
+Enregistrer localement, par serveur de jeu : les paramètres (outils activés, réglages), ce que le joueur a vu dans ses propres pages (niveaux, stocks, revenus, armée, heures de fin, attaques lancées), les défenses et les rôles d'alliance qu'il colle lui-même, les derniers exports publics des joueurs et des alliances, et les scores des exports de chaque nuit pour l'historique de progression, pour ne pas les retélécharger. Les interrupteurs des outils, les choix de notifications et la liste de Suivis sont dans `storage.sync`, synchronisé par le navigateur lui-même si le joueur l'a activé. Rien n'est envoyé ailleurs.
 
 **Justification — `unlimitedStorage`**
 Les exports publics mis en cache (dont l'historique des scores, une version par nuit) dépassent la limite de 10 Mo de `storage.local` dès qu'on joue sur plusieurs serveurs (l'export des joueurs d'un gros serveur pèse 4 Mo). Ces données restent dans le navigateur ; rien n'est envoyé ailleurs.
 
 **Justification — `alarms`**
-Recalculer chaque minute le badge de l'icône de l'extension (temps avant une famine ou un entrepôt plein dans le jeu) à partir des données déjà enregistrées localement. Aucune requête n'est faite en arrière-plan et rien n'est envoyé ailleurs.
+Recalculer chaque minute le badge de l'icône de l'extension (temps avant une famine ou un entrepôt plein dans le jeu) à partir des données déjà enregistrées localement, sans requête. Et, seulement si le joueur suit des joueurs ou des alliances (Suivis), télécharger chaque heure l'export public du serveur Fourmizzz concerné pour noter leurs changements. Rien n'est envoyé ailleurs.
 
 **Justification — `notifications` (permission facultative)**
-Demandée seulement quand le joueur active une notification dans les paramètres (famine ou entrepôt plein dans moins d'1 h, chantier terminé, chasse rentrée). Les notifications sont calculées à partir des données déjà enregistrées localement ; rien n'est envoyé ailleurs.
+Demandée seulement quand le joueur active une notification dans les paramètres (famine ou entrepôt plein dans moins d'1 h, chantier terminé, chasse rentrée, changements des joueurs et alliances suivis). Les notifications sont calculées à partir des données déjà enregistrées localement ou de l'export public de Fourmizzz ; rien n'est envoyé ailleurs.
 
 **Justification — autorisation d'accès à l'hôte `*://*.fourmizzz.fr/*`**
 L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les pages du jeu, lit les pages du jeu et l'API publique des exports du serveur, et envoie les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les sondes) uniquement quand le joueur clique.

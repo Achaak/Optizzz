@@ -160,6 +160,17 @@ export const featureCatalog = [
     ],
   },
   {
+    id: "watchlist",
+    label: "Suivis",
+    description:
+      "Suivre des joueurs et des alliances : leurs changements d'alliance, de TDC, de guerres et de pactes depuis votre dernière visite, relevés chaque heure.",
+    options: [
+      { id: "button", label: "Bouton dans la barre du haut" },
+      { id: "follow", label: "Bouton « Suivre » sur les profils et les pages d'alliance" },
+      { id: "popup", label: "Résumé dans le popup de l'extension" },
+    ],
+  },
+  {
     id: "tdc-chain",
     label: "Chaîne de TDC",
     description:

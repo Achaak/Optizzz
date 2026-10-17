@@ -23,7 +23,7 @@ export default defineConfig({
     // The combat simulator and the server map are framed over the game (src/utils/page-dialog.ts). Side effect: the
     // game's pages can tell the extension is installed by loading these pages.
     web_accessible_resources: [
-      { resources: ["combat-simulator.html", "server-map.html"], matches: ["*://*.fourmizzz.fr/*"] },
+      { resources: ["combat-simulator.html", "server-map.html", "watchlist.html"], matches: ["*://*.fourmizzz.fr/*"] },
     ],
     ...(browser === "firefox" && {
       browser_specific_settings: {

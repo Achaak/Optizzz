@@ -19,6 +19,8 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 13. **Carte du serveur** : situer des joueurs et des alliances (dont pactes et guerres) sur tout le serveur, avec distances et trajets ; voir `carte-serveur.md`.
 14. **Conseils** (Construction, Laboratoire) : Armes et Bouclier Thoracique comparés à la ponte d'unités, attendre Architecture ou la Salle d'analyse ; voir `conseils-recherche.md`.
 
+15. **Suivis** : suivre des joueurs et des alliances, ce qui a changé depuis la dernière visite, relevé chaque heure depuis l'export public, résumé dans le popup et notifications ; voir `suivis.md` (cadré le 2026-10-17).
+
 ## Décisions transverses
 
 - **Modèle d'armée partagé** : `src/game/army/` (unités, proies, combat), sorti du lanceur de chasse ; combat, ponte, rapports et chasse s'en servent.
