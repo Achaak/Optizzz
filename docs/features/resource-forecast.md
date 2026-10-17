@@ -52,7 +52,8 @@ Ajouté le 2026-10-17 : savoir combien coûtent et durent plusieurs niveaux d'un
 
 - Sous chaque bâtiment ou recherche qui peut être lancé (pas les lignes « Requis »), un dépliable fermé « Coût des 5 niveaux suivants » : un tableau dense, une ligne par niveau, « Jusqu'au niveau » (N), une colonne par ressource que coûte le premier niveau (Nourriture, Matériaux, Ouvrières : un bâtiment n'a que Matériaux), « Durée » et « Tout payable » (maintenant, l'heure où le stock couvrira le total, « manque N ouvrières », « entrepôt trop petit » ou « jamais au rythme actuel »). Tous des cumuls ; chiffres alignés à droite, sans retour à la ligne.
 - Le premier niveau est celui que le jeu affiche, après ceux déjà en file. Les suivants s'en déduisent (`docs/research/fourmizzz-pages.md`, « Temps des chantiers ») : le coût double à chaque niveau, le temps est multiplié par 1,6 (bâtiment) ou 1,7 (recherche), au bonus actuel d'Architecture ou de la Salle d'analyse. Une note sous le tableau le dit (« Cumuls estimés : coût × 2 et durée × 1,6 à chaque niveau… »).
-- **Champignonnière** exclue : son coût ne double pas (environ × 1,85).
+- **Champignonnière** : son coût est multiplié par 1,85 à chaque niveau (arrondi comme le jeu), pas par 2 ; la note le dit (« coût × 1,85 »). Ajoutée le 2026-10-17.
+- Les durées comptent × 1,6 / × 1,7 à chaque niveau : au-delà d'un niveau de 30 jours, le jeu passe à × 1,3 (voir la recherche), les durées très longues sont donc surestimées.
 - « Tout payé » ne compte ni la file d'attente ni les niveaux payés un par un : c'est le moment où le stock couvre le total.
 - Calculé une fois au chargement, à partir du même état que les délais.
 - Option « Coût des niveaux suivants sur Construction et Laboratoire », allumée par défaut.

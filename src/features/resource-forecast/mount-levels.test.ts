@@ -56,10 +56,21 @@ describe("renderLevelsAhead", () => {
     ]);
   });
 
-  it("leaves out the locked rows (Dôme) and the Champignonnière, whose cost does not double", () => {
+  it("leaves out the locked rows (Dôme), and grows the Champignonnière's cost by 1.85 a level", () => {
     const doc = parse(constructionCostsHtml);
     renderLevelsAhead(doc, state, "construction", now);
-    expect(Object.keys(levels(doc))).toEqual(["Entrepôt de Nourriture", "Entrepôt de Matériaux"]);
+    expect(Object.keys(levels(doc))).toEqual(["Champignonnière", "Entrepôt de Nourriture", "Entrepôt de Matériaux"]);
+    // Level 9 costs 12 348 materials: then 22 844, 42 261…
+    expect(
+      levels(doc)
+        ["Champignonnière"]?.slice(0, 3)
+        .map(([level, materials]) => [level, materials]),
+    ).toEqual([
+      ["9", "12 348"],
+      ["10", "35 192"],
+      ["11", "77 453"],
+    ]);
+    expect(doc.querySelector(".optizzz-levels .optizzz-note")?.textContent).toContain("coût × 1,85");
     // A building only costs materials: one resource column.
     expect(levels(doc)["Entrepôt de Nourriture"]?.[0]).toEqual(["6", "19 200", "32 min", "maintenant"]);
   });

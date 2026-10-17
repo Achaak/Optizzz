@@ -2,6 +2,7 @@
 // time, × 0.9 per level, as the game's level-0 times show (docs/research/fourmizzz-pages.md, « Temps des chantiers »).
 // Is it worth waiting for the next level before ordering a building or a research?
 
+import { sameName } from "./levels";
 import type { Cost } from "./pages/resources";
 
 export const SPEED_UP_FACTOR = 0.9;
@@ -44,6 +45,12 @@ export function speedUpFirst({ now, duration, startsAt, speedUpReady, levels }: 
 export const LEVEL_TIME_GROWTH = { construction: 1.6, research: 1.7 } as const;
 /** Costs double from one level to the next (Toolzzz's cost table). */
 export const LEVEL_COST_GROWTH = 2;
+/** But the Champignonnière's: × 1.85 a level, rounded (90, 167, 308, 570… materials). */
+const MUSHROOM_COST_GROWTH = 1.85;
+
+/** How a row's cost grows from one level to the next. */
+export const costGrowthOf = (name: string) =>
+  sameName(name, "Champignonnière") ? MUSHROOM_COST_GROWTH : LEVEL_COST_GROWTH;
 
 export interface SpeedUpLevel {
   /** Levels gained once it is done (those already queued included). */
@@ -102,6 +109,8 @@ export interface LevelsAheadInput {
   /** Time of the next level, as the game shows it (current bonus included). */
   duration: number;
   growth: number;
+  /** × per level of the cost; doubles by default. */
+  costGrowth?: number;
   count: number;
 }
 
@@ -114,18 +123,23 @@ export interface LevelsAhead {
   duration: number;
 }
 
-/** The cost and time of the next one, two… `count` levels, all together. */
-export function levelsAhead({ cost, duration, growth, count }: LevelsAheadInput): LevelsAhead[] {
+/** The cost and time of the next one, two… `count` levels, all together; each level's cost rounded, as the game does. */
+export function levelsAhead({
+  cost,
+  duration,
+  growth,
+  costGrowth = LEVEL_COST_GROWTH,
+  count,
+}: LevelsAheadInput): LevelsAhead[] {
   const result: LevelsAhead[] = [];
-  let total = 0;
+  const total: Cost = { food: 0, materials: 0, workers: 0 };
+  let time = 0;
   for (let levels = 1; levels <= count; levels++) {
-    total += Math.round(duration * growth ** (levels - 1));
-    const share = (LEVEL_COST_GROWTH ** levels - 1) / (LEVEL_COST_GROWTH - 1);
-    result.push({
-      levels,
-      cost: { food: cost.food * share, materials: cost.materials * share, workers: cost.workers * share },
-      duration: total,
-    });
+    const factor = costGrowth ** (levels - 1);
+    for (const resource of ["food", "materials", "workers"] as const)
+      total[resource] += Math.round(cost[resource] * factor);
+    time += Math.round(duration * growth ** (levels - 1));
+    result.push({ levels, cost: { ...total }, duration: time });
   }
   return result;
 }
