@@ -15,7 +15,7 @@ export interface StoredLaying extends Laying {
   readAt: Date;
 }
 
-/** The speed changes with Couveuse and Technique de ponte: past this age, Reine.php is read again. */
+/** The speed changes with Couveuse, Solarium and Technique de ponte: past this age, Reine.php is read again. */
 export const LAYING_MAX_AGE = 12 * 60 * 60_000;
 
 // « v2 »: the first version also kept the locked units.

@@ -7,7 +7,9 @@ Ajoutée le 2026-10-16 à la demande du joueur, d'après une autre extension qui
 - Savoir, avant de lancer Armes ou Bouclier Thoracique, si le niveau suivant renforce plus l'armée que les unités que la Reine pondrait à la place.
 - Savoir, avant de commander une construction (ou une recherche), s'il vaut mieux attendre le niveau suivant d'Architecture (ou de la Salle d'analyse) : demandé par le joueur le 2026-10-16.
 
-Une entrée « Conseils » dans « Fonctionnalités », avec une option par conseil (`weapons-shield`, `architecture`, `analysis-room`).
+- Savoir, entre Couveuse, Solarium et Technique de ponte (avec le Laboratoire qu'elle demande), lequel faire pour pondre plus vite : demandé par le joueur le 2026-10-17.
+
+Une entrée « Conseils » dans « Fonctionnalités », avec une option par conseil (`weapons-shield`, `architecture`, `analysis-room`, `laying-boost`).
 
 ## Armes et Bouclier Thoracique
 
@@ -33,10 +35,22 @@ Une entrée « Conseils » dans « Fonctionnalités », avec une option par cons
 - Non comptés : ce que le niveau d'accélération coûte (il retarde peut-être le paiement de la ligne), et le gain sur les chantiers suivants.
 - Données : l'autre page (`laboratoire.php` depuis Construction, `construction.php` depuis le Laboratoire), relue en arrière-plan à chaque visite.
 
+## Couveuse, Solarium ou Technique de ponte
+
+- Chaque niveau de l'une des trois multiplie le temps de ponte par 0,9 : la vitesse de Reine.php vaut 0,9 puissance la somme des trois niveaux (S5, 2026-10-17 : Couveuse 11 + Solarium 9 + Technique de ponte 9 = 29, 0,9²⁹ = 0,047101…, la valeur du script). Elles apportent donc exactement le même gain : **seul le coût les départage**.
+- **Coût** : celui du niveau suivant affiché, plus les niveaux manquants de ses prérequis (« Requis : Laboratoire niveau 10 »), chacun le double du précédent (× 1,85 pour la Champignonnière). Nourriture et matériaux additionnés en « ressources » ; les ouvrières, s'il y en a, sont écrites à part.
+- Le prérequis est lu sur l'autre page (`construction.php` depuis le Laboratoire et inversement), relue en arrière-plan (requête partagée avec le conseil d'accélération). Un prérequis introuvable, ou qui manque lui-même d'un prérequis : le coût est écrit « au moins ».
+- Ligne « Conseil » dans la description de chacune des trois lignes, entre la ligne d'accélération et le bloc Armes / Bouclier :
+  - sur la moins chère : « Technique de ponte 10 d'abord : **le moins cher pour pondre 10 % plus vite** (839 680 ressources, Laboratoire 10 compris, contre 1 024 000 pour Solarium 10 et 1 228 800 pour Couveuse 12) » (exemple S5) ;
+  - sur les autres : « Technique de ponte 10 d'abord (Laboratoire 10 compris) : **même gain de ponte, 32 % moins cher** (839 680 ressources au lieu de 1 228 800) », « 2,5 × moins cher » à partir du double ;
+  - à 5 % près : « Couveuse 12 et Solarium 10 se valent ».
+- Non comptés, dit dans l'infobulle : les niveaux de Laboratoire servent aussi aux autres recherches (comptés en entier quand même) ; les durées (Couveuse et Solarium partagent la file de construction avec le Laboratoire, Technique de ponte est au Laboratoire).
+- Un niveau en cours : la ligne montre déjà le coût du niveau d'après, le conseil part de là ; un prérequis atteint par un niveau en cours ne coûte rien.
+
 ## Données (Armes et Bouclier)
 
 - **Armée** : `Armee.php` relue en arrière-plan à chaque visite du Laboratoire (garnison des trois lieux et troupes des attaques en cours), et `Ressources.php` pour les troupes des chasses (requête partagée avec les Prévisions de ressources). Sans Compte+, le jeu n'écrit pas les troupes des sorties : la note dit combien ne sont pas comptées. `Armee.php` illisible : la garnison mémorisée (ou la dernière vue avec des unités), troupes sorties non comptées.
-- **Vitesse de ponte et unités débloquées** : lues sur `Reine.php` (`temps_ponte_base*…` dans le script, formulaires de ponte), mémorisées par serveur par `collect` quand le joueur y passe, relues en arrière-plan si inconnues ou vieilles de plus de 12 h (Couveuse et Technique de ponte les changent).
+- **Vitesse de ponte et unités débloquées** : lues sur `Reine.php` (`temps_ponte_base*…` dans le script, formulaires de ponte), mémorisées par serveur par `collect` quand le joueur y passe, relues en arrière-plan si inconnues ou vieilles de plus de 12 h (Couveuse, Solarium et Technique de ponte les changent).
 - **Niveau et coût** : la ligne du Laboratoire elle-même.
 
 ## Affichage
@@ -47,20 +61,22 @@ Une entrée « Conseils » dans « Fonctionnalités », avec une option par cons
 
 ## Cohérence sur Construction et Laboratoire
 
-- Tout ce qu'Optizzz ajoute dans la description d'une ligne suit le même ordre, quel que soit l'ordre de dessin (`src/utils/row-extras.ts`) : la ligne ⏳ des Prévisions de ressources, la ligne « Conseil » d'accélération, puis le bloc « Conseil » Armes / Bouclier.
+- Tout ce qu'Optizzz ajoute dans la description d'une ligne suit le même ordre, quel que soit l'ordre de dessin (`src/utils/row-extras.ts`) : la ligne ⏳ des Prévisions de ressources, la ligne « Conseil » d'accélération, la ligne « Conseil » de ponte, puis le bloc « Conseil » Armes / Bouclier.
 - Les deux conseils commencent par la même étiquette « Conseil ». Les nombres du bloc ne se coupent pas en fin de ligne (espaces insécables).
 - **Téléphone** (vu à 520 px, mise en page mobile du jeu) : les barres mettent libellé et valeur au-dessus de la barre, le tableau des unités défile dans son bloc, rien ne déborde de la page. Le tableau « Chantiers en cours » y masque « Temps restant » (« Fin » le dit) pour garder « Annuler » à l'écran.
 
 ## Code
 
-| Fichier                                                                                     | Rôle                                                           |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `src/features/research-advice/advice.ts` (+ test)                                           | Comparaison recherche / ponte, seuil, verdict                  |
-| `src/features/research-advice/army.ts` (+ test)                                             | Armée entière : garnison, attaques et chasses en cours         |
-| `src/features/research-advice/mount.ts` (+ test)                                            | Bande sous la ligne : verdict, barres, tableau, note, réglages |
-| `src/features/research-advice/index.ts`                                                     | La feature, chargement des données                             |
-| `src/game/speed-up.ts` (+ test)                                                             | Fin maintenant ou après le niveau d'accélération               |
-| `src/features/research-advice/speed-up-rows.ts`, `speed-up-mount.ts` (+ `speed-up.test.ts`) | Lignes, files, niveau d'accélération ; ligne de conseil        |
-| `src/utils/row-extras.ts` (+ test)                                                          | Ordre des ajouts dans la description d'une ligne               |
-| `src/data/laying.ts` (+ test)                                                               | Vitesse de ponte et unités débloquées, mémorisées par serveur  |
-| `src/game/pages/queen.ts`                                                                   | Lecture de Reine.php (vitesse, unités débloquées)              |
+| Fichier                                                                                     | Rôle                                                            |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `src/features/research-advice/advice.ts` (+ test)                                           | Comparaison recherche / ponte, seuil, verdict                   |
+| `src/features/research-advice/army.ts` (+ test)                                             | Armée entière : garnison, attaques et chasses en cours          |
+| `src/features/research-advice/mount.ts` (+ test)                                            | Bande sous la ligne : verdict, barres, tableau, note, réglages  |
+| `src/features/research-advice/index.ts`                                                     | La feature, chargement des données                              |
+| `src/game/speed-up.ts` (+ test)                                                             | Fin maintenant ou après le niveau d'accélération                |
+| `src/features/research-advice/speed-up-rows.ts`, `speed-up-mount.ts` (+ `speed-up.test.ts`) | Lignes, files, niveau d'accélération ; ligne de conseil         |
+| `src/game/laying-boost.ts` (+ test)                                                         | Couveuse, Solarium, Technique de ponte : coût prérequis compris |
+| `src/features/research-advice/laying-boost.ts` (+ test)                                     | Prérequis lus, ligne de conseil                                 |
+| `src/utils/row-extras.ts` (+ test)                                                          | Ordre des ajouts dans la description d'une ligne                |
+| `src/data/laying.ts` (+ test)                                                               | Vitesse de ponte et unités débloquées, mémorisées par serveur   |
+| `src/game/pages/queen.ts`                                                                   | Lecture de Reine.php (vitesse, unités débloquées)               |
