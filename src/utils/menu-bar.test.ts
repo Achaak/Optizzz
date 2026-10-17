@@ -18,8 +18,8 @@ const spec = (className: string): MenuBarButton => ({
   icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>`,
   onClick: vi.fn(),
 });
-const more = (doc: Document) => doc.querySelector<HTMLButtonElement>(".optizzz-bar-more");
-const bar = (doc: Document) => doc.querySelector<HTMLElement>(".optizzz-bar");
+const more = (doc: Document) => doc.querySelector<HTMLButtonElement>(".optizzz-menu-bar-more");
+const bar = (doc: Document) => doc.querySelector<HTMLElement>(".optizzz-menu-bar");
 
 describe("insertMenuBarButton", () => {
   it("puts each new button left of the ones Optizzz already added, and widens the bar's margin each time", () => {
@@ -37,7 +37,7 @@ describe("insertMenuBarButton", () => {
     insertMenuBarButton(doc, spec("first"));
     insertMenuBarButton(doc, spec("second"));
 
-    expect(doc.querySelectorAll(".optizzz-bar-more")).toHaveLength(1);
+    expect(doc.querySelectorAll(".optizzz-menu-bar-more")).toHaveLength(1);
     expect(bar(doc)?.querySelector("style")?.textContent).toMatch(
       /@media screen and \(max-width: 41em\)[^]*margin-right: 90px !important/,
     );
