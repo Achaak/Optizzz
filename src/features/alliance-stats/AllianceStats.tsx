@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { loadPlayersExport, type PlayersExport } from "@/data/exports";
 import type { Scores } from "@/features/history/api";
+import { WAR_LABELS } from "@/game/diplomacy";
 import type { AllianceRanking } from "@/game/pages/alliance-ranking";
 import type { Curve } from "@/utils/history-chart/chart-option";
 import { Controls, LoadingNote } from "@/utils/history-chart/controls";
@@ -67,7 +68,12 @@ const sortValue = (row: Row, key: SortKey): number | string => {
   return row.progress?.[key] ?? -Infinity;
 };
 
-const REASONS: Record<Suggestion["reason"], string> = { pact: "pacte", war: "guerre", neighbour: "voisine" };
+const reasonOf = (suggestion: Suggestion) =>
+  suggestion.reason === "war"
+    ? WAR_LABELS[suggestion.declaredBy].toLowerCase()
+    : suggestion.reason === "pact"
+      ? "pacte"
+      : "voisine";
 
 const sameTag = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
@@ -348,7 +354,7 @@ export function AllianceStats({
               onClick={() => compare(s.tag)}
               title={nameOf(s.tag)}
             >
-              + {s.tag} <span className="optizzz-muted">({REASONS[s.reason]})</span>
+              + {s.tag} <span className="optizzz-muted">({reasonOf(s)})</span>
             </button>
           ))}
         </p>

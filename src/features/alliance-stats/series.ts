@@ -1,6 +1,7 @@
 // Curves, ranks and suggestions drawn from the alliances' history.
 import { versionDate } from "@/data/export-history";
 import type { Alliance } from "@/data/exports";
+import { diplomacyWith, sameTag, type WarSide } from "@/game/diplomacy";
 import { HARVESTS_PER_DAY } from "@/game/forecast";
 import type { Point } from "@/utils/history-chart/chart-option";
 import type { AllianceScores, AllianceSnapshot } from "./api";
@@ -13,8 +14,6 @@ export interface LiveAlliance {
   time: Date;
   scores: Partial<AllianceScores>;
 }
-
-const sameTag = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
 /** The alliance's totals in an export, whatever the case of `tag` (the game ignores it too). */
 export function findAlliance(alliances: ReadonlyMap<string, AllianceScores>, tag: string): AllianceScores | undefined {
@@ -69,10 +68,7 @@ export function rankOf(
   return ahead + 1;
 }
 
-export interface Suggestion {
-  tag: string;
-  reason: "pact" | "war" | "neighbour";
-}
+export type Suggestion = { tag: string } & ({ reason: "pact" | "neighbour" } | { reason: "war"; declaredBy: WarSide });
 
 /** Alliances in the ranking on each side of mine. */
 const NEIGHBOURS = 2;
@@ -88,23 +84,25 @@ export function suggestions(
   metric: AllianceMetric,
 ): Suggestion[] {
   const found: Suggestion[] = [];
-  const add = (tag: string, reason: Suggestion["reason"]) => {
-    const known = alliances.find((alliance) => sameTag(alliance.tag, tag))?.tag;
-    if (known && !sameTag(known, myTag) && !found.some((s) => sameTag(s.tag, known)))
-      found.push({ tag: known, reason });
+  const mine = alliances.find((alliance) => sameTag(alliance.tag, myTag));
+  const add = (tag: string, neighbour = false) => {
+    const known = alliances.find((alliance) => sameTag(alliance.tag, tag));
+    if (!known || sameTag(known.tag, myTag) || found.some((s) => sameTag(s.tag, known.tag))) return;
+    const diplomacy = neighbour ? null : diplomacyWith(mine, known);
+    if (diplomacy?.kind === "war") found.push({ tag: known.tag, reason: "war", declaredBy: diplomacy.declaredBy });
+    else found.push({ tag: known.tag, reason: neighbour ? "neighbour" : "pact" });
   };
 
-  const mine = alliances.find((alliance) => sameTag(alliance.tag, myTag));
-  for (const pact of mine?.diplomacy.pacts ?? []) add(pact.tag, "pact");
-  for (const war of mine?.diplomacy.wars ?? []) add(war, "war");
-  for (const other of alliances) if (other.diplomacy.wars.some((war) => sameTag(war, myTag))) add(other.tag, "war");
+  for (const pact of mine?.diplomacy.pacts ?? []) add(pact.tag);
+  for (const war of mine?.diplomacy.wars ?? []) add(war);
+  for (const other of alliances) if (other.diplomacy.wars.some((war) => sameTag(war, myTag))) add(other.tag);
 
   const ranked = [...latest.alliances]
     .sort(([, a], [, b]) => (valueOf(b, metric, false) ?? 0) - (valueOf(a, metric, false) ?? 0))
     .map(([tag]) => tag);
   const at = ranked.findIndex((tag) => sameTag(tag, myTag));
   if (at >= 0) {
-    for (const tag of ranked.slice(Math.max(0, at - NEIGHBOURS), at + NEIGHBOURS + 1)) add(tag, "neighbour");
+    for (const tag of ranked.slice(Math.max(0, at - NEIGHBOURS), at + NEIGHBOURS + 1)) add(tag, true);
   }
   return found;
 }

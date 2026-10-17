@@ -91,20 +91,23 @@ describe("listTargets", () => {
     expect(faster[0]?.travelSeconds).toBe(6588);
   });
 
-  it("marks pacts and wars, whichever side declared the war, but not a war on oneself", () => {
+  it("marks pacts and wars, with who declared the war, but not a war on oneself", () => {
     const alliances = [
-      alliance("MOI", { pacts: [{ tag: "AMI", name: "PNA ", description: "6 mois" }], wars: ["Rival"] }),
+      alliance("MOI", { pacts: [{ tag: "AMI", name: "PNA ", description: "6 mois" }], wars: ["Rival", "ENNEMI"] }),
       alliance("AMI"),
       alliance("RIVAL"),
       alliance("HOSTILE", { wars: ["moi", "HOSTILE"] }),
+      alliance("ENNEMI", { wars: ["MOI"] }),
       alliance("NEUTRE", { wars: ["NEUTRE"] }),
     ];
-    const players = ["AMI", "RIVAL", "HOSTILE", "NEUTRE"].map((tag, i) => player(tag, { alliance: tag, x: i }));
+    const tags = ["AMI", "RIVAL", "HOSTILE", "ENNEMI", "NEUTRE"];
+    const players = tags.map((tag, i) => player(tag, { alliance: tag, x: i }));
     const targets = listTargets({ ...baseInput, alliances, players: [me, ...players] }, now);
     expect(targets.map((target) => [target.pseudo, target.diplomacy])).toEqual([
       ["AMI", { kind: "pact", name: "PNA", description: "6 mois" }],
-      ["RIVAL", { kind: "war" }],
-      ["HOSTILE", { kind: "war" }],
+      ["RIVAL", { kind: "war", declaredBy: "us" }],
+      ["HOSTILE", { kind: "war", declaredBy: "them" }],
+      ["ENNEMI", { kind: "war", declaredBy: "both" }],
       ["NEUTRE", null],
     ]);
   });

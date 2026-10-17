@@ -2,7 +2,22 @@
 // declared by one side only, and war tags do not always share the alliances' case.
 import type { Alliance } from "@/data/exports";
 
-export type Diplomacy = { kind: "pact"; name: string; description: string } | { kind: "war" };
+/** Who declared a war, from my alliance's side: both when each declared it on the other. */
+export type WarSide = "us" | "them" | "both";
+
+/** How the player reads a war, short (« Guerre déclarée ») and explained. */
+export const WAR_LABELS: Record<WarSide, string> = {
+  us: "Guerre déclarée",
+  them: "Guerre subie",
+  both: "Guerre réciproque",
+};
+export const WAR_TITLES: Record<WarSide, string> = {
+  us: "Votre alliance lui a déclaré la guerre.",
+  them: "Cette alliance a déclaré la guerre à la vôtre.",
+  both: "Vos deux alliances se sont déclaré la guerre.",
+};
+
+export type Diplomacy = { kind: "pact"; name: string; description: string } | { kind: "war"; declaredBy: WarSide };
 
 export const sameTag = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
@@ -12,7 +27,10 @@ export function diplomacyWith(mine: Alliance | undefined, theirs: Alliance | und
   const pact = mine.diplomacy.pacts.find((p) => sameTag(p.tag, theirs.tag));
   if (pact) return { kind: "pact", name: pact.name.trim(), description: pact.description.trim() };
   const declares = (from: Alliance, to: Alliance) => from.diplomacy.wars.some((tag) => sameTag(tag, to.tag));
-  return declares(mine, theirs) || declares(theirs, mine) ? { kind: "war" } : null;
+  const ours = declares(mine, theirs);
+  const theirsOn = declares(theirs, mine);
+  if (!ours && !theirsOn) return null;
+  return { kind: "war", declaredBy: ours && theirsOn ? "both" : ours ? "us" : "them" };
 }
 
 /** Tags of the alliances my alliance has a pact with, and of those at war with it, as the export writes them. */
