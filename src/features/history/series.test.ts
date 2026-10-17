@@ -4,17 +4,19 @@ import { averageSeries, periodProgress, playerSeries } from "./series";
 
 const scores = (field: number) => ({ field, building: 30, technology: 15, trophy: 0 });
 
-const history: Snapshot[] = [
-  { version: "202610052200", players: new Map([[1, scores(100)]]) },
-  { version: "202610062200", players: new Map([[2, scores(70)]]) },
-  {
-    version: "202610072200",
-    players: new Map([
-      [1, scores(150)],
-      [2, scores(80)],
-    ]),
-  },
-];
+const history: Snapshot[] = (
+  [
+    { version: "202610052200", players: new Map([[1, scores(100)]]) },
+    { version: "202610062200", players: new Map([[2, scores(70)]]) },
+    {
+      version: "202610072200",
+      players: new Map([
+        [1, scores(150)],
+        [2, scores(80)],
+      ]),
+    },
+  ] satisfies Omit<Snapshot, "alliances">[]
+).map((snapshot) => ({ ...snapshot, alliances: new Map() }));
 
 const now = new Date("2026-10-08T09:30:00Z");
 

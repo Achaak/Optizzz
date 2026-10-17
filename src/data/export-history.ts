@@ -29,10 +29,17 @@ export function dailyVersions(versions: readonly string[], days: number | null, 
   return [...byDay.values()];
 }
 
-/** A published version never changes: read from `key`, or downloaded once then stored there. */
-export async function cachedVersion<T>(key: `local:${string}`, download: () => Promise<T>): Promise<T> {
+/**
+ * A published version never changes: read from `key`, or downloaded once then stored there. `complete` tells a
+ * cache stored before a field was kept: it is downloaded again.
+ */
+export async function cachedVersion<T>(
+  key: `local:${string}`,
+  download: () => Promise<T>,
+  complete: (cached: T) => boolean = () => true,
+): Promise<T> {
   const cached = await storage.getItem<T>(key);
-  if (cached) return cached;
+  if (cached && complete(cached)) return cached;
   const fresh = await download();
   try {
     await storage.setItem(key, fresh);

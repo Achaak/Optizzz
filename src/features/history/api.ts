@@ -18,15 +18,21 @@ export interface Snapshot {
   version: string;
   /** By player id. */
   players: Map<number, Scores>;
+  /** Alliance tag of each player, null without one. */
+  alliances: Map<number, string | null>;
 }
 
-/** What is stored per version: all the players in columns, ~25 KB on S5, ~500 KB on S2. */
+/** What is stored per version: all the players in columns, ~30 KB on S5, ~600 KB on S2. */
 interface StoredSnapshot {
   ids: number[];
   field: number[];
   building: number[];
   technology: number[];
   trophy: number[];
+  /** Each alliance tag once; missing from the versions stored before the alliances were kept. */
+  tags?: string[];
+  /** Index in `tags` of each player's alliance, -1 without one. */
+  alliance?: number[];
 }
 
 const cacheKey = (origin: string, version: string) => `local:history:${new URL(origin).host}:${version}` as const;
@@ -37,21 +43,28 @@ const historyPlayerSchema = playerSchema.pick({
   buildingScore: true,
   technologyScore: true,
   trophyScore: true,
+  alliance: true,
 });
 
 function toStored(players: z.infer<typeof historyPlayerSchema>[]): StoredSnapshot {
+  const tags = [...new Set(players.flatMap((player) => (player.alliance ? [player.alliance] : [])))];
+  const tagIndex = new Map(tags.map((tag, i) => [tag, i]));
   return {
     ids: players.map((player) => player.id),
     field: players.map((player) => player.field),
     building: players.map((player) => player.buildingScore),
     technology: players.map((player) => player.technologyScore),
     trophy: players.map((player) => player.trophyScore),
+    tags,
+    alliance: players.map((player) => (player.alliance ? (tagIndex.get(player.alliance) ?? -1) : -1)),
   };
 }
 
 function fromStored(version: string, stored: StoredSnapshot): Snapshot {
   const players = new Map<number, Scores>();
+  const alliances = new Map<number, string | null>();
   stored.ids.forEach((id, i) => {
+    alliances.set(id, stored.tags?.[stored.alliance?.[i] ?? -1] ?? null);
     players.set(id, {
       field: stored.field[i] ?? 0,
       building: stored.building[i] ?? 0,
@@ -59,13 +72,16 @@ function fromStored(version: string, stored: StoredSnapshot): Snapshot {
       trophy: stored.trophy[i] ?? 0,
     });
   });
-  return { version, players };
+  return { version, players, alliances };
 }
 
 /** One version, from the cache or downloaded then cached. */
 async function loadSnapshot(origin: string, version: string): Promise<Snapshot> {
-  const stored = await cachedVersion(cacheKey(origin, version), async () =>
-    toStored(z.array(historyPlayerSchema).parse(await getJson(`${origin}/api/exports/players/?version=${version}`))),
+  const stored = await cachedVersion(
+    cacheKey(origin, version),
+    async () =>
+      toStored(z.array(historyPlayerSchema).parse(await getJson(`${origin}/api/exports/players/?version=${version}`))),
+    (cached: StoredSnapshot) => cached.tags !== undefined,
   );
   return fromStored(version, stored);
 }

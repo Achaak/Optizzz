@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { Scores } from "./api";
+import { allianceMoves, moveDays, type AllianceMove } from "./alliance-moves";
 import { Controls, LoadingNote } from "@/utils/history-chart/controls";
 import { METRICS } from "./metrics";
 import { formatGain, formatPercent } from "@/utils/history-chart/format";
@@ -33,6 +34,13 @@ export function ProfileHistory({ origin, loggedInPseudo, profile, liveTime, alli
     [player, snapshots, metric, liveTime, profile.scores],
   );
   const progress = periodProgress(points);
+  const moves = useMemo(
+    () =>
+      player
+        ? allianceMoves(snapshots, player.id, { version: playersExport?.version ?? "", alliance: player.alliance })
+        : [],
+    [player, snapshots, playersExport?.version],
+  );
 
   if (error)
     return <div className="history optizzz-panel compact optizzz-panel--danger">Historique indisponible : {error}</div>;
@@ -83,6 +91,54 @@ export function ProfileHistory({ origin, loggedInPseudo, profile, liveTime, alli
           </>
         )}
       </p>
+      {snapshots.length > 0 &&
+        (moves.length > 0 ? (
+          <>
+            <p className="summary">Changements d'alliance sur la période :</p>
+            <ul className="moves">
+              {moves.map((move) => (
+                <li key={move.before}>
+                  <b>{moveDays(move)}</b> · <Move move={move} />
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className="summary optizzz-muted">
+            {player.alliance ? (
+              <>
+                Toujours dans <AllianceLink tag={player.alliance} /> sur la période.
+              </>
+            ) : (
+              "Sans alliance sur toute la période."
+            )}
+          </p>
+        ))}
     </div>
+  );
+}
+
+const AllianceLink = ({ tag }: { tag: string }) => (
+  <a href={`classementAlliance.php?alliance=${encodeURIComponent(tag)}`}>{tag}</a>
+);
+
+/** « a quitté ABC pour XYZ ». */
+function Move({ move }: { move: AllianceMove }) {
+  if (move.from === null && move.to !== null)
+    return (
+      <>
+        a rejoint <AllianceLink tag={move.to} />
+      </>
+    );
+  if (move.to === null && move.from !== null)
+    return (
+      <>
+        a quitté <AllianceLink tag={move.from} />
+      </>
+    );
+  return (
+    <>
+      a quitté <AllianceLink tag={move.from ?? ""} /> pour <AllianceLink tag={move.to ?? ""} />
+    </>
   );
 }

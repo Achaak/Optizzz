@@ -58,6 +58,18 @@ h4 {
   text-align: center;
 }
 
+/* A profile's changes of alliance, latest first, one a line under their lead-in. */
+.moves {
+  margin: var(--optizzz-space-1) 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: center;
+}
+
+.moves li + li {
+  margin-top: var(--optizzz-space-1);
+}
+
 table.progress tr.me td {
   font-weight: bold;
 }
