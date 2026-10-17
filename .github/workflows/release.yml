@@ -59,6 +59,8 @@ jobs:
       - run: pnpm zip:firefox
 
       # Chrome refuses an upload while a version is in review: the new version replaces it.
+      # No --firefox-compatibility: AMO takes Firefox and Android from the manifest's gecko settings
+      # and refuses to override them.
       - name: Submit to Chrome Web Store and Firefox Add-ons
         run: >
           pnpm wxt submit
@@ -67,7 +69,6 @@ jobs:
           --chrome-cancel-pending
           --firefox-zip .output/*-firefox.zip
           --firefox-sources-zip .output/*-sources.zip
-          --firefox-compatibility firefox,android
         env:
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
           CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
