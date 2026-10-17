@@ -115,6 +115,15 @@ describe("mountConvoyPlanner", () => {
     expect(doc.querySelector(".Bas")?.hasAttribute("hidden")).toBe(false);
   });
 
+  it("keeps the game's « Annuler » link in the row of the convoy it cancels", () => {
+    const { doc } = setup();
+    const rows = [...doc.querySelectorAll(".optizzz-on-way-row")];
+    const cancels = rows.map((row) => row.querySelector<HTMLAnchorElement>(".optizzz-on-way-actions a"));
+    expect(cancels.map((link) => link?.textContent)).toEqual(["Annuler", undefined]);
+    expect(cancels[0]?.getAttribute("href")).toBe("commerce.php?annuler=1&t=TOKEN");
+    expect(cancels[0]?.closest("[hidden]")).toBeNull();
+  });
+
   it("copies a convoy as one line of text", async () => {
     const { doc, copied } = setup();
     const button = doc.querySelector<HTMLButtonElement>(".optizzz-on-way-copy");

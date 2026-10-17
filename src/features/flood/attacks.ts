@@ -20,11 +20,13 @@ export interface AttackLine extends AttackOnWay {
   countdown: HTMLElement;
   /** With Compte+, the game's note under the line: troops and arrival time. */
   note: Element | null;
+  /** The game's « Annuler » link after the countdown, while the attack can still be cancelled. */
+  cancel: HTMLAnchorElement | null;
 }
 
 /**
  * « - Vous allez attaquer <a>X</a>(TAG) (Terrain de chasse) dans <span id="attaque_N">…</span>
- * <script>reste(559, "attaque_N")</script><br><small><em>Troupes en attaques : … <br>Arrivée à 19h54</em></small> ».
+ * <script>reste(559, "attaque_N")</script> - <a href="/Armee.php?annuler=N">Annuler</a><br><small><em>Troupes en attaques : … <br>Arrivée à 19h54</em></small> ».
  */
 export function readAttackLines(doc: Document, now: Date): AttackLine[] {
   const seconds = new Map<string, number>();
@@ -42,6 +44,7 @@ export function readAttackLines(doc: Document, now: Date): AttackLine[] {
     const alliance = targetElement?.querySelector("a[href*='alliance=']")?.textContent.trim() ?? null;
     const between = countdown.previousSibling?.nodeType === Node.TEXT_NODE ? countdown.previousSibling.textContent : "";
     const note = noteAfter(countdown);
+    const cancel = lineAfter(countdown).find(isCancelLink) ?? null;
     const place = /\(([^)]+)\)\s*dans\s*$/.exec(between ?? "")?.[1]?.trim() ?? null;
     return [
       {
@@ -53,20 +56,30 @@ export function readAttackLines(doc: Document, now: Date): AttackLine[] {
         targetElement: targetElement ?? null,
         countdown,
         note,
+        cancel,
       },
     ];
   });
 }
 
-/** The Compte+ note after the countdown, before the next attack. */
-function noteAfter(countdown: Element): Element | null {
+/** What follows the countdown, up to the next attack. */
+function lineAfter(countdown: Element): ChildNode[] {
+  const nodes: ChildNode[] = [];
   for (let node = countdown.nextSibling; node; node = node.nextSibling) {
-    if (node instanceof Element && node.id.startsWith("attaque_")) return null;
-    if (node instanceof Element && node.tagName === "SMALL") return node;
-    if (node.nodeType === Node.TEXT_NODE && node.textContent?.includes("Vous allez attaquer")) return null;
+    if (node instanceof Element && node.id.startsWith("attaque_")) break;
+    if (node.nodeType === Node.TEXT_NODE && node.textContent?.includes("Vous allez attaquer")) break;
+    nodes.push(node);
   }
-  return null;
+  return nodes;
 }
+
+/** The Compte+ note after the countdown, before the next attack. */
+const noteAfter = (countdown: Element): Element | null =>
+  lineAfter(countdown).find((node): node is Element => node instanceof Element && node.tagName === "SMALL") ?? null;
+
+/** The game's « Annuler » link (`Armee.php?annuler=<id>` for an attack), while it can still be cancelled. */
+export const isCancelLink = (node: Node | null | undefined): node is HTMLAnchorElement =>
+  node instanceof Element && node.tagName === "A" && /[?&]annuler=/i.test(node.getAttribute("href") ?? "");
 
 function troopsIn(note: Element | null): string | null {
   return /Troupes en attaques\s*:[^\n]*?\./.exec(note?.textContent.replace(/\s+/g, " ") ?? "")?.[0].trim() ?? null;
