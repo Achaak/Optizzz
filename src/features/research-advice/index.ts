@@ -6,6 +6,8 @@ import { readWholeArmy } from "./army";
 import { mountSpeedUp, SPEED_UP_STYLE } from "./speed-up-mount";
 import { readTimedRows } from "@/game/pages/resources";
 import { queueEnd, readSpeedUp, startsAt } from "./speed-up-rows";
+import { LAYING_BOOST_STYLE, mountLayingBoost, readBoostRows } from "./laying-boost";
+import { LAYING_BOOSTS, rankLayingBoosts } from "@/game/laying-boost";
 import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
 import type { ColonyState } from "@/game/forecast";
 import { LEVEL_TIME_GROWTH } from "@/game/speed-up";
@@ -152,5 +154,29 @@ export const speedUpAdvice: Feature = {
       const start = startsAt(state, row.cost, ownQueueEnd, now);
       if (start) mountSpeedUp(row, speedUp, start, now);
     }
+  },
+};
+
+/**
+ * On construction.php and laboratoire.php, under Couveuse, Solarium and Technique de ponte: which one makes laying 10 %
+ * faster for the least. See docs/features/conseils-recherche.md.
+ */
+export const layingBoostAdvice: Feature = {
+  id: "laying-boost-advice",
+  toggle: "research-advice",
+  matches: (url) => url.pathname.toLowerCase() in PAGES,
+  async run(_ctx, toggles) {
+    if (!isEnabled(toggles, "research-advice", "laying-boost")) return;
+    const rows = readBoostRows([document]);
+    const own = rows.filter((row) => LAYING_BOOSTS.some((name) => sameName(name, row.name)));
+    if (own.length === 0) return;
+    const page = PAGES[location.pathname.toLowerCase() as keyof typeof PAGES];
+    const other = await fetchGamePage(`${location.origin}/${page.other}`).catch(() => null);
+    if (!other) return;
+    const ranked = rankLayingBoosts([...rows, ...readBoostRows([other])]);
+    const style = document.createElement("style");
+    style.textContent = LAYING_BOOST_STYLE;
+    document.head.append(style);
+    for (const row of own) mountLayingBoost(row.description, row.name, ranked);
   },
 };

@@ -108,6 +108,7 @@ export const featureCatalog = [
       { id: "weapons-shield", label: "Armes et Bouclier Thoracique comparés à la ponte d'unités" },
       { id: "architecture", label: "Attendre Architecture avant une construction" },
       { id: "analysis-room", label: "Attendre la Salle d'analyse avant une recherche" },
+      { id: "laying-boost", label: "Couveuse, Solarium ou Technique de ponte : le moins cher pour pondre plus vite" },
     ],
   },
   {
