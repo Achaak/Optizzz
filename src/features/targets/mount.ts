@@ -3,6 +3,7 @@ import { planAttacks } from "@/game/flood";
 import { afterOnWay, type OnWay } from "@/data/on-way";
 import { formatDecimal, formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
+import { WAR_LABELS, WAR_TITLES } from "@/game/diplomacy";
 import { listTargets, type Target, type TargetsInput } from "./targets";
 
 // Colours of the game's own panel (table.simulateur) and of the rows of #tabEnnemie.
@@ -252,7 +253,10 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     }
 
     const alliance = cell(row, target.alliance ?? "");
-    if (target.diplomacy?.kind === "war") alliance.append(" · Guerre");
+    if (target.diplomacy?.kind === "war") {
+      alliance.append(` · ${WAR_LABELS[target.diplomacy.declaredBy]}`);
+      alliance.title = WAR_TITLES[target.diplomacy.declaredBy];
+    }
     if (target.diplomacy?.kind === "pact") {
       alliance.append(` · Pacte (${target.diplomacy.name})`);
       alliance.title = target.diplomacy.description;

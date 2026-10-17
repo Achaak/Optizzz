@@ -102,20 +102,22 @@ describe("suggestions", () => {
     ["F", scores(3000)],
   ]);
 
-  it("suggests pacts, wars in both directions and the neighbours in the ranking", () => {
+  it("suggests pacts, wars with who declared them, and the neighbours in the ranking", () => {
     const alliances = [
-      exported("ME", ["F"], ["me", "A"]),
+      exported("ME", ["F"], ["me", "A", "G"]),
       exported("A"),
       exported("B"),
       exported("C"),
       exported("D"),
       exported("E", [], ["Me"]),
+      exported("G", [], ["ME"]),
       exported("F"),
     ];
     expect(suggestions(alliances, latest, "ME", "field")).toEqual([
       { tag: "F", reason: "pact" },
-      { tag: "A", reason: "war" },
-      { tag: "E", reason: "war" },
+      { tag: "A", reason: "war", declaredBy: "us" },
+      { tag: "G", reason: "war", declaredBy: "both" },
+      { tag: "E", reason: "war", declaredBy: "them" },
       { tag: "B", reason: "neighbour" },
       { tag: "C", reason: "neighbour" },
       { tag: "D", reason: "neighbour" },

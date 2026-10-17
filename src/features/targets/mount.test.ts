@@ -81,7 +81,7 @@ describe("mountTargets", () => {
     expect(box()?.nextElementSibling?.querySelector("#formulairePageEnnemie")).not.toBeNull();
     expect(doc.querySelector(".optizzz-targets summary")?.textContent).toBe("Cibles à portée (2)");
     expect(rows()).toEqual([
-      ["Proche", "RIVAL · Guerre", "2 345", "235 %", "469", "5", "2 h 31", "12 h 30", "libre ?", "Attaquer"],
+      ["Proche", "RIVAL · Guerre déclarée", "2 345", "235 %", "469", "5", "2 h 31", "12 h 30", "libre ?", "Attaquer"],
       ["Loin", "", "2 000", "200 %", "400", "13", "6 h 28", "16 h 27", "libre ?", "Attaquer"],
     ]);
   });

@@ -18,7 +18,7 @@ Elle filtre 50 à 300 % de mon TDC et trie (TDC, distance, alliance, pseudo), ma
 - **Protection débutant** : quand le jeu dit que je suis protégé (« Vous profitez de la protection débutant… »), l'encart le rappelle en tête : attaquer y met fin.
 - **Colonnes** :
   - Pseudo : lien vers le profil, suivi de l'icône du jeu `icone_degat_defense.gif` (infobulle « Peut vous attaquer en retour ») si le joueur peut m'attaquer en retour (mon TDC entre 50 et 300 % du sien, soit le sien entre 33 et 200 % du mien) ;
-  - Alliance : avec « · Pacte (PNA) » (la description du pacte en infobulle) ou « · Guerre » ;
+  - Alliance : avec « · Pacte (PNA) » (la description du pacte en infobulle) ou « · Guerre déclarée » (par mon alliance), « · Guerre subie » (déclarée contre elle) ou « · Guerre réciproque », expliqué en infobulle ;
   - TDC, puis % de mon TDC ;
   - Prise max : `floor(20 % de son TDC)` ; l'infobulle rappelle qu'il faut au moins autant de fourmis ;
   - Flood max (si « Plan de flood » est activé et mon armée connue par `Armee.php`) : le total d'un flood avec mes attaques possibles et mon armée, sa défense collée comprise (« — » si mon armée ne suffit pas), calculé comme le Plan de flood : une fois arrivées les attaques en route (prises notées, attaques lancées sans le plan relevées sur `Armee.php`, relu en arrière-plan) ; triable ; voir `flood.md`. Colonne absente, avec la raison dans la note, quand l'armée est inconnue, vide (toute en chasse) ou les niveaux illisibles ;
