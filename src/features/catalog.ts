@@ -39,6 +39,7 @@ export const featureCatalog = [
     description: "Quand vous pourrez payer, quand vous tomberez en famine, quand un entrepôt sera plein.",
     options: [
       { id: "costs", label: "Délais sur Construction et Laboratoire" },
+      { id: "levels", label: "Coût des niveaux suivants sur Construction et Laboratoire" },
       { id: "outlook", label: "Famine et entrepôt plein dans l'en-tête" },
       { id: "simulator", label: "Simulation de la répartition des ouvrières sur Ressources" },
     ],

@@ -46,6 +46,17 @@ Savoir quand on pourra payer un bâtiment ou une recherche, quand on tombera en 
 - « Revenir à l'actuel » remet la répartition du jeu ; « Appliquer » reste grisé tant qu'elle n'a pas changé.
 - « Appliquer » : remplit `#RecolteNourriture` / `#RecolteMateriaux` et déclenche `#ChangeRessource`. Première action de jeu d'Optizzz, toujours sur un clic du joueur.
 
+## 4. Niveaux suivants sur Construction et Laboratoire
+
+Ajouté le 2026-10-17 : savoir combien coûtent et durent plusieurs niveaux d'un coup (« combien pour arriver au niveau 15 ? »).
+
+- Sous chaque bâtiment ou recherche qui peut être lancé (pas les lignes « Requis »), un dépliable fermé « Coût des 5 niveaux suivants » : un tableau dense, une ligne par niveau, « Jusqu'au niveau » (N), une colonne par ressource que coûte le premier niveau (Nourriture, Matériaux, Ouvrières : un bâtiment n'a que Matériaux), « Durée » et « Tout payable » (maintenant, l'heure où le stock couvrira le total, « manque N ouvrières », « entrepôt trop petit » ou « jamais au rythme actuel »). Tous des cumuls ; chiffres alignés à droite, sans retour à la ligne.
+- Le premier niveau est celui que le jeu affiche, après ceux déjà en file. Les suivants s'en déduisent (`docs/research/fourmizzz-pages.md`, « Temps des chantiers ») : le coût double à chaque niveau, le temps est multiplié par 1,6 (bâtiment) ou 1,7 (recherche), au bonus actuel d'Architecture ou de la Salle d'analyse. Une note sous le tableau le dit (« Cumuls estimés : coût × 2 et durée × 1,6 à chaque niveau… »).
+- **Champignonnière** exclue : son coût ne double pas (environ × 1,85).
+- « Tout payé » ne compte ni la file d'attente ni les niveaux payés un par un : c'est le moment où le stock couvre le total.
+- Calculé une fois au chargement, à partir du même état que les délais.
+- Option « Coût des niveaux suivants sur Construction et Laboratoire », allumée par défaut.
+
 ## Format
 
 « 2 j 4 h », « 3 h 12 », « 12 min », « plus de 30 j » au-delà. Heure « aujourd'hui 18 h 40 », « demain 18 h 40 » ou le jour de la semaine.
@@ -64,6 +75,7 @@ Achats planifiés (stock réservé), délai des ouvrières via la ponte, optimis
 | `src/features/resource-forecast/mount-costs.ts`          | Ligne de délai dans les tableaux de coûts                               |
 | `src/features/resource-forecast/mount-outlook.ts`        | Famine et entrepôt plein sous les jauges de l'en-tête                   |
 | `src/features/resource-forecast/mount-simulator.ts`      | Simulateur de répartition sur Ressources                                |
+| `src/features/resource-forecast/mount-levels.ts`         | Dépliable « Niveaux suivants » ; cumul dans `src/game/speed-up.ts`      |
 | `src/features/resource-forecast/index.ts`                | Feature du registre (script léger), style, rafraîchissement à la minute |
 | `src/utils/number-format.ts`, `src/utils/time-format.ts` | Nombres « 12 348 », durées et heures                                    |
 

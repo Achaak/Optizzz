@@ -3,7 +3,8 @@ import constructionHtml from "@/features/resource-forecast/__fixtures__/construc
 import laboratoryQueueHtml from "@/features/work-queue/__fixtures__/laboratory-one.html?raw";
 import laboratoryHtml from "@/features/resource-forecast/__fixtures__/laboratory-costs.html?raw";
 import { mountSpeedUp } from "./speed-up-mount";
-import { queueEnd, readSpeedUp, readTimedRows, startsAt, type SpeedUpSource } from "./speed-up-rows";
+import { readTimedRows } from "@/game/pages/resources";
+import { queueEnd, readSpeedUp, startsAt, type SpeedUpSource } from "./speed-up-rows";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const now = new Date("2026-10-16T10:00:00Z");

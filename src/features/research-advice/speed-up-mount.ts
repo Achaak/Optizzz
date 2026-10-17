@@ -3,7 +3,8 @@
 import { bestSpeedUp } from "@/game/speed-up";
 import { placeInRow } from "@/utils/row-extras";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
-import type { SpeedUpSource, TimedRow } from "./speed-up-rows";
+import type { TimedRow } from "@/game/pages/resources";
+import type { SpeedUpSource } from "./speed-up-rows";
 
 export const SPEED_UP_STYLE = `
 .optizzz-speed-up { margin-top: var(--optizzz-space-2); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--optizzz-space-3); }
