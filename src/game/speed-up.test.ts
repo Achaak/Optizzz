@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bestSpeedUp, levelsAhead, SPEED_UP_FACTOR, speedUpFirst, speedUpLevels } from "./speed-up";
+import { bestSpeedUp, costGrowthOf, levelsAhead, SPEED_UP_FACTOR, speedUpFirst, speedUpLevels } from "./speed-up";
 
 const now = new Date("2026-10-16T12:00:00Z");
 const at = (minutes: number) => new Date(now.getTime() + minutes * 60_000);
@@ -121,5 +121,20 @@ describe("levelsAhead", () => {
       { levels: 2, cost: { food: 300, materials: 3000, workers: 30 }, duration: 150_000 },
       { levels: 3, cost: { food: 700, materials: 7000, workers: 70 }, duration: 285_000 },
     ]);
+  });
+
+  it("rounds each level of a cost that does not double, as the game does (Champignonnière: × 1.85)", () => {
+    const cost = { food: 0, materials: 90, workers: 0 };
+    const levels = levelsAhead({ cost, duration: 120_000, growth: 1.6, costGrowth: 1.85, count: 4 });
+    // Its levels cost 90, 167, 308 and 570 materials.
+    expect(levels.map((level) => level.cost.materials)).toEqual([90, 257, 565, 1135]);
+  });
+});
+
+describe("costGrowthOf", () => {
+  it("doubles every cost but the Champignonnière's, × 1.85", () => {
+    expect(costGrowthOf("Champignonnière")).toBe(1.85);
+    expect(costGrowthOf("champignonniere")).toBe(1.85);
+    expect(costGrowthOf("Entrepôt de Nourriture")).toBe(2);
   });
 });
