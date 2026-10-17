@@ -4,7 +4,8 @@
 
 1. Mettre à jour `version` dans `package.json` (source unique de la version), commiter (`chore(release): 1.2.3`) et pousser sur `main`. Rien d'autre : pas de tag à créer.
 2. Le workflow `.github/workflows/release.yml` part de lui-même dès qu'un push sur `main` touche `package.json`. Si le tag `v1.2.3` existe déjà, il s'arrête là (version déjà publiée). Sinon il relance toutes les vérifications de la CI, construit les zips, les soumet aux deux stores (`wxt submit`) et crée la release GitHub avec les zips, qui pose le tag `v1.2.3`.
-3. Si la soumission échoue (secret manquant, version encore en examen chez Chrome…), corriger puis relancer à la main : _Actions → Release → Run workflow_ sur `main`, ou `gh workflow run release.yml`. Faute de tag, la version est republiée.
+3. Si une version précédente est encore en examen chez Chrome, son examen est annulé et la nouvelle version prend sa place (`--chrome-cancel-pending`) : l'examen repart de zéro.
+4. Si la soumission échoue (secret refusé, store indisponible…), corriger puis relancer à la main : _Actions → Release → Run workflow_ sur `main`, ou `gh workflow run release.yml`. Faute de tag, la version est republiée.
 
 Les stores refusent une version déjà soumise : toute nouvelle publication passe par une nouvelle version dans `package.json`.
 
