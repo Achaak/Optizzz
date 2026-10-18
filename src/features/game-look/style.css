@@ -679,8 +679,40 @@ html.optizzz-game-look {
     height: 28px;
   }
 
-  & :is(.boite_info, .boite_compte_plus) a {
+  & :is(.boite_info, .boite_compte_plus) a:not(.ui-autocomplete *) {
     color: var(--look-menu-text);
+  }
+
+  /* Player search (jQuery UI autocomplete under the Compte+ box): a light list on the dark menu.
+     The game colours some names inline (e.g. green), those stay. */
+  & .ui-autocomplete.ui-menu {
+    padding: 4px;
+    border: 1px solid var(--look-line-strong);
+    border-radius: var(--look-radius-small);
+    background: var(--look-field);
+    box-shadow: var(--look-shadow);
+    font-family: var(--look-font);
+    font-size: 0.95rem;
+    text-align: left;
+
+    & .ui-menu-item a {
+      display: block;
+      padding: 4px 8px;
+      border: 0;
+      border-radius: 4px;
+      color: var(--look-text);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    & .ui-menu-item a:is(.ui-state-focus, .ui-state-active, :hover) {
+      margin: 0;
+      border: 0;
+      /* Light enough to keep the game's green names readable; the bar marks the row without colour alone */
+      background: color-mix(in srgb, var(--look-box) 55%, white);
+      box-shadow: inset 3px 0 0 var(--look-title);
+    }
   }
 
   & .lien_rapide a {
