@@ -48,23 +48,146 @@
   color: var(--optizzz-text-muted);
 }
 
-.inputs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--optizzz-space-4);
-  margin: var(--optizzz-space-4) 0;
+/* Parts of the launcher, in the order of Calystene's simulator */
+.section {
+  margin-top: var(--optizzz-space-4);
+  padding-top: var(--optizzz-space-3);
+  border-top: 1px solid var(--optizzz-border-soft);
 }
 
-fieldset {
-  flex: 1 1 260px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--optizzz-space-2) var(--optizzz-space-5);
+.section > summary {
+  margin-bottom: var(--optizzz-space-3);
+}
+
+.section > summary .aside {
+  font-weight: normal;
+  font-size: var(--optizzz-font-size-small);
+}
+
+.optizzz-subtitle {
+  margin-top: 0;
+}
+
+/* A label, its field and what follows, aligned with the rows above and below */
+.row {
+  display: grid;
+  grid-template-columns: minmax(150px, max-content) auto 1fr;
   align-items: center;
+  gap: var(--optizzz-space-2) var(--optizzz-space-3);
+  margin: var(--optizzz-space-1) 0;
 }
 
-fieldset .optizzz-note {
+.row > :nth-child(n + 3) {
+  justify-self: start;
+}
+
+.player-data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--optizzz-space-5);
+}
+
+.player-data .row input {
+  text-align: right;
+}
+
+.player-data .max {
+  white-space: nowrap;
+}
+
+.parameters .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0 var(--optizzz-space-5);
+}
+
+.parameters .row {
+  grid-template-columns: minmax(130px, max-content) auto auto auto 1fr;
+}
+
+.objective {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--optizzz-space-2) var(--optizzz-space-4);
+  margin: var(--optizzz-space-3) 0 var(--optizzz-space-2);
+}
+
+.objective .ratio select {
+  max-width: 100%;
+  margin-left: var(--optizzz-space-2);
+}
+
+.auto {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--optizzz-space-1);
+}
+
+.return-target {
+  margin-top: var(--optizzz-space-3);
+}
+
+/* « Informations sur la chasse »: two columns of label and value */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--optizzz-space-1) var(--optizzz-space-5);
+  margin: 0 0 var(--optizzz-space-4);
+}
+
+.facts > div {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: var(--optizzz-space-3);
+}
+
+.facts dt {
+  color: var(--optizzz-text-muted);
+}
+
+.facts dd {
   margin: 0;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+table.losses caption {
+  text-align: left;
+  font-weight: bold;
+  padding-bottom: var(--optizzz-space-2);
+}
+
+.losses :is(th, td),
+.by-field :is(th, td) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.losses tbody th,
+.by-field tbody th {
+  text-align: left;
+}
+
+.losses .main {
+  font-weight: bold;
+}
+
+.by-field tr.current :is(th, td) {
+  font-weight: bold;
+}
+
+.launch .columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--optizzz-space-1) var(--optizzz-space-4);
+  margin-bottom: var(--optizzz-space-3);
+}
+
+.launch .columns label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--optizzz-space-1);
 }
 
 input[type="number"] {
@@ -72,7 +195,7 @@ input[type="number"] {
 }
 
 input.units {
-  width: 58px;
+  width: 70px;
 }
 
 input.wide {
@@ -96,13 +219,12 @@ table.hunts {
   font-size: var(--optizzz-font-size-xs);
 }
 
-.hunts td.xp {
-  white-space: normal;
-  min-width: 90px;
+.hunts thead th[title] {
+  cursor: help;
 }
 
-.hunts thead th {
-  cursor: help;
+.hunts tfoot :is(th, td) {
+  font-weight: bold;
 }
 
 .hunts tr.launched td {

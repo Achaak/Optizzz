@@ -1,20 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { loadLaying } from "@/data/laying";
 import { loadLevels, unknownLevelsHint, type HuntLevels } from "@/data/levels";
 import { placeProbes } from "@/data/probes";
 import type { Place } from "@/game/army/battle";
-import { keepProbes, PLACE_NAMES } from "@/game/probes";
+import { keepProbes } from "@/game/probes";
 import { createEngine } from "./engine/client";
+import type { RatioChoice } from "./engine/extras";
 import { summarize, type Objective, type Plan, type PlanInput } from "./engine/planner";
 import type { Extras } from "./engine/requests";
-import { armyFromKeys, armyToKeys, unitLabel, UNITS } from "@/game/army/units";
+import { armyFromKeys, armyToKeys, UNITS } from "@/game/army/units";
+import { FieldTable, HuntDetails, huntsText } from "./HuntDetails";
+import { HuntParameters } from "./HuntParameters";
+import { HuntResult } from "./HuntResult";
 import { HuntTable } from "./HuntTable";
 import { launchHunts, type LaunchStatus } from "./launch";
-import { LossCurve } from "./LossCurve";
 import { hasNoArmyToSend, readHuntForm, type HuntForm, type OngoingHunt } from "./pages";
-import { huntableArmy, readSettings, writeSettings, type ObjectiveKind, type Settings } from "./settings";
-import { stepNotice, unitsText } from "./view";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
-import { NumberField } from "@/utils/NumberField";
+import { PlayerData } from "./PlayerData";
+import { huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
+import { unitsText } from "./view";
+import { formatNumber } from "@/utils/number-format";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 
@@ -29,11 +33,6 @@ interface Props {
   probes: readonly Place[];
 }
 
-const RATIOS = [1, 2, 3, 4, 5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 10];
-const OBJECTIVES: { kind: ObjectiveKind; label: string; hint: string }[] = [
-  { kind: "yield", label: "Rendement", hint: "plus de cm² en acceptant des pertes" },
-  { kind: "ratio", label: "Ratio", hint: "attaque / difficulté, comme le simulateur de Calystene" },
-];
 const RELOAD_DELAY_MS = 1500;
 const RECOMPUTE_DELAY_MS = 300;
 
@@ -45,26 +44,25 @@ async function fetchHuntForm(origin: string): Promise<HuntForm | "none" | "error
   return readHuntForm(doc) ?? (hasNoArmyToSend(doc) ? "none" : "error");
 }
 
-function objectiveOf(settings: Settings): Objective {
-  switch (settings.objective) {
-    case "yield":
-      return { kind: "yield", maxLossShare: settings.maxLossShare };
-    case "ratio":
-      return { kind: "ratio", ratio: settings.ratio };
-  }
-}
-
 export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: Props) {
   const host = new URL(origin).host;
   const engine = useMemo(() => createEngine(), []);
   const [settings, updateSettings] = useStoredSettings(host, readSettings, writeSettings);
-  const [levels, setLevels] = useState<HuntLevels | null>(null);
+  const [readLevels, setReadLevels] = useState<HuntLevels | null>(null);
+  const [levelEdits, setLevelEdits] = useState<Partial<HuntLevels>>({});
   const [levelsError, setLevelsError] = useState<string | null>(null);
+  const [layingSpeed, setLayingSpeed] = useState<number | null>(null);
   const [form, setForm] = useState<HuntForm | "none" | "error" | null>(null);
   const ongoingGain = ongoing.reduce((sum, hunt) => sum + hunt.fieldGain, 0);
-  const [field, setField] = useState(currentField + ongoingGain);
+  const [launchEdit, setLaunchEdit] = useState<number | null>(null);
+  const [arrivalEdit, setArrivalEdit] = useState<number | null>(null);
+  const launchField = launchEdit ?? currentField;
+  const arrivalField = arrivalEdit ?? launchField + ongoingGain;
+  const [huntCount, setHuntCount] = useState<number | null>(null);
+  const [huntAmount, setHuntAmount] = useState<number | null>(null);
   const [answered, setAnswered] = useState<{ input: PlanInput; answer: Plan } | null>(null);
   const [extras, setExtras] = useState<Extras | null>(null);
+  const [ratioChoices, setRatioChoices] = useState<RatioChoice[] | null>(null);
   const [override, setOverride] = useState<Plan | null>(null);
   const [editing, setEditing] = useState(false);
   const [statuses, setStatuses] = useState<LaunchStatus[]>([]);
@@ -73,11 +71,20 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   const [frozen, setFrozen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const requestId = useRef(0);
+  const ratiosId = useRef(0);
 
   useEffect(() => {
-    loadLevels(origin).then(setLevels, (error: unknown) => {
+    loadLevels(origin).then(setReadLevels, (error: unknown) => {
       setLevelsError(unknownLevelsHint(error));
     });
+    loadLaying(origin, new Date()).then(
+      (laying) => {
+        setLayingSpeed(laying?.speed ?? null);
+      },
+      () => {
+        setLayingSpeed(null);
+      },
+    );
     fetchHuntForm(origin).then(setForm, () => {
       setForm("error");
     });
@@ -90,21 +97,48 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
     return () => clearInterval(timer);
   }, []);
 
-  const input = useMemo<PlanInput | null>(() => {
-    if (!settings || !levels || !form || form === "error" || form === "none") return null;
+  // A level the player typed replaces the one read.
+  const levels = useMemo<HuntLevels | null>(
+    () =>
+      readLevels && {
+        weapons: levelEdits.weapons ?? readLevels.weapons,
+        shield: levelEdits.shield ?? readLevels.shield,
+        huntSpeed: levelEdits.huntSpeed ?? readLevels.huntSpeed,
+        cochineal: levelEdits.cochineal ?? readLevels.cochineal,
+      },
+    [readLevels, levelEdits],
+  );
+  const slots = levels ? Math.max(0, levels.huntSpeed + 1 - ongoing.length) : 0;
+
+  // Only what the plan depends on: folding a part or showing a column must not compute it again.
+  const reserve = settings?.reserve;
+  const objectiveKind = settings?.objective;
+  const ratio = settings?.ratio;
+  const maxLossShare = settings?.maxLossShare;
+  const dispatch = settings?.dispatch;
+
+  // Everything but the objective and the surface: what the ratio list is computed from.
+  const base = useMemo(() => {
+    if (!reserve || !levels || !form || form === "error" || form === "none") return null;
     return {
       army: keepProbes(
-        armyFromKeys(huntableArmy(form.available, settings.reserve)),
+        armyFromKeys(huntableArmy(form.available, reserve)),
         armyFromKeys(form.available),
         probes.length,
       ),
-      field,
-      fieldAtLaunch: currentField,
-      slots: Math.max(0, levels.huntSpeed + 1 - ongoing.length),
+      field: arrivalField,
+      fieldAtLaunch: launchField,
+      slots,
       levels,
-      objective: objectiveOf(settings),
+      ...(huntCount === null ? {} : { huntCount: Math.min(huntCount, Math.max(1, slots)) }),
     };
-  }, [settings, levels, form, field, currentField, ongoing.length, probes.length]);
+  }, [reserve, levels, form, arrivalField, launchField, slots, huntCount, probes.length]);
+
+  const input = useMemo<PlanInput | null>(() => {
+    if (!base || objectiveKind === undefined || ratio === undefined || maxLossShare === undefined) return null;
+    const objective: Objective = objectiveKind === "ratio" ? { kind: "ratio", ratio } : { kind: "yield", maxLossShare };
+    return { ...base, objective, dispatch, ...(huntAmount === null ? {} : { huntAmount }) };
+  }, [base, objectiveKind, ratio, maxLossShare, dispatch, huntAmount]);
 
   // Units away come back with the hunts: known with Compte+ only.
   const waiting = useMemo(() => {
@@ -132,20 +166,22 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
     return () => clearTimeout(timer);
   }, [engine, input, waiting, frozen]);
 
+  useEffect(() => {
+    if (!base || frozen) return;
+    const id = ++ratiosId.current;
+    const timer = setTimeout(() => {
+      setRatioChoices(null);
+      // Each ratio of the list sets its own objective.
+      void engine({ type: "ratios", input: { ...base, objective: { kind: "ratio", ratio: 1 } } }).then((choices) => {
+        if (id === ratiosId.current) setRatioChoices(choices);
+      });
+    }, RECOMPUTE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [engine, base, frozen]);
+
   const answer = answered?.answer ?? null;
   const computing = editing || (input !== null && !frozen && answered?.input !== input);
   const plan = override ?? answer;
-
-  const pickAmount = (amount: number) => {
-    if (!input || !plan || frozen) return;
-    const id = ++requestId.current;
-    setEditing(true);
-    void engine({ type: "fixed", input, count: Math.max(1, plan.hunts.length), amount }).then((result) => {
-      if (id !== requestId.current) return;
-      setOverride(result);
-      setEditing(false);
-    });
-  };
 
   const editHunt = (index: number, change: { amount?: number; unit?: string; count?: number }) => {
     if (!input || !plan || frozen) return;
@@ -180,13 +216,13 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
     if (!plan) return;
     setBusy(true);
     const orders = plan.hunts.slice(from, to).map((hunt) => ({ amount: hunt.amount, army: armyToKeys(hunt.army) }));
-    const base = plan.hunts.map((_, i) => statuses[i] ?? "pending");
+    const initial = plan.hunts.map((_, i) => statuses[i] ?? "pending");
     const result = await launchHunts(origin, orders, {
       onStatus: (part) => {
-        setStatuses(base.map((status, i) => (i >= from && i < to ? (part[i - from] ?? status) : status)));
+        setStatuses(initial.map((status, i) => (i >= from && i < to ? (part[i - from] ?? status) : status)));
       },
     });
-    const all = base.map((status, i) => (i >= from && i < to ? (result[i - from] ?? status) : status));
+    const all = initial.map((status, i) => (i >= from && i < to ? (result[i - from] ?? status) : status));
     // The game does not say which places the hunters leave: the probes kept home are put back on their places.
     if (probes.length > 0 && result.includes("launched")) {
       await placeProbes(origin, probes).catch((error: unknown) => {
@@ -211,6 +247,25 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
     </button>
   );
   if (!settings.open) return <div className="hunt-launcher optizzz-panel closed">{header}</div>;
+
+  const section = (key: SectionKey, title: string, content: ReactNode, aside?: string) => (
+    <details
+      className="optizzz-disclosure section"
+      open={settings.sections[key]}
+      onToggle={(e) => {
+        const open = e.currentTarget.open;
+        if (open !== settings.sections[key]) {
+          updateSettings((s) => ({ ...s, sections: { ...s.sections, [key]: open } }));
+        }
+      }}
+    >
+      <summary>
+        {title}
+        {aside && <span className="aside optizzz-muted">{aside}</span>}
+      </summary>
+      {content}
+    </details>
+  );
 
   const ongoingList = ongoing.length > 0 && (
     <div className="ongoing">
@@ -249,7 +304,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
       </div>
     );
   }
-  if (!form || !levels || !input) {
+  if (!form || !levels || !readLevels || !input) {
     return (
       <div className="hunt-launcher optizzz-panel">
         {header}
@@ -266,115 +321,69 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   const toLaunch = (i: number) => (statuses[i] ?? "pending") !== "launched";
   const pendingCount = plan ? plan.hunts.filter((_, i) => toLaunch(i)).length : 0;
   const firstPending = plan ? plan.hunts.findIndex((_, i) => toLaunch(i)) : -1;
-  const objective = OBJECTIVES.find((o) => o.kind === settings.objective);
+  const hasPlan = plan !== null && plan.hunts.length > 0;
+  // Changing what the plan is computed from drops the hunts changed by hand.
+  const reset = () => setOverride(null);
 
   return (
     <div className="hunt-launcher optizzz-panel">
       {header}
 
-      <div className="inputs">
-        <fieldset>
-          <legend>Objectif</legend>
-          {OBJECTIVES.map((o) => (
-            <label key={o.kind} title={o.hint}>
-              <input
-                type="radio"
-                name="objective"
-                checked={settings.objective === o.kind}
-                onChange={() => updateSettings((s) => ({ ...s, objective: o.kind }))}
-              />
-              {o.label}
-            </label>
-          ))}
-          {settings.objective === "yield" && (
-            <label>
-              pertes jusqu'à{" "}
-              <NumberField
-                min={0.1}
-                max={20}
-                step={0.1}
-                value={Math.round(settings.maxLossShare * 1000) / 10}
-                onCommit={(percent) => {
-                  if (percent !== null) updateSettings((s) => ({ ...s, maxLossShare: percent / 100 }));
-                }}
-              />{" "}
-              % de l'armée envoyée (en nourriture, 9 fois sur 10)
-            </label>
-          )}
-          {settings.objective === "ratio" && (
-            <label>
-              ratio{" "}
-              <select
-                value={settings.ratio}
-                onChange={(e) => updateSettings((s) => ({ ...s, ratio: Number(e.target.value) }))}
-              >
-                {RATIOS.map((ratio) => (
-                  <option key={ratio} value={ratio}>
-                    {formatDecimal(ratio)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <span className="optizzz-note">{objective?.hint}</span>
-        </fieldset>
+      {section(
+        "data",
+        "Vos données",
+        <PlayerData
+          read={readLevels}
+          levels={levels}
+          onLevel={(level, value) => {
+            setLevelEdits((edits) => ({
+              ...edits,
+              [level]: value === null || value === readLevels[level] ? undefined : value,
+            }));
+          }}
+          layingSpeed={layingSpeed}
+          available={form.available}
+          reserve={settings.reserve}
+          onSend={(unit, count) => {
+            updateSettings((s) => ({
+              ...s,
+              reserve: { ...s.reserve, [unit]: Math.max(0, (form.available[unit] ?? 0) - count) },
+            }));
+          }}
+          probes={probes}
+        />,
+        input.army.some((count) => count > 0) ? unitsText(armyToKeys(input.army)) : undefined,
+      )}
 
-        <fieldset>
-          <legend>Terrain et niveaux</legend>
-          <label title="TDC au moment où les chasses combattront : votre TDC plus ce que rapportent les chasses en cours. Changez-le si vous attendez un flood.">
-            TDC de calcul{" "}
-            <NumberField
-              min={1}
-              integer
-              className="wide"
-              value={field}
-              onCommit={(value) => {
-                if (value !== null) setField(value);
-              }}
-            />{" "}
-            cm²
-          </label>
-          {field !== currentField + ongoingGain && (
-            <button type="button" className="optizzz-button-link" onClick={() => setField(currentField + ongoingGain)}>
-              revenir à {formatNumber(currentField + ongoingGain)}
-            </button>
-          )}
-          <span className="optizzz-note">
-            Armes {levels.weapons} · Bouclier {levels.shield} · Vitesse de chasse {levels.huntSpeed} · Étable à
-            cochenilles {levels.cochineal} · {input.slots} créneau{input.slots > 1 ? "x" : ""} libre
-            {input.slots > 1 ? "s" : ""}
-          </span>
-        </fieldset>
+      {section(
+        "parameters",
+        "Paramètres de chasse",
+        <HuntParameters
+          settings={settings}
+          updateSettings={(change) => {
+            reset();
+            updateSettings(change);
+          }}
+          launchField={launchField}
+          arrivalField={arrivalField}
+          readLaunchField={currentField}
+          readArrivalField={launchField + ongoingGain}
+          onLaunchField={setLaunchEdit}
+          onArrivalField={setArrivalEdit}
+          huntCount={huntCount}
+          huntAmount={huntAmount}
+          planCount={answer?.hunts.length ?? 1}
+          planAmount={answer?.hunts[0]?.amount ?? 1}
+          slots={slots}
+          onHuntCount={setHuntCount}
+          onHuntAmount={setHuntAmount}
+          ratioChoices={ratioChoices}
+          huntSpeed={levels.huntSpeed}
+          now={now}
+        />,
+      )}
 
-        <fieldset>
-          <legend>Réserve (unités gardées à la maison)</legend>
-          {unitKeys.length === 0 && <span className="optizzz-note">Aucune unité disponible.</span>}
-          {unitKeys.map((key) => (
-            <label key={key} title={UNITS.find((u) => u.key === key)?.name}>
-              {unitLabel(key)}{" "}
-              <NumberField
-                min={0}
-                integer
-                className="units"
-                value={settings.reserve[key] ?? 0}
-                onCommit={(count) => {
-                  updateSettings((s) => ({ ...s, reserve: { ...s.reserve, [key]: count ?? 0 } }));
-                }}
-              />
-              <span className="optizzz-muted"> / {formatNumber(form.available[key] ?? 0)}</span>
-            </label>
-          ))}
-          {probes.length > 0 && unitKeys.length > 0 && (
-            <span className="optizzz-note">
-              et {probes.length > 1 ? `${String(probes.length)} sondes` : "1 sonde"} (
-              {probes.map((place) => PLACE_NAMES[place].replace(/^(le|la) /, "")).join(", ")}), remises en place après
-              le lancement
-            </span>
-          )}
-        </fieldset>
-      </div>
-
-      {input.slots === 0 && (
+      {slots === 0 && (
         <p className="optizzz-callout optizzz-callout--warning">Tous vos créneaux de chasse sont pris.</p>
       )}
       {computing && <p className="optizzz-note">Calcul…</p>}
@@ -393,102 +402,99 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
           pour en préparer d'autres.
         </p>
       )}
-
-      {answer?.hunts.length === 0 && input.slots > 0 && (
+      {answer?.hunts.length === 0 && slots > 0 && (
         <p className="optizzz-callout optizzz-callout--warning">
           Aucune chasse possible avec ces unités et cet objectif.
         </p>
       )}
 
-      {plan && plan.hunts.length > 0 && (
+      {hasPlan && (
         <>
-          <HuntTable
-            plan={plan}
-            unitKeys={unitKeys}
-            statuses={statuses}
-            busy={busy}
-            frozen={frozen}
-            launchBlocked={computing}
-            now={now}
-            onEdit={editHunt}
-            onLaunch={(i) => void launch(i, i + 1)}
-          />
-          <div className="actions optizzz-toolbar">
-            <button
-              type="button"
-              className="optizzz-button-primary"
-              disabled={busy || computing || pendingCount === 0}
-              onClick={() => void launch(Math.max(0, firstPending), plan.hunts.length)}
-            >
-              {pendingCount === plan.hunts.length
-                ? `Lancer ${plan.hunts.length === 1 ? "la chasse" : `${String(plan.hunts.length)} chasses`} (${formatNumber(plan.totalAmount)} cm²${emptiesGarrison ? ", toute l'armée" : ""})`
-                : `Lancer les ${String(pendingCount)} chasses restantes`}
-            </button>
-            {override && !frozen && (
-              <button type="button" className="optizzz-button-link" onClick={() => setOverride(null)}>
-                revenir au plan conseillé
-              </button>
-            )}
-          </div>
-          <p className="totals">
-            +{formatNumber(plan.totalAmount)} cm² · {formatNumber(plan.fieldPerHour * 24)} cm²/jour à ce rythme ·{" "}
-            {formatNumber(plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.food, 0))} de nourriture rapportée
-          </p>
-          {emptiesGarrison && (
-            <p className="optizzz-callout optizzz-callout--warning">
-              Ce plan envoie toute votre armée : rien ne reste pour défendre la fourmilière.
-            </p>
-          )}
-          <p className="optizzz-note">{stepNotice(field, plan.totalAmount)}</p>
-
-          {extras && extras.curve.length > 1 && !frozen && (
-            <LossCurve curve={extras.curve} amount={plan.hunts[0]?.amount ?? 0} onPick={pickAmount} />
-          )}
-          {override && extras && (
-            <p className="optizzz-note">
-              La courbe et les conseils ci-dessous portent sur le plan conseillé, à surfaces égales.
-            </p>
+          {section(
+            "result",
+            "Informations sur la chasse",
+            <HuntResult
+              plan={plan}
+              field={input.field}
+              layingSpeed={layingSpeed}
+              wavesAsked={settings.dispatch === "waves"}
+              now={now}
+            />,
           )}
 
-          {answer && extras && extras.laying.length > 0 && (
-            <ul className="advice">
-              {extras.laying.map((step) => (
-                <li key={step.extra}>
-                  Avec +{formatNumber(step.extra)} {step.unit} : {huntsText(step.plan)} (
-                  {signed(step.plan.totalAmount - answer.totalAmount)} cm²)
-                </li>
-              ))}
-            </ul>
+          {section(
+            "byField",
+            "Pertes selon le TdC à l'arrivée",
+            extras ? <FieldTable rows={extras.byField} field={input.field} /> : <p className="optizzz-note">Calcul…</p>,
           )}
 
-          {answer && extras?.waiting && waiting && (
-            <p className="optizzz-note">
-              En attendant le retour des chasses en cours ({formatDuration(waiting.waitSeconds * 1000)}) :{" "}
-              {huntsText(extras.waiting.plan)}, soit {formatNumber(extras.waiting.fieldPerHour)} cm²/h attente comprise,
-              contre {formatNumber(answer.fieldPerHour)} cm²/h en lançant maintenant.
-            </p>
+          {section(
+            "launch",
+            "Lancement des chasses",
+            <>
+              <HuntTable
+                plan={plan}
+                unitKeys={unitKeys}
+                columns={settings.columns}
+                onColumn={(column, shown) => {
+                  updateSettings((s) => ({ ...s, columns: { ...s.columns, [column]: shown } }));
+                }}
+                statuses={statuses}
+                busy={busy}
+                frozen={frozen}
+                launchBlocked={computing}
+                now={now}
+                onEdit={editHunt}
+                onLaunch={(i) => void launch(i, i + 1)}
+              />
+              {emptiesGarrison && (
+                <p className="optizzz-callout optizzz-callout--warning">
+                  Ce plan envoie toute votre armée : rien ne reste pour défendre la fourmilière.
+                </p>
+              )}
+              <div className="actions optizzz-toolbar">
+                <button
+                  type="button"
+                  className="optizzz-button-primary"
+                  disabled={busy || computing || pendingCount === 0}
+                  onClick={() => void launch(Math.max(0, firstPending), plan.hunts.length)}
+                >
+                  {pendingCount === plan.hunts.length
+                    ? `Lancer ${plan.hunts.length === 1 ? "la chasse" : `les ${String(plan.hunts.length)} chasses`} (${formatNumber(plan.totalAmount)} cm²${emptiesGarrison ? ", toute l'armée" : ""})`
+                    : `Lancer les ${String(pendingCount)} chasses restantes`}
+                </button>
+                {override && !frozen && (
+                  <button type="button" className="optizzz-button-link" onClick={reset}>
+                    revenir au plan calculé
+                  </button>
+                )}
+              </div>
+              <p className={busy ? "optizzz-callout optizzz-callout--warning" : "optizzz-note"}>
+                Ne quittez pas cette page tant que toutes les chasses ne sont pas lancées.
+              </p>
+            </>,
+          )}
+
+          {section(
+            "details",
+            "Détails",
+            <HuntDetails
+              plan={plan}
+              advised={answer}
+              extras={extras}
+              custom={override !== null || huntAmount !== null}
+              frozen={frozen}
+              waitSeconds={waiting?.waitSeconds ?? null}
+              onPickAmount={setHuntAmount}
+            />,
+            "Calystene, promotions, courbe, conseils",
           )}
         </>
       )}
 
       {ongoingList}
-
-      <p className="optizzz-note">
-        Pertes simulées sur 10 000 tirages de proies, une unité blessée à plus de la moitié de sa vie comptant comme
-        perdue. Colonne Calystene : tables de pertes du simulateur de chasse de Calystene.
-      </p>
     </div>
   );
-}
-
-const signed = (value: number) => `${value >= 0 ? "+" : "−"}${formatNumber(Math.abs(value))}`;
-
-function huntsText(plan: Plan): string {
-  if (plan.hunts.length === 0) return "aucune chasse";
-  const amounts = [...new Set(plan.hunts.map((hunt) => hunt.amount))];
-  const size =
-    amounts.length === 1 ? `${formatNumber(amounts[0] ?? 0)} cm²` : `${formatNumber(plan.totalAmount)} cm² en tout`;
-  return `${String(plan.hunts.length)} chasse${plan.hunts.length > 1 ? "s" : ""} de ${size}`;
 }
 
 function summaryText(plan: Plan | null, now: Date, computing: boolean): string {

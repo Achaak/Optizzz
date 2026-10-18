@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { difficulty, foodTarget, huntDurationSeconds, nextDifficultyStep } from "./difficulty";
+import { amountForDuration, difficulty, foodTarget, huntDurationSeconds, nextDifficultyStep } from "./difficulty";
 
 describe("difficulty", () => {
   it("matches the food of a real report", () => {
@@ -33,5 +33,18 @@ describe("huntDurationSeconds", () => {
     // (4 496 + 100) × 0.9³ = 3 350.48
     expect(huntDurationSeconds(4496, 100, 3)).toBe(3350);
     expect(huntDurationSeconds(4496, 100, 0)).toBe(4596);
+  });
+});
+
+describe("amountForDuration", () => {
+  it("finds the largest hunt back within the time", () => {
+    const amount = amountForDuration(4496, 3350, 3);
+    expect(amount).toBe(100);
+    expect(huntDurationSeconds(4496, amount, 3)).toBeLessThanOrEqual(3350);
+    expect(huntDurationSeconds(4496, amount + 1, 3)).toBeGreaterThan(3350);
+  });
+
+  it("is 0 when even the smallest hunt comes back too late", () => {
+    expect(amountForDuration(4496, 60, 3)).toBe(0);
   });
 });

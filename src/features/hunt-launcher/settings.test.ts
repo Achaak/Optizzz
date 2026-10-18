@@ -9,12 +9,22 @@ describe("settings", () => {
     expect(await readSettings("s5.fourmizzz.fr")).toEqual(DEFAULT_SETTINGS);
     await writeSettings("s5.fourmizzz.fr", { ...DEFAULT_SETTINGS, objective: "yield", reserve: { JSN: 100 } });
     expect((await readSettings("s5.fourmizzz.fr")).reserve).toEqual({ JSN: 100 });
-    expect((await readSettings("s1.fourmizzz.fr")).objective).toBe("yield");
+    expect((await readSettings("s1.fourmizzz.fr")).objective).toBe("ratio");
+  });
+
+  it("keeps settings stored before the folding parts and the columns existed", async () => {
+    await fakeBrowser.storage.local.set({
+      "huntLauncher:s5.fourmizzz.fr:settings": { objective: "yield", sections: { data: false } },
+    });
+    const settings = await readSettings("s5.fourmizzz.fr");
+    expect(settings.objective).toBe("yield");
+    expect(settings.sections).toEqual({ ...DEFAULT_SETTINGS.sections, data: false });
+    expect(settings.columns).toEqual(DEFAULT_SETTINGS.columns);
   });
 
   it("falls back to the default objective for one that no longer exists", async () => {
     await fakeBrowser.storage.local.set({ "huntLauncher:s5.fourmizzz.fr:settings": { objective: "zero" } });
-    expect((await readSettings("s5.fourmizzz.fr")).objective).toBe("yield");
+    expect((await readSettings("s5.fourmizzz.fr")).objective).toBe("ratio");
   });
 });
 

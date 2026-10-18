@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareWaiting, layingAdvice, lossCurve } from "./extras";
+import { compareWaiting, layingAdvice, lossCurve, lossesByField, ratioChoices } from "./extras";
 import { planHunts, type PlanInput } from "./planner";
 import { armyFromKeys } from "@/game/army/units";
 
@@ -45,5 +45,37 @@ describe("compareWaiting", () => {
     );
     expect(waiting.plan.totalAmount).toBeGreaterThan(now.totalAmount);
     expect(waiting.fieldPerHour).toBeCloseTo((waiting.plan.totalAmount * 3600) / (600 + waiting.plan.durationSeconds));
+  });
+});
+
+describe("ratioChoices", { timeout: 20_000 }, () => {
+  it("hunts less and loses less as the ratio grows, as in Calystene's list", () => {
+    const choices = ratioChoices({ ...input, slots: 1 });
+    expect(choices.map((choice) => choice.ratio)).toEqual([1, 2, 3, 4, 5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 10]);
+    const low = choices.find((choice) => choice.ratio === 2);
+    const high = choices.find((choice) => choice.ratio === 8);
+    expect(high?.totalAmount).toBeLessThan(low?.totalAmount ?? 0);
+    expect(high?.lostUnits).toBeLessThan(low?.lostUnits ?? 0);
+    expect(high?.replyChance).toBeCloseTo(0.874);
+    expect(high?.hunts).toBe(1);
+  });
+
+  it("keeps the number of hunts the player chose", () => {
+    for (const choice of ratioChoices({ ...input, huntCount: 2 })) {
+      if (choice.totalAmount > 0) expect(choice.hunts).toBe(2);
+    }
+  });
+});
+
+describe("lossesByField", { timeout: 20_000 }, () => {
+  it("costs more as the field at arrival grows, same hunts and units", () => {
+    const plan = planHunts({ ...input, slots: 2 });
+    const rows = lossesByField(input, plan, [0.5, 1, 2]);
+    expect(rows.map((row) => row.field)).toEqual([2248, 4496, 8992]);
+    const [small, same, big] = rows;
+    expect(same?.difficulty).toBeCloseTo(plan.hunts.reduce((sum, hunt) => sum + hunt.difficulty, 0));
+    expect(big?.difficulty).toBeGreaterThan(same?.difficulty ?? Infinity);
+    expect(small?.ratio).toBeGreaterThan(same?.ratio ?? Infinity);
+    expect(big?.lostUnits.mean).toBeGreaterThan(small?.lostUnits.mean ?? Infinity);
   });
 });

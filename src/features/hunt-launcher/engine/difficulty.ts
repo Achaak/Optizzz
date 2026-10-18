@@ -30,3 +30,11 @@ export function nextDifficultyStep(field: number): number {
 export function huntDurationSeconds(fieldAtLaunch: number, amount: number, huntSpeed: number): number {
   return Math.round((fieldAtLaunch + amount) * 0.9 ** huntSpeed);
 }
+
+/** Largest surface whose hunt is back within `seconds` (0 when none is). */
+export function amountForDuration(fieldAtLaunch: number, seconds: number, huntSpeed: number): number {
+  let amount = Math.max(0, Math.floor((seconds + 0.5) / 0.9 ** huntSpeed - fieldAtLaunch));
+  while (amount > 0 && huntDurationSeconds(fieldAtLaunch, amount, huntSpeed) > seconds) amount--;
+  while (huntDurationSeconds(fieldAtLaunch, amount + 1, huntSpeed) <= seconds) amount++;
+  return amount < 1 ? 0 : amount;
+}

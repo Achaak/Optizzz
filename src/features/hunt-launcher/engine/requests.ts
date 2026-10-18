@@ -1,28 +1,42 @@
 // Everything the view asks the engine, as plain data: it runs in a Web Worker.
-import { compareWaiting, layingAdvice, lossCurve, type CurvePoint, type LayingStep, type Waiting } from "./extras";
-import { describeHunt, planFixed, planHunts, type Draft, type Plan, type PlanInput, type PlannedHunt } from "./planner";
+import {
+  compareWaiting,
+  layingAdvice,
+  lossCurve,
+  lossesByField,
+  ratioChoices,
+  type CurvePoint,
+  type FieldRow,
+  type LayingStep,
+  type RatioChoice,
+  type Waiting,
+} from "./extras";
+import { describeHunt, planHunts, type Draft, type Plan, type PlanInput, type PlannedHunt } from "./planner";
 
 export type EngineRequest =
   | { type: "plan"; input: PlanInput }
   | { type: "extras"; input: PlanInput; plan: Plan; waiting: Waiting | null }
-  | { type: "fixed"; input: PlanInput; count: number; amount: number }
+  | { type: "ratios"; input: PlanInput }
   | { type: "hunt"; input: PlanInput; draft: Draft };
 
 export interface Extras {
   curve: CurvePoint[];
   laying: LayingStep[];
   waiting: { plan: Plan; fieldPerHour: number } | null;
+  byField: FieldRow[];
 }
 
 export type EngineAnswer<R extends EngineRequest> = R extends { type: "plan" }
   ? Plan
   : R extends { type: "extras" }
     ? Extras
-    : R extends { type: "fixed" }
-      ? Plan
+    : R extends { type: "ratios" }
+      ? RatioChoice[]
       : PlannedHunt;
 
 const CURVE_POINTS = 12;
+/** Fields at arrival the plan is tried at, as a share of the one planned for. */
+const FIELD_FACTORS = [0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 2];
 
 function curveAround(input: PlanInput, plan: Plan): CurvePoint[] {
   const amount = plan.hunts[0]?.amount ?? 0;
@@ -39,23 +53,25 @@ function curveAround(input: PlanInput, plan: Plan): CurvePoint[] {
   );
 }
 
-/** What-ifs around the plan shown, asked once the plan is on screen. */
+/** What-ifs around the plan shown, asked once the plan is on screen; laying and waiting choose the surface, mixed. */
 function answerExtras(input: PlanInput, plan: Plan, waiting: Waiting | null): Extras {
+  const auto = { ...input, huntAmount: undefined, dispatch: undefined };
   return {
     curve: curveAround(input, plan),
-    laying: plan.hunts.length > 0 ? layingAdvice(input, plan) : [],
-    waiting: waiting ? compareWaiting(input, waiting) : null,
+    laying: plan.hunts.length > 0 ? layingAdvice(auto, plan) : [],
+    waiting: waiting ? compareWaiting(auto, waiting) : null,
+    byField: plan.hunts.length > 0 ? lossesByField(input, plan, FIELD_FACTORS) : [],
   };
 }
 
-export function answer(request: EngineRequest): Extras | Plan | PlannedHunt {
+export function answer(request: EngineRequest): Extras | Plan | PlannedHunt | RatioChoice[] {
   switch (request.type) {
     case "plan":
       return planHunts(request.input);
     case "extras":
       return answerExtras(request.input, request.plan, request.waiting);
-    case "fixed":
-      return planFixed(request.input, request.count, request.amount);
+    case "ratios":
+      return ratioChoices(request.input);
     case "hunt":
       return describeHunt(request.input, request.draft);
   }

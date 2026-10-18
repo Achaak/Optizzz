@@ -24,6 +24,16 @@ describe("evaluateHunt", () => {
     expect(outcome.lostUnits.max).toBeGreaterThanOrEqual(outcome.lostUnits.p90);
   });
 
+  it("tells the fewest losses and the base laying time of what is lost", () => {
+    const outcome = evaluateHunt({ army, field: 3886, amount: 118, levels, samples: 500 });
+    expect(outcome.lostUnits.min).toBeLessThanOrEqual(outcome.lostUnits.mean);
+    expect(outcome.lostUnits.min).toBeGreaterThan(0);
+    // Only young dwarves die here: 300 s each before the player's bonuses.
+    expect(outcome.lossLayingSeconds.mean).toBeCloseTo(outcome.lostUnits.mean * 300);
+    expect(outcome.lossLayingSeconds.min).toBe(outcome.lostUnits.min * 300);
+    expect(outcome.lossLayingSeconds.max).toBe(outcome.lostUnits.max * 300);
+  });
+
   it("finds no loss on a tiny hunt guarded by tanks", () => {
     const tanks = armyFromKeys({ Tk: 200 });
     const outcome = evaluateHunt({ army: tanks, field: 3886, amount: 5, levels, samples: 500 });

@@ -2,6 +2,7 @@
 import { calysteneEstimate, type CalysteneEstimate } from "./calystene";
 import { difficulty, huntDurationSeconds } from "./difficulty";
 import { evaluateHunt, type HuntOutcome } from "./evaluate";
+import { dispatchWaves } from "./waves";
 import { armyAttack, armyFood, type Army, type Levels } from "@/game/army/units";
 
 // No « zero loss » objective: young dwarves take the hits first, and the fixed 0.01 × field part of the
@@ -25,6 +26,10 @@ export interface PlanInput {
   objective: Objective;
   /** Force the number of hunts instead of choosing the best. */
   huntCount?: number;
+  /** Force the surface of each hunt, whatever the objective. */
+  huntAmount?: number;
+  /** « waves »: promotable units together in the last hunts (./waves.ts); the same mix in each hunt otherwise. */
+  dispatch?: "mix" | "waves";
   /** Prey draws per surface while searching, and for the plan shown. */
   searchSamples?: number;
   finalSamples?: number;
@@ -45,6 +50,12 @@ export interface PlannedHunt {
 
 export interface Plan {
   hunts: PlannedHunt[];
+  /**
+   * « Par vagues » asked: « applied », or « worse » when the waves would lose more units other than young dwarves,
+   * promote fewer of them or be less sure to be won, and the units stay mixed. Absent when there was nothing to put in
+   * waves.
+   */
+  waves?: "applied" | "worse";
   totalAmount: number;
   /** Until the last hunt is back. */
   durationSeconds: number;
@@ -57,6 +68,8 @@ const MIN_WIN_CHANCE = 0.99;
 /** Different surfaces per hunt are only offered when they conquer this much more per hour. */
 const UNEQUAL_GAIN = 1.03;
 const MAX_FINAL_RETRIES = 25;
+/** Units other than young dwarves the waves may lose more than the mix (sampling noise). */
+const WAVES_TOLERANCE = 0.1;
 
 const NO_OUTCOME = evaluateHunt({
   army: [],
@@ -243,6 +256,50 @@ function planUnequal(input: PlanInput, count: number): Plan | null {
 }
 
 export function planHunts(input: PlanInput): Plan {
+  const plan = planMixed(input);
+  return input.dispatch === "waves" ? inWaves(input, plan) : plan;
+}
+
+/**
+ * Mean units other than young dwarves lost, and promoted, all hunts together: the waves trade young dwarves' promotions
+ * (they go with the heavy units) for those of the troops.
+ */
+function waveScore(plan: Plan): { others: number; promoted: number } {
+  let others = 0;
+  let promoted = 0;
+  for (const hunt of plan.hunts) {
+    for (const [key, count] of Object.entries(hunt.outcome.lost)) if (key !== "JSN") others += count;
+    for (const [key, count] of Object.entries(hunt.outcome.promoted)) if (key !== "JSN") promoted += count;
+  }
+  return { others, promoted };
+}
+
+/**
+ * The same hunts by waves, kept only when they are as sure to be won, lose no more units other than young dwarves
+ * and promote at least as many of them as the mix: a wave can always be filled with young dwarves, which sends the
+ * promotable units back to the first hunt.
+ */
+function inWaves(input: PlanInput, plan: Plan): Plan {
+  if (plan.hunts.length < 2) return plan;
+  const drafts = dispatchWaves(input, plan.hunts);
+  if (drafts === "same") return plan;
+  if (drafts === "unsafe") return { ...plan, waves: "worse" };
+  const waves = summarize(drafts.map((draft) => describeHunt(input, draft)));
+  const sure = (p: Plan) => Math.min(...p.hunts.map((hunt) => hunt.outcome.winChance));
+  const [mixed, byWaves] = [waveScore(plan), waveScore(waves)];
+  const better =
+    sure(waves) >= Math.min(MIN_WIN_CHANCE, sure(plan)) &&
+    byWaves.others <= mixed.others + WAVES_TOLERANCE &&
+    byWaves.promoted >= mixed.promoted;
+  return better ? { ...waves, waves: "applied" } : { ...plan, waves: "worse" };
+}
+
+function planMixed(input: PlanInput): Plan {
+  if (input.huntAmount !== undefined) {
+    const { huntAmount, ...auto } = input;
+    const count = input.huntCount ?? Math.max(1, planMixed(auto).hunts.length);
+    return planFixed(input, count, huntAmount);
+  }
   const counts = input.huntCount
     ? [input.huntCount]
     : Array.from({ length: Math.max(0, input.slots) }, (_, i) => i + 1);

@@ -13,8 +13,9 @@ export interface HuntInput {
   samples: number;
 }
 
-/** Mean, 9 draws out of 10, worst draw. */
+/** Best draw, mean, 9 draws out of 10, worst draw. */
 export interface Spread {
+  min: number;
   mean: number;
   p90: number;
   max: number;
@@ -28,6 +29,8 @@ export interface HuntOutcome {
   lossFood: Spread;
   /** Units lost, all types together. */
   lostUnits: Spread;
+  /** Seconds the queen needs to lay the units lost again, before the player's laying bonuses. */
+  lossLayingSeconds: Spread;
   /** Mean units per type, keyed by unit key. */
   lost: Record<string, number>;
   reportedDead: Record<string, number>;
@@ -37,9 +40,10 @@ export interface HuntOutcome {
 }
 
 function spread(values: number[]): Spread {
-  if (values.length === 0) return { mean: 0, p90: 0, max: 0 };
+  if (values.length === 0) return { min: 0, mean: 0, p90: 0, max: 0 };
   values.sort((a, b) => a - b);
   return {
+    min: values[0] ?? 0,
     mean: values.reduce((sum, value) => sum + value, 0) / values.length,
     p90: values[Math.floor(0.9 * (values.length - 1))] ?? 0,
     max: values[values.length - 1] ?? 0,
@@ -59,21 +63,25 @@ export function evaluateHunt({ army, field, amount, levels, samples }: HuntInput
   const promoted = UNITS.map(() => 0);
   const lossFoods: number[] = [];
   const lostCounts: number[] = [];
+  const layingTimes: number[] = [];
   let wins = 0;
   let zeroLoss = 0;
   for (let sample = 0; sample < samples; sample++) {
     const result = fight(army, drawPack(field, amount, random), levels);
     let lossFood = 0;
     let lostCount = 0;
+    let layingTime = 0;
     result.lost.forEach((count, i) => {
       lost[i] = (lost[i] ?? 0) + count;
       lossFood += count * (UNITS[i]?.food ?? 0);
+      layingTime += count * (UNITS[i]?.layingSeconds ?? 0);
       lostCount += count;
     });
     result.reportedDead.forEach((count, i) => (reportedDead[i] = (reportedDead[i] ?? 0) + count));
     result.promoted.forEach((count, i) => (promoted[i] = (promoted[i] ?? 0) + count));
     lossFoods.push(lossFood);
     lostCounts.push(lostCount);
+    layingTimes.push(layingTime);
     if (result.win) wins++;
     if (result.win && lossFood === 0) zeroLoss++;
   }
@@ -82,6 +90,7 @@ export function evaluateHunt({ army, field, amount, levels, samples }: HuntInput
     zeroLossChance: samples > 0 ? zeroLoss / samples : 0,
     lossFood: spread(lossFoods),
     lostUnits: spread(lostCounts),
+    lossLayingSeconds: spread(layingTimes),
     lost: byKey(lost, samples),
     reportedDead: byKey(reportedDead, samples),
     promoted: byKey(promoted, samples),
