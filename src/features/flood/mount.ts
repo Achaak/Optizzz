@@ -14,10 +14,16 @@ const C = "optizzz-flood";
 
 /** Close to Optizzz's other boxes: red italic title, figures first, rules out of the way. */
 export const FLOOD_STYLE = `
-.${C} { width: fit-content; min-width: min(520px, 100%); }
+.${C} { width: 100%; }
 .${C}-facts { margin: var(--optizzz-space-3) 0; }
 .${C}-fact dd { margin: 0; }
-.${C}-fact small { font-weight: normal; color: var(--optizzz-text-muted); }
+.${C}-fact small {
+  display: block;
+  font-size: var(--optizzz-font-size-small);
+  font-weight: normal;
+  white-space: normal;
+  color: var(--optizzz-text-muted);
+}
 .${C}-scroll { margin-top: var(--optizzz-space-3); }
 .${C} :is(th, td) { white-space: nowrap; }
 .${C} tr.${C}-filled { font-weight: bold; box-shadow: inset 3px 0 0 var(--optizzz-title); }
@@ -206,7 +212,7 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
         doc,
         "small",
         "",
-        ` · arrivée ≈ ${formatEndTimeShort(new Date(now.getTime() + travelSeconds * 1000), now)}`,
+        `arrivée ≈ ${formatEndTimeShort(new Date(now.getTime() + travelSeconds * 1000), now)}`,
       );
       tripFact.replaceChildren(formatDuration(travelSeconds * 1000), arrival);
     }
