@@ -5,6 +5,7 @@ import { askGrantPage, askNotificationsPermitted } from "../alerts/permission";
 import { simulatorDialog } from "../combat-simulator/dialog";
 import { serverMapDialog } from "../server-map";
 import { loadToggles, setToggle } from "../toggles";
+import { watchlistDialog } from "../watchlist";
 import { buildSettingsDialog, DIALOG_STYLE, settingsTabs } from "./dialog";
 import { BUTTON_CLASS } from "./menu-button";
 import { THEME_CSS } from "@/theme";
@@ -58,6 +59,14 @@ export function createSettingsPanel(ctx: ContentScriptContext) {
                 .open()
                 .catch((error: unknown) => {
                   console.error("[Optizzz] server map dialog failed", error);
+                });
+            },
+            openWatchlist: () => {
+              close();
+              watchlistDialog(ctx)
+                .open(undefined)
+                .catch((error: unknown) => {
+                  console.error("[Optizzz] watch list dialog failed", error);
                 });
             },
           },

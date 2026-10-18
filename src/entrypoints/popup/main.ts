@@ -1,6 +1,7 @@
 import { buildTabs, settingsTabs, TABS_STYLE } from "@/features/settings/dialog";
 import { simulatorUrl } from "@/features/combat-simulator/open";
 import { serverMapUrl } from "@/features/server-map/open";
+import { loadLastServer } from "@/features/server-map/settings";
 import { loadNotificationSettings, setNotification } from "@/features/alerts/notification-settings";
 import { NOTIFICATIONS_PERMISSION, openGrantPage } from "@/features/alerts/permission";
 import { isEnabled, loadToggles, setToggle } from "@/features/toggles";
@@ -45,6 +46,16 @@ const tabs = settingsTabs(
       void browser.tabs.create({ url: serverMapUrl(null, null) }).then(() => {
         window.close();
       });
+    },
+    openWatchlist: () => {
+      // The game on « Suivis », for the server of the last game tab; without one, the page says where to open it.
+      void loadLastServer()
+        .then((origin) =>
+          browser.tabs.create({ url: origin ? watchlistPageUrl(origin) : browser.runtime.getURL("/watchlist.html") }),
+        )
+        .then(() => {
+          window.close();
+        });
     },
   },
   {

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { NotificationsTabInput } from "./notifications-section";
+import type { ToolsInput } from "./tools-section";
 import { buildSettingsDialog, settingsTabs, type FeaturesTabInput, type SettingsTab } from "./dialog";
 
 const tab = (id: string): SettingsTab => ({
@@ -16,6 +17,8 @@ const notifications = (): NotificationsTabInput => ({
   onChange: vi.fn(),
   grant: vi.fn(),
 });
+
+const tools = (): ToolsInput => ({ openSimulator: vi.fn(), openServerMap: vi.fn(), openWatchlist: vi.fn() });
 
 const tabButton = (dialog: HTMLElement, label: string) =>
   [...dialog.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === label);
@@ -43,13 +46,7 @@ describe("buildSettingsDialog", () => {
   it("shows the version and the issue links in « À propos »", () => {
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs(
-        "1.2.3",
-        "Firefox/142",
-        features(),
-        { openSimulator: vi.fn(), openServerMap: vi.fn() },
-        notifications(),
-      ),
+      settingsTabs("1.2.3", "Firefox/142", features(), tools(), notifications()),
       vi.fn(),
     );
     tabButton(dialog, "À propos")?.click();
@@ -62,7 +59,7 @@ describe("buildSettingsDialog", () => {
     const input = features();
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", input, { openSimulator: vi.fn(), openServerMap: vi.fn() }, notifications()),
+      settingsTabs("1.2.3", "Firefox/142", input, tools(), notifications()),
       vi.fn(),
     );
     const box = () => dialog.querySelector<HTMLInputElement>('input[data-toggle="work-queue"]');
@@ -78,27 +75,30 @@ describe("buildSettingsDialog", () => {
     expect(box()?.checked).toBe(false);
   });
 
-  it("opens the combat simulator and the server map from « Outils »", () => {
-    const tools = { openSimulator: vi.fn(), openServerMap: vi.fn() };
+  it("opens the combat simulator, the server map and « Suivis » from « Outils »", () => {
+    const input = tools();
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", features(), tools, notifications()),
+      settingsTabs("1.2.3", "Firefox/142", features(), input, notifications()),
       vi.fn(),
     );
     tabButton(dialog, "Outils")?.click();
-    const [simulator, map] = dialog.querySelectorAll<HTMLButtonElement>(".tools button");
+    const [simulator, map, watchlist] = dialog.querySelectorAll<HTMLButtonElement>(".tools button");
     simulator?.click();
-    expect(tools.openSimulator).toHaveBeenCalledOnce();
+    expect(input.openSimulator).toHaveBeenCalledOnce();
     expect(map?.querySelector(".tool-name")?.textContent).toBe("Carte du serveur");
     map?.click();
-    expect(tools.openServerMap).toHaveBeenCalledOnce();
+    expect(input.openServerMap).toHaveBeenCalledOnce();
+    expect(watchlist?.querySelector(".tool-name")?.textContent).toBe("Suivis");
+    watchlist?.click();
+    expect(input.openWatchlist).toHaveBeenCalledOnce();
   });
 
   it("keeps a notification change when coming back to « Notifications »", () => {
     const input = notifications();
     const dialog = buildSettingsDialog(
       document,
-      settingsTabs("1.2.3", "Firefox/142", features(), { openSimulator: vi.fn(), openServerMap: vi.fn() }, input),
+      settingsTabs("1.2.3", "Firefox/142", features(), tools(), input),
       vi.fn(),
     );
     tabButton(dialog, "Notifications")?.click();

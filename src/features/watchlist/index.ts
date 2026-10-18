@@ -20,7 +20,8 @@ const EYE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
 
 let shared: ReturnType<typeof createPageDialog> | undefined;
 
-function watchlistDialog(ctx: ContentScriptContext) {
+/** The page's one « Suivis » dialog: the top bar button and « Outils » open the same one. */
+export function watchlistDialog(ctx: ContentScriptContext) {
   shared ??= createPageDialog(ctx, {
     name: "optizzz-watchlist",
     title: "Suivis",

@@ -25,6 +25,8 @@ export interface ToolsInput {
   openSimulator: () => void;
   /** Opens the server map: over the game, or in a new tab from the toolbar popup. */
   openServerMap: () => void;
+  /** Opens « Suivis »: over the game, or in a new tab from the toolbar popup. */
+  openWatchlist: () => void;
 }
 
 /** « Outils » : the extension's own pages. */
@@ -56,6 +58,11 @@ export function buildToolsSection(doc: Document, tools: ToolsInput): HTMLElement
       "Carte du serveur",
       "Situer des joueurs et des alliances sur tout le serveur, avec distances et trajets.",
       tools.openServerMap,
+    ),
+    tool(
+      "Suivis",
+      "Les joueurs et alliances que vous suivez : leur terrain, leurs pertes et leurs changements.",
+      tools.openWatchlist,
     ),
   );
   return list;
