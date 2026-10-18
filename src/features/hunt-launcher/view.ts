@@ -1,6 +1,7 @@
 // Texts of the hunt launcher, kept out of the components to be tested.
 import { nextDifficultyStep } from "./engine/difficulty";
 import type { RatioChoice } from "./engine/extras";
+import type { Plan } from "./engine/planner";
 import { unitLabel, UNITS } from "@/game/army/units";
 import { formatDecimal, formatNumber } from "@/utils/number-format";
 import { fromParisParts, parisParts } from "@/utils/time-format";
@@ -64,4 +65,32 @@ export function parisClockTime(now: Date, days: number, clock: string): Date | n
     hours: Number(match[1]),
     minutes: Number(match[2]),
   });
+}
+
+/** The simple view's choices: a ratio each, from fewest losses to most field. */
+export const PRESETS = [
+  { key: "careful", label: "Prudent", ratio: 10, hint: "très peu de pertes, moins de terrain" },
+  { key: "balanced", label: "Équilibré", ratio: 8, hint: "le réglage courant des chasseurs" },
+  { key: "fast", label: "Rapide", ratio: 6, hint: "plus de terrain, plus de pertes" },
+] as const;
+
+export type PresetKey = (typeof PRESETS)[number]["key"];
+
+/** The preset the settings match, null when the advanced settings say something else. */
+export function presetOf(settings: { objective: string; ratio: number }): PresetKey | null {
+  if (settings.objective !== "ratio") return null;
+  return PRESETS.find((preset) => preset.ratio === settings.ratio)?.key ?? null;
+}
+
+/** Promotions expected, all hunts together: troops (all but young dwarves), and young dwarves becoming SN. */
+export function promotionCounts(plan: Plan): { troops: number; youngDwarves: number } {
+  let troops = 0;
+  let youngDwarves = 0;
+  for (const hunt of plan.hunts) {
+    for (const [key, count] of Object.entries(hunt.outcome.promoted)) {
+      if (key === "JSN") youngDwarves += count;
+      else troops += count;
+    }
+  }
+  return { troops, youngDwarves };
 }

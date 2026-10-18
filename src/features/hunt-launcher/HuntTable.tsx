@@ -11,6 +11,8 @@ interface Props {
   /** Unit keys the player has. */
   unitKeys: string[];
   columns: Record<ColumnKey, boolean>;
+  /** The column choices are shown (advanced view). */
+  options: boolean;
   onColumn: (column: ColumnKey, shown: boolean) => void;
   statuses: LaunchStatus[];
   busy: boolean;
@@ -53,21 +55,23 @@ export function HuntTable(props: Props) {
   const sum = (pick: (hunt: Plan["hunts"][number]) => number) => plan.hunts.reduce((s, hunt) => s + pick(hunt), 0);
   return (
     <div className="launch">
-      <fieldset className="columns">
-        <legend>Afficher aussi</legend>
-        {COLUMN_OPTIONS.map(({ key, label }) => (
-          <label key={key}>
-            <input
-              type="checkbox"
-              checked={columns[key]}
-              onChange={(e) => {
-                props.onColumn(key, e.target.checked);
-              }}
-            />
-            {label}
-          </label>
-        ))}
-      </fieldset>
+      {props.options && (
+        <fieldset className="columns">
+          <legend>Afficher aussi</legend>
+          {COLUMN_OPTIONS.map(({ key, label }) => (
+            <label key={key}>
+              <input
+                type="checkbox"
+                checked={columns[key]}
+                onChange={(e) => {
+                  props.onColumn(key, e.target.checked);
+                }}
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+      )}
 
       <div className="optizzz-scroll">
         <table className="optizzz-table optizzz-table--dense hunts">

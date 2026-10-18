@@ -16,7 +16,8 @@ import { HuntTable } from "./HuntTable";
 import { launchHunts, type LaunchStatus } from "./launch";
 import { hasNoArmyToSend, readHuntForm, type HuntForm, type OngoingHunt } from "./pages";
 import { PlayerData } from "./PlayerData";
-import { huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
+import { SimpleView } from "./SimpleView";
+import { DEFAULT_SETTINGS, huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
 import { unitsText } from "./view";
 import { formatNumber } from "@/utils/number-format";
 import { useStoredSettings } from "@/utils/useStoredSettings";
@@ -325,9 +326,142 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   // Changing what the plan is computed from drops the hunts changed by hand.
   const reset = () => setOverride(null);
 
+  const launchArea = hasPlan && (
+    <>
+      <HuntTable
+        plan={plan}
+        unitKeys={unitKeys}
+        columns={settings.advanced ? settings.columns : DEFAULT_SETTINGS.columns}
+        options={settings.advanced}
+        onColumn={(column, shown) => {
+          updateSettings((s) => ({ ...s, columns: { ...s.columns, [column]: shown } }));
+        }}
+        statuses={statuses}
+        busy={busy}
+        frozen={frozen}
+        launchBlocked={computing}
+        now={now}
+        onEdit={editHunt}
+        onLaunch={(i) => void launch(i, i + 1)}
+      />
+      {emptiesGarrison && (
+        <p className="optizzz-callout optizzz-callout--warning">
+          Ce plan envoie toute votre armée : rien ne reste pour défendre la fourmilière.
+        </p>
+      )}
+      <div className="actions optizzz-toolbar">
+        <button
+          type="button"
+          className="optizzz-button-primary"
+          disabled={busy || computing || pendingCount === 0}
+          onClick={() => void launch(Math.max(0, firstPending), plan.hunts.length)}
+        >
+          {pendingCount === plan.hunts.length
+            ? `Lancer ${plan.hunts.length === 1 ? "la chasse" : `les ${String(plan.hunts.length)} chasses`} (${formatNumber(plan.totalAmount)} cm²${emptiesGarrison ? ", toute l'armée" : ""})`
+            : `Lancer les ${String(pendingCount)} chasses restantes`}
+        </button>
+        {override && !frozen && (
+          <button type="button" className="optizzz-button-link" onClick={reset}>
+            revenir au plan calculé
+          </button>
+        )}
+      </div>
+      <p className={busy ? "optizzz-callout optizzz-callout--warning" : "optizzz-note"}>
+        Ne quittez pas cette page tant que toutes les chasses ne sont pas lancées.
+      </p>
+    </>
+  );
+
+  const notices = (
+    <>
+      {slots === 0 && (
+        <p className="optizzz-callout optizzz-callout--warning">Tous vos créneaux de chasse sont pris.</p>
+      )}
+      {computing && <p className="optizzz-note">Calcul…</p>}
+      {frozen && (
+        <p className="optizzz-callout optizzz-callout--warning">
+          Des chasses sont parties : ce plan n'est plus recalculé, l'armée disponible a changé.{" "}
+          <button
+            type="button"
+            className="optizzz-button-link"
+            onClick={() => {
+              location.reload();
+            }}
+          >
+            Recharger la page
+          </button>{" "}
+          pour en préparer d'autres.
+        </p>
+      )}
+      {answer?.hunts.length === 0 && slots > 0 && (
+        <p className="optizzz-callout optizzz-callout--warning">
+          Aucune chasse possible avec ces unités et ce réglage
+          {settings.advanced ? "." : " : essayez « Prudent » ou « Rapide »."}
+        </p>
+      )}
+    </>
+  );
+
+  const setAdvanced = (advanced: boolean) => updateSettings((s) => ({ ...s, advanced }));
+
+  if (!settings.advanced) {
+    // What the advanced view changes and the simple one does not show.
+    const kept = huntableArmy(form.available, settings.reserve);
+    const reserved = Object.fromEntries(
+      Object.entries(form.available).map(([key, count]) => [key, count - (kept[key] ?? 0)]),
+    );
+    const custom = [
+      ...(levels.weapons !== readLevels.weapons ||
+      levels.shield !== readLevels.shield ||
+      levels.huntSpeed !== readLevels.huntSpeed ||
+      levels.cochineal !== readLevels.cochineal
+        ? ["niveaux modifiés"]
+        : []),
+      ...(launchEdit !== null || arrivalEdit !== null ? ["TdC modifié"] : []),
+      ...(huntCount !== null
+        ? [`${String(huntCount)} chasse${huntCount > 1 ? "s" : ""} imposée${huntCount > 1 ? "s" : ""}`]
+        : []),
+      ...(huntAmount !== null ? [`${formatNumber(huntAmount)} cm² par chasse imposés`] : []),
+      ...(override ? ["chasses changées à la main"] : []),
+      ...(Object.values(reserved).some((count) => count > 0) ? [`${unitsText(reserved)} gardées à la maison`] : []),
+    ];
+    return (
+      <div className="hunt-launcher optizzz-panel">
+        {header}
+        <SimpleView
+          settings={settings}
+          updateSettings={(change) => {
+            reset();
+            setHuntAmount(null);
+            updateSettings(change);
+          }}
+          plan={hasPlan ? plan : null}
+          layingSpeed={layingSpeed}
+          hasTroops={UNITS.some((unit) => unit.key !== "JSN" && unit.promotesTo && (form.available[unit.key] ?? 0) > 0)}
+          custom={custom}
+          onAdvanced={() => setAdvanced(true)}
+          now={now}
+        />
+        {notices}
+        {launchArea}
+        {ongoingList}
+        <p className="mode">
+          <button type="button" className="optizzz-button-link" onClick={() => setAdvanced(true)}>
+            Réglages avancés : niveaux, armée envoyée, TdC, ratio précis, nombre et surface des chasses…
+          </button>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="hunt-launcher optizzz-panel">
       {header}
+      <p className="mode">
+        <button type="button" className="optizzz-button-link" onClick={() => setAdvanced(false)}>
+          Revenir à l'affichage simple
+        </button>
+      </p>
 
       {section(
         "data",
@@ -383,30 +517,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
         />,
       )}
 
-      {slots === 0 && (
-        <p className="optizzz-callout optizzz-callout--warning">Tous vos créneaux de chasse sont pris.</p>
-      )}
-      {computing && <p className="optizzz-note">Calcul…</p>}
-      {frozen && (
-        <p className="optizzz-callout optizzz-callout--warning">
-          Des chasses sont parties : ce plan n'est plus recalculé, l'armée disponible a changé.{" "}
-          <button
-            type="button"
-            className="optizzz-button-link"
-            onClick={() => {
-              location.reload();
-            }}
-          >
-            Recharger la page
-          </button>{" "}
-          pour en préparer d'autres.
-        </p>
-      )}
-      {answer?.hunts.length === 0 && slots > 0 && (
-        <p className="optizzz-callout optizzz-callout--warning">
-          Aucune chasse possible avec ces unités et cet objectif.
-        </p>
-      )}
+      {notices}
 
       {hasPlan && (
         <>
@@ -428,52 +539,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
             extras ? <FieldTable rows={extras.byField} field={input.field} /> : <p className="optizzz-note">Calcul…</p>,
           )}
 
-          {section(
-            "launch",
-            "Lancement des chasses",
-            <>
-              <HuntTable
-                plan={plan}
-                unitKeys={unitKeys}
-                columns={settings.columns}
-                onColumn={(column, shown) => {
-                  updateSettings((s) => ({ ...s, columns: { ...s.columns, [column]: shown } }));
-                }}
-                statuses={statuses}
-                busy={busy}
-                frozen={frozen}
-                launchBlocked={computing}
-                now={now}
-                onEdit={editHunt}
-                onLaunch={(i) => void launch(i, i + 1)}
-              />
-              {emptiesGarrison && (
-                <p className="optizzz-callout optizzz-callout--warning">
-                  Ce plan envoie toute votre armée : rien ne reste pour défendre la fourmilière.
-                </p>
-              )}
-              <div className="actions optizzz-toolbar">
-                <button
-                  type="button"
-                  className="optizzz-button-primary"
-                  disabled={busy || computing || pendingCount === 0}
-                  onClick={() => void launch(Math.max(0, firstPending), plan.hunts.length)}
-                >
-                  {pendingCount === plan.hunts.length
-                    ? `Lancer ${plan.hunts.length === 1 ? "la chasse" : `les ${String(plan.hunts.length)} chasses`} (${formatNumber(plan.totalAmount)} cm²${emptiesGarrison ? ", toute l'armée" : ""})`
-                    : `Lancer les ${String(pendingCount)} chasses restantes`}
-                </button>
-                {override && !frozen && (
-                  <button type="button" className="optizzz-button-link" onClick={reset}>
-                    revenir au plan calculé
-                  </button>
-                )}
-              </div>
-              <p className={busy ? "optizzz-callout optizzz-callout--warning" : "optizzz-note"}>
-                Ne quittez pas cette page tant que toutes les chasses ne sont pas lancées.
-              </p>
-            </>,
-          )}
+          {section("launch", "Lancement des chasses", launchArea)}
 
           {section(
             "details",

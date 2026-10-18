@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { formatChance, formatShare, parisClockTime, ratioOptionText, splitText, stepNotice, unitsText } from "./view";
+import type { Plan } from "./engine/planner";
+import {
+  formatChance,
+  formatShare,
+  parisClockTime,
+  presetOf,
+  promotionCounts,
+  ratioOptionText,
+  splitText,
+  stepNotice,
+  unitsText,
+} from "./view";
 
 describe("formatChance", () => {
   it("never shows 100 % or 0 % unless it is certain", () => {
@@ -59,5 +70,22 @@ describe("parisClockTime", () => {
     expect(parisClockTime(now, 0, "16:47")?.toISOString()).toBe("2026-10-17T14:47:00.000Z");
     expect(parisClockTime(now, 1, "8:00")?.toISOString()).toBe("2026-10-18T06:00:00.000Z");
     expect(parisClockTime(now, 0, "midi")).toBeNull();
+  });
+});
+
+describe("presetOf", () => {
+  it("names the simple choice the settings match, none for advanced settings", () => {
+    expect(presetOf({ objective: "ratio", ratio: 8 })).toBe("balanced");
+    expect(presetOf({ objective: "ratio", ratio: 10 })).toBe("careful");
+    expect(presetOf({ objective: "ratio", ratio: 7.5 })).toBeNull();
+    expect(presetOf({ objective: "yield", ratio: 8 })).toBeNull();
+  });
+});
+
+describe("promotionCounts", () => {
+  it("adds the troops promoted apart from the young dwarves", () => {
+    const hunt = (promoted: Record<string, number>) => ({ outcome: { promoted } });
+    const plan = { hunts: [hunt({ JSN: 17, SN: 1, JS: 1 }), hunt({ JSN: 4, A: 3 })] } as unknown as Plan;
+    expect(promotionCounts(plan)).toEqual({ troops: 5, youngDwarves: 21 });
   });
 });

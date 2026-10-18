@@ -21,6 +21,8 @@ export interface Settings {
   /** Units kept home, by unit key. */
   reserve: Record<string, number>;
   dispatch: Dispatch;
+  /** Every setting shown; the simple view otherwise. */
+  advanced: boolean;
   open: boolean;
   sections: Record<SectionKey, boolean>;
   columns: Record<ColumnKey, boolean>;
@@ -32,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ratio: 8,
   reserve: {},
   dispatch: "mix",
+  advanced: false,
   open: true,
   sections: { data: true, parameters: true, result: true, byField: false, launch: true, details: false },
   columns: {
