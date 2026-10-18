@@ -9,15 +9,17 @@ const player = (pseudo: string, x: number, y: number, alliance: string | null = 
 describe("readConvoysOnWay", () => {
   it("reads each convoy on its way, its load and when it arrives from the time the page shows", () => {
     expect(
-      readConvoysOnWay(parse(commerceHtml), now).map(({ recipient, food, materials, arrivesAt }) => ({
-        recipient,
+      readConvoysOnWay(parse(commerceHtml), now).map(({ incoming, player, food, materials, arrivesAt }) => ({
+        incoming,
+        player,
         food,
         materials,
         arrivesAt,
       })),
     ).toEqual([
-      { recipient: "Messor", food: 1, materials: 0, arrivesAt: new Date(2026, 9, 7, 21, 54, 7) },
-      { recipient: "Tetramorium", food: 0, materials: 12_500, arrivesAt: new Date(2026, 9, 8, 22, 34, 49) },
+      { incoming: false, player: "Messor", food: 1, materials: 0, arrivesAt: new Date(2026, 9, 7, 21, 54, 7) },
+      { incoming: false, player: "Tetramorium", food: 0, materials: 12_500, arrivesAt: new Date(2026, 9, 8, 22, 34, 49) },
+      { incoming: true, player: "Polyergus", food: 2, materials: 1, arrivesAt: new Date(2026, 9, 8, 4, 38, 44) },
     ]);
   });
 
@@ -25,6 +27,7 @@ describe("readConvoysOnWay", () => {
     expect(readConvoysOnWay(parse(commerceHtml), now).map((convoy) => convoy.back)).toEqual([
       "Retour le 7 oct. à 21h54",
       null,
+      "Retour le 8 oct. à 04h38",
     ]);
   });
 
@@ -113,7 +116,8 @@ describe("workersAway", () => {
 
 describe("convoyMessage", () => {
   const convoy = {
-    recipient: "Tetramorium",
+    incoming: false,
+    player: "Tetramorium",
     food: 0,
     materials: 350_000,
     arrivesAt: new Date(now.getTime() + (47 * 60 + 21) * 1000),

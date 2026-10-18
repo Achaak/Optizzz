@@ -49,7 +49,7 @@ function readItems(doc: Document, kind: EndKind, now: Date): EndItem[] {
       return readLayings(doc, now);
     case "convoy":
       return readConvoysOnWay(doc, now).map((convoy) => ({
-        label: `Convoi → ${convoy.recipient}`,
+        label: `Convoi ${convoy.incoming ? "←" : "→"} ${convoy.player}`,
         endsAt: convoy.arrivesAt,
       }));
     case "construction":

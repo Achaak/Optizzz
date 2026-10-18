@@ -58,6 +58,7 @@ describe("readSection", () => {
     expect(readSection(parse(commerceHtml), "convoy", now)?.items.map((item) => item.label)).toEqual([
       "Convoi → Messor",
       "Convoi → Tetramorium",
+      "Convoi ← Polyergus",
     ]);
   });
 

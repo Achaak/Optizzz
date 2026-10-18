@@ -6,8 +6,10 @@ import { formatEndTime, formatGameDuration } from "./time-format";
 export type Copy = (text: string) => Promise<void>;
 
 export interface OnWayItem {
-  /** Who it goes to: the game's link, cloned. */
+  /** Who it goes to (or comes from, with `incoming`): the game's link, cloned. */
   to: Node;
+  /** Coming to me rather than going: « ← de X » in place of « → X ». */
+  incoming?: boolean;
   /** What it carries, between the recipient and the time. */
   details: Node[];
   arrivesAt: Date;
@@ -102,7 +104,7 @@ export function renderOnWayList(
     const row = doc.createElement("div");
     row.className = "optizzz-on-way-row";
     row.append(
-      span(doc, "optizzz-on-way-to", "→ ", item.to),
+      span(doc, "optizzz-on-way-to", item.incoming ? "← de " : "→ ", item.to),
       span(doc, "optizzz-on-way-details", ...item.details),
       span(doc, "optizzz-on-way-time", left, when),
       span(doc, "optizzz-on-way-actions", ...(item.cancel ? [item.cancel] : []), copyButton(doc, item, clock, copy)),

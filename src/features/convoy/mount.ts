@@ -57,13 +57,15 @@ export function renderConvoysOnWay(doc: Document, clock: () => Date, copy: Copy)
     convoys.map((convoy) => {
       const icons = convoy.element.querySelectorAll("img");
       return {
-        to: convoy.element.querySelector("a")?.cloneNode(true) ?? doc.createTextNode(convoy.recipient),
+        to: convoy.element.querySelector("a")?.cloneNode(true) ?? doc.createTextNode(convoy.player),
+        incoming: convoy.incoming,
         details: [
           load(doc, "optizzz-convoy-food", icons[0] ?? null, convoy.food, "nourriture"),
           load(doc, "optizzz-convoy-materials", icons[1] ?? null, convoy.materials, "matériaux"),
         ],
         arrivesAt: convoy.arrivesAt,
-        notes: convoy.back ? [convoy.back] : [],
+        // On a convoy I receive, the game's « Retour » is its arrival, already shown.
+        notes: convoy.back && !convoy.incoming ? [convoy.back] : [],
         message: (now: Date) => convoyMessage(convoy, now),
         copyTitle: "Copier ce convoi en une ligne de texte",
         cancel: convoy.cancel,

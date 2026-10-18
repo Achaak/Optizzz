@@ -3,7 +3,8 @@ import { storage } from "wxt/utils/storage";
 import { readConvoysOnWay, type ConvoyOnWay } from "@/features/convoy/convoy";
 import { fetchGamePage } from "@/utils/game-page";
 
-export type KeptConvoy = Pick<ConvoyOnWay, "recipient" | "food" | "materials" | "arrivesAt">;
+/** A convoy I send: those I receive take none of my workers. */
+export type KeptConvoy = Pick<ConvoyOnWay, "food" | "materials" | "arrivesAt"> & { recipient: string };
 
 export interface KeptConvoys {
   readAt: Date;
@@ -42,9 +43,12 @@ export async function storeConvoys(origin: string, convoys: KeptConvoy[], readAt
   });
 }
 
-/** The convoys commerce.php lists, or null when the page is not a logged-in game page. */
+/** The convoys I send that commerce.php lists, or null when the page is not a logged-in game page. */
 export function readKeptConvoys(doc: Document, now: Date): KeptConvoy[] | null {
-  return doc.querySelector("#data") ? readConvoysOnWay(doc, now) : null;
+  if (!doc.querySelector("#data")) return null;
+  return readConvoysOnWay(doc, now)
+    .filter((convoy) => !convoy.incoming)
+    .map(({ player, food, materials, arrivesAt }) => ({ recipient: player, food, materials, arrivesAt }));
 }
 
 /** Reads commerce.php again (one GET, with the session cookie); when it fails, what was kept stays. */

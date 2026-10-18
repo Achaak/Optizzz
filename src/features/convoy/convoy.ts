@@ -18,11 +18,17 @@ export interface MapPlayer {
 }
 
 export interface ConvoyOnWay {
-  recipient: string;
+  /** Sent by me, or received from another player. */
+  incoming: boolean;
+  /** The other player: the recipient of a convoy I send, the sender of one I receive. */
+  player: string;
   food: number;
   materials: number;
   arrivesAt: Date;
-  /** With Compte+, when the workers are back: « Retour le 7 oct. à 21h54 », as the game writes it. */
+  /**
+   * With Compte+, when the workers are back: « Retour le 7 oct. à 21h54 », as the game writes it. On a convoy I
+   * receive, the game writes it too: it is then the arrival, already shown.
+   */
   back: string | null;
   /** The game's line. */
   element: Element;
@@ -31,7 +37,8 @@ export interface ConvoyOnWay {
 }
 
 // « - Vous allez livrer 1 et 0 à Messor dans 1H 22m 22s »: the time left is written once, with no countdown.
-const ON_WAY = /livrer\s+([\d\s]+?)\s+et\s+([\d\s]+?)\s+à\s+(.+?)\s+dans\s+(.+)$/;
+// The convoys I receive follow: « - Vous allez recevoir 2 et 1 de Polyergus dans 8H 6m 59s ».
+const ON_WAY = /(livrer|recevoir)\s+([\d\s]+?)\s*et\s+([\d\s]+?)\s+(?:à|de)\s+(.+?)\s+dans\s+(.+)$/;
 
 export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
   const title = [...doc.querySelectorAll("h3")].find((h3) => h3.textContent.includes("Convois en cours"));
@@ -53,12 +60,13 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
       continue;
     }
     const match = ON_WAY.exec(element.textContent.replace(/\s+/g, " ").trim());
-    const left = parseGameDuration(match?.[4] ?? "");
+    const left = parseGameDuration(match?.[5] ?? "");
     if (!match || left === null) break;
     convoys.push({
-      recipient: match[3] ?? "",
-      food: parseGameInteger(match[1]),
-      materials: parseGameInteger(match[2]),
+      incoming: match[1] === "recevoir",
+      player: match[4] ?? "",
+      food: parseGameInteger(match[2]),
+      materials: parseGameInteger(match[3]),
       arrivesAt: new Date(now.getTime() + left),
       back: null,
       element,
@@ -70,17 +78,19 @@ export function readConvoysOnWay(doc: Document, now: Date): ConvoyOnWay[] {
 
 /**
  * The convoy as a line to paste elsewhere: « Vous allez livrer 0 nourriture et 350 000 matériaux à X dans 47m 21s
- * · arrivée aujourd'hui 17 h 13 - Retour le 16 oct. à 17h13 ». The time left counts from `now`.
+ * · arrivée aujourd'hui 17 h 13 - Retour le 16 oct. à 17h13 », or « Vous allez recevoir … de X … » for one I
+ * receive (its « Retour » is the arrival, left out). The time left counts from `now`.
  */
 export function convoyMessage(
-  convoy: Pick<ConvoyOnWay, "recipient" | "food" | "materials" | "arrivesAt" | "back">,
+  convoy: Pick<ConvoyOnWay, "incoming" | "player" | "food" | "materials" | "arrivesAt" | "back">,
   now: Date,
 ): string {
   const left = convoy.arrivesAt.getTime() - now.getTime();
   const load = `${formatNumber(convoy.food)} nourriture et ${formatNumber(convoy.materials)} matériaux`;
-  const sent = `Vous allez livrer ${load} à ${convoy.recipient}${left > 0 ? ` dans ${formatGameDuration(left)}` : ""}`;
+  const what = convoy.incoming ? `recevoir ${load} de` : `livrer ${load} à`;
+  const sent = `Vous allez ${what} ${convoy.player}${left > 0 ? ` dans ${formatGameDuration(left)}` : ""}`;
   const line = `${sent} · arrivée ${formatEndTime(convoy.arrivesAt, now)}`;
-  return convoy.back ? `${line} - ${convoy.back}` : line;
+  return convoy.back && !convoy.incoming ? `${line} - ${convoy.back}` : line;
 }
 
 /** Resources one worker carries: 10, plus 5 % per Étable à pucerons level (help of commerce.php). */
@@ -150,7 +160,7 @@ export interface WorkersAway {
 
 /** The workers carrying the convoys still on their way, soonest back first. The game takes them off its count. */
 export function workersAway(
-  convoys: Pick<ConvoyOnWay, "recipient" | "food" | "materials" | "arrivesAt">[],
+  convoys: { recipient: string; food: number; materials: number; arrivesAt: Date }[],
   aphids: number,
   now: Date,
 ): WorkersAway[] {

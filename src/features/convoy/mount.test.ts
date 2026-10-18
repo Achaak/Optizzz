@@ -73,7 +73,7 @@ describe("mountConvoyPlanner", () => {
 
   it("still writes the convoys' arrival, and says why, without the export or the levels", () => {
     const { doc, input, planner, lines } = setup({ players: null });
-    expect(doc.querySelectorAll(".optizzz-on-way-row")).toHaveLength(2);
+    expect(doc.querySelectorAll(".optizzz-on-way-row")).toHaveLength(3);
     input("pseudo_convoi").value = "Messor";
     planner.render();
     expect(lines()).toEqual(["L'export public de Fourmizzz ne répond pas : pas de temps de trajet."]);
@@ -97,20 +97,25 @@ describe("mountConvoyPlanner", () => {
     expect(rows.map((row) => row.querySelector(".optizzz-on-way-to")?.textContent)).toEqual([
       "→ Messor",
       "→ Tetramorium",
+      "← de Polyergus",
     ]);
     expect(rows.map((row) => row.querySelector(".optizzz-on-way-left")?.textContent)).toEqual([
       "dans 1H 22m 22s",
       "dans 1J 2H 3m 4s",
+      "dans 8H 6m 59s",
     ]);
     expect(rows.map((row) => row.querySelector(".optizzz-on-way-when")?.textContent)).toEqual([
       "arrivée aujourd'hui 21 h 54Retour le 7 oct. à 21h54",
       "arrivée demain 22 h 34",
+      // The game's « Retour » on a convoy received is its arrival.
+      "arrivée demain 4 h 38",
     ]);
     expect(rows[1]?.querySelector(".optizzz-convoy-materials")?.textContent).toBe("12 500matériaux");
-    const gameLines = [...doc.querySelectorAll("strong, small")].filter((line) =>
-      /livrer|Retour/.test(line.textContent),
+    expect(rows[2]?.querySelector(".optizzz-convoy-food")?.textContent).toBe("2nourriture");
+    const gameLines = [...doc.querySelectorAll("strong, span.gras, small")].filter((line) =>
+      /livrer|recevoir|Retour/.test(line.textContent),
     );
-    expect(gameLines).toHaveLength(3);
+    expect(gameLines).toHaveLength(5);
     expect(gameLines.every((line) => (line as HTMLElement).hidden)).toBe(true);
     expect(doc.querySelector(".Bas")?.hasAttribute("hidden")).toBe(false);
   });
@@ -119,7 +124,7 @@ describe("mountConvoyPlanner", () => {
     const { doc } = setup();
     const rows = [...doc.querySelectorAll(".optizzz-on-way-row")];
     const cancels = rows.map((row) => row.querySelector<HTMLAnchorElement>(".optizzz-on-way-actions a"));
-    expect(cancels.map((link) => link?.textContent)).toEqual(["Annuler", undefined]);
+    expect(cancels.map((link) => link?.textContent)).toEqual(["Annuler", undefined, undefined]);
     expect(cancels[0]?.getAttribute("href")).toBe("commerce.php?annuler=1&t=TOKEN");
     expect(cancels[0]?.closest("[hidden]")).toBeNull();
   });
@@ -134,6 +139,17 @@ describe("mountConvoyPlanner", () => {
     expect(copied).toEqual([
       "Vous allez livrer 1 nourriture et 0 matériaux à Messor dans 1H 22m 22s · arrivée aujourd'hui 21 h 54 - Retour le 7 oct. à 21h54",
     ]);
+  });
+
+  it("copies a convoy received, from its sender", async () => {
+    const { doc, copied } = setup();
+    const button = [...doc.querySelectorAll<HTMLButtonElement>(".optizzz-on-way-copy")].at(-1);
+    button?.click();
+    await vi.waitFor(() => {
+      expect(copied).toEqual([
+        "Vous allez recevoir 2 nourriture et 1 matériaux de Polyergus dans 8H 6m 59s · arrivée demain 4 h 38",
+      ]);
+    });
   });
 
   it("counts the time left down", () => {

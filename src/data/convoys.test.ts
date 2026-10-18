@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe("readKeptConvoys", () => {
-  it("reads the convoys of a logged-in commerce.php, none on any other game page", () => {
+  it("reads the convoys I send on a logged-in commerce.php, not those I receive, none on any other game page", () => {
     expect(readKeptConvoys(parse(commerceHtml), now)?.map((convoy) => convoy.recipient)).toEqual([
       "Messor",
       "Tetramorium",
