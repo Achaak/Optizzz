@@ -464,6 +464,18 @@ html.optizzz-game-look {
     border-radius: 6px;
   }
 
+  /* design7.css stacks the icon and label at the top of the 57px tile: centre them (#menu to beat its #menu ul li a) */
+  & #menu ul.menu_colonne li a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  & ul.menu_colonne li a span {
+    margin: 0;
+  }
+
   /* ---------- Alliance chat ---------- */
 
   & #chatAlliance {
