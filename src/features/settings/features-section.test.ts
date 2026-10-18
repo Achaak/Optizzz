@@ -31,6 +31,7 @@ describe("buildFeaturesSection", () => {
       "alerts.badge",
       "alerts.notifications",
       "laying-planner",
+      "laying-templates",
       "convoy",
       "convoy.workers",
       "targets",

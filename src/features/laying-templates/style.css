@@ -1,0 +1,70 @@
+/* Laying templates: a panel of the design system (docs/design-system.md); only what is its own is here. */
+:host {
+  all: initial;
+  display: block;
+  margin-bottom: var(--optizzz-space-5);
+}
+
+/* The title folds and unfolds the editor; the list of templates stays */
+.toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--optizzz-space-2) var(--optizzz-space-5);
+  width: 100%;
+  padding: var(--optizzz-space-1) 0;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: none;
+  filter: none;
+}
+
+.toggle .title {
+  margin: 0;
+}
+
+.toggle .title::after {
+  content: " ▾";
+  font-family: var(--optizzz-font);
+  font-style: normal;
+  font-size: var(--optizzz-font-size-xs);
+  color: var(--optizzz-text-muted);
+}
+
+.toggle[aria-expanded="false"] .title::after {
+  content: " ▸";
+}
+
+.list,
+.editor,
+.summary,
+.launch {
+  margin-top: var(--optizzz-space-4);
+}
+
+.list tr[aria-current="true"] .optizzz-button-link {
+  font-weight: bold;
+}
+
+.list td:last-child {
+  text-align: right;
+}
+
+.lines .amount {
+  width: 9ch;
+}
+
+.hours,
+.rotations {
+  width: 6ch;
+}
+
+.lines .actions {
+  white-space: nowrap;
+}
+
+.launch ol {
+  margin: 0;
+  padding-left: var(--optizzz-space-6);
+}

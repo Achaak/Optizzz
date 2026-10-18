@@ -1,0 +1,74 @@
+<!-- Structure observed on s5.fourmizzz.fr/Reine.php on 2026-10-07 and 2026-10-18 (token `t` in every laying form, the
+     same for all), trimmed to the queue and three units: workers, young dwarves, and soldier dwarves still locked.
+     Fictitious numbers; QUEUE is replaced by the tests with the queue's rows. -->
+<script>
+  var max_ponte2 = Math.round((7 * 24 * 3600) / (temps_ponte_base * 0.1));
+</script>
+<div id="data" style="display: none"><span id="quantite_tdc">4496</span></div>
+<div id="centre">
+  <h4>Pontes en cours:</h4>
+  <table class="tableau_leger">
+    <tbody>
+      <tr>
+        <td>Unités</td>
+        <td>Garnison</td>
+        <td>Temps requis</td>
+        <td>Temps total restant</td>
+      </tr>
+      <!--QUEUE-->
+    </tbody>
+  </table>
+  <table>
+    <tr class="ligneAmelioration">
+      <td class="desciption_amelioration"><h2>Ouvrière</h2></td>
+      <td class="cout_amelioration">
+        <form method="post" action="Reine.php">
+          <input type="hidden" name="unePonte" value="oui" />
+          <input type="hidden" name="typeUnite" value="ouvriere" />
+          <input type="hidden" name="t" value="TOKEN" />
+          <table>
+            <tr>
+              <td class="cout_ponte">
+                <div><input type="tel" id="input_cout_nombre" name="input_cout_nombre" value="" /></div>
+              </td>
+            </tr>
+          </table>
+          <input type="hidden" id="nombre_de_ponte" name="nombre_de_ponte" value="1" />
+          <input type="submit" value="Pondre" />
+        </form>
+      </td>
+    </tr>
+    <tr class="ligneAmelioration">
+      <td class="desciption_amelioration"><h2>Jeune Soldate Naine</h2></td>
+      <td class="cout_amelioration">
+        <form method="post" action="Reine.php">
+          <input type="hidden" name="unePonte" value="oui" />
+          <input type="hidden" name="typeUnite" value="unite1" />
+          <input type="hidden" name="t" value="TOKEN" />
+          <table>
+            <tr>
+              <td class="cout_ponte">
+                <div><input type="tel" id="input_cout_nombre1" name="input_cout_nombre1" value="" /></div>
+              </td>
+            </tr>
+          </table>
+          <input type="hidden" id="nombre_de_ponte1" name="nombre_de_ponte" value="1" />
+          <span id="texte_destination1">Loge</span>
+          <input type="hidden" id="destination1" name="destination" value="3" />
+          <input type="submit" value="Pondre" />
+        </form>
+      </td>
+    </tr>
+    <tr class="ligneAmelioration">
+      <td class="desciption_amelioration">
+        <h2>Soldate Naine</h2>
+        Requis : <span class="verificationNonOK">Salle de combat niveau 3</span>
+      </td>
+      <td class="cout_amelioration">
+        <form method="post" action="Reine.php">
+          <input type="hidden" name="typeUnite" value="unite2" />
+        </form>
+      </td>
+    </tr>
+  </table>
+</div>

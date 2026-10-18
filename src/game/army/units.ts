@@ -211,6 +211,9 @@ export const UNITS: readonly Unit[] = [
 /** Seconds to lay one worker before the player's bonuses. */
 export const WORKER_LAYING_SECONDS = 60;
 
+/** Food to lay one worker (the game's `ncaste` on Reine.php). */
+export const WORKER_FOOD = 5;
+
 /** Unit counts in `UNITS` order. */
 export type Army = readonly number[];
 

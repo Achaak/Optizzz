@@ -62,6 +62,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "laying-templates",
+    label: "Modèles de ponte",
+    description:
+      "Sur la Reine : mémorisez une ponte d'armée (plusieurs unités, en quantités ou réparties sur une durée) et lancez-la en un clic.",
+    options: [],
+  },
+  {
     id: "convoy",
     label: "Calculateur de convoi",
     description:

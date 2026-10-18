@@ -20,6 +20,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 14. **Conseils** (Construction, Laboratoire) : Armes et Bouclier Thoracique comparés à la ponte d'unités, attendre Architecture ou la Salle d'analyse ; voir `conseils-recherche.md`.
 
 15. **Suivis** : suivre des joueurs et des alliances, ce qui a changé depuis la dernière visite, relevé chaque heure depuis l'export public, résumé dans le popup et notifications ; voir `suivis.md` (cadré le 2026-10-17).
+16. **Modèles de ponte** (`Reine.php`) : une ponte d'armée habituelle (plusieurs unités, quantités fixes ou répartition sur une durée) mémorisée et lancée en un clic ; voir `laying-templates.md` (cadré le 2026-10-18).
 
 ## Décisions transverses
 

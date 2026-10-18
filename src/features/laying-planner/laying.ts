@@ -46,7 +46,7 @@ export interface LayingPlan {
 // destination_suivante cycles through 1 Terrain, 2 Dôme, 3 Loge (`nom_destination` in the page's script).
 const DESTINATIONS: Record<string, Place> = { "1": "field", "2": "nest", "3": "lodge" };
 /** Daily upkeep, share of the laying cost in food (official help, « Attaque & Défense »). */
-const UPKEEP: Record<Place, number> = { field: 0.05, nest: 0.1, lodge: 0.15 };
+export const UPKEEP: Record<Place, number> = { field: 0.05, nest: 0.1, lodge: 0.15 };
 
 export function readLayingRows(doc: Document): LayingRow[] {
   return [...doc.querySelectorAll<HTMLInputElement>('input[id^="input_cout_nombre"]')].flatMap((input) => {
