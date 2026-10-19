@@ -18,7 +18,7 @@ import {
   saveDefense,
 } from "@/data/launches";
 import { fetchGamePage } from "@/utils/game-page";
-import { watchedPlaces } from "../probes";
+import { loadProbePlan } from "../probes";
 
 /** Kept above the 50 % limit: other attacks and hunts may move the fields before arrival. */
 export const FLOOD_MARGIN = 0.01;
@@ -97,7 +97,7 @@ export const floodPlanner: Feature = {
         onWay: launches,
         defense,
         countLodge,
-        probes: watchedPlaces(toggles).length,
+        probes: await loadProbePlan(toggles),
         protectedMe: isUnderBeginnerProtection(document),
         margin: FLOOD_MARGIN,
         onCountLodgeChange: (count) => void saveCountLodge(origin, count),

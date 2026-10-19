@@ -1,9 +1,31 @@
 // Putting the probes in place with the « Déplacer son armée » form of Armee.php (docs/research/fourmizzz-pages.md),
 // on the player's click or right after a hunt or an attack they sent. See docs/features/sondes.md.
+import { storage } from "wxt/utils/storage";
 import type { Place } from "@/game/army/battle";
-import { UNITS } from "@/game/army/units";
-import { placesWithoutProbe, probeMoves, type ProbeMove } from "@/game/probes";
+import { armyFromKeys, UNITS } from "@/game/army/units";
+import { PLACES, placesWithoutProbe, probeMoves, type ProbeMove, type ProbePlan } from "@/game/probes";
 import { readGarrison } from "./garrison";
+
+/** What the player wants on each place, by unit key; stored per server. */
+export type ProbeTargets = Record<Place, Record<string, number>>;
+
+export const DEFAULT_PROBE_TARGETS: ProbeTargets = { field: { JSN: 1 }, nest: { JSN: 1 }, lodge: { JSN: 1 } };
+
+const targetsKey = (host: string) => `local:probes:${host}:targets` as const;
+
+export async function loadProbeTargets(host: string): Promise<ProbeTargets> {
+  return { ...DEFAULT_PROBE_TARGETS, ...(await storage.getItem<Partial<ProbeTargets>>(targetsKey(host))) };
+}
+
+export async function saveProbeTargets(host: string, targets: ProbeTargets): Promise<void> {
+  await storage.setItem(targetsKey(host), targets);
+}
+
+/** The targets of the watched places. */
+export const probePlan = (targets: ProbeTargets, watched: readonly Place[]): ProbePlan =>
+  Object.fromEntries(
+    PLACES.filter((place) => watched.includes(place)).map((place) => [place, armyFromKeys(targets[place])]),
+  );
 
 const LIEU: Record<Place, string> = { field: "1", nest: "2", lodge: "3" };
 
@@ -44,7 +66,7 @@ const parse = async (response: Response) => new DOMParser().parseFromString(awai
 
 function moveBody(form: MoveForm, move: ProbeMove): string {
   const body = new URLSearchParams(form.hiddenFields);
-  body.set("nbTroupes", "1");
+  body.set("nbTroupes", String(move.count));
   body.set("ChoixUnite", `unite${String(UNITS[move.unit]?.field ?? 0)}`);
   body.set("LieuOrigine", LIEU[move.from]);
   body.set("LieuDestination", LIEU[move.to]);
@@ -52,24 +74,24 @@ function moveBody(form: MoveForm, move: ProbeMove): string {
   return body.toString();
 }
 
-/** Moves one ant to each watched place without any, one move after the other, reading Armee.php afresh each time. */
+/** Brings each watched place up to its probes, one move after the other, reading Armee.php afresh each time. */
 export async function placeProbes(
   origin: string,
-  watched: readonly Place[],
+  plan: ProbePlan,
   fetchFn: FetchFn = (url, init) => fetch(url, init),
 ): Promise<ProbesResult> {
   const url = `${origin}/Armee.php`;
   const placed: Place[] = [];
   let doc = await parse(await fetchFn(url));
-  // One move per watched place at most: never a loop if the game keeps answering the same page.
-  for (let step = 0; step <= watched.length; step++) {
+  // A bounded number of moves: never a loop if the game keeps answering the same page.
+  for (let step = 0; step <= PLACES.length * UNITS.length; step++) {
     const garrison = readGarrison(doc);
-    if (!garrison) return { placed, missing: [...watched], failed: true };
-    const { moves, missing } = probeMoves(garrison.armies, watched);
+    if (!garrison) return { placed, missing: PLACES.filter((place) => plan[place]), failed: true };
+    const { moves, missing } = probeMoves(garrison.armies, plan);
     const [move] = moves;
     if (!move) return { placed, missing, failed: false };
     const form = readMoveForm(doc);
-    if (!form) return { placed, missing: placesWithoutProbe(garrison.armies, watched), failed: true };
+    if (!form) return { placed, missing: placesWithoutProbe(garrison.armies, plan), failed: true };
 
     const response = await fetchFn(url, {
       method: "POST",
@@ -80,10 +102,11 @@ export async function placeProbes(
     const answer = await parse(response);
     doc = readGarrison(answer) ? answer : await parse(await fetchFn(url));
     const after = readGarrison(doc);
-    if (!after || placesWithoutProbe(after.armies, [move.to]).length > 0) {
-      return { placed, missing: placesWithoutProbe((after ?? garrison).armies, watched), failed: true };
+    const before = garrison.armies[move.to][move.unit] ?? 0;
+    if (!after || (after.armies[move.to][move.unit] ?? 0) < before + move.count) {
+      return { placed, missing: placesWithoutProbe((after ?? garrison).armies, plan), failed: true };
     }
-    placed.push(move.to);
+    if (!placed.includes(move.to)) placed.push(move.to);
   }
   return { placed, missing: [], failed: true };
 }

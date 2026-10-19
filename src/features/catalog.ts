@@ -130,7 +130,7 @@ export const featureCatalog = [
     id: "probes",
     label: "Sondes",
     description:
-      "Une fourmi gardée sur chaque lieu, pour qu'une attaque y livre combat et que le rapport montre l'armée de l'attaquant. Sur Armée : un avertissement et un bouton pour les placer ; le Lanceur de chasse et le Plan de flood les laissent à la maison, et elles sont replacées après l'envoi.",
+      "Des fourmis gardées sur chaque lieu, pour qu'une attaque y livre combat et que le rapport montre l'armée de l'attaquant. Sur Armée : combien de chaque unité sur chaque lieu (une JSN par défaut), et un bouton pour les placer ; le Lanceur de chasse et le Plan de flood les laissent à la maison, et elles sont replacées après l'envoi.",
     options: [
       { id: "field", label: "Terrain de chasse", offByDefault: true },
       { id: "nest", label: "Dôme" },

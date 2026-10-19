@@ -6,7 +6,7 @@ import "@/theme/theme.css";
 import "@/features/hunt-launcher/style.css";
 import { readStock } from "@/game/pages/resources";
 import { isEnabled, loadToggles } from "@/features/toggles";
-import { watchedPlaces } from "@/features/probes";
+import { loadProbePlan } from "@/features/probes";
 
 export default defineContentScript({
   // Match patterns are case-sensitive, the game's links are not always written the same way.
@@ -18,6 +18,7 @@ export default defineContentScript({
     const anchor = document.querySelector<HTMLElement>("#boite_tdc");
     const stock = readStock(document);
     if (!anchor || !stock) return;
+    const probes = await loadProbePlan(toggles);
 
     const ui = await createShadowRootUi<Root>(ctx, {
       name: "optizzz-hunt-launcher",
@@ -33,7 +34,7 @@ export default defineContentScript({
             currentField={stock.huntingField}
             ongoing={readOngoingHunts(document, readAt)}
             readAt={readAt}
-            probes={watchedPlaces(toggles)}
+            probes={probes}
           />,
         );
         return root;

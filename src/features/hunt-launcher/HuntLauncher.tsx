@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { loadLaying } from "@/data/laying";
 import { loadLevels, unknownLevelsHint, type HuntLevels } from "@/data/levels";
 import { placeProbes } from "@/data/probes";
-import type { Place } from "@/game/army/battle";
-import { keepProbes } from "@/game/probes";
+import { keepProbes, type ProbePlan } from "@/game/probes";
 import { createEngine } from "./engine/client";
 import type { RatioChoice } from "./engine/extras";
 import { summarize, type Objective, type Plan, type PlanInput } from "./engine/planner";
@@ -31,7 +30,7 @@ interface Props {
   /** When the page was read: the hunts' return times count from it. */
   readAt: Date;
   /** Places that keep a probe (« Sondes »): as many ants stay home, put back there after the launch. */
-  probes: readonly Place[];
+  probes: ProbePlan;
 }
 
 const RELOAD_DELAY_MS = 1500;
@@ -122,18 +121,14 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   const base = useMemo(() => {
     if (!reserve || !levels || !form || form === "error" || form === "none") return null;
     return {
-      army: keepProbes(
-        armyFromKeys(huntableArmy(form.available, reserve)),
-        armyFromKeys(form.available),
-        probes.length,
-      ),
+      army: keepProbes(armyFromKeys(huntableArmy(form.available, reserve)), armyFromKeys(form.available), probes),
       field: arrivalField,
       fieldAtLaunch: launchField,
       slots,
       levels,
       ...(huntCount === null ? {} : { huntCount: Math.min(huntCount, Math.max(1, slots)) }),
     };
-  }, [reserve, levels, form, arrivalField, launchField, slots, huntCount, probes.length]);
+  }, [reserve, levels, form, arrivalField, launchField, slots, huntCount, probes]);
 
   const input = useMemo<PlanInput | null>(() => {
     if (!base || objectiveKind === undefined || ratio === undefined || maxLossShare === undefined) return null;
@@ -225,7 +220,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
     });
     const all = initial.map((status, i) => (i >= from && i < to ? (result[i - from] ?? status) : status));
     // The game does not say which places the hunters leave: the probes kept home are put back on their places.
-    if (probes.length > 0 && result.includes("launched")) {
+    if (Object.keys(probes).length > 0 && result.includes("launched")) {
       await placeProbes(origin, probes).catch((error: unknown) => {
         console.warn("[Optizzz] hunt launcher: probes not put back", error);
       });

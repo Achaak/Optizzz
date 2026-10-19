@@ -1,6 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { fakeBrowser } from "wxt/testing/fake-browser";
+import { armyFromKeys } from "@/game/army/units";
 import armeeMoveHtml from "./__fixtures__/armee-move.html?raw";
-import { markProbesPending, placeProbes, readMoveForm, takeProbesPending } from "./probes";
+import {
+  DEFAULT_PROBE_TARGETS,
+  loadProbeTargets,
+  markProbesPending,
+  placeProbes,
+  probePlan,
+  readMoveForm,
+  saveProbeTargets,
+  takeProbesPending,
+} from "./probes";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 
@@ -68,35 +79,38 @@ describe("readMoveForm", () => {
 
 describe("placeProbes", () => {
   const origin = "https://s5.fourmizzz.fr";
+  const jsn = (count: number) => armyFromKeys({ JSN: count });
+  const everywhere = { field: jsn(1), nest: jsn(1), lodge: jsn(1) };
 
-  it("moves one ant of the cheapest unit to each empty place, with the latest token", async () => {
+  it("moves the ants wanted, as many at once as needed, with the latest token", async () => {
     const game = fakeGame({ unite1: [500, 0, 0], unite10: [0, 0, 40] });
-    expect(await placeProbes(origin, ["field", "nest", "lodge"], game.fetchFn)).toEqual({
-      placed: ["nest"],
+    expect(await placeProbes(origin, { nest: jsn(1), lodge: jsn(25) }, game.fetchFn)).toEqual({
+      placed: ["nest", "lodge"],
       missing: [],
       failed: false,
     });
     expect(game.posts).toEqual([
       { t: "T1", nbTroupes: "1", ChoixUnite: "unite1", LieuOrigine: "1", LieuDestination: "2", Transferer: "Envoyer" },
+      { t: "T2", nbTroupes: "25", ChoixUnite: "unite1", LieuOrigine: "1", LieuDestination: "3", Transferer: "Envoyer" },
     ]);
-    expect(game.counts).toEqual({ unite1: [499, 1, 0], unite10: [0, 0, 40] });
+    expect(game.counts).toEqual({ unite1: [474, 1, 25], unite10: [0, 0, 40] });
   });
 
   it("fills only the watched places, and says which ones it could not fill", async () => {
     const game = fakeGame({ unite1: [2, 0, 0] });
-    expect(await placeProbes(origin, ["field", "nest", "lodge"], game.fetchFn)).toEqual({
+    expect(await placeProbes(origin, everywhere, game.fetchFn)).toEqual({
       placed: ["nest"],
       missing: ["lodge"],
       failed: false,
     });
-    expect(await placeProbes(origin, ["field"], fakeGame({ unite1: [0, 3, 0] }).fetchFn)).toMatchObject({
+    expect(await placeProbes(origin, { field: jsn(1) }, fakeGame({ unite1: [0, 3, 0] }).fetchFn)).toMatchObject({
       placed: ["field"],
     });
   });
 
   it("stops when the game does not take the move", async () => {
     const game = fakeGame({ unite1: [500, 0, 0] }, { refuse: true });
-    expect(await placeProbes(origin, ["field", "nest", "lodge"], game.fetchFn)).toEqual({
+    expect(await placeProbes(origin, everywhere, game.fetchFn)).toEqual({
       placed: [],
       missing: ["nest", "lodge"],
       failed: true,
@@ -106,12 +120,32 @@ describe("placeProbes", () => {
 
   it("sends nothing when every probe is in place", async () => {
     const game = fakeGame({ unite1: [1, 1, 1] });
-    expect(await placeProbes(origin, ["field", "nest", "lodge"], game.fetchFn)).toEqual({
+    expect(await placeProbes(origin, everywhere, game.fetchFn)).toEqual({
       placed: [],
       missing: [],
       failed: false,
     });
     expect(game.posts).toEqual([]);
+  });
+});
+
+describe("probe targets", () => {
+  beforeEach(() => fakeBrowser.reset());
+
+  it("keeps one JSN on each place until the player sets them, per server", async () => {
+    expect(await loadProbeTargets("s5.fourmizzz.fr")).toEqual(DEFAULT_PROBE_TARGETS);
+    const targets = { field: {}, nest: { JSN: 10 }, lodge: { JSN: 5, SN: 2 } };
+    await saveProbeTargets("s5.fourmizzz.fr", targets);
+    expect(await loadProbeTargets("s5.fourmizzz.fr")).toEqual(targets);
+    expect(await loadProbeTargets("s2.fourmizzz.fr")).toEqual(DEFAULT_PROBE_TARGETS);
+  });
+
+  it("plans the watched places only", () => {
+    const targets = { field: { JSN: 100 }, nest: { JSN: 10 }, lodge: { JSN: 5, SN: 2 } };
+    expect(probePlan(targets, ["nest", "lodge"])).toEqual({
+      nest: armyFromKeys({ JSN: 10 }),
+      lodge: armyFromKeys({ JSN: 5, SN: 2 }),
+    });
   });
 });
 

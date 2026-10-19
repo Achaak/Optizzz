@@ -1,9 +1,9 @@
 import type { HuntLevels } from "@/data/levels";
-import type { Place } from "@/game/army/battle";
-import { PLACE_NAMES } from "@/game/probes";
-import { UNITS } from "@/game/army/units";
+import { armyToKeys, UNITS } from "@/game/army/units";
+import { probeArmy, type ProbePlan } from "@/game/probes";
 import { formatNumber } from "@/utils/number-format";
 import { NumberField } from "@/utils/NumberField";
+import { unitsText } from "./view";
 
 interface Props {
   /** Levels read on the game's pages. */
@@ -18,7 +18,7 @@ interface Props {
   reserve: Readonly<Record<string, number>>;
   /** How many of a unit go hunting: the rest is kept home. */
   onSend: (unit: string, count: number) => void;
-  probes: readonly Place[];
+  probes: ProbePlan;
 }
 
 const LEVELS: { key: keyof HuntLevels; label: string }[] = [
@@ -106,10 +106,8 @@ export function PlayerData({ read, levels, onLevel, layingSpeed, available, rese
         })}
         <p className="optizzz-note">
           Le reste est gardé à la maison, et mémorisé pour les prochaines chasses.
-          {probes.length > 0 &&
-            ` ${probes.length > 1 ? `${String(probes.length)} sondes` : "1 sonde"} (${probes
-              .map((place) => PLACE_NAMES[place].replace(/^(le|la) /, ""))
-              .join(", ")}) restent aussi, remises en place après le lancement.`}
+          {Object.keys(probes).length > 0 &&
+            ` Les sondes (${unitsText(armyToKeys(probeArmy(probes)))}) restent aussi, remises en place après le lancement.`}
         </p>
       </div>
     </div>

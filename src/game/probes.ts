@@ -1,7 +1,7 @@
-// Probes: an ant always kept on each place (hunting field, dome, lodge), so that an attack there makes a fight and its
-// report shows the attacker's army. See docs/features/sondes.md.
+// Probes: ants always kept on each watched place (hunting field, dome, lodge), so that an attack there makes a fight
+// and its report shows the attacker's army. How many of each unit is the player's choice. See docs/features/sondes.md.
 import type { Place } from "./army/battle";
-import { UNITS, type Army } from "./army/units";
+import { emptyArmy, type Army } from "./army/units";
 
 export const PLACES: readonly Place[] = ["field", "nest", "lodge"];
 
@@ -15,70 +15,70 @@ export const PLACE_FROM: Record<Place, string> = {
   lodge: "de la Loge",
 };
 
-/** One ant moved from a place to another; `unit` is its index in UNITS. */
+/** What each watched place keeps, by unit; a place left out is not watched. */
+export type ProbePlan = Partial<Record<Place, Army>>;
+
+/** `count` ants of `unit` (index in UNITS) moved from a place to another. */
 export interface ProbeMove {
   unit: number;
+  count: number;
   from: Place;
   to: Place;
 }
 
-const total = (army: Army) => army.reduce((sum, count) => sum + count, 0);
+const watchedOf = (plan: ProbePlan) => PLACES.filter((place) => plan[place]);
 
-/** Unit indexes, the cheapest to lay first: a lost probe gives trophies to the attacker. */
-const CHEAPEST_FIRST = UNITS.map((_, i) => i).sort((a, b) => (UNITS[a]?.food ?? 0) - (UNITS[b]?.food ?? 0));
+/** The watched places short of their probes. */
+export const placesWithoutProbe = (armies: Record<Place, Army>, plan: ProbePlan): Place[] =>
+  watchedOf(plan).filter((place) => (plan[place] ?? []).some((wanted, unit) => (armies[place][unit] ?? 0) < wanted));
 
-/** The watched places without a single ant. */
-export const placesWithoutProbe = (armies: Record<Place, Army>, watched: readonly Place[]): Place[] =>
-  PLACES.filter((place) => watched.includes(place) && total(armies[place]) === 0);
+/** Every probe of the plan together. */
+export function probeArmy(plan: ProbePlan): number[] {
+  const army = emptyArmy();
+  for (const place of watchedOf(plan)) plan[place]?.forEach((count, unit) => (army[unit] = (army[unit] ?? 0) + count));
+  return army;
+}
 
 /**
- * The moves that put an ant on each watched place without one: the cheapest unit another place can spare (a watched
- * place keeps at least one ant), taken where there are the most of it. `missing`: places left without a probe, too
- * few ants home.
+ * The moves that bring each watched place up to its probes: ants another place can spare (a watched place keeps its
+ * own probes, a place nobody watches can be emptied), taken where there are the most to spare. `missing`: places
+ * still short, too few ants of a unit home.
  */
-export function probeMoves(
-  armies: Record<Place, Army>,
-  watched: readonly Place[],
-): { moves: ProbeMove[]; missing: Place[] } {
+export function probeMoves(armies: Record<Place, Army>, plan: ProbePlan): { moves: ProbeMove[]; missing: Place[] } {
   const left: Record<Place, number[]> = { field: [...armies.field], nest: [...armies.nest], lodge: [...armies.lodge] };
+  const spare = (place: Place, unit: number) => (left[place][unit] ?? 0) - (plan[place]?.[unit] ?? 0);
   const moves: ProbeMove[] = [];
   const missing: Place[] = [];
-  for (const to of placesWithoutProbe(armies, watched)) {
-    const move = spareAnt(left, watched, to);
-    if (!move) {
-      missing.push(to);
-      continue;
+  for (const to of watchedOf(plan)) {
+    let short = false;
+    for (const [unit, wanted] of (plan[to] ?? []).entries()) {
+      let needed = wanted - (left[to][unit] ?? 0);
+      const givers = PLACES.filter((from) => from !== to && spare(from, unit) > 0).sort(
+        (a, b) => spare(b, unit) - spare(a, unit),
+      );
+      for (const from of givers) {
+        if (needed <= 0) break;
+        const count = Math.min(needed, spare(from, unit));
+        left[from][unit] = (left[from][unit] ?? 0) - count;
+        left[to][unit] = (left[to][unit] ?? 0) + count;
+        needed -= count;
+        moves.push({ unit, count, from, to });
+      }
+      if (needed > 0) short = true;
     }
-    left[move.from][move.unit] = (left[move.from][move.unit] ?? 0) - 1;
-    left[to][move.unit] = (left[to][move.unit] ?? 0) + 1;
-    moves.push(move);
+    if (short) missing.push(to);
   }
   return { moves, missing };
 }
 
-function spareAnt(armies: Record<Place, number[]>, watched: readonly Place[], to: Place): ProbeMove | null {
-  const canGive = (place: Place) => place !== to && total(armies[place]) > (watched.includes(place) ? 1 : 0);
-  for (const unit of CHEAPEST_FIRST) {
-    const [from] = PLACES.filter((place) => canGive(place) && (armies[place][unit] ?? 0) > 0).sort(
-      (a, b) => (armies[b][unit] ?? 0) - (armies[a][unit] ?? 0),
-    );
-    if (from) return { unit, from, to };
-  }
-  return null;
-}
-
 /**
- * `sent` minus the cheapest units needed for `probes` ants to stay home, `home` being every ant home before sending.
- * Where they stay does not matter: they are moved to the empty places afterwards.
+ * `sent` minus what the plan's probes need to stay home, `home` being every ant home before sending. Where they stay
+ * does not matter: they are moved to their places afterwards.
  */
-export function keepProbes(sent: Army, home: Army, probes: number): number[] {
-  const kept = [...sent];
-  let missing = probes - (total(home) - total(sent));
-  for (const unit of CHEAPEST_FIRST) {
-    if (missing <= 0) break;
-    const count = Math.min(missing, kept[unit] ?? 0);
-    kept[unit] = (kept[unit] ?? 0) - count;
-    missing -= count;
-  }
-  return kept;
+export function keepProbes(sent: Army, home: Army, plan: ProbePlan): number[] {
+  const needed = probeArmy(plan);
+  return sent.map((count, unit) => {
+    const staying = (home[unit] ?? 0) - count;
+    return Math.max(0, count - Math.max(0, (needed[unit] ?? 0) - staying));
+  });
 }
