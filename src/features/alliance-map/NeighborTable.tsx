@@ -1,6 +1,7 @@
 import type { MapMember } from "./chart-option";
 import { levelOf, type KnownLevels, type Row, type Trip } from "./neighbor-table";
-import { formatAmount, formatDecimal } from "@/utils/number-format";
+import { formatDecimal } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";
 import { formatDuration } from "@/utils/time-format";
 
@@ -89,7 +90,9 @@ export function NeighborTable({ selected, rows, playerLevels, defaultLevel, leve
                 {row.player.onHoliday && <span className="holiday"> (vacances)</span>}
               </td>
               <td>{formatDecimal(row.distance)}</td>
-              <td>{formatAmount(row.player.huntingField)}</td>
+              <td>
+                <Amount value={row.player.huntingField} />
+              </td>
               <td>
                 <TripTime trip={row.outbound} />
               </td>

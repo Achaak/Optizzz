@@ -1,3 +1,4 @@
+import { Amount } from "@/utils/Amount";
 import { LineChart } from "echarts/charts";
 import { GridComponent, LegendComponent, MarkLineComponent, TooltipComponent } from "echarts/components";
 import * as echarts from "echarts/core";
@@ -7,7 +8,6 @@ import ReactECharts from "echarts-for-react/esm/core";
 import { useMemo, useState } from "react";
 import type { CurvePoint } from "./engine/extras";
 import { CHART_COLORS } from "@/theme";
-import { formatAmount } from "@/utils/number-format";
 
 echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, MarkLineComponent, CanvasRenderer]);
 
@@ -72,7 +72,10 @@ export function LossCurve({ curve, amount, onPick }: Props) {
     <div className="curve optizzz-well">
       <ReactECharts echarts={echarts} option={option} lazyUpdate style={{ width: "100%", height: 200 }} />
       <label className="slider">
-        Surface par chasse : <strong>{formatAmount(shown)} cm²</strong>
+        Surface par chasse :{" "}
+        <strong>
+          <Amount value={shown} /> cm²
+        </strong>
         <input
           type="range"
           min={first}

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import type { Place } from "@/game/army/battle";
 import { unitLabel, UNITS } from "@/game/army/units";
 import { formatAmount, formatNumber } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import { useStoredSettings } from "@/utils/useStoredSettings";
@@ -568,7 +569,7 @@ function TemplateEditor(props: {
                       }}
                     />
                   </td>
-                  {showTotal && <td className="optizzz-num">{planned ? formatAmount(planned.count) : "—"}</td>}
+                  {showTotal && <td className="optizzz-num">{planned ? <Amount value={planned.count} /> : "—"}</td>}
                   <td className="optizzz-num">
                     {planned ? layingDuration(planned.duration) : "—"}
                     {planned?.tooLong && (
@@ -660,7 +661,9 @@ function TemplateSummary(props: {
       <div className="optizzz-stats">
         <div className="optizzz-stat">
           <span className="optizzz-stat-label">Nourriture</span>
-          <span className="optizzz-stat-value">{formatAmount(plan.food)}</span>
+          <span className="optizzz-stat-value">
+            <Amount value={plan.food} />
+          </span>
         </div>
         <div className="optizzz-stat">
           <span className="optizzz-stat-label">Durée</span>
@@ -681,9 +684,11 @@ function TemplateSummary(props: {
         <div className="optizzz-stat">
           <span className="optizzz-stat-label">Bilan après</span>
           <span className={`optizzz-stat-value ${plan.balanceAfter < 0 ? "optizzz-text-danger" : ""}`}>
-            {formatAmount(Math.round(plan.balanceAfter))} / j
+            <Amount value={Math.round(plan.balanceAfter)} /> / j
           </span>
-          <span className="optizzz-stat-note">entretien {formatAmount(Math.round(plan.upkeepPerDay))} / j</span>
+          <span className="optizzz-stat-note">
+            entretien <Amount value={Math.round(plan.upkeepPerDay)} /> / j
+          </span>
         </div>
       </div>
       {plan.lines.some((line) => line.tooLong) && (

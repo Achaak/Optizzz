@@ -222,6 +222,7 @@ Vos chasseuses ont conquis 118 cm², les carcasses des prédateurs vous rapporte
 - Détail ouvert (relevé le 2026-10-07) : juste après l'en-tête, un `tr` vide puis `tr.contenu_conversation > td[colspan=5] > table`. Une ligne `tr#message_<n>` par combat, du plus ancien au plus récent : `td.expe` (« 07/10/26 à 11h08 ») et `td.message > div.contenuJoueur` (texte ci-dessus, nombres en `<strong>`, la nourriture suivie d'une `img` pomme). Puis `tr#reactions_<n>`.
 - Seuls les **10 derniers** combats sont chargés ; une ligne `tr.message_affiche` en tête porte le lien « Voir les messages précédents », qui ajoute les précédents dans le même tableau.
 - Types de conversation vus (`data-type`) : `Chasses`, `Alliance`, `Conversations`, `Commerce`, `Combats`.
+- Qui écrit (relevé le 2026-10-19 sur S5 et S2, liste seule) : `Commerce` (52) et `Combats` (16 + 3) ont toujours « Fourmizzz » dans `td.td_participants` ; `Alliance` vient des joueurs ; `Conversations` mêle joueurs et un message de « Fourmizzz ». Les rapports (Chasses, Combats, Commerce) ne contiennent donc que du texte du jeu, bien que rangé dans un `div.contenuJoueur` comme un message de joueur. Les captures du dépôt ont `td.td_participants` vide.
 
 ### Conversations « Combats »
 

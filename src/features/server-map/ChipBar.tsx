@@ -2,6 +2,7 @@ import { Fragment, useId, useMemo, useState } from "react";
 import { NumberField } from "@/utils/NumberField";
 import type { Alliance, Player } from "@/data/exports";
 import { formatAmount, formatNumber } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import {
   attackableBounds,
   FILTER_LABELS,
@@ -282,7 +283,7 @@ function FilterEditor(props: {
       </div>
       <div className="footer">
         <span className="optizzz-note">
-          {formatAmount(kept)} joueur{kept > 1 ? "s" : ""} sur {formatAmount(all.length)}
+          <Amount value={kept} /> joueur{kept > 1 ? "s" : ""} sur <Amount value={all.length} />
         </span>
         <button type="button" disabled={!isFiltering(chip.filter)} onClick={() => onChange({})}>
           Effacer

@@ -242,10 +242,10 @@ export const featureCatalog = [
     id: "compact-numbers",
     label: "Nombres arrondis",
     description:
-      "Les grands nombres écrits en court dès 10 000 : 12,3K, 1,23M, 4,51G. Les champs, les textes à copier et les quantités à envoyer ou pondre restent exacts ; dans les pages du jeu, la valeur exacte s'affiche au survol.",
+      "Les grands nombres écrits en court dès 10 000 : 12,3K, 1,23M, 4,51G. Les champs, les textes à copier et les quantités à envoyer ou pondre restent exacts ; la valeur exacte s'affiche au survol des nombres abrégés.",
     offByDefault: true,
     options: [
-      { id: "game", label: "Dans les pages du jeu (en-tête, coûts, armée, classements, profils…)" },
+      { id: "game", label: "Dans les pages du jeu (en-tête, coûts, armée, classements, profils, rapports…)" },
       { id: "extension", label: "Dans les tableaux et encarts d'Optizzz" },
     ],
   },

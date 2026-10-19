@@ -1,5 +1,5 @@
 import { unitLabel, UNITS, type Levels } from "@/game/army/units";
-import { formatAmount } from "@/utils/number-format";
+import { formatAmount, showExactAmount } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
 import {
   armyBalance,
@@ -202,6 +202,15 @@ export function mountHuntReport(
           td.textContent = text;
           row.append(td);
         }
+        for (const [index, value] of [
+          [3, fight.antsKilled],
+          [5, fight.promoted],
+          [6, fight.fieldWon],
+          [7, fight.food],
+        ] as const) {
+          const amountCell = row.cells[index];
+          if (amountCell) showExactAmount(amountCell, value);
+        }
         const predictionCell = row.cells[4];
         if (predictionCell) writePrediction(predictionCell, predicted, unknown);
         const armyCell = row.cells[1];
@@ -231,6 +240,15 @@ export function mountHuntReport(
       const td = doc.createElement("td");
       td.textContent = text;
       footer.append(td);
+    }
+    for (const [index, value] of [
+      [1, summary.antsKilled],
+      [3, promoted],
+      [4, summary.fieldWon],
+      [5, summary.food],
+    ] as const) {
+      const amountCell = footer.cells[index];
+      if (amountCell) showExactAmount(amountCell, value);
     }
     const label = footer.cells[0];
     if (label) label.colSpan = 3;

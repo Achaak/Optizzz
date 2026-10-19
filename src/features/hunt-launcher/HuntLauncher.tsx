@@ -19,6 +19,7 @@ import { SimpleView } from "./SimpleView";
 import { DEFAULT_SETTINGS, huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
 import { unitsText } from "./view";
 import { formatAmount, formatNumber } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 
@@ -269,7 +270,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
       <ul>
         {ongoing.map((hunt) => (
           <li key={hunt.id}>
-            +{formatAmount(hunt.fieldGain)} cm² · retour dans{" "}
+            +<Amount value={hunt.fieldGain} /> cm² · retour dans{" "}
             {formatDuration(Math.max(0, hunt.returnsAt.getTime() - now.getTime()))} (
             {formatEndTime(hunt.returnsAt, now)})
             {hunt.troops && <span className="optizzz-muted"> · {unitsText(hunt.troops)}</span>}

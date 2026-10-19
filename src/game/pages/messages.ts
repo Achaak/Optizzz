@@ -73,9 +73,15 @@ export function parseMessageDate(text: string, now: Date): Date | null {
   return thisYear.getTime() > now.getTime() ? read(today.year - 1) : thisYear;
 }
 
-/** The amount just before `icon` in the title: « 180 000 <img> ». */
+/**
+ * The amount just before `icon` in the title: « 180 000 <img> ». Read from every node back to the previous icon:
+ * « Nombres arrondis » wraps the number in its own element, and its text node then holds only the space.
+ */
 function amountBefore(icon: Element): number {
-  const text = icon.previousSibling?.textContent ?? "";
+  let text = "";
+  for (let node = icon.previousSibling; node && node.nodeName !== "IMG"; node = node.previousSibling) {
+    text = (node.textContent ?? "") + text;
+  }
   return parseGameInteger(/([\d\s]+)\s*$/.exec(text.replace(/^.*:/s, ""))?.[1]);
 }
 

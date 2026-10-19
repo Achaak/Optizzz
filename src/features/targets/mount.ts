@@ -1,7 +1,7 @@
 import type { Army } from "@/game/army/units";
 import { planAttacks } from "@/game/flood";
 import { afterOnWay, type OnWay } from "@/data/on-way";
-import { formatAmount, formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal, formatNumber, showExactAmount } from "@/utils/number-format";
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import { WAR_LABELS, WAR_TITLES } from "@/game/diplomacy";
 import { listTargets, type Target, type TargetsInput } from "./targets";
@@ -262,7 +262,7 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
       alliance.title = target.diplomacy.description;
     }
 
-    cell(row, formatAmount(target.field), true);
+    showExactAmount(cell(row, formatAmount(target.field), true), target.field);
     cell(row, `${String(Math.round(target.ratio * 100))} %`, true);
     cell(row, formatAmount(target.takeMax), true).title =
       `20 % de son TDC, 1 cm² par fourmi au plus : il faut au moins ${formatNumber(target.takeMax)} fourmis pour tout prendre.`;

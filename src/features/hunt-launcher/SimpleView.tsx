@@ -1,7 +1,8 @@
 import type { Plan } from "./engine/planner";
 import type { Settings } from "./settings";
 import { formatChance, presetOf, PRESETS, promotionCounts, splitText } from "./view";
-import { formatAmount, formatDecimal } from "@/utils/number-format";
+import { formatDecimal } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 
 interface Props {
@@ -75,7 +76,9 @@ export function SimpleView({ settings, updateSettings, plan, layingSpeed, hasTro
           <dl className="optizzz-stats">
             <div className="optizzz-stat">
               <dt className="optizzz-stat-label">Terrain gagné</dt>
-              <dd className="optizzz-stat-value">+{formatAmount(plan.totalAmount)} cm²</dd>
+              <dd className="optizzz-stat-value">
+                +<Amount value={plan.totalAmount} /> cm²
+              </dd>
               <dd className="optizzz-stat-note">{splitText(hunts.map((hunt) => hunt.amount))}</dd>
             </div>
             <div className="optizzz-stat">
@@ -87,7 +90,9 @@ export function SimpleView({ settings, updateSettings, plan, layingSpeed, hasTro
             </div>
             <div className="optizzz-stat">
               <dt className="optizzz-stat-label">Pertes</dt>
-              <dd className="optizzz-stat-value">≈ {formatAmount(lost)}</dd>
+              <dd className="optizzz-stat-value">
+                ≈ <Amount value={lost} />
+              </dd>
               <dd className="optizzz-stat-note">
                 {layingSpeed === null
                   ? "unités, en moyenne"
@@ -99,16 +104,18 @@ export function SimpleView({ settings, updateSettings, plan, layingSpeed, hasTro
               {hasTroops ? (
                 <>
                   <dd className="optizzz-stat-value">
-                    {formatAmount(promotions.troops)} troupe{Math.round(promotions.troops) > 1 ? "s" : ""}
+                    <Amount value={promotions.troops} /> troupe{Math.round(promotions.troops) > 1 ? "s" : ""}
                   </dd>
                   <dd className="optizzz-stat-note">
-                    et {formatAmount(promotions.youngDwarves)} JSN → SN
+                    et <Amount value={promotions.youngDwarves} /> JSN → SN
                     {plan.waves === "applied" ? ", par vagues" : ""}
                   </dd>
                 </>
               ) : (
                 <>
-                  <dd className="optizzz-stat-value">{formatAmount(promotions.youngDwarves)}</dd>
+                  <dd className="optizzz-stat-value">
+                    <Amount value={promotions.youngDwarves} />
+                  </dd>
                   <dd className="optizzz-stat-note">JSN → SN, en moyenne</dd>
                 </>
               )}

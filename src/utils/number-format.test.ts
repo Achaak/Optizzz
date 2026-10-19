@@ -6,6 +6,7 @@ import {
   formatNumber,
   isCompacted,
   setCompactNumbers,
+  showExactAmount,
 } from "./number-format";
 
 describe("formatNumber", () => {
@@ -74,5 +75,18 @@ describe("formatAmount", () => {
     expect(isCompacted(9999)).toBe(false);
     setCompactNumbers(false);
     expect(isCompacted(12345)).toBe(false);
+  });
+});
+
+describe("showExactAmount", () => {
+  afterEach(() => setCompactNumbers(false));
+
+  it("puts the exact number on hover only when it is shortened", () => {
+    const cell = document.createElement("td");
+    showExactAmount(cell, 9999);
+    expect(cell.title).toBe("");
+    setCompactNumbers(true);
+    showExactAmount(cell, 1234567);
+    expect(cell.title).toBe("1 234 567");
   });
 });

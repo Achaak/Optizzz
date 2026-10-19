@@ -1,5 +1,5 @@
 import type { ConvoyHistory } from "@/data/convoy-history";
-import { formatAmount } from "@/utils/number-format";
+import { formatAmount, showExactAmount } from "@/utils/number-format";
 import { formatDateTime, formatPastTime } from "@/utils/time-format";
 import type { Copy } from "@/utils/on-way-list";
 import { convoySummaryText, summarizeConvoys, type ConvoyLoad, type PlayerConvoys } from "./history";
@@ -54,11 +54,12 @@ function part(doc: Document, title: string, none: string, players: PlayerConvoys
     const tr = el(doc, "tr");
     const first = el(doc, "td");
     first.append(name);
-    tr.append(
-      first,
-      el(doc, "td", "optizzz-num", formatAmount(load.food)),
-      el(doc, "td", "optizzz-num", formatAmount(load.materials)),
-    );
+    const amount = (value: number) => {
+      const td = el(doc, "td", "optizzz-num", formatAmount(value));
+      showExactAmount(td, value);
+      return td;
+    };
+    tr.append(first, amount(load.food), amount(load.materials));
     return tr;
   };
   const body = el(doc, "tbody");

@@ -4,7 +4,8 @@ import { amountForDuration, huntDurationSeconds } from "./engine/difficulty";
 import type { RatioChoice } from "./engine/extras";
 import type { Dispatch, ObjectiveKind, Settings } from "./settings";
 import { parisClockTime, ratioOptionText } from "./view";
-import { formatAmount, formatNumber } from "@/utils/number-format";
+import { formatNumber } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";
 import { formatEndTime } from "@/utils/time-format";
 
@@ -67,7 +68,7 @@ export function HuntParameters(props: Props) {
           />
           {props.launchField !== props.readLaunchField && (
             <button type="button" className="optizzz-button-link" onClick={() => props.onLaunchField(null)}>
-              revenir à {formatAmount(props.readLaunchField)}
+              revenir à <Amount value={props.readLaunchField} />
             </button>
           )}
         </label>
@@ -87,7 +88,7 @@ export function HuntParameters(props: Props) {
           />
           {props.arrivalField !== props.readArrivalField && (
             <button type="button" className="optizzz-button-link" onClick={() => props.onArrivalField(null)}>
-              revenir à {formatAmount(props.readArrivalField)}
+              revenir à <Amount value={props.readArrivalField} />
             </button>
           )}
         </label>

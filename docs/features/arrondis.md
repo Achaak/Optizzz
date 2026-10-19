@@ -23,24 +23,24 @@ La feature passe **en dernier** dans le registre, après les autres features qui
 
 ### Recensement (2026-10-19)
 
-| Page                                   | Grands nombres                                                                                                            | Traité                     |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Toutes (en-tête)                       | `.texte_ligne_boite_info` : ouvrières, nourriture, matériaux, TDC                                                         | oui                        |
-| `Reine.php`                            | pontes en cours (`table.tableau_leger`), `#unites_restantes_premiere_ponte` ; coûts `#cout_*N` relus par le script du jeu | oui, sauf `#cout_*`        |
-| `construction.php`, `laboratoire.php`  | coûts (`td.nourriture`, `td.materiaux`, `div.ouvriere`…), « Production actuelle », « Capacité actuelle »                  | oui                        |
-| `Ressources.php`                       | récoltes (`p > strong`), ouvrières au travail, TDC, chasses en cours ; champs `#RecolteNourriture`…                       | oui, sauf les champs       |
-| `Armee.php`                            | effectifs (`span.cliquable`), vie / attaque / défense (`#detailVie*`…), totaux, troupes en attaque                        | oui                        |
-| `commerce.php`                         | convois en cours ; champs du formulaire                                                                                   | oui, sauf les champs       |
-| `ennemie.php`                          | TDC des cibles (`#tabEnnemie`), effectifs du formulaire d'attaque (`#tabChoixArmee`) ; champs `#terrain_min`…             | oui, sauf les champs       |
-| `AcquerirTerrain.php`, `colonies.php`  | effectifs, ressources rapportées                                                                                          | oui                        |
-| `classement.php`                       | scores (`table.tab_triable`, `tr#ancre`)                                                                                  | oui                        |
-| `classementAlliance.php`, `Membre.php` | scores (`table.simulateur`, `table.tableau_score`), membres ; descriptions écrites par les joueurs (`div.contenuJoueur`)  | oui, sauf les descriptions |
-| `alliance.php?Membres`                 | TDC, technologie, fourmilière (`#tabMembresAlliance`, rempli en AJAX)                                                     | oui                        |
-| `alliance.php` (chat, forum)           | texte des joueurs                                                                                                         | non                        |
-| `messagerie.php`                       | rapports de chasse et de combat, convois livrés (chargés en AJAX) ; messages des joueurs                                  | **pas encore**             |
-| Simulateurs du jeu (`simulateur*.php`) | champs pilotés par leurs scripts                                                                                          | non                        |
+| Page                                   | Grands nombres                                                                                                                                      | Traité                             |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Toutes (en-tête)                       | `.texte_ligne_boite_info` : ouvrières, nourriture, matériaux, TDC                                                                                   | oui                                |
+| `Reine.php`                            | pontes en cours (`table.tableau_leger`), `#unites_restantes_premiere_ponte` ; coûts `#cout_*N` relus par le script du jeu                           | oui, sauf `#cout_*`                |
+| `construction.php`, `laboratoire.php`  | coûts (`td.nourriture`, `td.materiaux`, `div.ouvriere`…), « Production actuelle », « Capacité actuelle »                                            | oui                                |
+| `Ressources.php`                       | récoltes (`p > strong`), ouvrières au travail, TDC, chasses en cours ; champs `#RecolteNourriture`…                                                 | oui, sauf les champs               |
+| `Armee.php`                            | effectifs (`span.cliquable`), vie / attaque / défense (`#detailVie*`…), totaux, troupes en attaque                                                  | oui                                |
+| `commerce.php`                         | convois en cours ; champs du formulaire                                                                                                             | oui, sauf les champs               |
+| `ennemie.php`                          | TDC des cibles (`#tabEnnemie`), effectifs du formulaire d'attaque (`#tabChoixArmee`) ; champs `#terrain_min`…                                       | oui, sauf les champs               |
+| `AcquerirTerrain.php`, `colonies.php`  | effectifs, ressources rapportées                                                                                                                    | oui                                |
+| `classement.php`                       | scores (`table.tab_triable`, `tr#ancre`)                                                                                                            | oui                                |
+| `classementAlliance.php`, `Membre.php` | scores (`table.simulateur`, `table.tableau_score`), membres ; descriptions écrites par les joueurs (`div.contenuJoueur`)                            | oui, sauf les descriptions         |
+| `alliance.php?Membres`                 | TDC, technologie, fourmilière (`#tabMembresAlliance`, rempli en AJAX)                                                                               | oui                                |
+| `alliance.php` (chat, forum)           | texte des joueurs                                                                                                                                   | non                                |
+| `messagerie.php`                       | rapports de chasse et de combat, butins, convois livrés et reçus (en-têtes, détail chargé en AJAX) ; messages des joueurs (Conversations, Alliance) | oui, sauf les messages des joueurs |
+| Simulateurs du jeu (`simulateur*.php`) | champs pilotés par leurs scripts                                                                                                                    | non                                |
 
-**Pas encore** : la messagerie. Les rapports (« Vous infligez 1 589 060 (+ 4 926 086) dégâts ») y ont de grands nombres, mais ils arrivent en AJAX dans les mêmes conteneurs que les messages des joueurs, qu'on ne retouche pas : il faut d'abord savoir les distinguer (dossiers `Combat`, `Chasse`, `Commerce` ?).
+**Messagerie** (ajoutée le 2026-10-19) : seules les conversations écrites par le jeu sont abrégées, `tr.en_tete_message` de `data-type` Chasses, Combats ou Commerce (participant « Fourmizzz », relevé sur S2 et S5), avec les lignes de détail qui les suivent jusqu'à l'en-tête suivant. Leur texte est dans un `div.contenuJoueur`, ignoré partout ailleurs (descriptions des joueurs). Un `MutationObserver` sur `#centre` reprend le détail ouvert par le joueur et les dossiers rechargés. Les rapports de chasse et d'attaque d'Optizzz lisent toujours les mêmes valeurs ; le lecteur des titres de convoi (`readConvoyMessages`) lit le texte jusqu'à l'icône précédente, le nombre étant enveloppé.
 
 ## Tableaux et encarts d'Optizzz (sous-option « extension »)
 
@@ -48,12 +48,13 @@ La feature passe **en dernier** dans le registre, après les autres features qui
 
 Recensement du 2026-10-19 : 240 appels à `formatNumber` / `formatDecimal` dans 57 fichiers. `formatDecimal` (distances, ratios, pourcentages) reste tel quel : ces nombres restent petits. Les axes des graphiques de progression sont courts, leur infobulle exacte.
 
-**Pas encore** : la valeur exacte au survol dans les vues d'Optizzz.
+**Valeur exacte au survol** : `<Amount value={…} />` (`src/utils/Amount.tsx`) dans les vues React (chaîne de TDC, cartes, suivis, statistiques, historique, partage, lanceur de chasse, simulateur, modèles de ponte), `showExactAmount` pour les cellules construites en DOM (Cibles, plan de flood, rapports de chasse, convois livrés et reçus). Un nombre pris dans une phrase n'a pas d'infobulle.
 
 ## Code
 
-| Fichier                                                 | Rôle                                                                 |
-| ------------------------------------------------------- | -------------------------------------------------------------------- |
-| `src/utils/number-format.ts` (+ test)                   | `formatCompact`, `formatAmount`, `setCompactNumbers`, `isCompacted`  |
-| `src/features/compact-numbers/game-numbers.ts` (+ test) | Zones des pages du jeu, remplacement visuel des nombres              |
-| `src/features/compact-numbers/index.ts`                 | Les deux features (interrupteur en premier, pages du jeu en dernier) |
+| Fichier                                                 | Rôle                                                                                   |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/utils/number-format.ts` (+ test)                   | `formatCompact`, `formatAmount`, `setCompactNumbers`, `isCompacted`, `showExactAmount` |
+| `src/utils/Amount.tsx` (+ test)                         | Une quantité dans une vue React, exacte au survol si abrégée                           |
+| `src/features/compact-numbers/game-numbers.ts` (+ test) | Zones des pages du jeu, rapports de la messagerie, remplacement visuel des nombres     |
+| `src/features/compact-numbers/index.ts`                 | Les deux features (interrupteur en premier, pages du jeu en dernier)                   |

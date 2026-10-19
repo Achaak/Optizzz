@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import messagerieHtml from "./__fixtures__/messagerie-convoys.html?raw";
 import { parseMessageDate, readConvoyMessages } from "./messages";
+import { compactNumbersIn } from "@/features/compact-numbers/game-numbers";
 
 // Monday 19 October 2026, Paris time.
 const now = new Date(2026, 9, 19, 12, 30);
@@ -71,5 +72,13 @@ describe("readConvoyMessages", () => {
       <img alt="nourriture"></a></td></tr></table>`;
     expect(readConvoyMessages(parse(html), now)).toEqual([]);
     expect(readConvoyMessages(parse("<p>Connexion</p>"), now)).toEqual([]);
+  });
+
+  it("reads the same amounts once « Nombres arrondis » has shortened the titles", () => {
+    const doc = parse(messagerieHtml);
+    const before = readConvoyMessages(doc, now);
+    for (const row of doc.querySelectorAll("tr.en_tete_message")) compactNumbersIn(row);
+    expect(doc.querySelectorAll(".optizzz-compact").length).toBeGreaterThan(0);
+    expect(readConvoyMessages(doc, now)).toEqual(before);
   });
 });

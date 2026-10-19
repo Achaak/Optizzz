@@ -16,6 +16,7 @@ import {
 } from "@/data/watchlist";
 import { sameTag } from "@/game/diplomacy";
 import { formatAmount, formatDecimal } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { formatDuration, formatPastTime } from "@/utils/time-format";
 import type { JournalEntry } from "./changes";
 import { describeChange, describeWhen } from "./describe";
@@ -303,7 +304,7 @@ export function Watchlist({ origin }: Props) {
                           {row.onHoliday && <span className="optizzz-muted"> · en vacances</span>}
                         </td>
                         <td>{row.alliance ?? <span className="optizzz-muted">—</span>}</td>
-                        <td className="optizzz-num">{row.field === null ? "—" : formatAmount(row.field)}</td>
+                        <td className="optizzz-num">{row.field === null ? "—" : <Amount value={row.field} />}</td>
                         <td className="optizzz-num">
                           <Gap gap={row.gap} />
                         </td>
@@ -355,8 +356,8 @@ export function Watchlist({ origin }: Props) {
                           </a>
                           {row.gone && <span className="optizzz-text-danger"> · n'existe plus</span>}
                         </td>
-                        <td className="optizzz-num">{row.members === null ? "—" : formatAmount(row.members)}</td>
-                        <td className="optizzz-num">{row.field === null ? "—" : formatAmount(row.field)}</td>
+                        <td className="optizzz-num">{row.members === null ? "—" : <Amount value={row.members} />}</td>
+                        <td className="optizzz-num">{row.field === null ? "—" : <Amount value={row.field} />}</td>
                         <td className="optizzz-num">
                           <Gap gap={row.gap} />
                         </td>

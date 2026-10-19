@@ -5,6 +5,7 @@ import { LossCurve } from "./LossCurve";
 import { formatChance } from "./view";
 import { unitLabel, UNITS } from "@/game/army/units";
 import { formatAmount, formatDecimal, formatNumber } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { formatDuration } from "@/utils/time-format";
 
 const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatAmount(value));
@@ -28,14 +29,19 @@ export function FieldTable({ rows, field }: { rows: FieldRow[]; field: number })
           {rows.map((row) => (
             <tr key={row.field} className={row.field === field ? "current" : undefined}>
               <th scope="row">
-                {formatAmount(row.field)} cm²{row.field === field && <span className="optizzz-muted"> (prévu)</span>}
+                <Amount value={row.field} /> cm²
+                {row.field === field && <span className="optizzz-muted"> (prévu)</span>}
               </th>
-              <td>{formatAmount(row.difficulty)}</td>
+              <td>
+                <Amount value={row.difficulty} />
+              </td>
               <td>{formatDecimal(row.ratio, 2)}</td>
               <td>{round1(row.lostUnits.mean)}</td>
-              <td>{formatAmount(row.lostUnits.p90)}</td>
               <td>
-                {formatAmount(row.lostUnits.max)}
+                <Amount value={row.lostUnits.p90} />
+              </td>
+              <td>
+                <Amount value={row.lostUnits.max} />
                 {row.winChance < 1 && (
                   <span className="optizzz-text-danger"> · échec {formatChance(1 - row.winChance)}</span>
                 )}
@@ -92,8 +98,8 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
                       : `${round1(calystene.min)} · ${round1(calystene.average)} · ${round1(calystene.max)} JSN`}
                   </td>
                   <td>
-                    {round1(hunt.outcome.lostUnits.mean)} · {formatAmount(hunt.outcome.lostUnits.p90)} ·{" "}
-                    {formatAmount(hunt.outcome.lostUnits.max)}
+                    {round1(hunt.outcome.lostUnits.mean)} · <Amount value={hunt.outcome.lostUnits.p90} /> ·{" "}
+                    <Amount value={hunt.outcome.lostUnits.max} />
                   </td>
                   <td>{promoted || "—"}</td>
                 </tr>
@@ -114,7 +120,7 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
         <ul className="advice">
           {extras.laying.map((step) => (
             <li key={step.extra}>
-              Avec +{formatAmount(step.extra)} {step.unit} : {huntsText(step.plan)} (
+              Avec +<Amount value={step.extra} /> {step.unit} : {huntsText(step.plan)} (
               {signed(step.plan.totalAmount - advised.totalAmount)} cm²)
             </li>
           ))}
@@ -124,8 +130,8 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
       {advised && extras?.waiting && waitSeconds !== null && (
         <p className="optizzz-note">
           En attendant le retour des chasses en cours ({formatDuration(waitSeconds * 1000)}) :{" "}
-          {huntsText(extras.waiting.plan)}, soit {formatAmount(extras.waiting.fieldPerHour)} cm²/h attente comprise,
-          contre {formatAmount(advised.fieldPerHour)} cm²/h en lançant maintenant.
+          {huntsText(extras.waiting.plan)}, soit <Amount value={extras.waiting.fieldPerHour} /> cm²/h attente comprise,
+          contre <Amount value={advised.fieldPerHour} /> cm²/h en lançant maintenant.
         </p>
       )}
 

@@ -11,6 +11,7 @@ import {
 import { UNITS, unitLabel } from "@/game/army/units";
 import { BUILDINGS, RESEARCH } from "@/game/levels";
 import { formatAmount } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";
 import { formatEndTime, formatPastTime } from "@/utils/time-format";
 import { memberRows, type MemberRow } from "./member-rows";
@@ -237,7 +238,7 @@ export function AllianceSharing({ origin, alliance, members, me }: Props) {
                 {memberCell(row)}
                 {cell(row, { key: "army", label: "Total" })}
                 {UNITS.map((unit) => (
-                  <td key={unit.key}>{units?.[unit.key] ? formatAmount(units[unit.key] ?? 0) : ""}</td>
+                  <td key={unit.key}>{units?.[unit.key] ? <Amount value={units[unit.key] ?? 0} /> : ""}</td>
                 ))}
                 <td>
                   {row.armyIncomplete && "incomplète"}

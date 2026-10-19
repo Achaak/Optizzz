@@ -1,3 +1,4 @@
+import { Amount } from "@/utils/Amount";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   loadAlliancesExport,
@@ -14,7 +15,6 @@ import { diplomaticCamps } from "@/game/diplomacy";
 import { CHART_COLORS } from "@/theme";
 import { formatExportVersion } from "@/utils/export-date";
 import { fittedBounds } from "@/utils/map-chart/axes";
-import { formatAmount } from "@/utils/number-format";
 import { ChipBar } from "./ChipBar";
 import { PlayerTable } from "./PlayerTable";
 import { ServerMapChart } from "./ServerMapChart";
@@ -163,7 +163,7 @@ export function ServerMap({ origin, target, embedded, sharing }: Props) {
     <div className="optizzz-server-map server-map optizzz-panel">
       <h2 className="optizzz-panel-title">Carte du serveur {host.split(".")[0]?.toUpperCase()}</h2>
       <p className="optizzz-note">
-        {formatAmount(players.length)} joueurs · positions du {formatExportVersion(playersExport.version)}
+        <Amount value={players.length} /> joueurs · positions du {formatExportVersion(playersExport.version)}
         {!me && " · connectez-vous au jeu sur ce serveur pour vous situer sur la carte"}
       </p>
       <ChipBar

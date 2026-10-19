@@ -30,6 +30,7 @@ import { readChainSettings, writeChainSettings } from "./settings";
 import { attackSlots } from "@/game/attack";
 import { distance, travelTime } from "@/game/travel";
 import { formatAmount, formatNumber } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { formatDuration, formatEndTimeShort, fromParisParts, parisParts } from "@/utils/time-format";
@@ -334,7 +335,9 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                         </a>
                         {m.id === me.id && " (vous)"}
                       </td>
-                      <td>{formatAmount(m.huntingField)}</td>
+                      <td>
+                        <Amount value={m.huntingField} />
+                      </td>
                       <td>
                         <select
                           value={roleKey(role)}
@@ -470,7 +473,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                 <option value="">—</option>
                 {ordered.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {pseudo(m.id)} ({formatAmount(m.field)})
+                    {pseudo(m.id)} (<Amount value={m.field} />)
                   </option>
                 ))}
               </select>
@@ -484,7 +487,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                 <option value="">—</option>
                 {ordered.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {pseudo(m.id)} ({formatAmount(m.field)})
+                    {pseudo(m.id)} (<Amount value={m.field} />)
                   </option>
                 ))}
               </select>
@@ -596,7 +599,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                         </td>
                         <td>{slot && formatEndTimeShort(slot.arrival, now)}</td>
                         <td>
-                          {formatAmount(hit.attackerAfter)} / {formatAmount(hit.targetAfter)}
+                          <Amount value={hit.attackerAfter} /> / <Amount value={hit.targetAfter} />
                         </td>
                         <td>
                           {mine && (

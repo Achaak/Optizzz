@@ -2,6 +2,7 @@ import type { Spread } from "./engine/evaluate";
 import type { Plan } from "./engine/planner";
 import { formatChance, formatShare, splitText, stepNotice } from "./view";
 import { formatAmount, formatDecimal } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 
 interface Props {
@@ -52,7 +53,9 @@ export function HuntResult({ plan, field, layingSpeed, wavesAsked, now }: Props)
       <dl className="facts">
         <div>
           <dt>TdC total chassé</dt>
-          <dd>{formatAmount(plan.totalAmount)} cm²</dd>
+          <dd>
+            <Amount value={plan.totalAmount} /> cm²
+          </dd>
         </div>
         <div>
           <dt>Durée de la chasse</dt>
@@ -68,11 +71,15 @@ export function HuntResult({ plan, field, layingSpeed, wavesAsked, now }: Props)
         </div>
         <div>
           <dt>Rentabilité</dt>
-          <dd>{formatAmount(plan.fieldPerHour * 24)} cm² / jour</dd>
+          <dd>
+            <Amount value={plan.fieldPerHour * 24} /> cm² / jour
+          </dd>
         </div>
         <div>
           <dt>Nourriture récoltée</dt>
-          <dd>{formatAmount(plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.food, 0))}</dd>
+          <dd>
+            <Amount value={plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.food, 0)} />
+          </dd>
         </div>
         <div>
           <dt>Ratio de votre chasse</dt>
@@ -80,7 +87,9 @@ export function HuntResult({ plan, field, layingSpeed, wavesAsked, now }: Props)
         </div>
         <div>
           <dt>Difficulté de la chasse</dt>
-          <dd>{formatAmount(difficulty)}</dd>
+          <dd>
+            <Amount value={difficulty} />
+          </dd>
         </div>
         <div>
           <dt>Répartition</dt>

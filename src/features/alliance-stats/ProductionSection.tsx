@@ -6,6 +6,7 @@ import { loadSharedStates, valueOf as sharedValueOf, type SharedStates } from "@
 import type { Scores } from "@/features/history/api";
 import { colonyTaxRate } from "@/game/production";
 import { formatAmount, formatDecimal } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { allianceProduction, type Balance, type MemberProduction } from "./production";
 
 interface Props {
@@ -49,13 +50,13 @@ function BalanceLine({ label, balance, exact }: { label: string; balance: Balanc
       {label} :{" "}
       <b>
         {exact ? "" : "≈ "}
-        {formatAmount(balance.net)}
+        <Amount value={balance.net} />
       </b>{" "}
       par jour
       {(balance.paid > 0 || balance.received > 0) && (
         <span className="optizzz-note">
           {" "}
-          ({formatAmount(balance.gross)} récoltés
+          (<Amount value={balance.gross} /> récoltés
           {balance.paid > 0 && <>, −{amount(balance.paid, exact)} de taxes payées hors de l'alliance</>}
           {balance.received > 0 && <>, +{amount(balance.received, exact)} touchées hors de l'alliance</>})
         </span>
@@ -170,9 +171,9 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
             Réel des membres aux ouvrières connues ({real.known} / {real.total}) :{" "}
             <b>
               {exact ? "" : "≈ "}
-              {formatAmount(real.net)}
+              <Amount value={real.net} />
             </b>{" "}
-            par jour, pour un plafond de {formatAmount(real.ceiling)} chez eux
+            par jour, pour un plafond de <Amount value={real.ceiling} /> chez eux
             {real.ceiling > 0 && <> ({formatDecimal((real.gross / real.ceiling) * 100)} %)</>}
           </p>
         ) : (
@@ -207,11 +208,15 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
                   <td>
                     <a href={`Membre.php?Pseudo=${encodeURIComponent(row.pseudo)}`}>{row.pseudo}</a>
                   </td>
-                  <td className="optizzz-num">{formatAmount(row.field)}</td>
-                  <td className="optizzz-num">{row.workers === null ? "—" : formatAmount(row.workers)}</td>
-                  <td className="optizzz-num">{formatAmount(row.ceiling)}</td>
+                  <td className="optizzz-num">
+                    <Amount value={row.field} />
+                  </td>
+                  <td className="optizzz-num">{row.workers === null ? "—" : <Amount value={row.workers} />}</td>
+                  <td className="optizzz-num">
+                    <Amount value={row.ceiling} />
+                  </td>
                   <td className={`optizzz-num ${row.real !== null && row.real < row.ceiling ? "down" : ""}`}>
-                    {row.real === null ? "—" : formatAmount(row.real)}
+                    {row.real === null ? "—" : <Amount value={row.real} />}
                   </td>
                   {taxes && (
                     <td className="optizzz-num">

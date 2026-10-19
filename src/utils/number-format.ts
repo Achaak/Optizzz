@@ -59,3 +59,8 @@ export function isCompacted(value: number): boolean {
 export function formatAmount(value: number): string {
   return isCompacted(value) ? formatCompact(value) : formatNumber(value);
 }
+
+/** For a cell or a figure written with `formatAmount`: the exact number on hover when it is shortened. */
+export function showExactAmount(element: HTMLElement, value: number) {
+  if (isCompacted(value)) element.title = formatNumber(value);
+}

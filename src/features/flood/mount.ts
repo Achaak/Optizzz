@@ -3,7 +3,7 @@ import { armyFromKeys, unitLabel, UNITS, type Army } from "@/game/army/units";
 import { inRange, maxTake } from "@/game/attack";
 import { planAttacks, type PlannedAttack } from "@/game/flood";
 import { keepProbes, PLACES, probeArmy, type ProbePlan } from "@/game/probes";
-import { formatAmount, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber, showExactAmount } from "@/utils/number-format";
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import { readArmyText } from "../combat-simulator/form";
 import { fillAttackForm, onAttackSent } from "./page";
@@ -204,6 +204,8 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
 
     targetFact.textContent = `${formatAmount(targetLeft)} cm²`;
     meFact.textContent = `${formatAmount(myField)} cm²`;
+    showExactAmount(targetFact, targetLeft);
+    showExactAmount(meFact, myField);
     slotsFact.textContent = String(slots);
     if (travelSeconds === null) {
       tripFact.textContent = "inconnu";
@@ -293,8 +295,8 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
         cell(row, armyText(attack.army));
         if (withLosses) cell(row, attack.lost ? armyText(attack.lost) || "aucune" : "");
         cell(row, formatNumber(attack.take), true);
-        cell(row, formatAmount(attack.targetAfter), true);
-        cell(row, formatAmount(attack.attackerAfter), true);
+        showExactAmount(cell(row, formatAmount(attack.targetAfter), true), attack.targetAfter);
+        showExactAmount(cell(row, formatAmount(attack.attackerAfter), true), attack.attackerAfter);
         const fill = element(doc, "button", `${C}-fill`, isFilled ? "✓ Rempli" : "Remplir");
         fill.type = "button";
         fill.title = "Met ces unités dans le formulaire du jeu (TDC visé) : vous validez vous-même.";
@@ -312,8 +314,8 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     if (last) {
       cell(footRow, "Total").colSpan = withLosses ? 3 : 2;
       cell(footRow, `${formatNumber(planned.reduce((acc, attack) => acc + attack.take, 0))} cm²`, true);
-      cell(footRow, formatAmount(last.targetAfter), true);
-      cell(footRow, formatAmount(last.attackerAfter), true);
+      showExactAmount(cell(footRow, formatAmount(last.targetAfter), true), last.targetAfter);
+      showExactAmount(cell(footRow, formatAmount(last.attackerAfter), true), last.attackerAfter);
       cell(footRow, plural(planned.length, "attaque"));
     }
     foot.replaceChildren(footRow);

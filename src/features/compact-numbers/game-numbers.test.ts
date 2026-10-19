@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import membersHtml from "../alliance-map/__fixtures__/members.html?raw";
 import constructionHtml from "../resource-forecast/__fixtures__/construction-costs.html?raw";
+import huntHtml from "../hunt-reports/__fixtures__/conversation.html?raw";
+import { readConversation } from "../hunt-reports/report";
 import ressourcesHtml from "../resource-forecast/__fixtures__/ressources-colonized.html?raw";
-import { compactGameNumbers, compactNumbersIn, zonesOf } from "./game-numbers";
+import { compactGameNumbers, compactNumbersIn, compactReports, zonesOf } from "./game-numbers";
+import combatHtml from "@/game/pages/__fixtures__/combat-conversations.html?raw";
 import { readMembersHuntingField } from "@/game/pages/alliance";
+import { readCombatConversation } from "@/game/pages/combat-reports";
 import { readCosts, readIncome, readStock } from "@/game/pages/resources";
 import { readMembersScores } from "@/game/pages/scores";
 
@@ -109,5 +113,53 @@ describe("compactGameNumbers", () => {
     compactGameNumbers(doc, new URL("http://s5.fourmizzz.fr/alliance.php?Membres"));
     expect(shown(doc)).toContain("1,23M");
     expect(read()).toEqual(before);
+  });
+});
+
+describe("compactReports", () => {
+  const MESSAGERIE = new URL("http://s5.fourmizzz.fr/messagerie.php");
+  const details = (doc: Document) => [...doc.querySelectorAll("tr.contenu_conversation")];
+
+  it("shortens the attack reports, which Optizzz still reads the same", () => {
+    const doc = parse(combatHtml);
+    const read = () => details(doc).map((conversation) => readCombatConversation(conversation));
+    const before = read();
+    compactReports(doc);
+    expect(shown(doc)).toEqual(expect.arrayContaining(["1,59M", "4,93M", "19,2K", "28,9K"]));
+    expect(read()).toEqual(before);
+  });
+
+  it("shortens the hunt reports, which Optizzz still reads the same", () => {
+    const doc = parse(huntHtml.replaceAll("1 975 Jeunes", "21 975 Jeunes"));
+    const read = () => details(doc).map((conversation) => readConversation(conversation));
+    const before = read();
+    compactReports(doc);
+    expect(shown(doc)).toContain("22K");
+    expect(read()).toEqual(before);
+  });
+
+  it("never touches what players write", () => {
+    const doc = parse(`<table>
+      <tr class="en_tete_message" data-type="Conversations"><td class="td_objet">Rendez-vous à 15 000 cm²</td></tr>
+      <tr class="contenu_conversation"><td><div class="contenuJoueur">J'envoie 250 000 demain</div></td></tr>
+      <tr class="en_tete_message" data-type="Alliance"><td class="td_objet">Objectif 2 000 000</td></tr>
+      <tr class="en_tete_message" data-type="Combats"><td class="td_objet">Butin chez X : 16 044 cm²</td></tr>
+    </table>`);
+    compactReports(doc);
+    expect(shown(doc)).toEqual(["16K"]);
+  });
+
+  it("shortens a report the player opens later (loaded by the game in AJAX)", async () => {
+    const doc = parse(`<div id="centre"><table><tbody>
+      <tr class="en_tete_message" data-type="Combats"><td class="td_objet">Attaque réussie</td></tr>
+    </tbody></table></div>`);
+    compactGameNumbers(doc, MESSAGERIE);
+    const detail = doc.createElement("tr");
+    detail.className = "contenu_conversation";
+    detail.innerHTML =
+      '<td><div class="contenuJoueur">Vous infligez <strong>1 589 060 (+ 4 926 086)</strong></div></td>';
+    doc.querySelector("tr.en_tete_message")?.after(detail);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(shown(doc)).toEqual(["1,59M", "4,93M"]);
   });
 });

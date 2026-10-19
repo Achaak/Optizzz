@@ -3,6 +3,7 @@ import { battle, PLACES, placeHpBonus, requiredAttack, spoils, type Place, type 
 import { armyAttack, UNITS } from "@/game/army/units";
 import { inRange } from "@/game/attack";
 import { formatAmount } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { loadStoredLevels } from "@/data/levels";
 import {
   emptyForm,
@@ -139,17 +140,25 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
               {rows.map((row) => (
                 <tr key={row.unit.key}>
                   <td>{row.unit.name}</td>
-                  <td>{formatAmount(row.sent)}</td>
-                  <td>{formatAmount(row.attackerLost)}</td>
-                  <td>{formatAmount(row.present)}</td>
-                  <td>{formatAmount(row.defenderLost)}</td>
+                  <td>
+                    <Amount value={row.sent} />
+                  </td>
+                  <td>
+                    <Amount value={row.attackerLost} />
+                  </td>
+                  <td>
+                    <Amount value={row.present} />
+                  </td>
+                  <td>
+                    <Amount value={row.defenderLost} />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
           <p className="optizzz-note">
-            Attaque {formatAmount(attack)} ; pour une riposte à 50 % : plus de {formatAmount(needed.half)}, à 30 % :
-            plus de {formatAmount(needed.thirty)}, à 10 % : plus de {formatAmount(needed.ten)}.
+            Attaque <Amount value={attack} /> ; pour une riposte à 50 % : plus de <Amount value={needed.half} />, à 30 %
+            : plus de <Amount value={needed.thirty} />, à 10 % : plus de <Amount value={needed.ten} />.
           </p>
         </>
       ) : (

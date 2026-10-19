@@ -10,7 +10,8 @@ import { HistoryChart } from "@/utils/history-chart/HistoryChart";
 import { periodProgress, type Progress } from "@/utils/history-chart/progress";
 import { formatExportVersion } from "@/utils/export-date";
 import { dayMonth } from "@/utils/time-format";
-import { formatAmount, formatDecimal } from "@/utils/number-format";
+import { formatDecimal } from "@/utils/number-format";
+import { Amount } from "@/utils/Amount";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { AverageToggle, formatRankChange, formatValue } from "./common";
 import { ViewSwitch } from "@/utils/history-chart/ViewSwitch";
@@ -271,7 +272,7 @@ export function AllianceStats({
               onClick={() => setMetric(id)}
             >
               <span className="optizzz-stat-label">{label}</span>
-              <span className="optizzz-stat-value">{now === undefined ? "—" : formatAmount(now)}</span>
+              <span className="optizzz-stat-value">{now === undefined ? "—" : <Amount value={now} />}</span>
               {delta !== null && delta !== 0 && (
                 <span className={`optizzz-stat-note ${delta < 0 ? "down" : ""}`}>{formatGain(delta)}</span>
               )}
@@ -435,7 +436,9 @@ export function AllianceStats({
                 <span className="optizzz-bar">
                   <span style={{ width: `${String(share.share ?? 0)}%` }} />
                 </span>
-                <span className="optizzz-num">{formatAmount(share.value)}</span>
+                <span className="optizzz-num">
+                  <Amount value={share.value} />
+                </span>
                 <span className="optizzz-num">{share.share === null ? "—" : `${formatDecimal(share.share)} %`}</span>
               </li>
             ))}

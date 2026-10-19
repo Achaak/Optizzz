@@ -25,7 +25,7 @@ const PAGE_ZONES: Record<string, string[]> = {
  * Never touched, even inside a zone: fields; what the game's scripts read back (`$('#cout_…').text()` on Reine);
  * what players wrote (alliance and profile descriptions). Optizzz's own additions are skipped too (`isOptizzz`).
  */
-const SKIPPED = [
+const FIELDS_AND_SCRIPTS = [
   "input",
   "textarea",
   "select",
@@ -35,8 +35,16 @@ const SKIPPED = [
   "[contenteditable]",
   "[id^='cout_']",
   "[id^='armee_initial']",
-  ".contenuJoueur",
 ].join(",");
+
+const SKIPPED = `${FIELDS_AND_SCRIPTS},.contenuJoueur`;
+
+/**
+ * Conversations of the messagerie written by the game (« Fourmizzz » for participant, checked on S2 and S5): hunt and
+ * attack reports, convoys. Their text sits in a `.contenuJoueur` like a player's message. « Conversations » and
+ * « Alliance » hold what players write: never touched.
+ */
+const REPORT_TYPES = ["Chasses", "Combats", "Commerce"];
 
 /**
  * Added by Optizzz, its numbers already written by `formatAmount` or kept exact on purpose (amounts to send): only
@@ -69,10 +77,10 @@ export function zonesOf(url: URL): string[] {
   return [HEADER, ...own];
 }
 
-const isSkipped = (node: Node, root: Element) => {
+const isSkipped = (node: Node, root: Element, skippedSelector: string) => {
   const parent = node.parentElement;
   if (!parent) return true;
-  const skipped = parent.closest(SKIPPED);
+  const skipped = parent.closest(skippedSelector);
   if (skipped !== null && root.contains(skipped)) return true;
   for (let element: Element | null = parent; element && element !== root; element = element.parentElement) {
     if (isOptizzz(element)) return true;
@@ -119,27 +127,58 @@ function compactTextNode(text: Text, root: Element) {
   for (const [span, value] of exact) showExact(span, value, root);
 }
 
-/** Shortens the game's numbers of 10 000 and more inside `root`; numbers already shortened are left alone. */
-export function compactNumbersIn(root: Element) {
+/**
+ * Shortens the game's numbers of 10 000 and more inside `root`; numbers already shortened are left alone. `report`:
+ * a report of the game, whose `.contenuJoueur` is the game's text and not a player's.
+ */
+export function compactNumbersIn(root: Element, report = false) {
   const doc = root.ownerDocument;
   const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const texts: Text[] = [];
+  const skipped = report ? FIELDS_AND_SCRIPTS : SKIPPED;
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (node instanceof Text && !isSkipped(node, root)) texts.push(node);
+    if (node instanceof Text && !isSkipped(node, root, skipped)) texts.push(node);
   }
   for (const text of texts) compactTextNode(text, root);
 }
 
+/** The rows of the game's reports: each one's header (its title) and the detail rows the game opens under it. */
+function reportRows(doc: Document): Element[] {
+  return [...doc.querySelectorAll("tr.en_tete_message")].flatMap((header) => {
+    if (!REPORT_TYPES.includes(header.getAttribute("data-type") ?? "")) return [];
+    const rows = [header];
+    for (let row = header.nextElementSibling; row && !row.matches("tr.en_tete_message"); row = row.nextElementSibling) {
+      rows.push(row);
+    }
+    return rows;
+  });
+}
+
+/** Shortens the numbers of the messagerie's reports and convoys, never those of the players' messages. */
+export function compactReports(doc: Document) {
+  for (const row of reportRows(doc)) compactNumbersIn(row, true);
+}
+
+const isMessagerie = (url: URL) => url.pathname.split("/").pop()?.toLowerCase() === "messagerie.php";
+
 /** Shortens the numbers of every zone of the page, now and when the game fills a zone later (alliance members, AJAX). */
 export function compactGameNumbers(doc: Document, url: URL): MutationObserver[] {
   const roots = zonesOf(url).flatMap((selector) => [...doc.querySelectorAll(selector)]);
-  return roots.map((root) => {
+  const observers = roots.map((root) => {
     compactNumbersIn(root);
     const observer = new MutationObserver((records) => {
-      // Only what the game added: our own spans are skipped by `SKIPPED`, so this ends.
+      // Only what the game added: a second pass finds nothing left to shorten, so this ends.
       if (records.some((record) => record.addedNodes.length > 0)) compactNumbersIn(root);
     });
     observer.observe(root, { childList: true, subtree: true });
     return observer;
   });
+  if (!isMessagerie(url)) return observers;
+  // The game loads a report's detail when the player opens it, and reloads the list of a folder.
+  compactReports(doc);
+  const messages = new MutationObserver((records) => {
+    if (records.some((record) => record.addedNodes.length > 0)) compactReports(doc);
+  });
+  messages.observe(doc.querySelector("#centre") ?? doc.body, { childList: true, subtree: true });
+  return [...observers, messages];
 }
