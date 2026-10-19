@@ -2,7 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import commerceHtml from "@/features/convoy/__fixtures__/commerce.html?raw";
 import { forgetGamePages } from "@/utils/game-page";
-import { loadConvoys, readKeptConvoys, refreshConvoys, storeConvoys } from "./convoys";
+import {
+  CONVOYS_MAX_AGE,
+  convoysOutdated,
+  loadConvoys,
+  readKeptConvoys,
+  refreshConvoys,
+  storeConvoys,
+} from "./convoys";
 
 const ORIGIN = "https://s5.fourmizzz.fr";
 const now = new Date(2026, 9, 7, 20, 31, 45);
@@ -34,6 +41,8 @@ describe("convoys storage", () => {
     await storeConvoys(ORIGIN, convoys, now);
     expect(await loadConvoys(ORIGIN)).toEqual({ readAt: now, convoys });
     expect(await loadConvoys("https://s1.fourmizzz.fr")).toBeNull();
+    await storeConvoys(ORIGIN, convoys, now, 4_995);
+    expect(await loadConvoys(ORIGIN)).toEqual({ readAt: now, convoys, workers: 4_995 });
   });
 
   it("reads commerce.php again, and keeps the old list when the game does not answer", async () => {
@@ -42,9 +51,9 @@ describe("convoys storage", () => {
       "fetch",
       vi.fn(() => Promise.resolve(new Response(commerceHtml))),
     );
-    expect((await refreshConvoys(ORIGIN))?.convoys.map((convoy) => convoy.food + convoy.materials)).toEqual([
-      1, 12_500,
-    ]);
+    const read = await refreshConvoys(ORIGIN);
+    expect(read?.convoys.map((convoy) => convoy.food + convoy.materials)).toEqual([1, 12_500]);
+    expect(read?.workers).toBe(4_995);
 
     forgetGamePages();
     vi.stubGlobal(
@@ -52,5 +61,22 @@ describe("convoys storage", () => {
       vi.fn(() => Promise.resolve(new Response("", { status: 503 }))),
     );
     expect((await refreshConvoys(ORIGIN))?.convoys).toHaveLength(2);
+  });
+});
+
+describe("convoysOutdated", () => {
+  const kept = { readAt: now, convoys: [], workers: 5_000 };
+  const later = (ms: number) => new Date(now.getTime() + ms);
+
+  it("reads commerce.php again when nothing is kept or the list is too old", () => {
+    expect(convoysOutdated(null, 5_000, now)).toBe(true);
+    expect(convoysOutdated(kept, 5_000, later(CONVOYS_MAX_AGE))).toBe(false);
+    expect(convoysOutdated(kept, 5_000, later(CONVOYS_MAX_AGE + 1))).toBe(true);
+  });
+
+  it("reads it again as soon as the header's workers dropped: a convoy may have left from elsewhere", () => {
+    expect(convoysOutdated(kept, 4_999, later(60_000))).toBe(true);
+    expect(convoysOutdated(kept, 5_200, later(60_000))).toBe(false);
+    expect(convoysOutdated({ readAt: now, convoys: [] }, 1, later(60_000))).toBe(false);
   });
 });

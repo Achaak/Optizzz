@@ -6,7 +6,7 @@ import { INCOME_MAX_AGE, loadIncome } from "@/data/income";
 import { readStock } from "@/game/pages/resources";
 import { CONVOY_STYLE, mountConvoyPlanner, renderConvoysOnWay } from "./mount";
 import { isEnabled } from "../toggles";
-import { CONVOYS_MAX_AGE, loadConvoys, refreshConvoys, type KeptConvoys } from "@/data/convoys";
+import { CONVOYS_MAX_AGE, convoysOutdated, loadConvoys, refreshConvoys, type KeptConvoys } from "@/data/convoys";
 import { loadStoredLevels } from "@/data/levels";
 import { HEADER_TIP_STYLE } from "@/utils/header-tip";
 import { workersAway } from "./convoy";
@@ -102,6 +102,6 @@ export const convoyWorkers: Feature = {
     // Kept by the collect feature, commerce.php included.
     const kept = await loadConvoys(origin);
     render(kept);
-    if (!kept || loadedAt.getTime() - kept.readAt.getTime() > CONVOYS_MAX_AGE) render(await refreshConvoys(origin));
+    if (convoysOutdated(kept, stock.workers, loadedAt)) render(await refreshConvoys(origin));
   },
 };

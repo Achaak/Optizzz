@@ -10,7 +10,7 @@ import { LAYING_BOOST_STYLE, mountLayingBoost } from "./laying-boost";
 import { readLevelRows } from "@/game/pages/level-rows";
 import { loadPlayersExport } from "@/data/exports";
 import { readLoggedInPseudo } from "@/game/pages/alliance";
-import { CONVOYS_MAX_AGE, loadConvoys, refreshConvoys } from "@/data/convoys";
+import { convoysOutdated, loadConvoys, refreshConvoys } from "@/data/convoys";
 import { loadStoredLevels } from "@/data/levels";
 import { spareWorkers } from "@/game/aphids";
 import { aphidsAdvice, APHIDS_STYLE, COMMUNICATION, mountAphids, STABLE } from "./aphids";
@@ -208,7 +208,7 @@ async function loadSpareWorkers(origin: string, aphids: number): Promise<number 
   if (!stock) return null;
   const now = new Date();
   let kept = await loadConvoys(origin);
-  if (!kept || now.getTime() - kept.readAt.getTime() > CONVOYS_MAX_AGE) kept = (await refreshConvoys(origin)) ?? kept;
+  if (convoysOutdated(kept, stock.workers, now)) kept = (await refreshConvoys(origin)) ?? kept;
   if (!kept) return null;
   return spareWorkers({ atHome: stock.workers, huntingField: stock.huntingField }, kept.convoys, aphids, now);
 }

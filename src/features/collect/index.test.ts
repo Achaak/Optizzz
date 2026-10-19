@@ -39,6 +39,8 @@ describe("collect", () => {
     await collect.run(ctx, { "convoy.workers": false });
     expect(await loadConvoys(ORIGIN)).toBeNull();
     await collect.run(ctx, {});
-    expect((await loadConvoys(ORIGIN))?.convoys.map((convoy) => convoy.recipient)).toEqual(["Messor", "Tetramorium"]);
+    const kept = await loadConvoys(ORIGIN);
+    expect(kept?.convoys.map((convoy) => convoy.recipient)).toEqual(["Messor", "Tetramorium"]);
+    expect(kept?.workers).toBe(4_995);
   });
 });

@@ -6,7 +6,7 @@ import type { Feature } from "../feature";
 import { storeLevels } from "@/data/levels";
 import { readLaying, storeLaying } from "@/data/laying";
 import { storeCapacities, storeIncome } from "@/data/income";
-import { readCapacities, readIncome } from "@/game/pages/resources";
+import { readCapacities, readIncome, readStock } from "@/game/pages/resources";
 import { isEnabled } from "../toggles";
 
 /**
@@ -41,7 +41,7 @@ export const collect: Feature = {
     // Convoys on their way: the workers they carry, off the header's count.
     if (path === "/commerce.php" && on("convoy", "workers")) {
       const convoys = readKeptConvoys(document, now);
-      if (convoys) await storeConvoys(origin, convoys, now);
+      if (convoys) await storeConvoys(origin, convoys, now, readStock(document)?.workers);
     }
 
     // The army by place: combat simulator, flood plan and its « Flood max » column, research advice.
