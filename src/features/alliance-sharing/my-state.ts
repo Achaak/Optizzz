@@ -2,11 +2,11 @@
 import type { Launch } from "@/data/launches";
 import { readGarrison } from "@/data/garrison";
 import type { SharedArmy, SharedState } from "@/data/shared-states";
-import { UNITS } from "@/game/army/units";
+import { readTroops, UNITS } from "@/game/army/units";
 import { readBuildingLevels, readResearchLevels } from "@/game/pages/levels";
 import { readStock } from "@/game/pages/resources";
 import { readWorkQueue } from "@/game/pages/work-queue";
-import { readAttacksOnWay, readReinforcementLines, reconcileLaunches } from "@/features/flood/attacks";
+import { readAttacksOnWay, readReinforcementLines, reconcileLaunches, troopList } from "@/features/flood/attacks";
 import { readColonies } from "@/game/pages/colonies";
 import { readOngoingHunts } from "@/features/hunt-launcher/pages";
 
@@ -37,8 +37,8 @@ export interface Me {
 
 /**
  * The army present (Armee.php), plus what is known of the troops away: hunts with their troops (Compte+), the troops
- * occupying my colonies (colonies.php), and the ants of the attacks sent with the flood plan. Anything else away
- * (troops coming home from a colony, whose count the game does not write) makes the army incomplete.
+ * occupying my colonies (colonies.php) or coming home from them (Armee.php, Compte+), and the ants of the attacks
+ * sent with the flood plan. Anything else away makes the army incomplete.
  */
 function readArmy(armyPage: Document, pages: MyPages, launches: Launch[], now: Date, detail: boolean) {
   const { resources } = pages;
@@ -54,12 +54,17 @@ function readArmy(armyPage: Document, pages: MyPages, launches: Launch[], now: D
   for (const colony of colonies ?? []) for (const [key, count] of Object.entries(colony.troops)) add(key, count);
   const onWay = reconcileLaunches(launches, readAttacksOnWay(armyPage, now));
   const coming = readReinforcementLines(armyPage, now);
+  for (const line of coming)
+    for (const [key, count] of Object.entries(readTroops(troopList(line.troops ?? "")))) add(key, count);
 
   const present = [...units.values()].reduce((sum, count) => sum + count, 0);
   const army: SharedArmy = {
     total: present + onWay.launches.reduce((sum, launch) => sum + launch.ants, 0),
     incomplete:
-      onWay.unknown > 0 || hunts.some((hunt) => hunt.troops === null) || colonies === null || coming.length > 0,
+      onWay.unknown > 0 ||
+      hunts.some((hunt) => hunt.troops === null) ||
+      colonies === null ||
+      coming.some((line) => line.troops === null),
   };
   if (detail) army.units = Object.fromEntries([...units].filter(([, count]) => count > 0));
   const returns = [...hunts.map((hunt) => hunt.returnsAt), ...coming.map((line) => line.arrivesAt)];

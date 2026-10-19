@@ -1,7 +1,9 @@
 import {
   gameAttackText,
+  gameReinforcementText,
   readAttackLines,
   readReinforcementLines,
+  troopList,
   type AttackLine,
   type ReinforcementLine,
 } from "@/features/flood/attacks";
@@ -18,19 +20,19 @@ ${ON_WAY_STYLE}`;
 
 /** « 1 488 JSN, 485 SN, 29 NE », as the game abbreviates; the game's words when a unit is not recognised. */
 function shortTroops(troops: string): string {
-  const list = troops.replace(/^Troupes en attaques\s*:\s*/, "");
+  const list = troopList(troops);
   const read = Object.entries(readTroops(list));
   if (read.length !== list.split(",").length) return list;
   return read.map(([key, count]) => `${formatNumber(count)} ${unitLabel(key)}`).join(", ");
 }
 
-function details(doc: Document, attack: AttackLine): Node[] {
+function details(doc: Document, place: string | null, troops: string | null): Node[] {
   const nodes: Node[] = [];
-  if (attack.place) nodes.push(span(doc, "optizzz-attacks-place", attack.place));
-  if (attack.troops) {
-    const troops = span(doc, "optizzz-attacks-troops", shortTroops(attack.troops));
-    troops.title = attack.troops;
-    nodes.push(troops);
+  if (place) nodes.push(span(doc, "optizzz-attacks-place", place));
+  if (troops) {
+    const element = span(doc, "optizzz-attacks-troops", shortTroops(troops));
+    element.title = troops;
+    nodes.push(element);
   }
   return nodes;
 }
@@ -38,7 +40,7 @@ function details(doc: Document, attack: AttackLine): Node[] {
 function attackItem(doc: Document, attack: AttackLine): OnWayItem {
   return {
     to: attack.targetElement?.cloneNode(true) ?? doc.createTextNode(attack.target),
-    details: details(doc, attack),
+    details: details(doc, attack.place, attack.troops),
     arrivesAt: attack.arrivesAt,
     notes: [],
     message: () => gameAttackText(attack),
@@ -52,10 +54,13 @@ function reinforcementItem(doc: Document, line: ReinforcementLine): OnWayItem {
   return {
     to: doc.createTextNode("Renforts"),
     returning: true,
-    details: [span(doc, "optizzz-attacks-troops", "votre armée qui rentre (d'une colonie)")],
+    // Without Compte+, the game does not write the troops.
+    details: line.troops
+      ? [span(doc, "optizzz-attacks-place", "d'une colonie"), ...details(doc, null, line.troops)]
+      : [span(doc, "optizzz-attacks-troops", "votre armée qui rentre (d'une colonie)")],
     arrivesAt: line.arrivesAt,
     notes: [],
-    message: () => `Des renforts arrivent dans ${line.countdown.textContent.replace(/\s+/g, " ").trim()}`,
+    message: () => gameReinforcementText(line),
     copyTitle: "Copier ce retour tel que le jeu l'écrit",
   };
 }

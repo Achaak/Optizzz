@@ -62,11 +62,16 @@ export interface ReinforcementLine {
   arrivesAt: Date;
   /** The game's countdown, `span#attaque_N`, kept up to date by the game. */
   countdown: HTMLElement;
+  /** With Compte+: « Troupes en renforts : 10 Jeunes Soldates Naines. », as the game writes it. */
+  troops: string | null;
+  /** With Compte+, the game's note under the line: troops and arrival time. */
+  note: Element | null;
 }
 
 /**
  * « - Des renforts arrivent dans <span id="attaque_N">42m 36s </span><br><script>reste(2556, "attaque_N")</script> »
- * (S2, 2026-10-19, after « Rappeler l'armée » on colonies.php): no target, the same countdown ids as the attacks.
+ * (S2, 2026-10-19, after « Rappeler l'armée » on colonies.php): no target, the same countdown ids as the attacks. With
+ * Compte+, `<small><em> Troupes en renforts : 10 Jeunes Soldates Naines.<br>Arrivée à 12h57</em></small>` follows.
  */
 export function readReinforcementLines(doc: Document, now: Date): ReinforcementLine[] {
   const seconds = countdownSeconds(doc);
@@ -74,7 +79,8 @@ export function readReinforcementLines(doc: Document, now: Date): ReinforcementL
     const left = seconds.get(countdown.id);
     const before = countdown.previousSibling?.nodeType === Node.TEXT_NODE ? countdown.previousSibling.textContent : "";
     if (left === undefined || !/renforts arrivent\s+dans\s*$/i.test(before ?? "")) return [];
-    return [{ arrivesAt: new Date(now.getTime() + left * 1000), countdown }];
+    const note = noteAfter(countdown);
+    return [{ arrivesAt: new Date(now.getTime() + left * 1000), countdown, troops: troopsIn(note), note }];
   });
 }
 
@@ -109,8 +115,12 @@ export const isCancelLink = (node: Node | null | undefined): node is HTMLAnchorE
   node instanceof Element && node.tagName === "A" && /[?&]annuler=/i.test(node.getAttribute("href") ?? "");
 
 function troopsIn(note: Element | null): string | null {
-  return /Troupes en attaques\s*:[^\n]*?\./.exec(note?.textContent.replace(/\s+/g, " ") ?? "")?.[0].trim() ?? null;
+  const text = note?.textContent.replace(/\s+/g, " ") ?? "";
+  return /Troupes en (?:attaques|renforts)\s*:[^\n]*?\./.exec(text)?.[0].trim() ?? null;
 }
+
+/** « Troupes en renforts : 10 Jeunes Soldates Naines. » → « 10 Jeunes Soldates Naines. », for `readTroops`. */
+export const troopList = (troops: string) => troops.replace(/^Troupes en \S+\s*:\s*/, "");
 
 /** The attacks the game lists: target and arrival. */
 export function readAttacksOnWay(doc: Document, now: Date): AttackOnWay[] {
@@ -128,14 +138,23 @@ const clean = (text: string) => text.replace(/\s+/g, " ").trim();
 export function gameAttackText(attack: Pick<AttackLine, "target" | "place" | "targetElement" | "countdown" | "note">) {
   const target = clean(attack.targetElement?.textContent ?? attack.target);
   const place = attack.place ? ` (${attack.place})` : "";
-  const lines = [`Vous allez attaquer ${target}${place} dans ${clean(attack.countdown.textContent)}`];
-  if (attack.note) {
-    // The game breaks its note with <br>.
-    const note = attack.note.cloneNode(true) as Element;
-    for (const br of note.querySelectorAll("br")) br.replaceWith("\n");
-    lines.push(...note.textContent.split("\n").map(clean).filter(Boolean));
-  }
-  return lines.join("\n");
+  return [
+    `Vous allez attaquer ${target}${place} dans ${clean(attack.countdown.textContent)}`,
+    ...noteLines(attack.note),
+  ].join("\n");
+}
+
+/** « Des renforts arrivent dans 42 minutes 36 secondes », then the Compte+ note on the next lines. */
+export function gameReinforcementText(line: Pick<ReinforcementLine, "countdown" | "note">) {
+  return [`Des renforts arrivent dans ${clean(line.countdown.textContent)}`, ...noteLines(line.note)].join("\n");
+}
+
+/** The Compte+ note's lines, which the game breaks with <br>. */
+function noteLines(note: Element | null): string[] {
+  if (!note) return [];
+  const copy = note.cloneNode(true) as Element;
+  for (const br of copy.querySelectorAll("br")) br.replaceWith("\n");
+  return copy.textContent.split("\n").map(clean).filter(Boolean);
 }
 
 /**

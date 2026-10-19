@@ -75,11 +75,22 @@ describe("collectMyState", () => {
     expect(unread.army).toMatchObject({ total: 3664, incomplete: true });
   });
 
-  it("calls the army incomplete while troops come home from a colony, back at their arrival", () => {
+  it("adds the troops coming home from a colony (Compte+), back at their arrival; without Compte+, incomplete", () => {
     const line = /<h3>Attaque[\s\S]*(?=<\/center>)/.exec(reinforcementsHtml)?.[0] ?? "";
     const army = parse(armyHtml.replace(/<\/div>\s*$/, `${line}</div>`));
     const { state } = collectMyState({ ...pages, army, resources: null }, everything, me, [], now);
-    expect(state.army).toMatchObject({ incomplete: true, returnsAt: new Date(now.getTime() + 2556_000) });
+    // Garrison: 1 219 JSN, 40 Tk, 5 TuE; coming home: 10 JSN.
+    expect(state.army).toMatchObject({
+      total: 1274,
+      units: { JSN: 1229 },
+      incomplete: false,
+      returnsAt: new Date(now.getTime() + 2556_000),
+    });
+    const withoutCompte = parse(
+      armyHtml.replace(/<\/div>\s*$/, `${line.replace(/<small[\s\S]*<\/small\s*>/, "")}</div>`),
+    );
+    const unknown = collectMyState({ ...pages, army: withoutCompte, resources: null }, everything, me, [], now).state;
+    expect(unknown.army).toMatchObject({ total: 1264, incomplete: true });
   });
 
   it("adds the ants of the attacks sent with the flood plan, and calls an attack sent without it unknown", () => {

@@ -60,6 +60,7 @@ describe("renderAttacksOnWay", () => {
     );
     const row = alone.querySelector(".optizzz-attacks .optizzz-on-way-row");
     expect(row?.querySelector(".optizzz-on-way-to")?.textContent).toBe("← Renforts");
+    expect(row?.querySelector(".optizzz-on-way-details")?.textContent).toBe("d'une colonie10 JSN");
     expect(row?.querySelector(".optizzz-on-way-left")?.textContent).toBe("dans 42m 36s");
     expect(row?.querySelector(".optizzz-on-way-when")?.textContent).toBe("arrivée aujourd'hui 17 h 21");
     expect(alone.querySelector<HTMLElement>(".optizzz-attacks-game")?.textContent).toContain("Des renforts arrivent");
@@ -84,6 +85,42 @@ describe("renderAttacksOnWay", () => {
       "→ Cible_2",
       "← Renforts",
     ]);
+  });
+
+  it("copies troops coming home as the game writes them, with the Compte+ note", async () => {
+    const doc = new DOMParser().parseFromString(reinforcementsHtml, "text/html");
+    const copied: string[] = [];
+    stops.push(
+      renderAttacksOnWay(
+        doc,
+        () => now,
+        (text) => {
+          copied.push(text);
+          return Promise.resolve();
+        },
+      ),
+    );
+    doc.querySelector<HTMLButtonElement>(".optizzz-attacks button")?.click();
+    await vi.waitFor(() => {
+      expect(copied).toEqual([
+        "Des renforts arrivent dans 42m 36s\nTroupes en renforts : 10 Jeunes Soldates Naines.\nArrivée à 12h57",
+      ]);
+    });
+  });
+
+  it("says the army comes home, without its troops, when the game does not write them (no Compte+)", () => {
+    const doc = new DOMParser().parseFromString(reinforcementsHtml, "text/html");
+    doc.querySelector("#centre small")?.remove();
+    stops.push(
+      renderAttacksOnWay(
+        doc,
+        () => now,
+        () => Promise.resolve(),
+      ),
+    );
+    expect(doc.querySelector(".optizzz-attacks .optizzz-on-way-details")?.textContent).toBe(
+      "votre armée qui rentre (d'une colonie)",
+    );
   });
 
   it("leaves a line it does not read where the game wrote it, such as troops coming home", () => {
