@@ -4,7 +4,7 @@
 import { payback, stableGain, type StableGain } from "@/game/aphids";
 import { sameName } from "@/game/levels";
 import { costWithRequirements, type LevelCost, type LevelRow, type Requirement } from "@/game/requirements";
-import { formatNumber as formatSpaced } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { placeInRow } from "@/utils/row-extras";
 
 export const STABLE = "Étable à pucerons";
@@ -39,7 +39,8 @@ export function aphidsAdvice(
 }
 
 /** Numbers never break at the end of a line. */
-const formatNumber = (value: number) => formatSpaced(value).replace(/ /g, "\u00a0");
+// Shortened when the player wants it; never broken across lines.
+const formatNumber = (value: number) => formatAmount(value).replace(/ /g, "\u00a0");
 const level = (requirement: Requirement) => `${requirement.name} ${String(requirement.level)}`;
 const list = (items: string[]) =>
   items.length > 1 ? `${items.slice(0, -1).join(", ")} et ${items.at(-1) ?? ""}` : (items[0] ?? "");

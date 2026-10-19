@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Player } from "@/data/exports";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
 import { sortRows, type SortKey, type TableRow } from "./view";
 
@@ -55,7 +55,7 @@ export function PlayerTable(props: Props) {
   return (
     <div className="player-table">
       <p className="optizzz-note">
-        {formatNumber(rows.length)} joueur{rows.length > 1 ? "s" : ""}, trajets depuis <b>{reference.pseudo}</b>
+        {formatAmount(rows.length)} joueur{rows.length > 1 ? "s" : ""}, trajets depuis <b>{reference.pseudo}</b>
         {onReferenceMe ? (
           <>
             {" · "}
@@ -130,7 +130,7 @@ export function PlayerTable(props: Props) {
                   {trip.estimated && "≈ "}
                   {formatDuration(trip.seconds * 1000)}
                 </td>
-                <td className="optizzz-num">{formatNumber(player.field)}</td>
+                <td className="optizzz-num">{formatAmount(player.field)}</td>
                 <td className="optional">{state(player)}</td>
                 <td>
                   <button

@@ -1,5 +1,5 @@
 // Famine and full warehouse warnings under the header gauges (#boiteInfo), on every page.
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import { urgencyOf } from "@/utils/urgency";
 import { setHeaderTip } from "@/utils/header-tip";
@@ -67,7 +67,7 @@ function balanceBadge(doc: Document, state: ColonyState): HTMLElement {
   return element;
 }
 
-const signed = (value: number) => `${value < 0 ? "−" : "+"}${formatNumber(Math.abs(value))}`;
+const signed = (value: number) => `${value < 0 ? "−" : "+"}${formatAmount(Math.abs(value))}`;
 
 function foodTooltip(state: ColonyState, balance: number | null, now: Date): string {
   const harvest = state.foodWorkers * HARVESTS_PER_DAY;
@@ -85,14 +85,14 @@ function foodTooltip(state: ColonyState, balance: number | null, now: Date): str
     parts.join(", "),
     balance === null
       ? "Équilibre impossible même avec toutes les ouvrières sur la nourriture"
-      : `Équilibre : ${formatNumber(balance)} ouvrières sur la nourriture`,
+      : `Équilibre : ${formatAmount(balance)} ouvrières sur la nourriture`,
   ];
   if (!state.capacities) {
     lines.push("Capacité des entrepôts inconnue : ouvrez Construction pour être prévenu d'un entrepôt plein");
   }
   for (const hunt of state.hunts) {
     if (hunt.returnsAt > now) {
-      lines.push(`Chasse de retour ${formatEndTime(hunt.returnsAt, now)} : +${formatNumber(hunt.fieldGain)} cm²`);
+      lines.push(`Chasse de retour ${formatEndTime(hunt.returnsAt, now)} : +${formatAmount(hunt.fieldGain)} cm²`);
     }
   }
   return lines.join("\n");

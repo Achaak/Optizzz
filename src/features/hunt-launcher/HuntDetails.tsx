@@ -4,10 +4,10 @@ import type { Extras } from "./engine/requests";
 import { LossCurve } from "./LossCurve";
 import { formatChance } from "./view";
 import { unitLabel, UNITS } from "@/game/army/units";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal, formatNumber } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
 
-const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatNumber(value));
+const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatAmount(value));
 
 /** « Pertes selon le TdC à l'arrivée »: the same hunts if the field has changed by the time they fight. */
 export function FieldTable({ rows, field }: { rows: FieldRow[]; field: number }) {
@@ -28,14 +28,14 @@ export function FieldTable({ rows, field }: { rows: FieldRow[]; field: number })
           {rows.map((row) => (
             <tr key={row.field} className={row.field === field ? "current" : undefined}>
               <th scope="row">
-                {formatNumber(row.field)} cm²{row.field === field && <span className="optizzz-muted"> (prévu)</span>}
+                {formatAmount(row.field)} cm²{row.field === field && <span className="optizzz-muted"> (prévu)</span>}
               </th>
-              <td>{formatNumber(row.difficulty)}</td>
+              <td>{formatAmount(row.difficulty)}</td>
               <td>{formatDecimal(row.ratio, 2)}</td>
               <td>{round1(row.lostUnits.mean)}</td>
-              <td>{formatNumber(row.lostUnits.p90)}</td>
+              <td>{formatAmount(row.lostUnits.p90)}</td>
               <td>
-                {formatNumber(row.lostUnits.max)}
+                {formatAmount(row.lostUnits.max)}
                 {row.winChance < 1 && (
                   <span className="optizzz-text-danger"> · échec {formatChance(1 - row.winChance)}</span>
                 )}
@@ -79,7 +79,7 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
               const promoted = UNITS.filter((unit) => (hunt.outcome.promoted[unit.key] ?? 0) >= 0.5)
                 .map(
                   (unit) =>
-                    `${formatNumber(hunt.outcome.promoted[unit.key] ?? 0)} ${unitLabel(unit.key)}→${unitLabel(unit.promotesTo ?? "")}`,
+                    `${formatAmount(hunt.outcome.promoted[unit.key] ?? 0)} ${unitLabel(unit.key)}→${unitLabel(unit.promotesTo ?? "")}`,
                 )
                 .join(", ");
               const { calystene } = hunt;
@@ -92,8 +92,8 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
                       : `${round1(calystene.min)} · ${round1(calystene.average)} · ${round1(calystene.max)} JSN`}
                   </td>
                   <td>
-                    {round1(hunt.outcome.lostUnits.mean)} · {formatNumber(hunt.outcome.lostUnits.p90)} ·{" "}
-                    {formatNumber(hunt.outcome.lostUnits.max)}
+                    {round1(hunt.outcome.lostUnits.mean)} · {formatAmount(hunt.outcome.lostUnits.p90)} ·{" "}
+                    {formatAmount(hunt.outcome.lostUnits.max)}
                   </td>
                   <td>{promoted || "—"}</td>
                 </tr>
@@ -114,7 +114,7 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
         <ul className="advice">
           {extras.laying.map((step) => (
             <li key={step.extra}>
-              Avec +{formatNumber(step.extra)} {step.unit} : {huntsText(step.plan)} (
+              Avec +{formatAmount(step.extra)} {step.unit} : {huntsText(step.plan)} (
               {signed(step.plan.totalAmount - advised.totalAmount)} cm²)
             </li>
           ))}
@@ -124,8 +124,8 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
       {advised && extras?.waiting && waitSeconds !== null && (
         <p className="optizzz-note">
           En attendant le retour des chasses en cours ({formatDuration(waitSeconds * 1000)}) :{" "}
-          {huntsText(extras.waiting.plan)}, soit {formatNumber(extras.waiting.fieldPerHour)} cm²/h attente comprise,
-          contre {formatNumber(advised.fieldPerHour)} cm²/h en lançant maintenant.
+          {huntsText(extras.waiting.plan)}, soit {formatAmount(extras.waiting.fieldPerHour)} cm²/h attente comprise,
+          contre {formatAmount(advised.fieldPerHour)} cm²/h en lançant maintenant.
         </p>
       )}
 
@@ -137,7 +137,7 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
   );
 }
 
-const signed = (value: number) => `${value >= 0 ? "+" : "−"}${formatNumber(Math.abs(value))}`;
+const signed = (value: number) => `${value >= 0 ? "+" : "−"}${formatAmount(Math.abs(value))}`;
 
 export function huntsText(plan: Plan): string {
   if (plan.hunts.length === 0) return "aucune chasse";

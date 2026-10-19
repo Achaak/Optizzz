@@ -7,6 +7,7 @@ import { AllianceHistory } from "@/features/history/AllianceHistory";
 import { HISTORY_HASH } from "@/features/history/menu";
 import { readMembersScores, readProfile } from "@/game/pages/scores";
 import { ProfileHistory } from "@/features/history/ProfileHistory";
+import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles, type Toggles } from "@/features/toggles";
 import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
 import "@/theme/theme.css";
@@ -106,6 +107,7 @@ export default defineContentScript({
   cssInjectionMode: "ui",
   async main(ctx) {
     const toggles = await loadToggles();
+    applyCompactNumbers(toggles);
     const allianceView = isEnabled(toggles, "history", "alliance");
     if (location.pathname === "/alliance.php") {
       if (allianceView) await mountAllianceView(ctx, toggles);

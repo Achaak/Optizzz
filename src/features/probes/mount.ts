@@ -11,7 +11,7 @@ import {
 } from "@/game/probes";
 import { probePlan, type ProbeTargets, type ProbesResult } from "@/data/probes";
 import { parseGameInteger } from "@/utils/game-number";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 
 const BOX_CLASS = "optizzz-probes";
 
@@ -32,13 +32,13 @@ const placeTitle = (place: Place) => PLACE_NAMES[place].replace(/^(le|la) /, "")
 
 /** « 10 JSN, 2 SN », or « aucune ». */
 const armyText = (army: Army) =>
-  UNITS.flatMap((unit, i) => ((army[i] ?? 0) > 0 ? [`${formatNumber(army[i] ?? 0)} ${unitLabel(unit.key)}`] : [])).join(
+  UNITS.flatMap((unit, i) => ((army[i] ?? 0) > 0 ? [`${formatAmount(army[i] ?? 0)} ${unitLabel(unit.key)}`] : [])).join(
     ", ",
   ) || "aucune";
 
 /** « 10 JSN du Terrain de chasse vers la Loge ». */
 const moveText = (move: ProbeMove) =>
-  `${formatNumber(move.count)} ${unitLabel(UNITS[move.unit]?.key ?? "")} ${PLACE_FROM[move.from]} vers ${PLACE_NAMES[move.to]}`;
+  `${formatAmount(move.count)} ${unitLabel(UNITS[move.unit]?.key ?? "")} ${PLACE_FROM[move.from]} vers ${PLACE_NAMES[move.to]}`;
 
 export interface ProbesPanel {
   armies: Record<Place, Army>;

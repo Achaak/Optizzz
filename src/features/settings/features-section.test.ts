@@ -12,7 +12,7 @@ const click = (input: HTMLInputElement | null) => {
 };
 
 describe("buildFeaturesSection", () => {
-  it("lists every feature and option, all on by default but the options marked offByDefault", () => {
+  it("lists every feature and option, all on by default but those marked offByDefault", () => {
     const section = buildFeaturesSection(document, {}, vi.fn());
     expect(section.textContent).toContain("Chantiers en cours");
     expect(section.textContent).toContain("Lanceur de chasse");
@@ -74,9 +74,19 @@ describe("buildFeaturesSection", () => {
       "alliance-sharing",
       "hunt-launcher",
       "safe-reload",
+      "compact-numbers",
+      "compact-numbers.game",
+      "compact-numbers.extension",
     ]);
-    expect(boxes.filter((box) => !box.checked).map((box) => box.dataset.toggle)).toEqual(["probes.field"]);
-    expect(boxes.every((box) => !box.disabled)).toBe(true);
+    expect(boxes.filter((box) => !box.checked).map((box) => box.dataset.toggle)).toEqual([
+      "probes.field",
+      "compact-numbers",
+    ]);
+    // The options of a feature off by default wait for it, ready to be on with it.
+    expect(boxes.filter((box) => box.disabled).map((box) => box.dataset.toggle)).toEqual([
+      "compact-numbers.game",
+      "compact-numbers.extension",
+    ]);
   });
 
   it("greys out the options of a switched-off feature and keeps their own state", () => {
@@ -121,10 +131,11 @@ describe("buildFeaturesSection", () => {
     const count = () => section.querySelector(".features-count")?.textContent;
     expect(count()).toMatch(/^\d+ sur \d+ activées$/);
     const [on, all] = (count() ?? "").split(" sur ").map((part) => parseInt(part, 10));
-    expect(on).toBe((all ?? 0) - 1);
+    // « Nombres arrondis » is off by default.
+    expect(on).toBe((all ?? 0) - 2);
 
     click(checkbox(section, "work-queue"));
-    expect(count()).toBe(`${String(all)} sur ${String(all)} activées`);
+    expect(count()).toBe(`${String((all ?? 0) - 1)} sur ${String(all)} activées`);
   });
 
   it("filters the features by name, description or option, accents aside", () => {

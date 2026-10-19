@@ -29,7 +29,7 @@ import { defaultFirstArrival, schedule } from "./schedule";
 import { readChainSettings, writeChainSettings } from "./settings";
 import { attackSlots } from "@/game/attack";
 import { distance, travelTime } from "@/game/travel";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber } from "@/utils/number-format";
 import { NumberField } from "@/utils/NumberField";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { formatDuration, formatEndTimeShort, fromParisParts, parisParts } from "@/utils/time-format";
@@ -267,12 +267,12 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
     const below = byId.get(gap.below)?.huntingField ?? 0;
     const above = byId.get(gap.above)?.huntingField ?? 0;
     const needed = bridge(below, above, MARGIN);
-    const start = gap.below === gap.from ? "" : `, au mieux jusqu'à ${pseudo(gap.below)} (${formatNumber(below)})`;
+    const start = gap.below === gap.from ? "" : `, au mieux jusqu'à ${pseudo(gap.below)} (${formatAmount(below)})`;
     const fix =
       "min" in needed
-        ? `il faudrait un passeur entre ${formatNumber(needed.min)} et ${formatNumber(needed.max)} cm²`
+        ? `il faudrait un passeur entre ${formatAmount(needed.min)} et ${formatAmount(needed.max)} cm²`
         : `il faudrait ${String(needed.passers)} passeurs`;
-    return `Pas de passage de ${pseudo(gap.from)} vers ${pseudo(gap.above)} (${formatNumber(above)})${start} : ${fix}.`;
+    return `Pas de passage de ${pseudo(gap.from)} vers ${pseudo(gap.above)} (${formatAmount(above)})${start} : ${fix}.`;
   };
 
   return (
@@ -334,7 +334,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                         </a>
                         {m.id === me.id && " (vous)"}
                       </td>
-                      <td>{formatNumber(m.huntingField)}</td>
+                      <td>{formatAmount(m.huntingField)}</td>
                       <td>
                         <select
                           value={roleKey(role)}
@@ -470,7 +470,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                 <option value="">—</option>
                 {ordered.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {pseudo(m.id)} ({formatNumber(m.field)})
+                    {pseudo(m.id)} ({formatAmount(m.field)})
                   </option>
                 ))}
               </select>
@@ -484,7 +484,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                 <option value="">—</option>
                 {ordered.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {pseudo(m.id)} ({formatNumber(m.field)})
+                    {pseudo(m.id)} ({formatAmount(m.field)})
                   </option>
                 ))}
               </select>
@@ -596,7 +596,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                         </td>
                         <td>{slot && formatEndTimeShort(slot.arrival, now)}</td>
                         <td>
-                          {formatNumber(hit.attackerAfter)} / {formatNumber(hit.targetAfter)}
+                          {formatAmount(hit.attackerAfter)} / {formatAmount(hit.targetAfter)}
                         </td>
                         <td>
                           {mine && (

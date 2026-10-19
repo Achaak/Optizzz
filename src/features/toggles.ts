@@ -1,9 +1,9 @@
 import { storage } from "wxt/utils/storage";
-import { featureCatalog, type FeatureId } from "./catalog";
+import { featureCatalog, type CatalogEntry, type FeatureId } from "./catalog";
 
 /**
  * Switches of « Fonctionnalités », keyed by feature id or `featureId.optionId`. Only a change from the default is
- * kept: a missing key means on, or off for an option marked `offByDefault`. Global (not per server) and synced: it is
+ * kept: a missing key means on, or off for a feature or an option marked `offByDefault`. Global (not per server) and synced: it is
  * the player's choice.
  */
 export type Toggles = Partial<Record<string, boolean>>;
@@ -12,17 +12,15 @@ export const TOGGLES_KEY = "sync:featureToggles";
 
 const toggleKey = (feature: FeatureId, option?: string) => (option ? `${feature}.${option}` : feature);
 
-const isOnByDefault = (feature: FeatureId, option?: string) =>
-  option === undefined ||
-  !featureCatalog
-    .find((entry) => entry.id === feature)
-    ?.options.some(
-      (candidate: { id: string; offByDefault?: true }) => candidate.id === option && candidate.offByDefault,
-    );
+const isOnByDefault = (feature: FeatureId, option?: string) => {
+  const entry: CatalogEntry | undefined = featureCatalog.find((candidate) => candidate.id === feature);
+  if (option === undefined) return !entry?.offByDefault;
+  return !entry?.options.some((candidate) => candidate.id === option && candidate.offByDefault);
+};
 
 /** An option is on only when its feature is on too. */
 export function isEnabled(toggles: Toggles, feature: FeatureId, option?: string): boolean {
-  if (toggles[feature] === false) return false;
+  if (!(toggles[feature] ?? isOnByDefault(feature))) return false;
   return option === undefined || (toggles[toggleKey(feature, option)] ?? isOnByDefault(feature, option));
 }
 

@@ -3,7 +3,7 @@ import { armyFromKeys, unitLabel, UNITS, type Army } from "@/game/army/units";
 import { inRange, maxTake } from "@/game/attack";
 import { planAttacks, type PlannedAttack } from "@/game/flood";
 import { keepProbes, PLACES, probeArmy, type ProbePlan } from "@/game/probes";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import { readArmyText } from "../combat-simulator/form";
 import { fillAttackForm, onAttackSent } from "./page";
@@ -58,7 +58,7 @@ export interface FloodContext {
 }
 
 const armyText = (army: Army) =>
-  UNITS.flatMap((unit, i) => ((army[i] ?? 0) > 0 ? [`${formatNumber(army[i] ?? 0)} ${unitLabel(unit.key)}`] : [])).join(
+  UNITS.flatMap((unit, i) => ((army[i] ?? 0) > 0 ? [`${formatAmount(army[i] ?? 0)} ${unitLabel(unit.key)}`] : [])).join(
     ", ",
   );
 
@@ -66,7 +66,7 @@ const total = (army: Army) => army.reduce((sum, count) => sum + count, 0);
 
 const sameArmy = (a: Army, b: Army) => UNITS.every((_, i) => (a[i] ?? 0) === (b[i] ?? 0));
 
-const plural = (count: number, word: string) => `${formatNumber(count)} ${word}${count > 1 ? "s" : ""}`;
+const plural = (count: number, word: string) => `${formatAmount(count)} ${word}${count > 1 ? "s" : ""}`;
 
 function element<K extends keyof HTMLElementTagNameMap>(doc: Document, tag: K, className = "", text = "") {
   const node = doc.createElement(tag);
@@ -202,8 +202,8 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     const probesKept = armyText(probeArmy(context.probes));
     const { travelSeconds } = context;
 
-    targetFact.textContent = `${formatNumber(targetLeft)} cm²`;
-    meFact.textContent = `${formatNumber(myField)} cm²`;
+    targetFact.textContent = `${formatAmount(targetLeft)} cm²`;
+    meFact.textContent = `${formatAmount(myField)} cm²`;
     slotsFact.textContent = String(slots);
     if (travelSeconds === null) {
       tripFact.textContent = "inconnu";
@@ -293,8 +293,8 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
         cell(row, armyText(attack.army));
         if (withLosses) cell(row, attack.lost ? armyText(attack.lost) || "aucune" : "");
         cell(row, formatNumber(attack.take), true);
-        cell(row, formatNumber(attack.targetAfter), true);
-        cell(row, formatNumber(attack.attackerAfter), true);
+        cell(row, formatAmount(attack.targetAfter), true);
+        cell(row, formatAmount(attack.attackerAfter), true);
         const fill = element(doc, "button", `${C}-fill`, isFilled ? "✓ Rempli" : "Remplir");
         fill.type = "button";
         fill.title = "Met ces unités dans le formulaire du jeu (TDC visé) : vous validez vous-même.";
@@ -312,8 +312,8 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     if (last) {
       cell(footRow, "Total").colSpan = withLosses ? 3 : 2;
       cell(footRow, `${formatNumber(planned.reduce((acc, attack) => acc + attack.take, 0))} cm²`, true);
-      cell(footRow, formatNumber(last.targetAfter), true);
-      cell(footRow, formatNumber(last.attackerAfter), true);
+      cell(footRow, formatAmount(last.targetAfter), true);
+      cell(footRow, formatAmount(last.attackerAfter), true);
       cell(footRow, plural(planned.length, "attaque"));
     }
     foot.replaceChildren(footRow);

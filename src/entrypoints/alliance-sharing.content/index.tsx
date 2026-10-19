@@ -5,6 +5,7 @@ import type { ContentScriptContext } from "wxt/utils/content-script-context";
 import { AllianceSharing } from "@/features/alliance-sharing/AllianceSharing";
 import { MY_STATE_HASH, SHARING_HASH } from "@/features/alliance-sharing/menu";
 import { MyState } from "@/features/alliance-sharing/MyState";
+import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles, type Toggles } from "@/features/toggles";
 import { readAllianceTag, readLoggedInPseudo, readMembersHuntingField } from "@/game/pages/alliance";
 import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
@@ -98,6 +99,7 @@ export default defineContentScript({
   cssInjectionMode: "ui",
   async main(ctx) {
     const toggles = await loadToggles();
+    applyCompactNumbers(toggles);
     if (!isEnabled(toggles, "alliance-sharing")) return;
     if (location.pathname.toLowerCase() === "/fourmiliere.php") await mountMyState(ctx);
     else await mountAllianceSharing(ctx, toggles);

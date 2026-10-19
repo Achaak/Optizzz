@@ -2,7 +2,7 @@
 import type { Alliance, Player } from "@/data/exports";
 import { sameTag } from "@/game/diplomacy";
 import { CHART_COLORS } from "@/theme";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { passesFilter, type ChipFilter } from "./filter";
 
 /** `unaffiliated`: every player without an alliance. */
@@ -60,14 +60,14 @@ export function searchSuggestions(
   const unaffiliatedScore = rank([UNAFFILIATED_LABEL], wanted);
   if (unaffiliatedScore !== null && !chosen(unaffiliated)) {
     const count = countUnaffiliated(players);
-    const detail = `${formatNumber(count)} joueur${count > 1 ? "s" : ""}`;
+    const detail = `${formatAmount(count)} joueur${count > 1 ? "s" : ""}`;
     found.push({ target: unaffiliated, label: UNAFFILIATED_LABEL, detail, score: unaffiliatedScore });
   }
   for (const alliance of alliances) {
     const score = rank([alliance.tag, alliance.name], wanted);
     const target = { kind: "alliance", tag: alliance.tag } as const;
     if (score === null || chosen(target)) continue;
-    const members = `${formatNumber(alliance.playersCount)} membre${alliance.playersCount > 1 ? "s" : ""}`;
+    const members = `${formatAmount(alliance.playersCount)} membre${alliance.playersCount > 1 ? "s" : ""}`;
     found.push({ target, label: alliance.tag, detail: `${alliance.name} · ${members}`, score });
   }
   for (const player of players) {

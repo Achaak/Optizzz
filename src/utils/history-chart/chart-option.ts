@@ -2,7 +2,7 @@
 import type { EChartsCoreOption } from "echarts/core";
 import { CHART_COLORS } from "@/theme";
 import { escapeHtml } from "@/utils/html";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber } from "@/utils/number-format";
 import { formatDateTime } from "@/utils/time-format";
 
 export interface Point {
@@ -42,7 +42,7 @@ export function buildHistoryOption(curves: readonly Curve[], compact: boolean): 
         `${param.marker}${escapeHtml(param.seriesName)} : <b>${formatNumber(param.data.value[1])}</b>`,
     },
     xAxis: { type: "time", axisLabel: { formatter: (value: number) => day.format(value), hideOverlap: true } },
-    yAxis: { type: "value", scale: true, axisLabel: { formatter: (value: number) => formatNumber(value) } },
+    yAxis: { type: "value", scale: true, axisLabel: { formatter: (value: number) => formatAmount(value) } },
     series: curves.map((curve) => ({
       type: "line",
       name: curve.name,

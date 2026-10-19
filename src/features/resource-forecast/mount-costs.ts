@@ -1,5 +1,5 @@
 // The forecast line added to each row of construction.php and laboratoire.php, under its description.
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { placeInRow } from "@/utils/row-extras";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import type { WorkQueue } from "@/game/pages/work-queue";
@@ -46,9 +46,9 @@ export function renderCostForecasts(
 function describe({ affordability, readyAt, blockedBy }: Forecast, now: Date, hourOnly: boolean): string | null {
   switch (affordability.kind) {
     case "workers":
-      return `Il manque ${formatNumber(affordability.missing)} ouvrières`;
+      return `Il manque ${formatAmount(affordability.missing)} ouvrières`;
     case "warehouse":
-      return `Entrepôt trop petit (capacité ${formatNumber(affordability.capacity)})`;
+      return `Entrepôt trop petit (capacité ${formatAmount(affordability.capacity)})`;
     case "never":
       return "Jamais au rythme actuel";
     case "now":
@@ -68,6 +68,6 @@ function describeMissing(state: ColonyState, cost: Cost, { affordability }: Fore
     return null;
   const missing = (["food", "materials"] as const)
     .filter((resource) => cost[resource] > state[resource])
-    .map((resource) => `${formatNumber(Math.ceil(cost[resource] - state[resource]))} ${RESOURCE_NAMES[resource]}`);
+    .map((resource) => `${formatAmount(Math.ceil(cost[resource] - state[resource]))} ${RESOURCE_NAMES[resource]}`);
   return missing.length ? `manque ${missing.join(", ")}` : null;
 }

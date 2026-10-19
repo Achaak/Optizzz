@@ -5,6 +5,7 @@ import { readOngoingHunts } from "@/features/hunt-launcher/pages";
 import "@/theme/theme.css";
 import "@/features/hunt-launcher/style.css";
 import { readStock } from "@/game/pages/resources";
+import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles } from "@/features/toggles";
 import { loadProbePlan } from "@/features/probes";
 
@@ -14,6 +15,7 @@ export default defineContentScript({
   cssInjectionMode: "ui",
   async main(ctx) {
     const toggles = await loadToggles();
+    applyCompactNumbers(toggles);
     if (!isEnabled(toggles, "hunt-launcher")) return;
     const anchor = document.querySelector<HTMLElement>("#boite_tdc");
     const stock = readStock(document);

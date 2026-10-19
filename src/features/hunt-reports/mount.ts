@@ -1,5 +1,5 @@
 import { unitLabel, UNITS, type Levels } from "@/game/army/units";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
 import {
   armyBalance,
@@ -31,18 +31,18 @@ const unbreakable = (text: string) => text.replace(/ /g, "\u00a0");
 
 const writeArmy = (sent: Record<string, number>) =>
   Object.entries(sent)
-    .map(([key, count]) => unbreakable(`${formatNumber(count)} ${unitLabel(key)}`))
+    .map(([key, count]) => unbreakable(`${formatAmount(count)} ${unitLabel(key)}`))
     .join(", ");
 
 /** The full names, for the cell's tooltip: the keys are short. */
 const armyNames = (sent: Record<string, number>) =>
   Object.entries(sent)
-    .map(([key, count]) => `${formatNumber(count)} ${UNITS.find((unit) => unit.key === key)?.name ?? key}`)
+    .map(([key, count]) => `${formatAmount(count)} ${UNITS.find((unit) => unit.key === key)?.name ?? key}`)
     .join(", ");
 
 const writePrey = (prey: Record<string, number>) =>
   Object.entries(prey)
-    .map(([name, count]) => unbreakable(`${formatNumber(count)} ${name}`))
+    .map(([name, count]) => unbreakable(`${formatAmount(count)} ${name}`))
     .join(", ");
 
 /** « 198 +1 blessée », the wounded muted: what the engine predicts; the reason when it cannot. */
@@ -50,7 +50,7 @@ function writePrediction(cell: HTMLElement, predicted: PredictedLosses | null, u
   if (unknown.length > 0) cell.textContent = `inconnu : ${unknown.join(", ")}`;
   else if (!predicted) cell.textContent = "—";
   else {
-    cell.textContent = formatNumber(predicted.dead);
+    cell.textContent = formatAmount(predicted.dead);
     if (predicted.wounded <= 0) return;
     const wounded = cell.ownerDocument.createElement("span");
     wounded.className = "optizzz-muted";
@@ -61,10 +61,10 @@ function writePrediction(cell: HTMLElement, predicted: PredictedLosses | null, u
 
 const writeUnits = (counts: Record<string, number>, sign = "") =>
   Object.entries(counts)
-    .map(([key, count]) => unbreakable(`${sign}${formatNumber(count)} ${unitLabel(key)}`))
+    .map(([key, count]) => unbreakable(`${sign}${formatAmount(count)} ${unitLabel(key)}`))
     .join(", ");
 
-const signed = (value: number) => `${value < 0 ? "−" : "+"}${formatNumber(Math.abs(value))}`;
+const signed = (value: number) => `${value < 0 ? "−" : "+"}${formatAmount(Math.abs(value))}`;
 
 /** What the fights cost and taught the army, in attack « hors bonus » and, when the speed is known, laying time. */
 function writeBalance(balance: ArmyBalance, layingSpeed: number | null): [string, string][] {
@@ -192,11 +192,11 @@ export function mountHuntReport(
           writeArmy(fight.sent),
           writePrey(fight.prey),
           // Written, not only coloured: the row's red alone is lost with a colour blindness.
-          `${off ? "⚠ " : ""}${formatNumber(fight.antsKilled)}`,
+          `${off ? "⚠ " : ""}${formatAmount(fight.antsKilled)}`,
           "",
-          formatNumber(fight.promoted),
-          formatNumber(fight.fieldWon),
-          formatNumber(fight.food),
+          formatAmount(fight.promoted),
+          formatAmount(fight.fieldWon),
+          formatAmount(fight.food),
         ]) {
           const td = doc.createElement("td");
           td.textContent = text;
@@ -215,18 +215,18 @@ export function mountHuntReport(
     const off = summary.offPrediction > 0;
     // Predicted total only when every fight has a prediction: a partial sum would read as a gap.
     const predictedDead = rows.every((row) => row.predicted)
-      ? formatNumber(rows.reduce((sum, row) => sum + (row.predicted?.dead ?? 0), 0))
+      ? formatAmount(rows.reduce((sum, row) => sum + (row.predicted?.dead ?? 0), 0))
       : "";
     const footer = doc.createElement("tr");
     for (const text of [
       `Total : ${String(summary.fights)} combat${summary.fights > 1 ? "s" : ""}${
-        expeditions !== null && expeditions > summary.fights ? ` affichés sur ${formatNumber(expeditions)}` : ""
+        expeditions !== null && expeditions > summary.fights ? ` affichés sur ${formatAmount(expeditions)}` : ""
       }${off ? ` · ⚠ ${String(summary.offPrediction)} loin du prévu` : ""}`,
-      formatNumber(summary.antsKilled),
+      formatAmount(summary.antsKilled),
       predictedDead,
-      formatNumber(promoted),
-      formatNumber(summary.fieldWon),
-      formatNumber(summary.food),
+      formatAmount(promoted),
+      formatAmount(summary.fieldWon),
+      formatAmount(summary.food),
     ]) {
       const td = doc.createElement("td");
       td.textContent = text;

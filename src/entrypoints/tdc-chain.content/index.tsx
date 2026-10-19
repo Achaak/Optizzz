@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { readLoggedInPseudo, readMembersHuntingField } from "@/game/pages/alliance";
 import { CHAIN_HASH } from "@/features/tdc-chain/menu";
 import { TdcChain } from "@/features/tdc-chain/TdcChain";
+import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles } from "@/features/toggles";
 import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
 import "@/theme/theme.css";
@@ -20,6 +21,7 @@ export default defineContentScript({
   cssInjectionMode: "ui",
   async main(ctx) {
     const toggles = await loadToggles();
+    applyCompactNumbers(toggles);
     if (!isEnabled(toggles, "tdc-chain")) return;
     if (location.search !== "?Membres") return;
     const allianceContent = document.querySelector<HTMLElement>("#alliance");

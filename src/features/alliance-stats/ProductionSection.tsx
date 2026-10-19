@@ -5,7 +5,7 @@ import { loadLevelsOf } from "@/data/levels";
 import { loadSharedStates, valueOf as sharedValueOf, type SharedStates } from "@/data/shared-states";
 import type { Scores } from "@/features/history/api";
 import { colonyTaxRate } from "@/game/production";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { allianceProduction, type Balance, type MemberProduction } from "./production";
 
 interface Props {
@@ -41,7 +41,7 @@ const sortValue = (row: MemberProduction, key: SortKey): number | string => {
 };
 
 /** « 1 234 », « ≥ 1 234 » when only the 20 % floor of the tax is known. */
-const amount = (value: number, exact: boolean) => `${exact ? "" : "≥ "}${formatNumber(value)}`;
+const amount = (value: number, exact: boolean) => `${exact ? "" : "≥ "}${formatAmount(value)}`;
 
 function BalanceLine({ label, balance, exact }: { label: string; balance: Balance; exact: boolean }) {
   return (
@@ -49,13 +49,13 @@ function BalanceLine({ label, balance, exact }: { label: string; balance: Balanc
       {label} :{" "}
       <b>
         {exact ? "" : "≈ "}
-        {formatNumber(balance.net)}
+        {formatAmount(balance.net)}
       </b>{" "}
       par jour
       {(balance.paid > 0 || balance.received > 0) && (
         <span className="optizzz-note">
           {" "}
-          ({formatNumber(balance.gross)} récoltés
+          ({formatAmount(balance.gross)} récoltés
           {balance.paid > 0 && <>, −{amount(balance.paid, exact)} de taxes payées hors de l'alliance</>}
           {balance.received > 0 && <>, +{amount(balance.received, exact)} touchées hors de l'alliance</>})
         </span>
@@ -170,9 +170,9 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
             Réel des membres aux ouvrières connues ({real.known} / {real.total}) :{" "}
             <b>
               {exact ? "" : "≈ "}
-              {formatNumber(real.net)}
+              {formatAmount(real.net)}
             </b>{" "}
-            par jour, pour un plafond de {formatNumber(real.ceiling)} chez eux
+            par jour, pour un plafond de {formatAmount(real.ceiling)} chez eux
             {real.ceiling > 0 && <> ({formatDecimal((real.gross / real.ceiling) * 100)} %)</>}
           </p>
         ) : (
@@ -207,11 +207,11 @@ export function ProductionSection({ origin, myTag, loggedInPseudo, myWorkers, me
                   <td>
                     <a href={`Membre.php?Pseudo=${encodeURIComponent(row.pseudo)}`}>{row.pseudo}</a>
                   </td>
-                  <td className="optizzz-num">{formatNumber(row.field)}</td>
-                  <td className="optizzz-num">{row.workers === null ? "—" : formatNumber(row.workers)}</td>
-                  <td className="optizzz-num">{formatNumber(row.ceiling)}</td>
+                  <td className="optizzz-num">{formatAmount(row.field)}</td>
+                  <td className="optizzz-num">{row.workers === null ? "—" : formatAmount(row.workers)}</td>
+                  <td className="optizzz-num">{formatAmount(row.ceiling)}</td>
                   <td className={`optizzz-num ${row.real !== null && row.real < row.ceiling ? "down" : ""}`}>
-                    {row.real === null ? "—" : formatNumber(row.real)}
+                    {row.real === null ? "—" : formatAmount(row.real)}
                   </td>
                   {taxes && (
                     <td className="optizzz-num">

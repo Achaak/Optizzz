@@ -4,6 +4,7 @@ import { serverMapUrl } from "@/features/server-map/open";
 import { loadLastServer } from "@/features/server-map/settings";
 import { loadNotificationSettings, setNotification } from "@/features/alerts/notification-settings";
 import { NOTIFICATIONS_PERMISSION, openGrantPage } from "@/features/alerts/permission";
+import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles, setToggle } from "@/features/toggles";
 import { buildWatchSummary, loadWatchSummaries, WATCH_SUMMARY_STYLE } from "@/features/watchlist/popup";
 import { watchlistPageUrl } from "@/features/watchlist/settings";
@@ -23,6 +24,8 @@ ${WATCH_SUMMARY_STYLE}`;
 document.head.append(style);
 
 const toggles = await loadToggles();
+
+applyCompactNumbers(toggles);
 const tabs = settingsTabs(
   browser.runtime.getManifest().version,
   navigator.userAgent,

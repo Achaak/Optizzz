@@ -1,5 +1,5 @@
 // The total of workers under the header's workers line (#boiteInfo), those carrying convoys included.
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { formatEndTime, formatPastTime } from "@/utils/time-format";
 import { setHeaderTip } from "@/utils/header-tip";
 import type { WorkersAway } from "./convoy";
@@ -30,7 +30,7 @@ export function renderConvoyWorkers(doc: Document, state: ConvoyWorkers, now: Da
   const away = state.away.reduce((sum, convoy) => sum + convoy.workers, 0);
   const line = doc.createElement("div");
   line.className = LINE_CLASS;
-  line.textContent = `Total ${formatNumber(state.atHome + away)} · ${formatNumber(away)} en convoi`;
+  line.textContent = `Total ${formatAmount(state.atHome + away)} · ${formatAmount(away)} en convoi`;
   setHeaderTip(line, tooltip(state, now));
   cell.append(line);
 }
@@ -39,7 +39,7 @@ function tooltip(state: ConvoyWorkers, now: Date): string {
   const lines = [
     "Ouvrières en convoi, de retour à l'arrivée :",
     ...state.away.map(
-      (convoy) => `${formatNumber(convoy.workers)} → ${convoy.recipient}, ${formatEndTime(convoy.backAt, now)}`,
+      (convoy) => `${formatAmount(convoy.workers)} → ${convoy.recipient}, ${formatEndTime(convoy.backAt, now)}`,
     ),
     "Comptées d'après les ressources portées.",
   ];

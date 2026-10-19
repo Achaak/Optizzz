@@ -6,6 +6,7 @@ import { allianceStatsMenu } from "./alliance-stats/menu";
 import { attacksOnWay } from "./attacks-on-way";
 import { combatReports } from "./combat-reports";
 import { combatSimulator } from "./combat-simulator";
+import { compactGamePages, compactNumbers } from "./compact-numbers";
 import { convoyHistory, convoyPlanner, convoyWorkers } from "./convoy";
 import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
@@ -29,6 +30,8 @@ import { workQueue } from "./work-queue";
 
 /** Registry of lightweight features, loaded on every page: register each new feature here. */
 export const features: Feature[] = [
+  // First: every other feature writes its numbers with what it sets.
+  compactNumbers,
   settingsMenu,
   // First: the others may read what it keeps.
   collect,
@@ -62,4 +65,6 @@ export const features: Feature[] = [
   watchlist,
   gameLevels,
   safeReload,
+  // Last: the game's numbers are shortened once the others have read the page.
+  compactGamePages,
 ];

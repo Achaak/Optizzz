@@ -6,7 +6,7 @@ import { parseGameDuration } from "@/game/pages/work-queue";
 import { HARVESTS_PER_DAY } from "@/game/forecast";
 import { workersNeeded } from "@/game/aphids";
 import { parseGameInteger } from "@/utils/game-number";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { formatEndTime, formatGameDuration } from "@/utils/time-format";
 
 const DAY = 24 * 60 * 60_000;
@@ -87,7 +87,7 @@ export function convoyMessage(
   now: Date,
 ): string {
   const left = convoy.arrivesAt.getTime() - now.getTime();
-  const load = `${formatNumber(convoy.food)} nourriture et ${formatNumber(convoy.materials)} matériaux`;
+  const load = `${formatAmount(convoy.food)} nourriture et ${formatAmount(convoy.materials)} matériaux`;
   const what = convoy.incoming ? `recevoir ${load} de` : `livrer ${load} à`;
   const sent = `Vous allez ${what} ${convoy.player}${left > 0 ? ` dans ${formatGameDuration(left)}` : ""}`;
   const line = `${sent} · arrivée ${formatEndTime(convoy.arrivesAt, now)}`;

@@ -5,6 +5,7 @@ import { AllianceBox } from "@/features/alliance-stats/AllianceBox";
 import { AllianceStats } from "@/features/alliance-stats/AllianceStats";
 import { STATS_HASH } from "@/features/alliance-stats/menu";
 import type { Scores } from "@/features/history/api";
+import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles, type Toggles } from "@/features/toggles";
 import { readAllianceTag, readLoggedInPseudo } from "@/game/pages/alliance";
 import { findAllianceRankingTable, readAllianceRanking, type AllianceRanking } from "@/game/pages/alliance-ranking";
@@ -136,6 +137,7 @@ export default defineContentScript({
   cssInjectionMode: "ui",
   async main(ctx) {
     const toggles = await loadToggles();
+    applyCompactNumbers(toggles);
     const statsView = isEnabled(toggles, "alliance-stats", "alliance");
     if (location.pathname === "/alliance.php") {
       if (statsView) await mountStatsView(ctx, toggles);

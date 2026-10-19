@@ -10,7 +10,7 @@ import {
 } from "@/data/shared-states";
 import { UNITS, unitLabel } from "@/game/army/units";
 import { BUILDINGS, RESEARCH } from "@/game/levels";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { NumberField } from "@/utils/NumberField";
 import { formatEndTime, formatPastTime } from "@/utils/time-format";
 import { memberRows, type MemberRow } from "./member-rows";
@@ -188,7 +188,7 @@ export function AllianceSharing({ origin, alliance, members, me }: Props) {
     }
     return (
       <td key={column.key} className={className} title={value?.manual ? "Saisi à la main" : undefined}>
-        {value ? `${formatNumber(value.value)}${marker}` : ""}
+        {value ? `${formatAmount(value.value)}${marker}` : ""}
       </td>
     );
   };
@@ -237,7 +237,7 @@ export function AllianceSharing({ origin, alliance, members, me }: Props) {
                 {memberCell(row)}
                 {cell(row, { key: "army", label: "Total" })}
                 {UNITS.map((unit) => (
-                  <td key={unit.key}>{units?.[unit.key] ? formatNumber(units[unit.key] ?? 0) : ""}</td>
+                  <td key={unit.key}>{units?.[unit.key] ? formatAmount(units[unit.key] ?? 0) : ""}</td>
                 ))}
                 <td>
                   {row.armyIncomplete && "incomplète"}

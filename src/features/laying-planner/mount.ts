@@ -1,4 +1,4 @@
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTime, formatEndTimeShort } from "@/utils/time-format";
 import type { Affordability, ColonyState } from "@/game/forecast";
 import {
@@ -51,7 +51,7 @@ export function settingsStore(initial: LayingSettings, save: (settings: LayingSe
   };
 }
 
-const signed = (value: number) => (value < 0 ? `−${formatNumber(-value)}` : `+${formatNumber(value)}`);
+const signed = (value: number) => (value < 0 ? `−${formatAmount(-value)}` : `+${formatAmount(value)}`);
 
 /** A tone said in bold as well as in colour (docs/design-system.md). */
 type Tone = "positive" | "waiting" | "negative";
@@ -72,7 +72,7 @@ function payable(affordability: Affordability, now: Date): { text: string; note?
         tone: "waiting",
       };
     case "warehouse":
-      return { text: "jamais", note: `entrepôt de ${formatNumber(affordability.capacity)}`, tone: "negative" };
+      return { text: "jamais", note: `entrepôt de ${formatAmount(affordability.capacity)}`, tone: "negative" };
     case "never":
     case "workers":
       return { text: "jamais", note: "au rythme actuel", tone: "negative" };
@@ -171,17 +171,17 @@ export function mountLayingPlan(
     const pay = payable(plan.affordability, now);
     summary.replaceChildren(
       tile(isPreview ? "Aperçu" : "Quantité", formatNumber(order.count)),
-      tile("Coût", formatNumber(order.food), "nourriture"),
+      tile("Coût", formatAmount(order.food), "nourriture"),
       tile("Payable", pay.text, pay.note, pay.tone),
       tile("Fin de ponte", plan.endsAt ? formatEndTimeShort(plan.endsAt, now) : "—"),
       plan.idleWorkers === null
         ? tile(
             "Bilan après",
             `${signed(plan.balanceAfter)} / j`,
-            `entretien ${formatNumber(plan.upkeepPerDay)} / j`,
+            `entretien ${formatAmount(plan.upkeepPerDay)} / j`,
             plan.balanceAfter < 0 ? "negative" : undefined,
           )
-        : tile("Sans travail", formatNumber(plan.idleWorkers), `TDC ${formatNumber(context.huntingField)}`),
+        : tile("Sans travail", formatAmount(plan.idleWorkers), `TDC ${formatAmount(context.huntingField)}`),
     );
   };
 

@@ -13,7 +13,7 @@ import {
   spotLabel,
   type LabelSpot,
 } from "@/utils/map-chart/labels";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
 import type { Chip } from "./selection";
 import { allianceCenters } from "./view";
@@ -59,7 +59,7 @@ function tooltipLines(player: Player, input: ServerMapInput, byId: ReadonlyMap<n
   const lines = [
     `<b>${escapeHtml(player.pseudo)}</b> (${String(player.x)} ; ${String(player.y)})`,
     player.alliance ? `Alliance : ${escapeHtml(player.alliance)}` : "Sans alliance",
-    `TDC : ${formatNumber(player.field)} cm²`,
+    `TDC : ${formatAmount(player.field)} cm²`,
     player.onHoliday ? "En vacances" : null,
     player.masterPlayerId !== null ? `Colonisé par ${master ? escapeHtml(master.pseudo) : "un joueur inconnu"}` : null,
   ];

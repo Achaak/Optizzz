@@ -9,7 +9,7 @@ import { HistoryChart } from "@/utils/history-chart/HistoryChart";
 import { averageSeries, periodProgress, playerSeries, type Progress } from "./series";
 import { readHistorySettings, writeHistorySettings } from "./settings";
 import { useHistory } from "./useHistory";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { ViewSwitch } from "@/utils/history-chart/ViewSwitch";
 
@@ -177,8 +177,8 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, 
               <td>
                 <a href={`Membre.php?Pseudo=${encodeURIComponent(row.pseudo)}`}>{row.pseudo}</a>
               </td>
-              <td className="optizzz-num">{row.progress ? formatNumber(row.progress.first) : "—"}</td>
-              <td className="optizzz-num">{row.progress ? formatNumber(row.progress.last) : "—"}</td>
+              <td className="optizzz-num">{row.progress ? formatAmount(row.progress.first) : "—"}</td>
+              <td className="optizzz-num">{row.progress ? formatAmount(row.progress.last) : "—"}</td>
               <td className={`optizzz-num ${row.progress && row.progress.gain < 0 ? "down" : ""}`}>
                 {row.progress ? formatGain(row.progress.gain) : "—"}
               </td>

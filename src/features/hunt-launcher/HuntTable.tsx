@@ -2,7 +2,7 @@ import type { Plan } from "./engine/planner";
 import { unitLabel, UNITS } from "@/game/army/units";
 import type { LaunchStatus } from "./launch";
 import type { ColumnKey } from "./settings";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal, formatNumber } from "@/utils/number-format";
 import { NumberField } from "@/utils/NumberField";
 import { formatEndTimeShort } from "@/utils/time-format";
 
@@ -43,7 +43,7 @@ const STATUS_TEXT: Record<LaunchStatus, string> = {
   failed: "✗ Refusée",
 };
 
-const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatNumber(value));
+const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatAmount(value));
 
 /** One row per hunt with its launch button, then the totals; surface and units can be changed, the hunt is simulated again. */
 export function HuntTable(props: Props) {
@@ -135,15 +135,15 @@ export function HuntTable(props: Props) {
                             }}
                           />
                         ) : (
-                          formatNumber(hunt.army[index] ?? 0)
+                          formatAmount(hunt.army[index] ?? 0)
                         )}
                       </td>
                     );
                   })}
-                  {columns.difficulty && <td>{formatNumber(hunt.difficulty)}</td>}
+                  {columns.difficulty && <td>{formatAmount(hunt.difficulty)}</td>}
                   {columns.ratio && <td>{formatDecimal(hunt.attack / hunt.difficulty, 2)}</td>}
                   {columns.meanLosses && <td>{round1(hunt.outcome.lostUnits.mean)}</td>}
-                  {columns.maxLosses && <td>{formatNumber(hunt.outcome.lostUnits.max)}</td>}
+                  {columns.maxLosses && <td>{formatAmount(hunt.outcome.lostUnits.max)}</td>}
                   {columns.returns && (
                     <td>{formatEndTimeShort(new Date(now.getTime() + hunt.durationSeconds * 1000), now)}</td>
                   )}
@@ -179,16 +179,16 @@ export function HuntTable(props: Props) {
                 <th scope="row" title="Total">
                   T
                 </th>
-                <td>{formatNumber(plan.totalAmount)} cm²</td>
+                <td>{formatAmount(plan.totalAmount)} cm²</td>
                 {units.map((unit) => (
-                  <td key={unit.key}>{formatNumber(sent[UNITS.indexOf(unit)] ?? 0)}</td>
+                  <td key={unit.key}>{formatAmount(sent[UNITS.indexOf(unit)] ?? 0)}</td>
                 ))}
-                {columns.difficulty && <td>{formatNumber(sum((hunt) => hunt.difficulty))}</td>}
+                {columns.difficulty && <td>{formatAmount(sum((hunt) => hunt.difficulty))}</td>}
                 {columns.ratio && (
                   <td>{formatDecimal(sum((hunt) => hunt.attack) / sum((hunt) => hunt.difficulty), 2)}</td>
                 )}
                 {columns.meanLosses && <td>{round1(sum((hunt) => hunt.outcome.lostUnits.mean))}</td>}
-                {columns.maxLosses && <td>{formatNumber(sum((hunt) => hunt.outcome.lostUnits.max))}</td>}
+                {columns.maxLosses && <td>{formatAmount(sum((hunt) => hunt.outcome.lostUnits.max))}</td>}
                 {columns.returns && (
                   <td>{formatEndTimeShort(new Date(now.getTime() + plan.durationSeconds * 1000), now)}</td>
                 )}

@@ -6,7 +6,7 @@ import { distance, travelTime } from "@/game/travel";
 import { SHAPE_SYMBOLS, type MemberBubble } from "@/features/tdc-chain/role-styles";
 import { roleLabel } from "@/features/tdc-chain/roles";
 import { CHART_COLORS } from "@/theme";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
 import { escapeHtml } from "@/utils/html";
 import { bounds, MAP_ZOOM, mapAxis, squareGrid } from "@/utils/map-chart/axes";
@@ -130,7 +130,7 @@ export function buildChartOption(
           `<b>${escapeHtml(m.pseudo)}</b> (${m.x} ; ${m.y})`,
           m.grade ? `Grade : ${escapeHtml(m.grade)}` : null,
           bubbles?.has(m.id) ? `Rôle dans la chaîne : ${roleLabel(bubbles.get(m.id)?.role ?? { kind: "out" })}` : null,
-          `TDC : ${formatNumber(m.huntingField)} cm²`,
+          `TDC : ${formatAmount(m.huntingField)} cm²`,
           m.onHoliday ? "En vacances" : null,
           m.masterPlayerId !== null ? "Colonisé" : null,
         ];

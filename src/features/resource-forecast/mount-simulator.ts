@@ -1,6 +1,6 @@
 // The harvest of Ressources.php, reworked: one panel to split the workers between food and materials, see what
 // each side yields per day and when food runs out or a warehouse fills up, then apply it through the game's form.
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber } from "@/utils/number-format";
 import { formatDuration } from "@/utils/time-format";
 import { parseGameInteger } from "@/utils/game-number";
 import { balancedFoodWorkers, HARVESTS_PER_DAY, outlook, withSplit, type ColonyState } from "@/game/forecast";
@@ -65,7 +65,7 @@ export const SIMULATOR_STYLE = `
 .${PANEL_CLASS}-game-form { display: block; margin-top: var(--optizzz-space-3); }`;
 
 const signed = (value: number) =>
-  Math.round(value) === 0 ? "0" : `${value < 0 ? "−" : "+"}${formatNumber(Math.abs(value))}`;
+  Math.round(value) === 0 ? "0" : `${value < 0 ? "−" : "+"}${formatAmount(Math.abs(value))}`;
 const percent = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
 
 /**
@@ -204,13 +204,13 @@ export function mountSimulator(doc: Document, state: ColonyState, assignable: nu
     );
     split.setAttribute(
       "aria-valuetext",
-      `${formatNumber(foodWorkers)} sur la nourriture, ${formatNumber(materialWorkers)} sur les matériaux`,
+      `${formatAmount(foodWorkers)} sur la nourriture, ${formatAmount(materialWorkers)} sur les matériaux`,
     );
     share("food", foodWorkers);
     share("materials", materialWorkers);
     idle.textContent =
       idleWorkers > 0
-        ? `${formatNumber(idleWorkers)} ouvrières sans travail : elles pourraient récolter, rien ne leur est attribué`
+        ? `${formatAmount(idleWorkers)} ouvrières sans travail : elles pourraient récolter, rien ne leur est attribué`
         : "";
 
     const simulated = { ...withSplit(state, foodWorkers, materialWorkers), newWorkersGoTo };
@@ -360,7 +360,7 @@ function changeSummary(
 ): string {
   const moves: string[] = [];
   const move = (label: string, from: number, to: number) => {
-    if (from !== to) moves.push(`${label} ${formatNumber(from)} → ${formatNumber(to)}`);
+    if (from !== to) moves.push(`${label} ${formatAmount(from)} → ${formatAmount(to)}`);
   };
   move("nourriture", state.foodWorkers, foodWorkers);
   move("matériaux", state.materialWorkers, materialWorkers);

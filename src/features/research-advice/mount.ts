@@ -1,7 +1,7 @@
 // The advice in the Armes and Bouclier Thoracique rows of laboratoire.php: a block in the description, folded to its
 // verdict. See docs/features/conseils-recherche.md.
 import { UNITS, type Army } from "@/game/army/units";
-import { formatDecimal, formatNumber as formatSpaced } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { placeInRow } from "@/utils/row-extras";
 import { formatDuration, formatPastTime } from "@/utils/time-format";
 import { researchAdvice, verdictOf, type Advice, type AdviceStat } from "./advice";
@@ -27,7 +27,8 @@ tr.ligneAmelioration:has(.optizzz-advice[open]) > td { vertical-align: top !impo
 .optizzz-advice-units tr.optizzz-advice-best td { font-weight: bold; }`;
 
 /** Numbers that never wrap in the middle: « 19 284 » stays on one line. */
-const formatNumber = (value: number) => formatSpaced(value).replace(/ /g, "\u00a0");
+// Shortened when the player wants it; never broken across lines.
+const formatNumber = (value: number) => formatAmount(value).replace(/ /g, "\u00a0");
 
 export type AdvisedResearch = "weapons" | "shield";
 

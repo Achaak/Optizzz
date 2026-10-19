@@ -3,7 +3,7 @@ import { nextDifficultyStep } from "./engine/difficulty";
 import type { RatioChoice } from "./engine/extras";
 import type { Plan } from "./engine/planner";
 import { unitLabel, UNITS } from "@/game/army/units";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal, formatNumber } from "@/utils/number-format";
 import { fromParisParts, parisParts } from "@/utils/time-format";
 
 /** A chance as a player reads it: 100 % and 0 % only when certain. */
@@ -18,7 +18,7 @@ export function formatChance(chance: number): string {
 /** « 1 000 JSN + 70 SN » */
 export function unitsText(army: Readonly<Record<string, number>>): string {
   const parts = UNITS.filter((unit) => (army[unit.key] ?? 0) > 0).map(
-    (unit) => `${formatNumber(army[unit.key] ?? 0)} ${unitLabel(unit.key)}`,
+    (unit) => `${formatAmount(army[unit.key] ?? 0)} ${unitLabel(unit.key)}`,
   );
   return parts.length > 0 ? parts.join(" + ") : "aucune unité";
 }
@@ -28,9 +28,9 @@ export function stepNotice(field: number, totalAmount: number): string {
   const step = nextDifficultyStep(field);
   const after = field + totalAmount;
   if (after >= step) {
-    return `Ces chasses font passer votre terrain au palier de ${formatNumber(step)} cm² : les suivantes seront 4 % plus difficiles.`;
+    return `Ces chasses font passer votre terrain au palier de ${formatAmount(step)} cm² : les suivantes seront 4 % plus difficiles.`;
   }
-  return `Prochain palier de difficulté à ${formatNumber(step)} cm² (encore ${formatNumber(step - after)} cm² après ces chasses).`;
+  return `Prochain palier de difficulté à ${formatAmount(step)} cm² (encore ${formatAmount(step - after)} cm² après ces chasses).`;
 }
 
 /** How the surface is split: « 2 × 115 cm² », « 120 + 118 cm² ». */
@@ -47,7 +47,7 @@ export function ratioOptionText(ratio: number, choice: RatioChoice | undefined):
   if (!choice) return name;
   if (choice.hunts === 0) return `${name} → aucune chasse possible`;
   const each = Math.floor(choice.totalAmount / choice.hunts);
-  return `${name} → réplique ${formatChance(choice.replyChance)}, pertes moy. ${formatNumber(choice.lostUnits)}, ${formatNumber(choice.totalAmount)} cm² (${String(choice.hunts)} × ${formatNumber(each)})`;
+  return `${name} → réplique ${formatChance(choice.replyChance)}, pertes moy. ${formatAmount(choice.lostUnits)}, ${formatAmount(choice.totalAmount)} cm² (${String(choice.hunts)} × ${formatAmount(each)})`;
 }
 
 /** « 15,8 % »: a share of something, one decimal. */

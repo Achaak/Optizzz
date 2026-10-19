@@ -24,6 +24,12 @@ describe("isEnabled", () => {
     expect(isEnabled({ probes: false, "probes.field": true }, "probes", "field")).toBe(false);
   });
 
+  it("leaves a feature marked offByDefault off, with its options, until it is switched on", () => {
+    expect(isEnabled({}, "compact-numbers")).toBe(false);
+    expect(isEnabled({}, "compact-numbers", "game")).toBe(false);
+    expect(isEnabled({ "compact-numbers": true }, "compact-numbers", "game")).toBe(true);
+  });
+
   it("switches one option off and keeps the others", () => {
     const toggles = { "resource-forecast.costs": false };
     expect(isEnabled(toggles, "resource-forecast", "costs")).toBe(false);

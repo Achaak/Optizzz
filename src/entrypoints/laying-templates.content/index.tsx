@@ -9,6 +9,7 @@ import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
 import { readSection } from "@/game/pages/end-times";
 import { readLayableUnits, readLayingSpeed } from "@/game/pages/queen";
 import { readStock } from "@/game/pages/resources";
+import { loadCompactNumbers } from "@/features/compact-numbers";
 import { isFeatureEnabled } from "@/features/toggles";
 
 export default defineContentScript({
@@ -17,6 +18,7 @@ export default defineContentScript({
   cssInjectionMode: "ui",
   async main(ctx) {
     if (!(await isFeatureEnabled("laying-templates"))) return;
+    await loadCompactNumbers();
     // The units' table, right after the laying queue.
     const anchor = document.querySelector("tr.ligneAmelioration")?.closest("table");
     const stock = readStock(document);

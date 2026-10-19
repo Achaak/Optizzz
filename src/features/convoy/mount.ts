@@ -1,4 +1,4 @@
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import { distance } from "@/game/travel";
 import { convoyMessage, planConvoy, readConvoysOnWay, recipients, type MapPlayer } from "./convoy";
@@ -38,7 +38,7 @@ const LIST_CLASS = "optizzz-convoys";
 function load(doc: Document, className: string, icon: Element | null, amount: number, name: string) {
   const image = icon?.cloneNode() ?? null;
   if (image instanceof HTMLImageElement) image.alt = "";
-  return span(doc, className, ...(image ? [image] : []), formatNumber(amount), span(doc, "optizzz-convoy-unit", name));
+  return span(doc, className, ...(image ? [image] : []), formatAmount(amount), span(doc, "optizzz-convoy-unit", name));
 }
 
 /**
@@ -173,8 +173,8 @@ export function mountConvoyPlanner(doc: Document, context: ConvoyContext, clock:
         lines.push({
           text:
             plan.workingTaken > 0
-              ? `${formatNumber(plan.workers)} ouvrières, dont ${formatNumber(plan.workingTaken)} au travail : ≈ ${formatNumber(plan.harvestLost)} de récolte perdue pendant le trajet`
-              : `${formatNumber(plan.workers)} ouvrières, toutes sans travail`,
+              ? `${formatAmount(plan.workers)} ouvrières, dont ${formatAmount(plan.workingTaken)} au travail : ≈ ${formatAmount(plan.harvestLost)} de récolte perdue pendant le trajet`
+              : `${formatAmount(plan.workers)} ouvrières, toutes sans travail`,
         });
         lines.push({ text: "Le surplus est perdu si ses entrepôts débordent.", note: true });
       }

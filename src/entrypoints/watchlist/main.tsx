@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { Watchlist } from "@/features/watchlist/Watchlist";
+import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles } from "@/features/toggles";
 import { closeOnEscapeWhenFramed } from "@/utils/page-dialog-frame";
 import "@/theme/theme.css";
@@ -12,6 +13,7 @@ if (query.has("embedded")) {
   closeOnEscapeWhenFramed();
 }
 const toggles = await loadToggles();
+applyCompactNumbers(toggles);
 
 function Page() {
   if (!isEnabled(toggles, "watchlist"))

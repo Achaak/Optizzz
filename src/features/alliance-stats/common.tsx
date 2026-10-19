@@ -1,7 +1,7 @@
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 
 /** A total as the game writes it, an average per member with one decimal. */
-export const formatValue = (value: number) => (Number.isInteger(value) ? formatNumber(value) : formatDecimal(value));
+export const formatValue = (value: number) => (Number.isInteger(value) ? formatAmount(value) : formatDecimal(value));
 
 /** « ▲2 » for places gained, « ▼1 » for places lost. */
 export const formatRankChange = (change: number) => `${change > 0 ? "▲" : "▼"}${String(Math.abs(change))}`;

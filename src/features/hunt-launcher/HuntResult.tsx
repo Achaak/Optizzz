@@ -1,7 +1,7 @@
 import type { Spread } from "./engine/evaluate";
 import type { Plan } from "./engine/planner";
 import { formatChance, formatShare, splitText, stepNotice } from "./view";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 
 interface Props {
@@ -36,7 +36,7 @@ const total = (plan: Plan, pick: (hunt: Plan["hunts"][number]) => Spread): Sprea
     { min: 0, mean: 0, p90: 0, max: 0 },
   );
 
-const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatNumber(value));
+const round1 = (value: number) => (value < 10 ? formatDecimal(value) : formatAmount(value));
 
 /** « Informations sur la chasse »: what the hunts conquer, when they are back and what they cost. */
 export function HuntResult({ plan, field, layingSpeed, wavesAsked, now }: Props) {
@@ -52,7 +52,7 @@ export function HuntResult({ plan, field, layingSpeed, wavesAsked, now }: Props)
       <dl className="facts">
         <div>
           <dt>TdC total chassé</dt>
-          <dd>{formatNumber(plan.totalAmount)} cm²</dd>
+          <dd>{formatAmount(plan.totalAmount)} cm²</dd>
         </div>
         <div>
           <dt>Durée de la chasse</dt>
@@ -68,11 +68,11 @@ export function HuntResult({ plan, field, layingSpeed, wavesAsked, now }: Props)
         </div>
         <div>
           <dt>Rentabilité</dt>
-          <dd>{formatNumber(plan.fieldPerHour * 24)} cm² / jour</dd>
+          <dd>{formatAmount(plan.fieldPerHour * 24)} cm² / jour</dd>
         </div>
         <div>
           <dt>Nourriture récoltée</dt>
-          <dd>{formatNumber(plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.food, 0))}</dd>
+          <dd>{formatAmount(plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.food, 0))}</dd>
         </div>
         <div>
           <dt>Ratio de votre chasse</dt>
@@ -80,7 +80,7 @@ export function HuntResult({ plan, field, layingSpeed, wavesAsked, now }: Props)
         </div>
         <div>
           <dt>Difficulté de la chasse</dt>
-          <dd>{formatNumber(difficulty)}</dd>
+          <dd>{formatAmount(difficulty)}</dd>
         </div>
         <div>
           <dt>Répartition</dt>

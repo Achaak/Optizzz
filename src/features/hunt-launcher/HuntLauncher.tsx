@@ -18,7 +18,7 @@ import { PlayerData } from "./PlayerData";
 import { SimpleView } from "./SimpleView";
 import { DEFAULT_SETTINGS, huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
 import { unitsText } from "./view";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber } from "@/utils/number-format";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 
@@ -269,7 +269,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
       <ul>
         {ongoing.map((hunt) => (
           <li key={hunt.id}>
-            +{formatNumber(hunt.fieldGain)} cm² · retour dans{" "}
+            +{formatAmount(hunt.fieldGain)} cm² · retour dans{" "}
             {formatDuration(Math.max(0, hunt.returnsAt.getTime() - now.getTime()))} (
             {formatEndTime(hunt.returnsAt, now)})
             {hunt.troops && <span className="optizzz-muted"> · {unitsText(hunt.troops)}</span>}
@@ -352,7 +352,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
           onClick={() => void launch(Math.max(0, firstPending), plan.hunts.length)}
         >
           {pendingCount === plan.hunts.length
-            ? `Lancer ${plan.hunts.length === 1 ? "la chasse" : `les ${String(plan.hunts.length)} chasses`} (${formatNumber(plan.totalAmount)} cm²${emptiesGarrison ? ", toute l'armée" : ""})`
+            ? `Lancer ${plan.hunts.length === 1 ? "la chasse" : `les ${String(plan.hunts.length)} chasses`} (${formatAmount(plan.totalAmount)} cm²${emptiesGarrison ? ", toute l'armée" : ""})`
             : `Lancer les ${String(pendingCount)} chasses restantes`}
         </button>
         {override && !frozen && (
@@ -563,5 +563,5 @@ function summaryText(plan: Plan | null, now: Date, computing: boolean): string {
   if (plan.hunts.length === 0) return "aucune chasse possible";
   const lost = plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.lostUnits.mean, 0);
   const back = formatEndTime(new Date(now.getTime() + plan.durationSeconds * 1000), now);
-  return `${huntsText(plan)} · +${formatNumber(plan.totalAmount)} cm² · retour ${back} · ≈ ${formatNumber(lost)} pertes`;
+  return `${huntsText(plan)} · +${formatAmount(plan.totalAmount)} cm² · retour ${back} · ≈ ${formatAmount(lost)} pertes`;
 }

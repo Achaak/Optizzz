@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import type { Place } from "@/game/army/battle";
 import { unitLabel, UNITS } from "@/game/army/units";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber } from "@/utils/number-format";
 import { NumberField } from "@/utils/NumberField";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 import { useStoredSettings } from "@/utils/useStoredSettings";
@@ -93,7 +93,7 @@ const layingCount = (plan: TemplatePlan) => plan.layings.length;
 
 function launchLabel(plan: TemplatePlan): string {
   const count = layingCount(plan);
-  return `Lancer ${String(count)} ponte${count > 1 ? "s" : ""} : ${formatNumber(unitsOf(plan))} unités, ${layingDuration(plan.duration)}, ${formatNumber(plan.food)} de nourriture`;
+  return `Lancer ${String(count)} ponte${count > 1 ? "s" : ""} : ${formatAmount(unitsOf(plan))} unités, ${layingDuration(plan.duration)}, ${formatAmount(plan.food)} de nourriture`;
 }
 
 /** Why a template cannot be launched, in words; null when it can. */
@@ -489,7 +489,7 @@ function TemplateEditor(props: {
           {shares
             ? `La répartition est faite ${String(template.rotations)} fois, l'une après l'autre : les unités alternent dans la file.`
             : `Les quantités sont celles d'une rotation, pondue ${String(template.rotations)} fois : les unités alternent dans la file.`}{" "}
-          {plan ? `${formatNumber(plan.layings.length)} pontes en tout.` : ""}
+          {plan ? `${formatAmount(plan.layings.length)} pontes en tout.` : ""}
         </p>
       )}
       {shares && (
@@ -568,7 +568,7 @@ function TemplateEditor(props: {
                       }}
                     />
                   </td>
-                  {showTotal && <td className="optizzz-num">{planned ? formatNumber(planned.count) : "—"}</td>}
+                  {showTotal && <td className="optizzz-num">{planned ? formatAmount(planned.count) : "—"}</td>}
                   <td className="optizzz-num">
                     {planned ? layingDuration(planned.duration) : "—"}
                     {planned?.tooLong && (
@@ -660,7 +660,7 @@ function TemplateSummary(props: {
       <div className="optizzz-stats">
         <div className="optizzz-stat">
           <span className="optizzz-stat-label">Nourriture</span>
-          <span className="optizzz-stat-value">{formatNumber(plan.food)}</span>
+          <span className="optizzz-stat-value">{formatAmount(plan.food)}</span>
         </div>
         <div className="optizzz-stat">
           <span className="optizzz-stat-label">Durée</span>
@@ -681,9 +681,9 @@ function TemplateSummary(props: {
         <div className="optizzz-stat">
           <span className="optizzz-stat-label">Bilan après</span>
           <span className={`optizzz-stat-value ${plan.balanceAfter < 0 ? "optizzz-text-danger" : ""}`}>
-            {formatNumber(Math.round(plan.balanceAfter))} / j
+            {formatAmount(Math.round(plan.balanceAfter))} / j
           </span>
-          <span className="optizzz-stat-note">entretien {formatNumber(Math.round(plan.upkeepPerDay))} / j</span>
+          <span className="optizzz-stat-note">entretien {formatAmount(Math.round(plan.upkeepPerDay))} / j</span>
         </div>
       </div>
       {plan.lines.some((line) => line.tooLong) && (

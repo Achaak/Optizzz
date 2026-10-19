@@ -1,7 +1,7 @@
 import type { Army } from "@/game/army/units";
 import { planAttacks } from "@/game/flood";
 import { afterOnWay, type OnWay } from "@/data/on-way";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal, formatNumber } from "@/utils/number-format";
 import { formatDuration, formatEndTimeShort } from "@/utils/time-format";
 import { WAR_LABELS, WAR_TITLES } from "@/game/diplomacy";
 import { listTargets, type Target, type TargetsInput } from "./targets";
@@ -262,14 +262,14 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
       alliance.title = target.diplomacy.description;
     }
 
-    cell(row, formatNumber(target.field), true);
+    cell(row, formatAmount(target.field), true);
     cell(row, `${String(Math.round(target.ratio * 100))} %`, true);
-    cell(row, formatNumber(target.takeMax), true).title =
+    cell(row, formatAmount(target.takeMax), true).title =
       `20 % de son TDC, 1 cm² par fourmi au plus : il faut au moins ${formatNumber(target.takeMax)} fourmis pour tout prendre.`;
     if (flood) {
       const taken = floodOf(target);
       const { slots } = afterOnWay(context.me.field, target, flood.onWay, flood.attackSpeed);
-      cell(row, taken === null ? "—" : formatNumber(taken), true).title =
+      cell(row, taken === null ? "—" : formatAmount(taken), true).title =
         taken === null
           ? "Votre armée ne suffit pas à écraser sa défense connue."
           : `Avec vos ${String(slots)} attaques possibles et votre armée, après les attaques en route${flood.defenses.has(target.id) ? ", sa défense connue comprise" : ", sans défense en face"}.`;

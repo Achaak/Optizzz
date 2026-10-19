@@ -5,7 +5,7 @@ import { sameName } from "@/game/levels";
 import { readTimedRows, type Cost } from "@/game/pages/resources";
 import { readWorkQueue } from "@/game/pages/work-queue";
 import { costGrowthOf, levelsAhead, LEVEL_TIME_GROWTH } from "@/game/speed-up";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { placeInRow } from "@/utils/row-extras";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
 
@@ -33,7 +33,7 @@ function describePaid(affordability: Affordability, now: Date): string {
     case "at":
       return formatEndTime(affordability.at, now);
     case "workers":
-      return `manque ${formatNumber(affordability.missing)} ouvrières`;
+      return `manque ${formatAmount(affordability.missing)} ouvrières`;
     case "warehouse":
       return "entrepôt trop petit";
     case "never":
@@ -86,7 +86,7 @@ export function renderLevelsAhead(
       const line = doc.createElement("tr");
       line.append(
         cell(doc, "td", String(done + ahead.levels), true),
-        ...resources.map(([resource]) => cell(doc, "td", formatNumber(ahead.cost[resource]), true)),
+        ...resources.map(([resource]) => cell(doc, "td", formatAmount(ahead.cost[resource]), true)),
         cell(doc, "td", formatDuration(ahead.duration), true),
         cell(doc, "td", describePaid(timeToAfford(state, ahead.cost, now), now)),
       );

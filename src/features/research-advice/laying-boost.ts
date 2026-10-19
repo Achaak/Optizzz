@@ -2,7 +2,7 @@
 // Laboratoire levels Technique de ponte needs included. See docs/features/conseils-recherche.md.
 import type { LevelCost } from "@/game/requirements";
 import { sameName } from "@/game/levels";
-import { formatDecimal, formatNumber as formatSpaced } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { placeInRow } from "@/utils/row-extras";
 
 export const LAYING_BOOST_STYLE = `
@@ -11,7 +11,8 @@ export const LAYING_BOOST_STYLE = `
 .optizzz-laying-boost-detail { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }`;
 
 /** Numbers never break at the end of a line. */
-const formatNumber = (value: number) => formatSpaced(value).replace(/ /g, "\u00a0");
+// Shortened when the player wants it; never broken across lines.
+const formatNumber = (value: number) => formatAmount(value).replace(/ /g, "\u00a0");
 const label = (boost: LevelCost) => `${boost.name} ${String(boost.level)}`;
 const amount = (boost: LevelCost) =>
   `${formatNumber(boost.total)}${boost.complete ? "" : " au moins"}${

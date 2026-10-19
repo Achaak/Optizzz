@@ -2,7 +2,7 @@ import type { Place } from "@/game/army/battle";
 import { unitLabel, UNITS } from "@/game/army/units";
 import { combatWeapons, readCombatConversation, type CombatReport, type Loot } from "@/game/pages/combat-reports";
 import { encodeOpponent, type Opponent } from "@/features/combat-simulator/form";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { htmlElement } from "@/utils/html";
 
 export const COMBAT_REPORT_STYLE = `
@@ -22,13 +22,13 @@ const unbreakable = (text: string) => text.replace(/ /g, "\u00a0");
 
 const writeArmy = (army: Record<string, number>) =>
   Object.entries(army)
-    .map(([key, count]) => unbreakable(`${formatNumber(count)} ${unitLabel(key)}`))
+    .map(([key, count]) => unbreakable(`${formatAmount(count)} ${unitLabel(key)}`))
     .join(", ");
 
 /** The full names, for the cell's tooltip: the keys are short. */
 const armyNames = (army: Record<string, number>) =>
   Object.entries(army)
-    .map(([key, count]) => `${formatNumber(count)} ${UNITS.find((unit) => unit.key === key)?.name ?? key}`)
+    .map(([key, count]) => `${formatAmount(count)} ${UNITS.find((unit) => unit.key === key)?.name ?? key}`)
     .join(", ");
 
 /** What the « Butin chez … » messages of the same minute say was taken from the same player. */
@@ -43,7 +43,7 @@ function lootOf(combat: CombatReport, loots: Loot[]): string | null {
   ];
   const written = parts
     .filter(([count]) => count > 0)
-    .map(([count, unit]) => unbreakable(`${formatNumber(count)} ${unit}`));
+    .map(([count, unit]) => unbreakable(`${formatAmount(count)} ${unit}`));
   return written.length > 0 ? written.join(", ") : "rien";
 }
 
@@ -130,14 +130,14 @@ export function mountCombatReport(conversation: Element, input: CombatReportInpu
         const theirs = cell(
           doc,
           writeArmy(combat.defenders),
-          `${unbreakable(`Pertes : ${formatNumber(combat.killed)}`)} · ${unbreakable(`Armes : ${weapons === null ? "?" : String(weapons)}`)}`,
+          `${unbreakable(`Pertes : ${formatAmount(combat.killed)}`)} · ${unbreakable(`Armes : ${weapons === null ? "?" : String(weapons)}`)}`,
         );
         theirs.title =
           armyNames(combat.defenders) +
           (weapons === null
             ? "\nArmes : trop peu de dégâts adverses pour lire leur bonus, il en faut au moins 10 de base."
             : "");
-        const mine = cell(doc, writeArmy(combat.attackers), unbreakable(`Pertes : ${formatNumber(combat.lost)}`));
+        const mine = cell(doc, writeArmy(combat.attackers), unbreakable(`Pertes : ${formatAmount(combat.lost)}`));
         mine.title = armyNames(combat.attackers);
         row.append(
           cell(doc, combat.date, combat.occupied ? `${place}, armée d'occupation` : place),

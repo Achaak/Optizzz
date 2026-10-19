@@ -1,7 +1,7 @@
 // The « Production max » row under « Etat » on Membre.php. See docs/features/production-profil.md.
 import { BASE_COLONY_TAX, estimateProduction } from "@/game/production";
 import { findProfileStateRow } from "@/game/pages/scores";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 
 /**
  * Marks the row. Not an `optizzz-` class: the theme pads the cells of any `[class*="optizzz-"]` block, and the row
@@ -19,28 +19,28 @@ tr[${PRODUCTION_ROW_ATTRIBUTE}], tr[data-optizzz-colonies] { cursor: help; }
 /** The colony tax: none (free anthill), known (master's aphid stable, or my own Ressources.php), or only its floor. */
 export type ColonyTax = { kind: "none" } | { kind: "known"; rate: number } | { kind: "atLeast" };
 
-const percent = (rate: number) => `${formatNumber(Math.round(rate * 100))} %`;
+const percent = (rate: number) => `${formatAmount(Math.round(rate * 100))} %`;
 
 /** The row's figure (« par jour » follows it), in bold as the game's values; the tax detail, muted; the tooltip. */
 export function productionText(field: number, tax: ColonyTax): { value: string; detail: string | null; title: string } {
   const basis =
     "TDC × 48 : une ouvrière au travail par cm², qui rapporte 48 ressources par jour. Sans la champignonnière.";
   if (tax.kind === "none") {
-    return { value: `≈ ${formatNumber(estimateProduction(field, 0).gross)}`, detail: null, title: basis };
+    return { value: `≈ ${formatAmount(estimateProduction(field, 0).gross)}`, detail: null, title: basis };
   }
   const rate = tax.kind === "known" ? tax.rate : BASE_COLONY_TAX;
   const { gross, net } = estimateProduction(field, rate);
   const taxRule = "Le maître prend 20 % plus 1 % par niveau de son Étable à pucerons.";
   if (tax.kind === "known") {
     return {
-      value: `≈ ${formatNumber(net)}`,
-      detail: `taxe de ${percent(rate)} déduite, ${formatNumber(gross)} avant`,
+      value: `≈ ${formatAmount(net)}`,
+      detail: `taxe de ${percent(rate)} déduite, ${formatAmount(gross)} avant`,
       title: `${basis}\n${taxRule}`,
     };
   }
   return {
-    value: `≤ ${formatNumber(net)}`,
-    detail: `taxe d'au moins ${percent(rate)} déduite, ${formatNumber(gross)} avant`,
+    value: `≤ ${formatAmount(net)}`,
+    detail: `taxe d'au moins ${percent(rate)} déduite, ${formatAmount(gross)} avant`,
     title: `${basis}\n${taxRule} Le niveau de son étable n'est pas connu : la taxe peut être plus forte.`,
   };
 }
@@ -92,7 +92,7 @@ export function coloniesText(colonies: readonly Colony[]): { value: string; deta
   );
   const count = colonies.length;
   return {
-    value: `${exact ? "≈" : "≥"} ${formatNumber(amount)}`,
+    value: `${exact ? "≈" : "≥"} ${formatAmount(amount)}`,
     detail: `${String(count)} colonie${count > 1 ? "s" : ""}, sur ${count > 1 ? "leur" : "son"} TDC du dernier export`,
     title:
       "La taxe prise sur la production max de chaque colonie (TDC × 48) : 20 % plus 1 % par niveau de l'Étable à " +

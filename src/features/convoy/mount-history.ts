@@ -1,5 +1,5 @@
 import type { ConvoyHistory } from "@/data/convoy-history";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { formatDateTime, formatPastTime } from "@/utils/time-format";
 import type { Copy } from "@/utils/on-way-list";
 import { convoySummaryText, summarizeConvoys, type ConvoyLoad, type PlayerConvoys } from "./history";
@@ -56,8 +56,8 @@ function part(doc: Document, title: string, none: string, players: PlayerConvoys
     first.append(name);
     tr.append(
       first,
-      el(doc, "td", "optizzz-num", formatNumber(load.food)),
-      el(doc, "td", "optizzz-num", formatNumber(load.materials)),
+      el(doc, "td", "optizzz-num", formatAmount(load.food)),
+      el(doc, "td", "optizzz-num", formatAmount(load.materials)),
     );
     return tr;
   };

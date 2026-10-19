@@ -15,7 +15,7 @@ import {
   type WatchKey,
 } from "@/data/watchlist";
 import { sameTag } from "@/game/diplomacy";
-import { formatDecimal, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal } from "@/utils/number-format";
 import { formatDuration, formatPastTime } from "@/utils/time-format";
 import type { JournalEntry } from "./changes";
 import { describeChange, describeWhen } from "./describe";
@@ -46,7 +46,7 @@ function useReadings(host: string) {
 }
 
 const signed = (value: number) =>
-  value > 0 ? `+${formatNumber(value)}` : value < 0 ? `−${formatNumber(-value)}` : "0";
+  value > 0 ? `+${formatAmount(value)}` : value < 0 ? `−${formatAmount(-value)}` : "0";
 
 function Gap({ gap }: { gap: PlayerRow["gap"] }) {
   if (!gap) return <>—</>;
@@ -303,7 +303,7 @@ export function Watchlist({ origin }: Props) {
                           {row.onHoliday && <span className="optizzz-muted"> · en vacances</span>}
                         </td>
                         <td>{row.alliance ?? <span className="optizzz-muted">—</span>}</td>
-                        <td className="optizzz-num">{row.field === null ? "—" : formatNumber(row.field)}</td>
+                        <td className="optizzz-num">{row.field === null ? "—" : formatAmount(row.field)}</td>
                         <td className="optizzz-num">
                           <Gap gap={row.gap} />
                         </td>
@@ -355,8 +355,8 @@ export function Watchlist({ origin }: Props) {
                           </a>
                           {row.gone && <span className="optizzz-text-danger"> · n'existe plus</span>}
                         </td>
-                        <td className="optizzz-num">{row.members === null ? "—" : formatNumber(row.members)}</td>
-                        <td className="optizzz-num">{row.field === null ? "—" : formatNumber(row.field)}</td>
+                        <td className="optizzz-num">{row.members === null ? "—" : formatAmount(row.members)}</td>
+                        <td className="optizzz-num">{row.field === null ? "—" : formatAmount(row.field)}</td>
                         <td className="optizzz-num">
                           <Gap gap={row.gap} />
                         </td>

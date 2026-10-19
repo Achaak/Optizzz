@@ -1,7 +1,7 @@
 import { Fragment, useId, useMemo, useState } from "react";
 import { NumberField } from "@/utils/NumberField";
 import type { Alliance, Player } from "@/data/exports";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount, formatNumber } from "@/utils/number-format";
 import {
   attackableBounds,
   FILTER_LABELS,
@@ -170,7 +170,7 @@ export function ChipBar({
           ? "Sans alliance ajoutés"
           : unaffiliated === 0
             ? "Personne sans alliance"
-            : `+ Sans alliance (${formatNumber(unaffiliated)})`}
+            : `+ Sans alliance (${formatAmount(unaffiliated)})`}
       </button>
       <ul className="chips optizzz-chips">
         {chips.map((chip) => {
@@ -282,7 +282,7 @@ function FilterEditor(props: {
       </div>
       <div className="footer">
         <span className="optizzz-note">
-          {formatNumber(kept)} joueur{kept > 1 ? "s" : ""} sur {formatNumber(all.length)}
+          {formatAmount(kept)} joueur{kept > 1 ? "s" : ""} sur {formatAmount(all.length)}
         </span>
         <button type="button" disabled={!isFiltering(chip.filter)} onClick={() => onChange({})}>
           Effacer

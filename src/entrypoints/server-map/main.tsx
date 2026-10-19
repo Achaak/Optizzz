@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { ServerMap } from "@/features/server-map/ServerMap";
 import { decodeTarget } from "@/features/server-map/open";
 import { loadLastServer } from "@/features/server-map/settings";
+import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles } from "@/features/toggles";
 import { closeOnEscapeWhenFramed } from "@/utils/page-dialog-frame";
 import "@/theme/theme.css";
@@ -16,6 +17,7 @@ if (embedded) {
   closeOnEscapeWhenFramed();
 }
 const toggles = await loadToggles();
+applyCompactNumbers(toggles);
 
 function Page() {
   if (!isEnabled(toggles, "server-map")) {

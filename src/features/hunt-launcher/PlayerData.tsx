@@ -1,7 +1,7 @@
 import type { HuntLevels } from "@/data/levels";
 import { armyToKeys, UNITS } from "@/game/army/units";
 import { probeArmy, type ProbePlan } from "@/game/probes";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { NumberField } from "@/utils/NumberField";
 import { unitsText } from "./view";
 
@@ -99,7 +99,7 @@ export function PlayerData({ read, levels, onLevel, layingSpeed, available, rese
                   onSend(unit.key, max);
                 }}
               >
-                ({formatNumber(max)} max)
+                ({formatAmount(max)} max)
               </button>
             </label>
           );

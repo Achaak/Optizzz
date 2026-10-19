@@ -5,7 +5,7 @@ import { UNITS, WORKER_LAYING_SECONDS } from "@/game/army/units";
 import { dailyBalance, timeToAfford, type Affordability, type ColonyState } from "@/game/forecast";
 import { parseGameDuration } from "@/game/pages/work-queue";
 import { parseGameInteger } from "@/utils/game-number";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { formatEndTimeShort, fromParisParts, parisParts } from "@/utils/time-format";
 import type { LayingSettings } from "./settings";
 
@@ -276,7 +276,7 @@ export function layingShortcuts(input: ShortcutInput): ShortcutGroup[] {
           label: "jusqu'au TDC",
           count: cap(-idle),
           title: "Une ouvrière par cm² de TDC, file de ponte comprise : au-delà, elles ne récoltent rien.",
-          empty: `TDC plein, ${formatNumber(Math.max(0, idle))} sans travail`,
+          empty: `TDC plein, ${formatAmount(Math.max(0, idle))} sans travail`,
         },
       ],
     });

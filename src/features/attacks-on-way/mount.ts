@@ -8,7 +8,7 @@ import {
   type ReinforcementLine,
 } from "@/features/flood/attacks";
 import { readTroops, unitLabel } from "@/game/army/units";
-import { formatNumber } from "@/utils/number-format";
+import { formatAmount } from "@/utils/number-format";
 import { ON_WAY_STYLE, renderOnWayList, span, type Copy, type OnWayItem } from "@/utils/on-way-list";
 
 const LIST_CLASS = "optizzz-attacks";
@@ -23,7 +23,7 @@ function shortTroops(troops: string): string {
   const list = troopList(troops);
   const read = Object.entries(readTroops(list));
   if (read.length !== list.split(",").length) return list;
-  return read.map(([key, count]) => `${formatNumber(count)} ${unitLabel(key)}`).join(", ");
+  return read.map(([key, count]) => `${formatAmount(count)} ${unitLabel(key)}`).join(", ");
 }
 
 function details(doc: Document, place: string | null, troops: string | null): Node[] {
