@@ -1,6 +1,6 @@
 // Hunt fights of an opened « Chasses » conversation (messagerie.php). Structure: docs/research/fourmizzz-pages.md.
 import { fight as replayFight } from "@/game/army/combat";
-import { PREYS } from "@/game/army/prey";
+import { PREYS, preyIndexOf } from "@/game/army/prey";
 import { armyFromKeys, parseCounts, unitKeyOf, UNITS, type Levels } from "@/game/army/units";
 import { parseGameInteger } from "@/utils/game-number";
 
@@ -18,6 +18,8 @@ export interface HuntFight {
   damageTaken: number;
   antsKilled: number;
   promoted: number;
+  /** Promoted ants by the unit key they were (« 54 Jeunes Soldates Naines sont devenues… » → { JSN: 54 }). */
+  promotions: Record<string, number>;
   won: boolean;
   fieldWon: number;
   food: number;
@@ -44,9 +46,10 @@ export function readFight(date: string, text: string): HuntFight | null {
   );
   if (!sent || !prey || !dealt || !taken) return null;
 
-  let promoted = 0;
-  for (const [, count] of flat.matchAll(new RegExp(`- ${NUMBER} \\D+? sont devenues des`, "g"))) {
-    promoted += parseGameInteger(count);
+  const promotions: Record<string, number> = {};
+  for (const [, count, name] of flat.matchAll(new RegExp(`- ${NUMBER} (\\D+?) sont devenues des`, "g"))) {
+    const key = unitKeyOf(name ?? "") ?? name ?? "";
+    promotions[key] = (promotions[key] ?? 0) + parseGameInteger(count);
   }
   return {
     date,
@@ -57,7 +60,8 @@ export function readFight(date: string, text: string): HuntFight | null {
     preyKilled: parseGameInteger(dealt[3]),
     damageTaken: parseGameInteger(taken[1]),
     antsKilled: parseGameInteger(taken[2]),
-    promoted,
+    promoted: Object.values(promotions).reduce((sum, count) => sum + count, 0),
+    promotions,
     won: flat.includes("Vous avez gagné"),
     fieldWon: parseGameInteger(new RegExp(`conquis ${NUMBER} cm²`).exec(flat)?.[1]),
     food: parseGameInteger(new RegExp(`rapportent ${NUMBER}`).exec(flat)?.[1]),
@@ -76,9 +80,7 @@ export function readConversation(conversation: Element): HuntFight[] {
 /** Units and prey of the report the engine does not know: replaying the fight without them would be wrong. */
 export function unknownEntries(huntFight: HuntFight): string[] {
   const units = Object.keys(huntFight.sent).filter((key) => !UNITS.some((unit) => unit.key === key));
-  const prey = Object.keys(huntFight.prey).filter(
-    (name) => !PREYS.some((candidate) => candidate.plural === name || candidate.name === name),
-  );
+  const prey = Object.keys(huntFight.prey).filter((name) => preyIndexOf(name) === -1);
   return [...units, ...prey];
 }
 
@@ -91,7 +93,11 @@ export const expeditionCount = (title: string): number | null => {
 /** The fight replayed by the engine. Weapons come from the report's bonus; the shield is the one remembered now. */
 export function predictLosses(huntFight: HuntFight, levels: Pick<Levels, "shield" | "cochineal">): PredictedLosses {
   const weapons = huntFight.attackBase > 0 ? Math.round((huntFight.attackBonus / huntFight.attackBase) * 10) : 0;
-  const pack = PREYS.map((prey) => huntFight.prey[prey.plural] ?? huntFight.prey[prey.name] ?? 0);
+  const pack = PREYS.map(() => 0);
+  for (const [name, count] of Object.entries(huntFight.prey)) {
+    const i = preyIndexOf(name);
+    if (i >= 0) pack[i] = (pack[i] ?? 0) + count;
+  }
   const result = replayFight(armyFromKeys(huntFight.sent), pack, { weapons, ...levels });
   const sum = (counts: number[]) => counts.reduce((total, count) => total + count, 0);
   const dead = sum(result.reportedDead);
@@ -130,8 +136,6 @@ export interface Summary {
   antsKilled: number;
   fieldWon: number;
   food: number;
-  /** cm² per ant killed in the reports (the wounded the engine predicts are not in the reports); null without. */
-  fieldPerAntKilled: number | null;
   offPrediction: number;
 }
 
@@ -144,7 +148,62 @@ export function summarize(rows: { fight: HuntFight; predicted: PredictedLosses |
     antsKilled,
     fieldWon,
     food: total((row) => row.food),
-    fieldPerAntKilled: antsKilled > 0 ? fieldWon / antsKilled : null,
     offPrediction: rows.filter((row) => row.predicted && isOffPrediction(row.fight, row.predicted)).length,
   };
+}
+
+/** What the fights did to the army: ants lost and promoted, in attack « hors bonus » and in laying time. */
+export interface ArmyBalance {
+  /** Dead ants by unit key: the report gives only their number, they are taken from the front line first. */
+  dead: Record<string, number>;
+  /** Laying time of the dead before the player's bonuses: multiply by the laying speed. */
+  deadLayingSeconds: number;
+  /** Attack « hors bonus » of the dead. */
+  deadAttack: number;
+  /** Promoted ants by the unit key they became. */
+  promoted: Record<string, number>;
+  /** Attack « hors bonus » the promotions add. */
+  promotedAttack: number;
+}
+
+const unitOf = (key: string) => UNITS.find((unit) => unit.key === key);
+
+/** In a hunt, the prey hit our units in `UNITS` order: the dead are the first ones of the army sent. */
+function deadByUnit(huntFight: HuntFight): Record<string, number> {
+  const dead: Record<string, number> = {};
+  let left = huntFight.antsKilled;
+  for (const unit of UNITS) {
+    const count = Math.min(left, huntFight.sent[unit.key] ?? 0);
+    if (count <= 0) continue;
+    dead[unit.key] = count;
+    left -= count;
+  }
+  return dead;
+}
+
+export function armyBalance(fights: HuntFight[]): ArmyBalance {
+  const balance: ArmyBalance = { dead: {}, deadLayingSeconds: 0, deadAttack: 0, promoted: {}, promotedAttack: 0 };
+  for (const huntFight of fights) {
+    for (const [key, count] of Object.entries(deadByUnit(huntFight))) {
+      const unit = unitOf(key);
+      balance.dead[key] = (balance.dead[key] ?? 0) + count;
+      balance.deadLayingSeconds += count * (unit?.layingSeconds ?? 0);
+      balance.deadAttack += count * (unit?.attack ?? 0);
+    }
+    for (const [key, count] of Object.entries(huntFight.promotions)) {
+      const from = unitOf(key);
+      const to = from?.promotesTo ? unitOf(from.promotesTo) : undefined;
+      if (!from || !to) continue;
+      balance.promoted[to.key] = (balance.promoted[to.key] ?? 0) + count;
+      balance.promotedAttack += count * (to.attack - from.attack);
+    }
+  }
+  // Promotions in UNITS order, whatever order the fights wrote them in.
+  balance.promoted = Object.fromEntries(
+    UNITS.flatMap((unit) => {
+      const count = balance.promoted[unit.key];
+      return count ? [[unit.key, count] as const] : [];
+    }),
+  );
+  return balance;
 }

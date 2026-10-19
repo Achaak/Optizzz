@@ -38,3 +38,15 @@ export const PREYS: readonly Prey[] = [
 
 /** Prey counts in `PREYS` order. */
 export type Pack = readonly number[];
+
+/** A prey's name compared loosely: reports drop accents (« Lezards ») and may write it singular or plural. */
+const looseName = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLowerCase();
+
+/** Index in `PREYS` of a prey as a report writes it; -1 when unknown. */
+export const preyIndexOf = (name: string): number =>
+  PREYS.findIndex((prey) => looseName(prey.plural) === looseName(name) || looseName(prey.name) === looseName(name));

@@ -1,5 +1,6 @@
 import type { Levels } from "@/game/army/units";
 import type { Feature } from "../feature";
+import { loadLaying } from "@/data/laying";
 import { loadLevels } from "@/data/levels";
 import { HUNT_REPORT_STYLE, mountHuntReport } from "./mount";
 import { expeditionCount } from "./report";
@@ -34,6 +35,16 @@ export const huntReports: Feature = {
         return null;
       }));
 
+    // The laying speed turns the losses into laying time; null when Reine.php cannot be read.
+    let layingSpeed: Promise<number | null> | undefined;
+    const getLayingSpeed = () =>
+      (layingSpeed ??= loadLaying(location.origin, new Date())
+        .then((laying) => laying?.speed ?? null)
+        .catch((error: unknown) => {
+          console.warn("[Optizzz] hunt reports: laying speed unknown", error);
+          return null;
+        }));
+
     const mounted = new WeakMap<Element, { report: MountedReport; count: number }>();
     const pending = new WeakSet<Element>();
     const scan = () => {
@@ -50,12 +61,13 @@ export const huntReports: Feature = {
           continue;
         }
         pending.add(conversation);
-        void getLevels().then((read) => {
+        void Promise.all([getLevels(), getLayingSpeed()]).then(([read, speed]) => {
           const report = mountHuntReport(
             conversation,
             read,
             (text) => navigator.clipboard.writeText(text),
             expeditionCount(headerOf(conversation)?.textContent ?? ""),
+            speed,
           );
           mounted.set(conversation, { report, count: report.messageCount() });
           pending.delete(conversation);

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { HUNT_REPORT_LINES } from "@/game/army/__fixtures__/hunt-reports";
 import conversationHtml from "./__fixtures__/conversation.html?raw";
 import {
+  armyBalance,
   expeditionCount,
   predictLosses,
   readConversation,
@@ -40,6 +41,7 @@ describe("readConversation", () => {
       damageTaken: 56,
       antsKilled: 4,
       promoted: 5,
+      promotions: { JSN: 5 },
       won: true,
       fieldWon: 118,
       food: 794,
@@ -66,6 +68,28 @@ describe("readFight", () => {
     });
   });
 });
+
+// 19/10/26 11h19 on s5, reported by a player: the game writes « Lezards » without its accent.
+const LIZARD_HUNT = `Troupes en attaque : 5 754 Jeunes Soldates Naines, 1 225 Soldates Naines, 235 Naines d’Elites,
+  8 942 Jeunes Soldates, 1 737 Soldates, 2 863 Artilleuses, 137 Artilleuses d’élites, 178 Soldates d’élites.
+  Troupes en défense : 108 Petites araignées, 764 Araignées, 14 Lezards.
+  Vous infligez 235 464 (+ 164 825) dégâts et tuez 886 ennemies.
+  L’ennemie inflige 2 572 (+ 0) dégâts à vos fourmis et en tue 200.
+  Écrasante victoire ! A peine le temps de se dégourdir les pattes qu’ils étaient tous morts ...
+  Vous avez gagné cette bataille !
+  Les unités survivantes ont appris de cette bataille :
+  - 54 Jeunes Soldates Naines sont devenues des Soldates Naines
+  - 12 Soldates Naines sont devenues des Naines d’Elites
+  - 88 Jeunes Soldates sont devenues des Soldates
+  - 17 Soldates sont devenues des Soldates d’élites
+  - 28 Artilleuses sont devenues des Artilleuses d’élites
+  Vos chasseuses ont conquis 6 115 cm², les carcasses des prédateurs vous rapportent 40 028`;
+
+const lizardHunt = () => {
+  const read = readFight("19/10/26 11h19", LIZARD_HUNT);
+  if (!read) throw new Error("fixture");
+  return read;
+};
 
 describe("toReportLine", () => {
   it("writes the line format of the research fixtures, without player names", () => {
@@ -95,7 +119,6 @@ describe("summarize", () => {
       antsKilled: 9,
       fieldWon: 240,
       food: 1614,
-      fieldPerAntKilled: 240 / 9,
       offPrediction: 1,
     });
   });
@@ -109,6 +132,31 @@ describe("unknownEntries", () => {
     expect(
       unknownEntries({ ...fight, sent: { ...fight.sent, Dragons: 3 }, prey: { ...fight.prey, Licornes: 1 } }),
     ).toEqual(["Dragons", "Licornes"]);
+  });
+
+  it("knows the prey the game writes without its accent", () => {
+    expect(unknownEntries(lizardHunt())).toEqual([]);
+    expect(predictLosses(lizardHunt(), { shield: 6, cochineal: 0 }).dead).toBeGreaterThan(0);
+  });
+});
+
+describe("armyBalance", () => {
+  it("weighs the dead and the promoted in attack « hors bonus » and laying time", () => {
+    expect(lizardHunt().promotions).toEqual({ JSN: 54, SN: 12, JS: 88, S: 17, A: 28 });
+    expect(armyBalance([lizardHunt()])).toEqual({
+      // 200 dead, all from the front line: the young dwarves.
+      dead: { JSN: 200 },
+      deadLayingSeconds: 200 * 300,
+      deadAttack: 600,
+      promoted: { SN: 54, NE: 12, S: 88, SE: 17, AE: 28 },
+      // 54 × 2 + 12 × 2 + 88 × 5 + 17 × 9 + 28 × 5.
+      promotedAttack: 865,
+    });
+  });
+
+  it("takes the dead from the next units once the front line is gone", () => {
+    const fight = { ...lizardHunt(), sent: { JSN: 150, SN: 100 }, antsKilled: 200, promotions: {} };
+    expect(armyBalance([fight, fight]).dead).toEqual({ JSN: 300, SN: 100 });
   });
 });
 
