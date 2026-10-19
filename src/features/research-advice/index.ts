@@ -10,6 +10,7 @@ import { LAYING_BOOST_STYLE, mountLayingBoost } from "./laying-boost";
 import { readLevelRows } from "@/game/pages/level-rows";
 import { loadPlayersExport } from "@/data/exports";
 import { readLoggedInPseudo } from "@/game/pages/alliance";
+import { readColonies } from "@/game/pages/colonies";
 import { convoysOutdated, loadConvoys, refreshConvoys } from "@/data/convoys";
 import { loadStoredLevels } from "@/data/levels";
 import { spareWorkers } from "@/game/aphids";
@@ -188,17 +189,27 @@ export const layingBoostAdvice: Feature = {
   },
 };
 
-/** The TDC of my colonies, from the last public export; null when unknown. */
+/**
+ * The TDC of my colonies: the ones colonies.php lists now (the export lags behind a colony taken or freed), their TDC
+ * from the last public export; the export's own list when colonies.php does not answer. Null when unknown.
+ */
 async function loadColonyFields(origin: string): Promise<number[] | null> {
   const me = readLoggedInPseudo(document);
-  const players = me
-    ? await loadPlayersExport(origin).then(
-        (data) => data.players,
-        () => null,
-      )
-    : null;
+  const [players, page] = me
+    ? await Promise.all([
+        loadPlayersExport(origin).then(
+          (data) => data.players,
+          () => null,
+        ),
+        fetchGamePage(`${origin}/colonies.php`).catch(() => null),
+      ])
+    : [null, null];
   const self = players?.find((player) => player.pseudo === me);
   if (!players || !self) return null;
+  if (page) {
+    const names = new Set(readColonies(page).colonies.map((colony) => colony.pseudo.toLowerCase()));
+    return players.filter((player) => names.has(player.pseudo.toLowerCase())).map((player) => player.field);
+  }
   return players.filter((player) => player.masterPlayerId === self.id).map((player) => player.field);
 }
 

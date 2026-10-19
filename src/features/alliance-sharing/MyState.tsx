@@ -18,6 +18,7 @@ const PAGES: Record<keyof MyPages, string> = {
   laboratory: "/laboratoire.php",
   army: "/Armee.php",
   resources: "/Ressources.php",
+  colonies: "/colonies.php",
 };
 
 /** Read when the view opens and on « Actualiser »: the player asked for them, never in the background. */

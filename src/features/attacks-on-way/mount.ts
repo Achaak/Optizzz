@@ -1,7 +1,13 @@
-import { gameAttackText, readAttackLines, type AttackLine } from "@/features/flood/attacks";
+import {
+  gameAttackText,
+  readAttackLines,
+  readReinforcementLines,
+  type AttackLine,
+  type ReinforcementLine,
+} from "@/features/flood/attacks";
 import { readTroops, unitLabel } from "@/game/army/units";
 import { formatNumber } from "@/utils/number-format";
-import { ON_WAY_STYLE, renderOnWayList, span, type Copy } from "@/utils/on-way-list";
+import { ON_WAY_STYLE, renderOnWayList, span, type Copy, type OnWayItem } from "@/utils/on-way-list";
 
 const LIST_CLASS = "optizzz-attacks";
 
@@ -29,42 +35,83 @@ function details(doc: Document, attack: AttackLine): Node[] {
   return nodes;
 }
 
+function attackItem(doc: Document, attack: AttackLine): OnWayItem {
+  return {
+    to: attack.targetElement?.cloneNode(true) ?? doc.createTextNode(attack.target),
+    details: details(doc, attack),
+    arrivesAt: attack.arrivesAt,
+    notes: [],
+    message: () => gameAttackText(attack),
+    copyTitle: "Copier cette attaque telle que le jeu l'écrit",
+    cancel: attack.cancel,
+  };
+}
+
+/** Troops coming home, « Des renforts arrivent » for the game: the army of a colony called back or freed. */
+function reinforcementItem(doc: Document, line: ReinforcementLine): OnWayItem {
+  return {
+    to: doc.createTextNode("Renforts"),
+    returning: true,
+    details: [span(doc, "optizzz-attacks-troops", "votre armée qui rentre (d'une colonie)")],
+    arrivesAt: line.arrivesAt,
+    notes: [],
+    message: () => `Des renforts arrivent dans ${line.countdown.textContent.replace(/\s+/g, " ").trim()}`,
+    copyTitle: "Copier ce retour tel que le jeu l'écrit",
+  };
+}
+
 /**
- * The attacks on their way on Armee.php or the attack form: the game's lines give way to a list with a live countdown, the arrival
- * time, the place and troops (Compte+), the game's « Annuler » link while it is offered, and a button that copies each
- * attack as the game writes it. The game's lines
- * stay in the page, folded away (read as the game wrote them). Returns a function that stops the countdown.
+ * The attacks on their way on Armee.php or the attack form, and the troops coming home: the game's lines give way to
+ * a list with a live countdown, the arrival time, the place and troops (Compte+), the game's « Annuler » link while it
+ * is offered, and a button that copies each line as the game writes it. The game's lines stay in the page, folded
+ * away (read as the game wrote them). Returns a function that stops the countdown.
  */
 export function renderAttacksOnWay(doc: Document, clock: () => Date, copy: Copy): () => void {
-  const attacks = readAttackLines(doc, clock());
+  const now = clock();
+  const attacks = readAttackLines(doc, now);
+  const reinforcements = readReinforcementLines(doc, now);
   const title = [...doc.querySelectorAll("#centre h3")].find((h3) => h3.textContent.includes("Attaque(s) en cours"));
-  if (attacks.length === 0 || !title || doc.querySelector(`.${LIST_CLASS}`)) return () => undefined;
+  const lines = [
+    ...attacks.map((attack) => ({ countdown: attack.countdown, item: attackItem(doc, attack) })),
+    ...reinforcements.map((line) => ({ countdown: line.countdown, item: reinforcementItem(doc, line) })),
+  ].sort((a, b) => (a.countdown.compareDocumentPosition(b.countdown) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+  if (lines.length === 0 || !title || doc.querySelector(`.${LIST_CLASS}`)) return () => undefined;
 
   const { list, stop } = renderOnWayList(
     doc,
     LIST_CLASS,
-    attacks.map((attack) => ({
-      to: attack.targetElement?.cloneNode(true) ?? doc.createTextNode(attack.target),
-      details: details(doc, attack),
-      arrivesAt: attack.arrivesAt,
-      notes: [],
-      message: () => gameAttackText(attack),
-      copyTitle: "Copier cette attaque telle que le jeu l'écrit",
-      cancel: attack.cancel,
-    })),
+    lines.map((line) => line.item),
     clock,
     copy,
   );
 
-  // Everything the game writes for its attacks, up to the next block: text, spans, scripts, line breaks, notes.
+  // The game's lines for the attacks listed above, folded away. A line Optizzz does not read stays where the game
+  // wrote it, under the list.
   const folded = doc.createElement("div");
   folded.className = "optizzz-attacks-game";
   folded.hidden = true;
-  while (title.nextSibling) {
-    const node = title.nextSibling;
-    if (node instanceof Element && !["SPAN", "SCRIPT", "BR", "SMALL"].includes(node.tagName)) break;
-    folded.append(node);
+  const countdowns = new Set<Node>(lines.map((line) => line.countdown));
+  for (const line of gameLines(title)) {
+    if (line.some((node) => countdowns.has(node))) folded.append(...line);
   }
   title.after(list, folded);
   return stop;
+}
+
+/**
+ * What the game writes under the title, up to the next block (text, spans, scripts, line breaks, notes), cut into its
+ * lines: each one starts with the « - » that follows a line break (not the « - » before « Annuler »).
+ */
+function gameLines(title: Element): ChildNode[][] {
+  const lines: ChildNode[][] = [];
+  let afterBreak = true;
+  for (let node = title.nextSibling; node; node = node.nextSibling) {
+    if (node instanceof Element && !["SPAN", "SCRIPT", "BR", "SMALL"].includes(node.tagName)) break;
+    const text = node.nodeType === Node.TEXT_NODE ? node.textContent?.trim() : null;
+    if ((afterBreak && text?.startsWith("-")) || lines.length === 0) lines.push([]);
+    lines.at(-1)?.push(node);
+    if (node instanceof Element) afterBreak = node.tagName === "BR";
+    else if (text) afterBreak = false;
+  }
+  return lines;
 }

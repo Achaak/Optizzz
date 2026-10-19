@@ -13,6 +13,8 @@ Lire d'un coup d'œil les attaques parties, et pouvoir en coller une (Discord de
 - **« Annuler »** : tant que le jeu le propose (un temps après l'envoi), son lien passe dans la ligne de l'attaque, à côté de « Copier ».
 - **Bouton « Copier »** : l'attaque telle que le jeu l'écrit, avec son décompte au moment du clic, puis la note Compte+ ligne par ligne : « Vous allez attaquer X(TAG) (Terrain de chasse) dans 3 heures 14 minutes 54 secondes », « Troupes en attaques : 4 047 Jeunes Soldates Naines. », « Arrivée à 19h54 ». Sans Compte+, la première ligne seule.
 - Les lignes du jeu restent dans la page, repliées dans un bloc masqué : le Plan de flood, le partage d'alliance et le décompte du jeu les lisent comme avant.
+- **Renforts** (2026-10-19) : les troupes qui rentrent d'une colonie (« Rappeler l'armée » ou « Libérer la colonie » sur `colonies.php`), que le jeu écrit « - Des renforts arrivent dans 42m 36s » sans cible ni troupes, ont leur ligne « ← Renforts · votre armée qui rentre (d'une colonie) », avec décompte et heure d'arrivée, à leur place parmi les attaques ; « Copier » donne la phrase du jeu. Avant, un joueur de S1 ne voyait plus son armée rentrer : la ligne était repliée avec ses floods.
+- Une ligne du jeu qu'Optizzz ne lit pas reste visible, sous la liste, telle que le jeu l'écrit.
 - Rien n'est chargé : tout vient de la page.
 
 ## Code

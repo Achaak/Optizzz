@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import armeeS5Html from "@/features/flood/__fixtures__/armee-attacks-s5.html?raw";
+import reinforcementsHtml from "@/features/flood/__fixtures__/armee-reinforcements-s2.html?raw";
 import attackFormHtml from "@/features/flood/__fixtures__/attack-form.html?raw";
 import { readAttacksOnWay } from "@/features/flood/attacks";
 import { renderAttacksOnWay } from "./mount";
@@ -46,6 +47,65 @@ describe("renderAttacksOnWay", () => {
     expect(folded?.textContent).toContain("Vous allez attaquer");
     expect(folded?.querySelectorAll("small")).toHaveLength(2);
     expect(readAttacksOnWay(doc, now).map((attack) => attack.target)).toEqual(["Cible_1", "Cible_2"]);
+  });
+
+  it("lists troops coming home (« Des renforts arrivent »), alone or after the attacks, in the game's order", () => {
+    const alone = new DOMParser().parseFromString(reinforcementsHtml, "text/html");
+    stops.push(
+      renderAttacksOnWay(
+        alone,
+        () => now,
+        () => Promise.resolve(),
+      ),
+    );
+    const row = alone.querySelector(".optizzz-attacks .optizzz-on-way-row");
+    expect(row?.querySelector(".optizzz-on-way-to")?.textContent).toBe("← Renforts");
+    expect(row?.querySelector(".optizzz-on-way-left")?.textContent).toBe("dans 42m 36s");
+    expect(row?.querySelector(".optizzz-on-way-when")?.textContent).toBe("arrivée aujourd'hui 17 h 21");
+    expect(alone.querySelector<HTMLElement>(".optizzz-attacks-game")?.textContent).toContain("Des renforts arrivent");
+
+    const { rows } = (() => {
+      const doc = new DOMParser().parseFromString(armeeS5Html, "text/html");
+      const line = new DOMParser().parseFromString(reinforcementsHtml, "text/html").querySelector("h3");
+      const block: ChildNode[] = [];
+      for (let node = line?.nextSibling ?? null; node; node = node.nextSibling) block.push(node);
+      doc.querySelector("#centre > center")?.append(...block.map((node) => doc.importNode(node, true)));
+      stops.push(
+        renderAttacksOnWay(
+          doc,
+          () => now,
+          () => Promise.resolve(),
+        ),
+      );
+      return { rows: [...doc.querySelectorAll(".optizzz-attacks .optizzz-on-way-row")] };
+    })();
+    expect(rows.map((r) => r.querySelector(".optizzz-on-way-to")?.textContent)).toEqual([
+      "→ Cible_1(TAG)",
+      "→ Cible_2",
+      "← Renforts",
+    ]);
+  });
+
+  it("leaves a line it does not read where the game wrote it, such as troops coming home", () => {
+    // Markup not yet seen: troops coming home after freeing a colony must not vanish with the attacks.
+    const doc = new DOMParser().parseFromString(armeeS5Html, "text/html");
+    const back = new DOMParser().parseFromString(
+      '- Vos troupes rentrent dans <span class="gras" id="retour_1">1 heure</span><script>reste(3600, "retour_1");</script><br />',
+      "text/html",
+    ).body;
+    doc.querySelector("#centre > center")?.append(...[...back.childNodes].map((node) => doc.importNode(node, true)));
+    stops.push(
+      renderAttacksOnWay(
+        doc,
+        () => now,
+        () => Promise.resolve(),
+      ),
+    );
+    expect(doc.querySelectorAll(".optizzz-attacks .optizzz-on-way-row")).toHaveLength(2);
+    const countdown = doc.querySelector("#retour_1");
+    expect(countdown?.closest("[hidden]")).toBeNull();
+    expect(countdown?.previousSibling?.textContent).toContain("Vos troupes rentrent");
+    expect(doc.querySelector(".optizzz-attacks-game")?.textContent).not.toContain("rentrent");
   });
 
   it("keeps the game's « Annuler » link in the row of the attack it cancels, while the game offers it", () => {

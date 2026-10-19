@@ -101,7 +101,7 @@ const TITLE =
   "en convoi et 1 % au pillage d'une fourmilière (au plus 1 ressource par point d'attaque survivant ; non chiffré, il " +
   "dépend de vos cibles).\n" +
   "Ouvrières libres : celles de la fourmilière et celles parties en convoi, moins une par cm² de TDC, qui récolte.\n" +
-  "Gain par jour : 1 % de la production max de chaque colonie (TDC × 48, export public du jeu) ; une colonie qui " +
+  "Gain par jour : 1 % de la production max de chaque colonie (colonies de la page Colonies, TDC × 48 d'après l'export public du jeu) ; une colonie qui " +
   "manque d'ouvrières rapporte moins, d'où « au moins ».\n" +
   "Coût : nourriture et matériaux additionnés, avec les niveaux requis de Communication avec les animaux et du " +
   "Laboratoire, comptés en entier bien que le Laboratoire serve aussi aux autres recherches. Les ouvrières ne sont " +

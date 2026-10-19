@@ -10,6 +10,8 @@ export interface OnWayItem {
   to: Node;
   /** Coming to me rather than going: « ← de X » in place of « → X ». */
   incoming?: boolean;
+  /** My own troops coming home: « ← X ». */
+  returning?: boolean;
   /** What it carries, between the recipient and the time. */
   details: Node[];
   arrivesAt: Date;
@@ -104,7 +106,7 @@ export function renderOnWayList(
     const row = doc.createElement("div");
     row.className = "optizzz-on-way-row";
     row.append(
-      span(doc, "optizzz-on-way-to", item.incoming ? "← de " : "→ ", item.to),
+      span(doc, "optizzz-on-way-to", item.incoming ? "← de " : item.returning ? "← " : "→ ", item.to),
       span(doc, "optizzz-on-way-details", ...item.details),
       span(doc, "optizzz-on-way-time", left, when),
       span(doc, "optizzz-on-way-actions", ...(item.cancel ? [item.cancel] : []), copyButton(doc, item, clock, copy)),

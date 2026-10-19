@@ -29,12 +29,7 @@ export interface AttackLine extends AttackOnWay {
  * <script>reste(559, "attaque_N")</script> - <a href="/Armee.php?annuler=N">Annuler</a><br><small><em>Troupes en attaques : … <br>Arrivée à 19h54</em></small> ».
  */
 export function readAttackLines(doc: Document, now: Date): AttackLine[] {
-  const seconds = new Map<string, number>();
-  for (const script of doc.querySelectorAll("#centre script")) {
-    for (const [, left, id] of script.textContent.matchAll(/reste\((\d+),\s*"(attaque_\d+)"\)/g)) {
-      if (id) seconds.set(id, Number(left));
-    }
-  }
+  const seconds = countdownSeconds(doc);
   return [...doc.querySelectorAll<HTMLElement>("#centre span[id^='attaque_']")].flatMap((countdown) => {
     const left = seconds.get(countdown.id);
     // The target's link is in the bold span just before « dans ».
@@ -62,12 +57,44 @@ export function readAttackLines(doc: Document, now: Date): AttackLine[] {
   });
 }
 
+/** Troops coming home, which the game calls reinforcements (after the army of a colony was called back or freed). */
+export interface ReinforcementLine {
+  arrivesAt: Date;
+  /** The game's countdown, `span#attaque_N`, kept up to date by the game. */
+  countdown: HTMLElement;
+}
+
+/**
+ * « - Des renforts arrivent dans <span id="attaque_N">42m 36s </span><br><script>reste(2556, "attaque_N")</script> »
+ * (S2, 2026-10-19, after « Rappeler l'armée » on colonies.php): no target, the same countdown ids as the attacks.
+ */
+export function readReinforcementLines(doc: Document, now: Date): ReinforcementLine[] {
+  const seconds = countdownSeconds(doc);
+  return [...doc.querySelectorAll<HTMLElement>("#centre span[id^='attaque_']")].flatMap((countdown) => {
+    const left = seconds.get(countdown.id);
+    const before = countdown.previousSibling?.nodeType === Node.TEXT_NODE ? countdown.previousSibling.textContent : "";
+    if (left === undefined || !/renforts arrivent\s+dans\s*$/i.test(before ?? "")) return [];
+    return [{ arrivesAt: new Date(now.getTime() + left * 1000), countdown }];
+  });
+}
+
+/** The game's `reste(<seconds>, "attaque_N")` calls, by countdown id. */
+function countdownSeconds(doc: Document): Map<string, number> {
+  const seconds = new Map<string, number>();
+  for (const script of doc.querySelectorAll("#centre script")) {
+    for (const [, left, id] of script.textContent.matchAll(/reste\((\d+),\s*"(attaque_\d+)"\)/g)) {
+      if (id) seconds.set(id, Number(left));
+    }
+  }
+  return seconds;
+}
+
 /** What follows the countdown, up to the next attack. */
 function lineAfter(countdown: Element): ChildNode[] {
   const nodes: ChildNode[] = [];
   for (let node = countdown.nextSibling; node; node = node.nextSibling) {
     if (node instanceof Element && node.id.startsWith("attaque_")) break;
-    if (node.nodeType === Node.TEXT_NODE && node.textContent?.includes("Vous allez attaquer")) break;
+    if (node.nodeType === Node.TEXT_NODE && /Vous allez attaquer|renforts arrivent/.test(node.textContent ?? "")) break;
     nodes.push(node);
   }
   return nodes;

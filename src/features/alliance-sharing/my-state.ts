@@ -6,7 +6,8 @@ import { UNITS } from "@/game/army/units";
 import { readBuildingLevels, readResearchLevels } from "@/game/pages/levels";
 import { readStock } from "@/game/pages/resources";
 import { readWorkQueue } from "@/game/pages/work-queue";
-import { readAttacksOnWay, reconcileLaunches } from "@/features/flood/attacks";
+import { readAttacksOnWay, readReinforcementLines, reconcileLaunches } from "@/features/flood/attacks";
+import { readColonies } from "@/game/pages/colonies";
 import { readOngoingHunts } from "@/features/hunt-launcher/pages";
 
 export interface ShareChoices {
@@ -25,6 +26,7 @@ export interface MyPages {
   laboratory: Document | null;
   army: Document | null;
   resources: Document | null;
+  colonies: Document | null;
 }
 
 export interface Me {
@@ -34,10 +36,12 @@ export interface Me {
 }
 
 /**
- * The army present (Armee.php), plus what is known of the troops away: hunts with their troops (Compte+), and the
- * ants of the attacks sent with the flood plan. Anything else away makes the army incomplete.
+ * The army present (Armee.php), plus what is known of the troops away: hunts with their troops (Compte+), the troops
+ * occupying my colonies (colonies.php), and the ants of the attacks sent with the flood plan. Anything else away
+ * (troops coming home from a colony, whose count the game does not write) makes the army incomplete.
  */
-function readArmy(armyPage: Document, resources: Document | null, launches: Launch[], now: Date, detail: boolean) {
+function readArmy(armyPage: Document, pages: MyPages, launches: Launch[], now: Date, detail: boolean) {
+  const { resources } = pages;
   const garrison = readGarrison(armyPage);
   const units = new Map<string, number>();
   const add = (key: string, count: number) => units.set(key, (units.get(key) ?? 0) + count);
@@ -46,16 +50,20 @@ function readArmy(armyPage: Document, resources: Document | null, launches: Laun
   }
   const hunts = resources ? readOngoingHunts(resources, now) : [];
   for (const hunt of hunts) for (const [key, count] of Object.entries(hunt.troops ?? {})) add(key, count);
+  const colonies = pages.colonies ? readColonies(pages.colonies).colonies : null;
+  for (const colony of colonies ?? []) for (const [key, count] of Object.entries(colony.troops)) add(key, count);
   const onWay = reconcileLaunches(launches, readAttacksOnWay(armyPage, now));
+  const coming = readReinforcementLines(armyPage, now);
 
   const present = [...units.values()].reduce((sum, count) => sum + count, 0);
   const army: SharedArmy = {
     total: present + onWay.launches.reduce((sum, launch) => sum + launch.ants, 0),
-    incomplete: onWay.unknown > 0 || hunts.some((hunt) => hunt.troops === null),
+    incomplete:
+      onWay.unknown > 0 || hunts.some((hunt) => hunt.troops === null) || colonies === null || coming.length > 0,
   };
   if (detail) army.units = Object.fromEntries([...units].filter(([, count]) => count > 0));
-  const lastReturn = Math.max(...hunts.map((hunt) => hunt.returnsAt.getTime()));
-  if (hunts.length > 0) army.returnsAt = new Date(lastReturn);
+  const returns = [...hunts.map((hunt) => hunt.returnsAt), ...coming.map((line) => line.arrivesAt)];
+  if (returns.length > 0) army.returnsAt = new Date(Math.max(...returns.map((date) => date.getTime())));
   return army;
 }
 
@@ -94,9 +102,7 @@ export function collectMyState(
       .map((item) => ({ name: item.name, level: item.targetLevel, endsAt: item.endsAt }));
   }
   if (choices.army !== "none") {
-    state.army = need(pages.army, "Armée", (doc) =>
-      readArmy(doc, pages.resources, launches, now, choices.army === "units"),
-    );
+    state.army = need(pages.army, "Armée", (doc) => readArmy(doc, pages, launches, now, choices.army === "units"));
   }
 
   // Parts whose page did not answer are left out rather than written as undefined.

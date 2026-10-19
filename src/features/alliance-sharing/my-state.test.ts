@@ -4,6 +4,8 @@ import attacksHtml from "@/features/flood/__fixtures__/armee-attacks.html?raw";
 import constructionHtml from "@/features/game-levels/__fixtures__/construction.html?raw";
 import laboratoryHtml from "@/features/game-levels/__fixtures__/laboratory.html?raw";
 import huntsHtml from "@/features/hunt-launcher/__fixtures__/ressources-hunts.html?raw";
+import coloniesHtml from "@/game/pages/__fixtures__/colonies.html?raw";
+import reinforcementsHtml from "@/features/flood/__fixtures__/armee-reinforcements-s2.html?raw";
 import { collectMyState, type ShareChoices } from "./my-state";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
@@ -22,6 +24,7 @@ const pages = {
   laboratory: parse(laboratoryHtml),
   army: parse(armyHtml),
   resources: parse(huntsHtml),
+  colonies: parse("<div id='centre'><div class='Bas'></div></div>"),
 };
 
 describe("collectMyState", () => {
@@ -63,6 +66,20 @@ describe("collectMyState", () => {
     const withoutCompte = parse(huntsHtml.replace(/Troupes en chasses : 300[^<]*/, ""));
     const { state } = collectMyState({ ...pages, resources: withoutCompte }, everything, me, [], now);
     expect(state.army).toMatchObject({ total: 3363, incomplete: true });
+  });
+
+  it("adds the troops occupying my colonies, and calls the army incomplete when colonies.php did not answer", () => {
+    const withColony = collectMyState({ ...pages, colonies: parse(coloniesHtml) }, everything, me, [], now).state;
+    expect(withColony.army).toMatchObject({ total: 3674, units: { JSN: 3504 }, incomplete: false });
+    const unread = collectMyState({ ...pages, colonies: null }, everything, me, [], now).state;
+    expect(unread.army).toMatchObject({ total: 3664, incomplete: true });
+  });
+
+  it("calls the army incomplete while troops come home from a colony, back at their arrival", () => {
+    const line = /<h3>Attaque[\s\S]*(?=<\/center>)/.exec(reinforcementsHtml)?.[0] ?? "";
+    const army = parse(armyHtml.replace(/<\/div>\s*$/, `${line}</div>`));
+    const { state } = collectMyState({ ...pages, army, resources: null }, everything, me, [], now);
+    expect(state.army).toMatchObject({ incomplete: true, returnsAt: new Date(now.getTime() + 2556_000) });
   });
 
   it("adds the ants of the attacks sent with the flood plan, and calls an attack sent without it unknown", () => {
