@@ -15,15 +15,13 @@ Savoir à quelle heure finit une chasse, une ponte ou un chantier sans faire le 
 ## 2. Encart « Prochaines fins » (sous-option « Encart « Prochaines fins » »)
 
 - Colonne de gauche, à la place de la boîte Compte+, poussée en dessous ; même habillage que les boîtes du jeu (titre non cliquable). Caché quand il n'y a rien, et quand la vraie boîte Compte+ (lignes `#ligne_*`) est là.
-- Lignes, de la plus proche à la plus lointaine : chaque chasse ; pour la ponte, la construction et la recherche, le prochain à finir et « +N en file ». Pas le retour des ouvrières.
+- Lignes, de la plus proche à la plus lointaine : chaque chasse, convoi et attaque ; pour la ponte, la construction et la recherche, le prochain à finir et « +N en file ». Pas le retour des ouvrières.
 - Ligne : « 🏹 Chasse 183 cm² » (lien vers la page), puis « 14 min · 17 h 45 ». Ce qui est fini reste « terminé » 1 h puis disparaît. Une page lue il y a plus de 24 h ajoute « vu il y a … ».
-- Données : à chaque passage sur `Ressources.php`, `Reine.php`, `construction.php`, `laboratoire.php` ou `commerce.php`, la liste est mémorisée par serveur (`local:endTimes:<host>:sections`, type, libellé, fin, heure de lecture ; écritures l'une après l'autre, deux onglets ne s'écrasent pas). Quand l'encart s'affiche, une page jamais lue ou lue il y a plus de 15 min est relue en arrière-plan (un `GET`, partagé avec les autres features par `src/utils/game-page.ts`), datée à sa réponse ; une page qui échoue (session expirée…) garde l'ancienne liste.
+- Données : à chaque passage sur `Ressources.php`, `Reine.php`, `construction.php`, `laboratoire.php`, `commerce.php` ou `Armee.php`, la liste est mémorisée par serveur (`local:endTimes:<host>:sections`, type, libellé, fin, heure de lecture ; écritures l'une après l'autre, deux onglets ne s'écrasent pas). Quand l'encart s'affiche, une page jamais lue ou lue il y a plus de 15 min est relue en arrière-plan (un `GET`, partagé avec les autres features par `src/utils/game-page.ts`), datée à sa réponse ; une page qui échoue (session expirée…) garde l'ancienne liste.
 - **Lecteurs** : les notifications « Chantier terminé » et « Chasse rentrée » des Alertes partent de ces listes. Couper « Heures de fin » les arrête (l'onglet Notifications le signale).
 - **Convois** : ils n'ont pas de `reste()` ; leur heure d'arrivée vient du calculateur de convoi, et ils entrent dans l'encart (« 🐜 Convoi → X », source `commerce.php`).
 
-## Hors v1
-
-- Attaques : à vérifier dès qu'il y en aura en cours (`Armee.php`).
+- **Attaques** (ajoutées le 2026-10-19) : lues sur `Armee.php` et sur le formulaire d'attaque (`ennemie.php?Attaquer=…`, qui les liste de la même façon), une ligne par attaque (« ⚔️ Attaque → Cible_1 », source `Armee.php`). Elles nourrissent la notification « Attaque arrivée sur sa cible ».
 
 ## Code
 

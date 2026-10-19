@@ -25,12 +25,13 @@ const build = (overrides: Partial<NotificationsTabInput> = {}) => {
 };
 
 describe("buildNotificationsSection", () => {
-  it("lists the four kinds, all off by default", () => {
+  it("lists the five kinds, all off by default", () => {
     const { section } = build({ settings: { hunt: true } });
     expect(section.textContent).toContain("Famine");
     expect(section.textContent).toContain("Entrepôt plein");
     expect(section.textContent).toContain("Chantier terminé");
     expect(section.textContent).toContain("Chasse rentrée");
+    expect(section.textContent).toContain("Attaque arrivée sur sa cible");
     expect(checkbox(section, "famine").checked).toBe(false);
     expect(checkbox(section, "hunt").checked).toBe(true);
   });

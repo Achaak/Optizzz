@@ -105,7 +105,7 @@ describe("kindsToRefresh", () => {
         { hunt: section("hunt", [], 16), laying: section("laying", [], 14), research: section("research", [], 0) },
         now,
       ),
-    ).toEqual(["hunt", "construction", "convoy"]);
+    ).toEqual(["hunt", "construction", "convoy", "attack"]);
   });
 });
 

@@ -39,14 +39,15 @@ Voir sans ouvrir le jeu que la famine approche ou qu'un entrepôt va être plein
 
 ## 2. Notifications (option « Notifications »)
 
-- Onglet « Notifications » de la fenêtre Paramètres et de la popup : quatre cases, toutes décochées par défaut (`sync:alertNotifications`, global à tous les serveurs) :
+- Onglet « Notifications » de la fenêtre Paramètres et de la popup : cinq cases pour vos fourmilières, toutes décochées par défaut (`sync:alertNotifications`, global à tous les serveurs) :
   - **Famine dans moins d'1 h** et **Entrepôt plein dans moins d'1 h** : une fois par événement (clé : serveur, type, heure prévue arrondie à 15 min ; une prévision qui glisse d'au plus 30 min, même par-dessus une frontière de quart d'heure, est le même événement et n'est pas renvoyée). Pas de notification sur des données de plus de 24 h ;
   - **Chantier terminé** (construction ou recherche) et **Chasse rentrée** : à l'heure de fin mémorisée par Heures de fin, avec jusqu'à 1 min de retard (l'alarme). Ni pontes ni convois. Elles dépendent de la feature « Heures de fin » : coupée, rien ne part, et l'onglet le dit ;
+  - **Attaque arrivée sur sa cible** (ajoutée le 2026-10-19) : à l'heure d'arrivée lue sur `Armee.php` ou sur le formulaire d'attaque (`ennemie.php?Attaquer=…`), mémorisée par Heures de fin, avec jusqu'à 1 min de retard. Les attaques arrivées depuis la dernière notification sont réunies en une seule (un flood en pose une dizaine en quelques secondes) : « S5 : attaque arrivée · Cible_1 », « S5 : 3 attaques arrivées · Cible_1 (2), Cible_2 » ; chacune est mémorisée comme envoyée. Une attaque annulée disparaît dès que `Armee.php` est relue (le lien « Annuler » y ramène) ; partie sans qu'aucune de ces pages soit revue, elle n'est connue qu'à la relecture de l'encart « Prochaines fins » ;
   - rien pour ce qui est arrivé il y a plus de 15 min (navigateur fermé entre-temps).
-- Texte : « S5 : famine dans 52 min (17 h 32) », « S5 : chantier terminé · Couveuse 12 », « S5 : chasse rentrée · 183 cm² ». Un clic ouvre la page du jeu concernée (Ressources, Construction ou Laboratoire).
+- Texte : « S5 : famine dans 52 min (17 h 32) », « S5 : chantier terminé · Couveuse 12 », « S5 : chasse rentrée · 183 cm² ». « S5 : attaque arrivée · Cible_1 ». Un clic ouvre la page du jeu concernée (Ressources, Construction, Laboratoire ou Armée).
 - Les notifications envoyées sont mémorisées 2 jours (`local:alerts:sentNotifications`, avec l'URL du clic). Le background fait un calcul à la fois : deux rafraîchissements rapprochés ne notifient pas deux fois.
 - L'option « Notifications » de « Fonctionnalités » coupe tout : l'onglet le dit alors et grise ses cases.
-- Pas d'attaque entrante.
+- Pas d'attaque entrante : le jeu ne les liste pas.
 
 ### Permission `notifications` (optionnelle)
 
@@ -61,7 +62,7 @@ Un content script n'a pas l'API `permissions` : la fenêtre Paramètres demande 
 | `src/features/alerts/index.ts`                            | Feature du registre : mémorise le stock de chaque page      |
 | `src/features/alerts/background.ts`                       | Alarme, écoute du stockage, `action.setBadge*` / `setTitle` |
 | `src/features/alerts/notifications.ts` (+ test)           | Notifications à envoyer, à partir des données               |
-| `src/features/alerts/notification-settings.ts`            | Les quatre cases, mémorisées                                |
+| `src/features/alerts/notification-settings.ts`            | Les cases, mémorisées                                       |
 | `src/features/alerts/permission.ts`                       | Messages de permission entre content scripts et background  |
 | `src/features/settings/notifications-section.ts` (+ test) | Onglet « Notifications » (fenêtre et popup)                 |
 | `src/entrypoints/notifications-permission/`               | Page qui demande la permission sur un clic                  |

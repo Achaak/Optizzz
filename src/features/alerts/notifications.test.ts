@@ -1,13 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Sections } from "../end-times/recap";
 import type { ServerData } from "./badge";
-import { deliverNotices, dueNotifications, type Notice, type NotificationSettings } from "./notifications";
+import {
+  deliverNotices,
+  dueNotifications,
+  type Notice,
+  type NotificationSettings,
+  type SentNotifications,
+} from "./notifications";
 
 const MINUTE = 60_000;
 const now = new Date(2026, 9, 8, 16, 40);
 const at = (minutes: number) => new Date(now.getTime() + minutes * MINUTE);
 
-const ALL: NotificationSettings = { famine: true, full: true, construction: true, hunt: true };
+const ALL: NotificationSettings = { famine: true, full: true, construction: true, hunt: true, attack: true };
 
 /** S5, read just now, eating `perHour` food an hour from `food`. */
 const server = (food: number, perHour: number, overrides: Partial<ServerData> = {}): ServerData => ({
@@ -128,6 +134,48 @@ describe("dueNotifications", () => {
   });
 });
 
+describe("dueNotifications: attacks", () => {
+  const attacks = (...items: [string, number][]): Record<string, Sections> => ({
+    "s5.fourmizzz.fr": {
+      attack: {
+        kind: "attack",
+        readAt: at(-120),
+        items: items.map(([label, minutes]) => ({ label, endsAt: at(minutes) })),
+      },
+    },
+  });
+
+  it("says when an attack reaches its target, with a link to the army", () => {
+    expect(dueNotifications(input([], attacks(["Attaque → Cible_1", -1], ["Attaque → Cible_2", 30])), now)).toEqual([
+      {
+        id: "s5.fourmizzz.fr:attack:Attaque → Cible_1:" + String(at(-1).getTime()),
+        message: "S5 : attaque arrivée · Cible_1",
+        url: "https://s5.fourmizzz.fr/Armee.php",
+      },
+    ]);
+    expect(dueNotifications(input([], attacks(["Attaque → Cible_1", -1]), { ...ALL, attack: false }), now)).toEqual([]);
+  });
+
+  it("sums up in one notification the attacks landing together, such as a flood", () => {
+    const ends = attacks(["Attaque → Cible_1", -1], ["Attaque → Cible_1", -1], ["Attaque → Cible_2", 0]);
+    const [notice, ...others] = dueNotifications(input([], ends), now);
+    expect(others).toEqual([]);
+    expect(notice?.message).toBe("S5 : 3 attaques arrivées · Cible_1 (2), Cible_2");
+    // Each attack is remembered as sent: none comes back at the next minute.
+    const ids = [notice?.id ?? "", ...(notice?.covers ?? [])];
+    const sent: SentNotifications = Object.fromEntries(ids.map((id) => [id, { at: 0, url: "" }]));
+    expect(dueNotifications({ ...input([], ends), sent }, at(1))).toEqual([]);
+  });
+
+  it("names only the attacks not said yet", () => {
+    const ends = attacks(["Attaque → Cible_1", -3], ["Attaque → Cible_2", 0]);
+    const sent = { ["s5.fourmizzz.fr:attack:Attaque → Cible_1:" + String(at(-3).getTime())]: { at: 0, url: "" } };
+    expect(dueNotifications({ ...input([], ends), sent }, now)).toMatchObject([
+      { message: "S5 : attaque arrivée · Cible_2" },
+    ]);
+  });
+});
+
 describe("deliverNotices", () => {
   const notices: Notice[] = [
     { id: "a", message: "A", url: "https://s5.fourmizzz.fr/a" },
@@ -150,6 +198,14 @@ describe("deliverNotices", () => {
     const result = await deliverNotices(notices, {}, now, create);
     expect(Object.keys(result)).toEqual(["b"]);
     expect(create).toHaveBeenCalledTimes(2);
+  });
+
+  it("records too the events a notice sums up", async () => {
+    const create = vi.fn().mockResolvedValue(undefined);
+    const summed: Notice = { id: "a", message: "A", url: "https://s5.fourmizzz.fr/a", covers: ["a2"] };
+    const result = await deliverNotices([summed], {}, now, create);
+    expect(Object.keys(result)).toEqual(["a", "a2"]);
+    expect(result.a2?.url).toBe("https://s5.fourmizzz.fr/a");
   });
 
   it("keeps what was already sent", async () => {

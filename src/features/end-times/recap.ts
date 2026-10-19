@@ -23,9 +23,9 @@ export type Sections = Partial<Record<EndKind, Section>>;
 const KINDS = Object.keys(SOURCE_PAGES) as EndKind[];
 
 /** Kinds whose items run side by side: one row each. The others are queues: their next item, and how many follow. */
-const SIDE_BY_SIDE: readonly EndKind[] = ["hunt", "convoy"];
+const SIDE_BY_SIDE: readonly EndKind[] = ["hunt", "convoy", "attack"];
 
-/** One row per hunt and convoy; for layings, buildings and research, the next to end and how many follow. Soonest first. */
+/** One row per hunt, convoy and attack; for layings, buildings and research, the next to end and how many follow. Soonest first. */
 export function recapRows(sections: Sections, now: Date): RecapRow[] {
   const rows: RecapRow[] = [];
   for (const kind of KINDS) {

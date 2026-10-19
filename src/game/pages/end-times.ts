@@ -4,8 +4,12 @@ import { readConvoysOnWay } from "@/features/convoy/convoy";
 import { readHunts } from "@/game/pages/resources";
 import { readWorkQueue } from "@/game/pages/work-queue";
 import { readCountdowns } from "@/features/end-times/countdowns";
+import { readAttacksOnWay } from "@/features/flood/attacks";
 
-export type EndKind = "hunt" | "laying" | "construction" | "research" | "convoy";
+export type EndKind = "hunt" | "laying" | "construction" | "research" | "convoy" | "attack";
+
+/** « Attaque → Cible_1 »: the notifications read the target back after it. */
+export const ATTACK_LABEL = "Attaque → ";
 
 export interface EndItem {
   label: string;
@@ -25,9 +29,12 @@ export const SOURCE_PAGES: Record<EndKind, string> = {
   construction: "/construction.php",
   research: "/laboratoire.php",
   convoy: "/commerce.php",
+  attack: "/Armee.php",
 };
 
-export function sourceOf(pathname: string): EndKind | null {
+/** The page of `kind`, or the attack form, which lists the attacks on their way like Armee.php. */
+export function sourceOf(pathname: string, search = ""): EndKind | null {
+  if (pathname.toLowerCase() === "/ennemie.php" && /[?&]Attaquer=/i.test(search)) return "attack";
   const kinds = Object.keys(SOURCE_PAGES) as EndKind[];
   return kinds.find((kind) => SOURCE_PAGES[kind].toLowerCase() === pathname.toLowerCase()) ?? null;
 }
@@ -51,6 +58,11 @@ function readItems(doc: Document, kind: EndKind, now: Date): EndItem[] {
       return readConvoysOnWay(doc, now).map((convoy) => ({
         label: `Convoi ${convoy.incoming ? "←" : "→"} ${convoy.player}`,
         endsAt: convoy.arrivesAt,
+      }));
+    case "attack":
+      return readAttacksOnWay(doc, now).map((attack) => ({
+        label: `${ATTACK_LABEL}${attack.target}`,
+        endsAt: attack.arrivesAt,
       }));
     case "construction":
     case "research":

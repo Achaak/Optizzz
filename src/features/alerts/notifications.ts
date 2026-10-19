@@ -1,5 +1,5 @@
 // Which notifications to send now, from stored data only. See docs/features/alertes.md.
-import { SOURCE_PAGES, type EndKind } from "@/game/pages/end-times";
+import { ATTACK_LABEL, SOURCE_PAGES, type EndItem, type EndKind } from "@/game/pages/end-times";
 import type { Sections } from "../end-times/recap";
 import { describeProblem, problems, serverName, STALE_AFTER, type ProblemKind, type ServerData } from "./badge";
 
@@ -11,7 +11,7 @@ const MISSED_AFTER = 15 * MINUTE;
 
 import type { WatchNotificationKind } from "../watchlist/describe";
 
-export type NotificationKind = "famine" | "full" | "construction" | "hunt" | WatchNotificationKind;
+export type NotificationKind = "famine" | "full" | "construction" | "hunt" | "attack" | WatchNotificationKind;
 
 /** All off unless switched on: a missing key means off. */
 export type NotificationSettings = Partial<Record<NotificationKind, boolean>>;
@@ -24,6 +24,8 @@ export interface Notice {
   id: string;
   message: string;
   url: string;
+  /** Other events this notice sums up (attacks landing together): remembered as sent with it. */
+  covers?: string[];
 }
 
 export interface NotificationInput {
@@ -85,25 +87,56 @@ const END_NOTICES: Partial<Record<EndKind, { setting: NotificationKind; describe
   hunt: { setting: "hunt", describe: (label) => `chasse rentrée · ${label.replace(/^Chasse\s+/, "")}` },
 };
 
-function endNotices(host: string, sections: Sections, settings: NotificationSettings, now: Date): Notice[] {
+const ended = (now: Date) => (item: EndItem) =>
+  item.endsAt <= now && now.getTime() - item.endsAt.getTime() <= MISSED_AFTER;
+
+const endId = (host: string, kind: EndKind, item: EndItem) =>
+  `${host}:${kind}:${item.label}:${String(item.endsAt.getTime())}`;
+
+function endNotices(host: string, sections: Sections, input: NotificationInput, now: Date): Notice[] {
   return Object.values(sections).flatMap((section) => {
+    if (section.kind === "attack") return attackNotices(host, section.items, input, now);
     const notice = END_NOTICES[section.kind];
-    if (!notice || !settings[notice.setting]) return [];
-    return section.items
-      .filter((item) => item.endsAt <= now && now.getTime() - item.endsAt.getTime() <= MISSED_AFTER)
-      .map((item) => ({
-        id: `${host}:${section.kind}:${item.label}:${String(item.endsAt.getTime())}`,
-        message: `${serverName(host)} : ${notice.describe(item.label)}`,
-        url: `https://${host}${SOURCE_PAGES[section.kind]}`,
-      }));
+    if (!notice || !input.settings[notice.setting]) return [];
+    return section.items.filter(ended(now)).map((item) => ({
+      id: endId(host, section.kind, item),
+      message: `${serverName(host)} : ${notice.describe(item.label)}`,
+      url: `https://${host}${SOURCE_PAGES[section.kind]}`,
+    }));
   });
+}
+
+/**
+ * The attacks arrived since the last notification, in one notice: a flood lands a dozen attacks within seconds.
+ * « S5 : attaque arrivée · Cible_1 », « S5 : 3 attaques arrivées · Cible_1 (2), Cible_2 ».
+ */
+function attackNotices(host: string, items: readonly EndItem[], input: NotificationInput, now: Date): Notice[] {
+  if (!input.settings.attack) return [];
+  const arrived = items
+    .filter(ended(now))
+    .map((item) => ({ id: endId(host, "attack", item), target: item.label.slice(ATTACK_LABEL.length) }))
+    .filter((attack) => !input.sent[attack.id]);
+  const [first, ...others] = arrived;
+  if (!first) return [];
+  const counts = new Map<string, number>();
+  for (const { target } of arrived) counts.set(target, (counts.get(target) ?? 0) + 1);
+  const targets = [...counts].map(([target, count]) => (count > 1 ? `${target} (${String(count)})` : target));
+  const what = arrived.length > 1 ? `${String(arrived.length)} attaques arrivées` : "attaque arrivée";
+  return [
+    {
+      id: first.id,
+      message: `${serverName(host)} : ${what} · ${targets.join(", ")}`,
+      url: `https://${host}${SOURCE_PAGES.attack}`,
+      ...(others.length > 0 && { covers: others.map((attack) => attack.id) }),
+    },
+  ];
 }
 
 export function dueNotifications(input: NotificationInput, now: Date): Notice[] {
   const notices = [
     ...input.servers.flatMap((data) => problemNotices(data, input.settings, input.sent, now)),
     ...Object.entries(input.ends).flatMap(([host, sections]) =>
-      sections ? endNotices(host, sections, input.settings, now) : [],
+      sections ? endNotices(host, sections, input, now) : [],
     ),
   ];
   return notices.filter((notice) => !input.sent[notice.id]);
@@ -123,7 +156,7 @@ export async function deliverNotices(
   for (const notice of notices) {
     try {
       await show(notice);
-      updated[notice.id] = { at: now.getTime(), url: notice.url };
+      for (const id of [notice.id, ...(notice.covers ?? [])]) updated[id] = { at: now.getTime(), url: notice.url };
     } catch (error) {
       console.warn("[Optizzz] could not show a notification", error);
     }

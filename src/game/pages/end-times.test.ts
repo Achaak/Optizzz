@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import commerceHtml from "@/features/convoy/__fixtures__/commerce.html?raw";
+import armeeHtml from "@/features/flood/__fixtures__/armee-attacks.html?raw";
 import constructionFullHtml from "@/features/work-queue/__fixtures__/construction-full.html?raw";
 import laboratoryHtml from "@/features/work-queue/__fixtures__/laboratory-one.html?raw";
 import noSessionHtml from "@/features/end-times/__fixtures__/page-without-session.html?raw";
@@ -20,7 +21,14 @@ describe("sourceOf", () => {
     expect(sourceOf("/construction.php")).toBe("construction");
     expect(sourceOf("/laboratoire.php")).toBe("research");
     expect(sourceOf("/commerce.php")).toBe("convoy");
-    expect(sourceOf("/Armee.php")).toBeNull();
+    expect(sourceOf("/Armee.php")).toBe("attack");
+    expect(sourceOf("/Alliance.php")).toBeNull();
+  });
+
+  it("reads the attacks on the attack form too, which lists them like Armee.php", () => {
+    expect(sourceOf("/ennemie.php", "?Attaquer=1234")).toBe("attack");
+    // The list of enemies, without the attacks on their way.
+    expect(sourceOf("/ennemie.php")).toBeNull();
   });
 });
 
@@ -51,6 +59,13 @@ describe("readSection", () => {
     ]);
     expect(readSection(parse(withHeader(laboratoryHtml)), "research", now)?.items).toEqual([
       { label: "Architecture 1", endsAt: inSeconds(189) },
+    ]);
+  });
+
+  it("reads the attacks on their way, with their target", () => {
+    expect(readSection(parse(withHeader(armeeHtml)), "attack", now)?.items).toEqual([
+      { label: "Attaque → Cible_1", endsAt: inSeconds(547) },
+      { label: "Attaque → Cible_2", endsAt: inSeconds(3720) },
     ]);
   });
 

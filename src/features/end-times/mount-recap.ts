@@ -3,7 +3,14 @@ import type { RecapRow } from "./recap";
 import { SOURCE_PAGES, type EndKind } from "@/game/pages/end-times";
 import { htmlElement } from "@/utils/html";
 
-const ICONS: Record<EndKind, string> = { hunt: "🏹", laying: "🥚", construction: "🔨", research: "🔬", convoy: "🐜" };
+const ICONS: Record<EndKind, string> = {
+  hunt: "🏹",
+  laying: "🥚",
+  construction: "🔨",
+  research: "🔬",
+  convoy: "🐜",
+  attack: "⚔️",
+};
 
 /** Space between the recap and the Compte+ box pushed below it. */
 const GAP_PX = 5;

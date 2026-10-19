@@ -43,7 +43,7 @@ Désinstaller l'extension efface ces données.
 - `storage` : enregistrer les paramètres et le cache décrits ci-dessus (stockage local, et synchronisé pour les interrupteurs des outils, les notifications et la liste de Suivis).
 - `unlimitedStorage` : lever la limite de 10 Mo de ce stockage, que les exports d'un gros serveur (4 Mo pour les joueurs de S2) suffisent à remplir quand on joue sur plusieurs serveurs. Rien d'autre n'est stocké, et rien ne sort de votre navigateur.
 - `alarms` : recalculer chaque minute le badge de l'icône (temps avant une famine ou un entrepôt plein) à partir des données déjà enregistrées, sans interroger le jeu ; et, si vous suivez des joueurs ou des alliances, télécharger chaque heure l'export public du serveur concerné (la même API publique de Fourmizzz que la Carte et les Cibles) pour noter leurs changements.
-- `notifications` (facultative) : demandée seulement si vous activez une notification (famine, entrepôt plein, chantier terminé, chasse rentrée, changements de vos Suivis). Les notifications sont affichées par votre navigateur, à partir des données déjà enregistrées ou de l'export public de Fourmizzz ; rien n'est envoyé ailleurs.
+- `notifications` (facultative) : demandée seulement si vous activez une notification (famine, entrepôt plein, chantier terminé, chasse rentrée, attaque arrivée, changements de vos Suivis). Les notifications sont affichées par votre navigateur, à partir des données déjà enregistrées ou de l'export public de Fourmizzz ; rien n'est envoyé ailleurs.
 - Accès à `*.fourmizzz.fr` : afficher les outils dans les pages du jeu et lire l'API publique du serveur.
 
 ## Contact

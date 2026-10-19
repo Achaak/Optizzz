@@ -25,7 +25,7 @@ export const collect: Feature = {
 
     // End times: the « Prochaines fins » box, and the end notifications of the alerts.
     if (on("end-times") || on("alerts", "notifications")) {
-      const kind = sourceOf(location.pathname);
+      const kind = sourceOf(location.pathname, location.search);
       const section = kind ? readSection(document, kind, now) : null;
       if (section) await storeSection(origin, section);
     }

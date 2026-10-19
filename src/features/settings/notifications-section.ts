@@ -20,6 +20,7 @@ const KINDS: { kind: NotificationKind; label: string }[] = [
   { kind: "full", label: "Entrepôt plein dans moins d'1 h" },
   { kind: "construction", label: "Chantier terminé (construction ou recherche)" },
   { kind: "hunt", label: "Chasse rentrée" },
+  { kind: "attack", label: "Attaque arrivée sur sa cible" },
 ];
 
 /** The watch list's, summed up in one notification per hourly reading. */
@@ -64,11 +65,11 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
   off.textContent =
     "Notifications coupées dans « Fonctionnalités » (Alertes › Notifications) : rien ne part, quelles que soient ces cases.";
 
-  // « Chantier terminé » and « Chasse rentrée » come from the end times « Heures de fin » keeps.
+  // « Chantier terminé », « Chasse rentrée » and « Attaque arrivée » come from the end times « Heures de fin » keeps.
   const needs = doc.createElement("p");
   needs.className = "notifications-needs optizzz-callout optizzz-callout--warning";
   needs.textContent =
-    "« Chantier terminé » et « Chasse rentrée » ont besoin de « Heures de fin », coupée dans « Fonctionnalités ».";
+    "« Chantier terminé », « Chasse rentrée » et « Attaque arrivée » ont besoin de « Heures de fin », coupée dans « Fonctionnalités ».";
 
   // Never asked yet, or refused: the browser has not allowed them so far.
   const blocked = doc.createElement("p");
