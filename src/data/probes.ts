@@ -3,7 +3,7 @@
 import { storage } from "wxt/utils/storage";
 import type { Place } from "@/game/army/battle";
 import { armyFromKeys, UNITS } from "@/game/army/units";
-import { PLACES, placesWithoutProbe, probeMoves, type ProbeMove, type ProbePlan } from "@/game/probes";
+import { PLACES, placesWithoutProbe, probeMoves, storeMoves, type ProbeMove, type ProbePlan } from "@/game/probes";
 import { readGarrison } from "./garrison";
 
 /** What the player wants on each place, by unit key; stored per server. */
@@ -74,10 +74,20 @@ function moveBody(form: MoveForm, move: ProbeMove): string {
   return body.toString();
 }
 
+type MovePlanner = typeof probeMoves;
+
 /** Brings each watched place up to its probes, one move after the other, reading Armee.php afresh each time. */
-export async function placeProbes(
+export const placeProbes = (origin: string, plan: ProbePlan, fetchFn?: FetchFn) =>
+  applyMoves(origin, plan, probeMoves, fetchFn);
+
+/** « Replacer l'armée »: every ant in the Loge but the probes of the other places, as `placeProbes` does. */
+export const storeArmy = (origin: string, plan: ProbePlan, fetchFn?: FetchFn) =>
+  applyMoves(origin, plan, storeMoves, fetchFn);
+
+async function applyMoves(
   origin: string,
   plan: ProbePlan,
+  planMoves: MovePlanner,
   fetchFn: FetchFn = (url, init) => fetch(url, init),
 ): Promise<ProbesResult> {
   const url = `${origin}/Armee.php`;
@@ -87,7 +97,7 @@ export async function placeProbes(
   for (let step = 0; step <= PLACES.length * UNITS.length; step++) {
     const garrison = readGarrison(doc);
     if (!garrison) return { placed, missing: PLACES.filter((place) => plan[place]), failed: true };
-    const { moves, missing } = probeMoves(garrison.armies, plan);
+    const { moves, missing } = planMoves(garrison.armies, plan);
     const [move] = moves;
     if (!move) return { placed, missing, failed: false };
     const form = readMoveForm(doc);

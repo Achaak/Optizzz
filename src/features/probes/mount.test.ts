@@ -21,11 +21,24 @@ const setup = ({
 } = {}) => {
   const doc = parse();
   const place = vi.fn(() => Promise.resolve(result));
+  const store = vi.fn(() => Promise.resolve(result));
   const save = vi.fn(() => Promise.resolve());
   const reload = vi.fn();
-  renderProbes(doc, { armies, watched, targets, place, save, reload });
+  renderProbes(doc, { armies, watched, targets, place, store, save, reload });
   const box = doc.querySelector(".optizzz-probes");
-  return { doc, box, place, save, reload, button: box?.querySelector<HTMLButtonElement>("p button") };
+  const buttonNamed = (label: string) =>
+    [...(box?.querySelectorAll<HTMLButtonElement>("p button") ?? [])].find((button) => button.textContent === label) ??
+    null;
+  return {
+    doc,
+    box,
+    place,
+    store,
+    save,
+    reload,
+    button: buttonNamed("Placer les sondes"),
+    storeButton: buttonNamed("Replacer l'armée"),
+  };
 };
 
 describe("renderProbes", () => {
@@ -75,6 +88,29 @@ describe("renderProbes", () => {
     });
     expect(box?.querySelector("p")?.textContent).toBe("✓ Sondes en place : Dôme 10 JSN · Loge 1 JSN.");
     expect(button).toBeNull();
+  });
+
+  it("puts the army back in the Loge on click, leaving the probes, then reloads", async () => {
+    const { box, store, reload, storeButton } = setup({
+      armies: { field: armyFromKeys({ JSN: 900 }), nest: armyFromKeys({ JSN: 10 }), lodge: armyFromKeys({ JSN: 3 }) },
+      targets: { field: {}, nest: { JSN: 10 }, lodge: { JSN: 1 } },
+      watched: ["nest", "lodge"],
+    });
+    expect(storeButton?.nextElementSibling?.textContent).toBe(" 900 JSN du Terrain de chasse vers la Loge");
+    storeButton?.click();
+    await vi.waitFor(() => {
+      expect(reload).toHaveBeenCalled();
+    });
+    expect(store).toHaveBeenCalledOnce();
+    expect(box?.textContent).toContain("Sondes en place");
+  });
+
+  it("offers no « Replacer » once the army is put away", () => {
+    const { storeButton } = setup({
+      armies: { field: armyFromKeys({}), nest: armyFromKeys({ JSN: 1 }), lodge: armyFromKeys({ JSN: 500 }) },
+      watched: ["nest", "lodge"],
+    });
+    expect(storeButton).toBeNull();
   });
 
   it("saves the numbers set for each watched place, then reloads", async () => {

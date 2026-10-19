@@ -5,6 +5,7 @@ import {
   placeProbes,
   probePlan,
   saveProbeTargets,
+  storeArmy,
   takeProbesPending,
 } from "@/data/probes";
 import type { Place } from "@/game/army/battle";
@@ -67,6 +68,7 @@ export const probes: Feature = {
       watched,
       targets,
       place: () => placeProbes(origin, probePlan(targets, watched)),
+      store: () => storeArmy(origin, probePlan(targets, watched)),
       save: (next) => saveProbeTargets(location.host, next),
       reload: () => {
         location.reload();

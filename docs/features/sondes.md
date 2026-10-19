@@ -15,7 +15,8 @@ Toujours laisser des fourmis sur son Terrain de chasse, son Dôme et sa Loge : u
 
 ## Comportement
 
-- **Sur `Armee.php`**, au-dessus de la garnison, toujours un encart. Sondes en place : « ✓ Sondes en place : Dôme 10 JSN · Loge 1 JSN. » Sinon : « ⚠ Il manque des sondes sur la Loge. », un bouton « Placer les sondes » et les déplacements prévus (« 1 000 JSN du Terrain de chasse vers la Loge »). Un déplacement par unité et par lieu, l'un après l'autre (relecture d'`Armee.php`, POST du formulaire « Déplacer son armée » avec le jeton du moment), puis la page se recharge. Si le jeu ne prend pas un déplacement, l'encart le dit. Trop peu de fourmis à la maison : l'encart le dit. Dessous, « Régler les sondes » (replié) : un tableau unité × lieu surveillé (les unités possédées ou déjà demandées), « Enregistrer » mémorise et recharge la page.
+- **Sur `Armee.php`**, au-dessus de la garnison, toujours un encart. Sondes en place : « ✓ Sondes en place : Dôme 10 JSN · Loge 1 JSN. » Sinon : « ⚠ Il manque des sondes sur la Loge. », un bouton « Placer les sondes » et les déplacements prévus (« 1 000 JSN du Terrain de chasse vers la Loge »). Un déplacement par unité et par lieu, l'un après l'autre (relecture d'`Armee.php`, POST du formulaire « Déplacer son armée » avec le jeton du moment), puis la page se recharge. Si le jeu ne prend pas un déplacement, l'encart le dit. Trop peu de fourmis à la maison : l'encart le dit.
+- **Replacer l'armée** (retour de joueur du 2026-10-19) : quand une armée revient, ses fourmis restent sur le lieu d'où elles sont parties. Le bouton « Replacer l'armée » met **toute l'armée en Loge**, sauf les sondes des autres lieux surveillés, qui sont remises en place en même temps ; la Loge garde au moins les siennes. Les déplacements prévus sont écrits à côté (« 900 JSN du Terrain de chasse vers la Loge »), envoyés comme ceux des sondes, puis la page se recharge. Le bouton n'apparaît que s'il y a quelque chose à déplacer. Trop peu de fourmis : les sondes passent d'abord (Terrain, puis Dôme), la Loge prend le reste. Dessous, « Régler les sondes » (replié) : un tableau unité × lieu surveillé (les unités possédées ou déjà demandées), « Enregistrer » mémorise et recharge la page.
 - **Lanceur de chasse** : l'armée proposée est celle du jeu moins la réserve, moins ce qu'il faut pour les sondes (rappel sous la réserve). Après le lancement, les sondes sont replacées avant le rechargement de la page.
 - **Plan de flood** : l'armée planifiée garde les sondes (« Sondes gardées au nid : 2 JSN. » dans le résumé) ; les troupes de la Loge non comptées restent à la maison et servent de sondes. « Remplir » ne met donc jamais les sondes dans le formulaire.
 - **Attaque envoyée depuis le formulaire du jeu** (avec ou sans le Plan de flood) : marquée dans le `sessionStorage` de l'onglet ; à la page suivante, les sondes sont replacées en arrière-plan (sur `Armee.php`, la page se recharge pour montrer la garnison à jour). Le formulaire du jeu, pré-rempli avec toute l'armée, n'est pas modifié : sans « Remplir », toute l'armée peut partir.
@@ -27,12 +28,12 @@ Le POST du formulaire de déplacement n'a pas encore réussi sur le jeu. Premier
 
 ## Code
 
-| Fichier                                       | Rôle                                                                                                    |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `src/game/probes.ts` (+ test)                 | Lieux sans sonde, déplacements à faire, fourmis à garder lors d'un envoi                                |
-| `src/data/probes.ts` (+ test)                 | Formulaire « Déplacer son armée », placement des sondes, marque après envoi, sondes voulues par serveur |
-| `src/data/garrison.ts` (+ test)               | Garnison d'`Armee.php` (ancien et nouveau balisage)                                                     |
-| `src/features/probes/index.ts` (+ test)       | La feature, lieux surveillés (`watchedPlaces`)                                                          |
-| `src/features/probes/mount.ts` (+ test)       | L'encart sur Armée : état, bouton, réglage                                                              |
-| `src/features/hunt-launcher/HuntLauncher.tsx` | Sondes gardées et replacées après le lancement                                                          |
-| `src/features/flood/mount.ts` (+ test)        | Sondes gardées dans le plan                                                                             |
+| Fichier                                       | Rôle                                                                                                     |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `src/game/probes.ts` (+ test)                 | Lieux sans sonde, déplacements à faire (sondes, `storeMoves`), fourmis à garder lors d'un envoi          |
+| `src/data/probes.ts` (+ test)                 | Formulaire « Déplacer son armée », placement des sondes, `storeArmy`, marque, sondes voulues par serveur |
+| `src/data/garrison.ts` (+ test)               | Garnison d'`Armee.php` (ancien et nouveau balisage)                                                      |
+| `src/features/probes/index.ts` (+ test)       | La feature, lieux surveillés (`watchedPlaces`)                                                           |
+| `src/features/probes/mount.ts` (+ test)       | L'encart sur Armée : état, bouton, réglage                                                               |
+| `src/features/hunt-launcher/HuntLauncher.tsx` | Sondes gardées et replacées après le lancement                                                           |
+| `src/features/flood/mount.ts` (+ test)        | Sondes gardées dans le plan                                                                              |

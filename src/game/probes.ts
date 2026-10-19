@@ -1,7 +1,7 @@
 // Probes: ants always kept on each watched place (hunting field, dome, lodge), so that an attack there makes a fight
 // and its report shows the attacker's army. How many of each unit is the player's choice. See docs/features/sondes.md.
 import type { Place } from "./army/battle";
-import { emptyArmy, type Army } from "./army/units";
+import { emptyArmy, UNITS, type Army } from "./army/units";
 
 export const PLACES: readonly Place[] = ["field", "nest", "lodge"];
 
@@ -81,4 +81,42 @@ export function keepProbes(sent: Army, home: Army, plan: ProbePlan): number[] {
     const staying = (home[unit] ?? 0) - count;
     return Math.max(0, count - Math.max(0, (needed[unit] ?? 0) - staying));
   });
+}
+
+/** Where the army is put away when it comes back: the Loge, the safest place. */
+const STORE: Place = "lodge";
+
+/**
+ * The moves that put the army away (« Replacer l'armée », after an army comes back): each place other than the Loge
+ * keeps exactly its probes, every other ant goes to the Loge. Probes come first when there are too few ants; `missing`:
+ * places still short of theirs.
+ */
+export function storeMoves(armies: Record<Place, Army>, plan: ProbePlan): { moves: ProbeMove[]; missing: Place[] } {
+  const moves: ProbeMove[] = [];
+  const missing = new Set<Place>();
+  for (const unit of UNITS.keys()) {
+    let left = PLACES.reduce((sum, place) => sum + (armies[place][unit] ?? 0), 0);
+    const wanted = (place: Place) => plan[place]?.[unit] ?? 0;
+    const final = { field: 0, nest: 0, lodge: 0 };
+    for (const place of PLACES.filter((candidate) => candidate !== STORE)) {
+      final[place] = Math.min(wanted(place), left);
+      left -= final[place];
+    }
+    final[STORE] = left;
+    for (const place of PLACES) if (final[place] < wanted(place)) missing.add(place);
+
+    const gap = (place: Place) => (armies[place][unit] ?? 0) - final[place];
+    const surplus = Object.fromEntries(PLACES.map((place) => [place, gap(place)])) as Record<Place, number>;
+    for (const to of PLACES.filter((place) => surplus[place] < 0)) {
+      const givers = PLACES.filter((from) => surplus[from] > 0).sort((a, b) => surplus[b] - surplus[a]);
+      for (const from of givers) {
+        if (surplus[to] >= 0) break;
+        const count = Math.min(surplus[from], -surplus[to]);
+        surplus[from] -= count;
+        surplus[to] += count;
+        moves.push({ unit, count, from, to });
+      }
+    }
+  }
+  return { moves, missing: PLACES.filter((place) => missing.has(place)) };
 }

@@ -1,6 +1,14 @@
 import type { Place } from "@/game/army/battle";
 import { unitLabel, UNITS, type Army } from "@/game/army/units";
-import { PLACE_FROM, PLACE_NAMES, PLACES, placesWithoutProbe, probeMoves, type ProbeMove } from "@/game/probes";
+import {
+  PLACE_FROM,
+  PLACE_NAMES,
+  PLACES,
+  placesWithoutProbe,
+  probeMoves,
+  storeMoves,
+  type ProbeMove,
+} from "@/game/probes";
 import { probePlan, type ProbeTargets, type ProbesResult } from "@/data/probes";
 import { parseGameInteger } from "@/utils/game-number";
 import { formatNumber } from "@/utils/number-format";
@@ -37,6 +45,8 @@ export interface ProbesPanel {
   watched: readonly Place[];
   targets: ProbeTargets;
   place: () => Promise<ProbesResult>;
+  /** « Replacer l'armée »: everything in the Loge but the probes of the other places. */
+  store: () => Promise<ProbesResult>;
   save: (targets: ProbeTargets) => Promise<void>;
   reload: () => void;
 }
@@ -64,7 +74,12 @@ export function renderProbes(doc: Document, panel: ProbesPanel): void {
   box.append(status);
 
   const { moves, missing } = probeMoves(armies, plan);
-  if (moves.length > 0) box.append(placeLine(doc, moves, short, panel));
+  if (moves.length > 0) box.append(actionLine(doc, "Placer les sondes", moves, short, panel.place, panel.reload));
+  // After an army comes back: its ants are wherever it left from, the probes may be gone.
+  const stored = storeMoves(armies, plan);
+  if (stored.moves.length > 0) {
+    box.append(actionLine(doc, "Replacer l'armée", stored.moves, short, panel.store, panel.reload));
+  }
   if (missing.length > 0) {
     const line = doc.createElement("p");
     line.textContent = `Pas assez de fourmis à la maison pour les sondes ${placeList(missing, PLACE_FROM)}, sans prendre celles d'un autre lieu.`;
@@ -74,12 +89,19 @@ export function renderProbes(doc: Document, panel: ProbesPanel): void {
   table.before(box);
 }
 
-function placeLine(doc: Document, moves: ProbeMove[], short: Place[], panel: ProbesPanel): DocumentFragment {
+function actionLine(
+  doc: Document,
+  label: string,
+  moves: ProbeMove[],
+  short: Place[],
+  run: () => Promise<ProbesResult>,
+  reload: () => void,
+): DocumentFragment {
   const fragment = doc.createDocumentFragment();
   const line = doc.createElement("p");
   const button = doc.createElement("button");
   button.type = "button";
-  button.textContent = "Placer les sondes";
+  button.textContent = label;
   const detail = doc.createElement("span");
   detail.className = `${BOX_CLASS}-moves optizzz-muted`;
   detail.textContent = ` ${moves.map(moveText).join(", ")}`;
@@ -90,12 +112,11 @@ function placeLine(doc: Document, moves: ProbeMove[], short: Place[], panel: Pro
   button.addEventListener("click", () => {
     button.disabled = true;
     button.textContent = "Déplacement…";
-    void panel
-      .place()
+    void run()
       .catch((): ProbesResult => ({ placed: [], missing: short, failed: true }))
       .then((result) => {
         if (!result.failed) {
-          panel.reload();
+          reload();
           return;
         }
         outcome.hidden = false;

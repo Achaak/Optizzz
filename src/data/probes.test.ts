@@ -10,6 +10,7 @@ import {
   probePlan,
   readMoveForm,
   saveProbeTargets,
+  storeArmy,
   takeProbesPending,
 } from "./probes";
 
@@ -126,6 +127,18 @@ describe("placeProbes", () => {
       failed: false,
     });
     expect(game.posts).toEqual([]);
+  });
+});
+
+describe("storeArmy", () => {
+  it("puts every ant in the Loge but the probes of the other places", async () => {
+    const game = fakeGame({ unite1: [500, 0, 0], unite10: [40, 0, 0] });
+    expect(await storeArmy("https://s5.fourmizzz.fr", { nest: armyFromKeys({ JSN: 1 }) }, game.fetchFn)).toEqual({
+      placed: ["nest", "lodge"],
+      missing: [],
+      failed: false,
+    });
+    expect(game.counts).toEqual({ unite1: [0, 1, 499], unite10: [0, 0, 40] });
   });
 });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { armyFromKeys, UNITS } from "./army/units";
-import { keepProbes, placesWithoutProbe, probeArmy, probeMoves, type ProbePlan } from "./probes";
+import { keepProbes, placesWithoutProbe, probeArmy, probeMoves, storeMoves, type ProbePlan } from "./probes";
 
 const unit = (key: string) => UNITS.findIndex((candidate) => candidate.key === key);
 
@@ -96,5 +96,45 @@ describe("keepProbes", () => {
   it("sends none of a unit rather than leave fewer probes", () => {
     const home = armyFromKeys({ JSN: 2 });
     expect(keepProbes(home, home, everywhere)).toEqual(armyFromKeys({}));
+  });
+});
+
+describe("storeMoves", () => {
+  it("puts the army back in the Loge, leaving their probes on the other places", () => {
+    // Back from a hunt on the field: 5 000 JSN and 300 Tanks there.
+    const armies = {
+      field: armyFromKeys({ JSN: 5000, Tk: 300 }),
+      nest: armyFromKeys({}),
+      lodge: armyFromKeys({ JSN: 10, Tk: 2000 }),
+    };
+    expect(storeMoves(armies, { nest: armyFromKeys({ JSN: 10 }), lodge: oneJsn })).toEqual({
+      moves: [
+        { unit: unit("JSN"), count: 10, from: "field", to: "nest" },
+        { unit: unit("JSN"), count: 4990, from: "field", to: "lodge" },
+        { unit: unit("Tk"), count: 300, from: "field", to: "lodge" },
+      ],
+      missing: [],
+    });
+  });
+
+  it("keeps the field's probes when it is watched, and moves nothing once everything is put away", () => {
+    const armies = {
+      field: armyFromKeys({ JSN: 1 }),
+      nest: armyFromKeys({ JSN: 1 }),
+      lodge: armyFromKeys({ JSN: 50 }),
+    };
+    expect(storeMoves(armies, everywhere)).toEqual({ moves: [], missing: [] });
+    expect(storeMoves(armies, {}).moves).toEqual([
+      { unit: unit("JSN"), count: 1, from: "field", to: "lodge" },
+      { unit: unit("JSN"), count: 1, from: "nest", to: "lodge" },
+    ]);
+  });
+
+  it("puts the probes first when there are too few ants", () => {
+    const armies = { field: armyFromKeys({}), nest: armyFromKeys({}), lodge: armyFromKeys({ JSN: 1 }) };
+    expect(storeMoves(armies, everywhere)).toEqual({
+      moves: [{ unit: unit("JSN"), count: 1, from: "lodge", to: "field" }],
+      missing: ["nest", "lodge"],
+    });
   });
 });
