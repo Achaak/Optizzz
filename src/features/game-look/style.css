@@ -399,6 +399,34 @@ html.optizzz-game-look {
     cursor: default;
   }
 
+  /*
+   * Messagerie: under a message the game puts a button alone (« Corbeille ») or « Répondre » with its menu. Alone,
+   * it is a side action: a small light button, not the dark one the game makes 180px wide.
+   */
+  & #centre #messagerie .ui-buttonset > button.reaction_choisie:only-child {
+    width: auto;
+    min-height: 26px;
+    margin: 4px 0;
+    padding: 2px 12px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--look-text);
+    background: var(--look-box-alt);
+    border: 1px solid var(--look-line-strong);
+    box-shadow: none;
+  }
+
+  & #centre #messagerie .ui-buttonset > button.reaction_choisie:only-child:hover {
+    filter: none;
+    background: var(--look-box-head);
+  }
+
+  & #centre #messagerie .ui-buttonset > button.reaction_choisie:only-child .ui-button-text {
+    padding: 0;
+    color: inherit;
+    font-weight: inherit;
+  }
+
   & #centre :is(input:is([type="radio"], [type="checkbox"])) {
     accent-color: var(--look-title);
   }
