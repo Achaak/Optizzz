@@ -34,17 +34,19 @@ Savoir quand on pourra payer un bâtiment ou une recherche, quand on tombera en 
 - Couleurs : neutre au-delà de 24 h, orange en dessous de 24 h, rouge en dessous de 6 h (`src/utils/urgency.ts`, la même échelle que le simulateur et le badge des Alertes).
 - Infobulle (toujours présente), une ligne par information : solde par jour (détail récolte, champignonnière, armée, taxe), ouvrières à mettre sur la nourriture pour rester à l'équilibre, « Capacité des entrepôts inconnue : ouvrez Construction… » tant que Construction n'a pas été lue (pas d'alerte d'entrepôt plein sans elle), retours de chasse prévus. C'est une infobulle d'Optizzz : celle du jeu (jQuery UI, sur la cellule de la jauge) aplatissait les lignes, elle ne s'ouvre plus au-dessus de notre ligne.
 
-## 3. Simulation sur Ressources
+## 3. Répartition des ouvrières sur Ressources
 
-- Part de la répartition du jeu ; les ouvrières qui pourraient récolter (min(TDC, ouvrières)) sans être affectées sont affichées à part (« 100 ouvrières sans travail »).
-- Deux nombres modifiables : la nourriture prend d'abord les ouvrières sans travail, puis sur les matériaux. Un curseur fait passer des ouvrières de l'un à l'autre.
-- Bouton « équilibre nourriture » : le minimum d'ouvrières sur la nourriture pour que le stock ne tombe jamais à zéro (retours de chasse compris), toutes les autres sur les matériaux (plus aucune sans travail). Grisé, avec une infobulle, quand même toutes les ouvrières sur la nourriture ne suffisent pas.
-- Boîte dans le style du jeu (titre rouge en italique, bordure brune, icônes pomme et bois du jeu).
-- Une barre sous le curseur montre la part nourriture / matériaux / sans travail.
-- Tableau « Par jour » : nourriture et matériaux, actuel → simulé, écart en vert ou en rouge.
-- La famine et les entrepôts pleins se recalculent en direct, une ligne chacun, colorée selon l'urgence (même échelle que l'en-tête, entrepôt plein compris).
-- « Revenir à l'actuel » remet la répartition du jeu ; « Appliquer » reste grisé tant qu'elle n'a pas changé.
-- « Appliquer » : remplit `#RecolteNourriture` / `#RecolteMateriaux` et déclenche `#ChangeRessource`. Première action de jeu d'Optizzz, toujours sur un clic du joueur.
+Retravaillée le 2026-10-19 : le formulaire du jeu et son résumé en prose (« Chaque jour, vous récoltez… ») étaient redondants avec la simulation, qui n'était pas assez claire.
+
+- Le panneau « Répartition des ouvrières » **remplace** dans la boîte Récoltes le formulaire du jeu et son résumé : ils sont masqués (classe `optizzz-harvest-replaced`), pas retirés. « Afficher le formulaire du jeu » les remontre. Couper l'option rend la page du jeu intacte.
+- **Curseur** : nourriture à gauche, matériaux à droite ; sa piste se colore selon les parts (nourriture, matériaux, sans travail rayé en gris). Aux deux bouts, l'icône, le nom, le nombre modifiable (écrit comme le jeu, « 108 966 », saisie lue comme un nombre du jeu) et la part des ouvrières en %. La nourriture prend d'abord les ouvrières sans travail, puis sur les matériaux.
+- Les ouvrières qui pourraient récolter (min(TDC, ouvrières)) sans être affectées : « 100 ouvrières sans travail : … ».
+- **Raccourcis** (pastilles, pressées quand la répartition affichée est la leur) : « Répartition actuelle » (celle du jeu) et « Juste assez de nourriture » : le minimum d'ouvrières sur la nourriture pour que le stock ne tombe jamais à zéro (retours de chasse compris), toutes les autres sur les matériaux. Grisé, avec une infobulle, quand même toutes les ouvrières sur la nourriture ne suffisent pas.
+- **Tableau « Par jour »**, une colonne par ressource (dans l'ordre du curseur), une ligne par poste comme le résumé du jeu : récolte du terrain, champignonnière, armée, « Pillage de <pseudo> (22 %) » (arrondi à l'unité inférieure comme le jeu, ligne absente sans tribut), **solde**. Le solde dit l'écart avec la répartition actuelle, en note neutre (le signe dit le sens, pas la couleur : ADR 0003).
+- Ligne « À venir » : famine (ou « Pas de famine ») et entrepôt plein, colorés selon l'urgence (même échelle que l'en-tête), avec « actuellement : … » quand la répartition simulée change la date. Capacité inconnue : « ouvrez Construction ».
+- **Nouvelles ouvrières** (choix segmenté, seulement si le jeu montre l'affectation automatique) : nourriture, matériaux ou sans travail ; il compte dans la simulation (retours de chasse) et part avec « Appliquer ».
+- Une phrase dit ce que fera « Appliquer » (« À appliquer : nourriture 0 → 20 000, matériaux 108 966 → 88 966. ») ; le bouton reste grisé tant que rien n'a changé.
+- « Appliquer » : remplit `#RecolteNourriture` / `#RecolteMateriaux`, coche le `choixOuvriere` choisi et déclenche `#ChangeRessource`. Toujours sur un clic du joueur.
 
 ## 4. Niveaux suivants sur Construction et Laboratoire
 

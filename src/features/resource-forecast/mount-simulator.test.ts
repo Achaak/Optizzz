@@ -20,18 +20,26 @@ const state: ColonyState = {
   taxRate: 0,
   nextHarvestAt: at(10),
   hunts: [],
-  newWorkersGoTo: "none",
+  newWorkersGoTo: "materials",
   capacities: null,
 };
 
-function setup() {
+function setup(colony: ColonyState = state, assignable = 300) {
   const doc = parse(ressourcesHtml);
-  const panel = mountSimulator(doc, state, 300, () => now);
+  const panel = mountSimulator(doc, colony, assignable, () => now);
   const field = (name: string) => panel.querySelector<HTMLInputElement>(`[name="${name}"]`);
+  const value = (name: string) => field(name)?.value;
   const button = (label: string) =>
-    [...panel.querySelectorAll("button")].find((element) => element.textContent === label);
-  const summary = () => panel.querySelector(".optizzz-simulator-outlook")?.textContent ?? "";
-  return { doc, panel, field, button, summary };
+    [...panel.querySelectorAll("button")].find((element) => element.textContent.trim() === label);
+  const rows = () =>
+    [...panel.querySelectorAll(".optizzz-simulator-daily tbody tr")].map((row) =>
+      [...row.querySelectorAll("th, td")].map((cell) =>
+        [...cell.childNodes].map((child) => (child.textContent ?? "").trim()).join(" | "),
+      ),
+    );
+  const idle = () => panel.querySelector(".optizzz-simulator-idle")?.textContent ?? "";
+  const change = () => panel.querySelector(".optizzz-simulator-change")?.textContent ?? "";
+  return { doc, panel, field, value, button, rows, idle, change };
 }
 
 function type(input: HTMLInputElement | null, value: string) {
@@ -41,65 +49,120 @@ function type(input: HTMLInputElement | null, value: string) {
 }
 
 describe("mountSimulator", () => {
-  it("sits right under the daily summary of the harvest", () => {
-    const { doc, panel } = setup();
-    expect(panel.previousElementSibling).toBe(doc.querySelector("#nbNourriture")?.closest("p"));
+  it("stands in for the game's form and daily summary, which stay one click away", () => {
+    const { doc, panel, button } = setup();
+    const summary = doc.querySelector("#nbNourriture")?.closest("p");
+    expect(panel.previousElementSibling).toBe(summary);
+    expect(summary?.classList).toContain("optizzz-harvest-replaced");
+
+    button("Afficher le formulaire du jeu")?.click();
+    expect(summary?.classList).not.toContain("optizzz-harvest-replaced");
+    expect(button("Masquer le formulaire du jeu")).toBeDefined();
   });
 
-  it("starts from the current split and its outlook", () => {
-    const { field, summary } = setup();
-    expect(field("optizzz-food")?.value).toBe("0");
-    expect(field("optizzz-materials")?.value).toBe("300");
-    expect(summary()).toContain("Famine dans 5 h 00");
-  });
-
-  it("recomputes the outlook as the split changes, keeping the total", () => {
-    const { field, summary } = setup();
-    type(field("optizzz-food"), "100");
-    expect(field("optizzz-materials")?.value).toBe("200");
-    expect(field("optizzz-split")?.value).toBe("100");
-    expect(summary()).toContain("Pas de famine");
-
-    type(field("optizzz-split"), "50");
-    expect(field("optizzz-food")?.value).toBe("50");
-    expect(field("optizzz-materials")?.value).toBe("250");
-  });
-
-  it("starts from the game's split and shows idle workers apart", () => {
-    const doc = parse(ressourcesHtml);
-    const panel = mountSimulator(doc, state, 400, () => now);
-    const value = (name: string) => panel.querySelector<HTMLInputElement>(`[name="${name}"]`)?.value;
-    const idle = () => panel.querySelector(".optizzz-simulator-idle")?.textContent ?? "";
+  it("starts from the current split, written like the game", () => {
+    const { value, button, change } = setup(state, 3000);
     expect(value("optizzz-food")).toBe("0");
     expect(value("optizzz-materials")).toBe("300");
-    expect(idle()).toBe("100 ouvrières sans travail");
+    expect(button("Répartition actuelle")?.getAttribute("aria-pressed")).toBe("true");
+    expect(button("Appliquer")?.disabled).toBe(true);
+    expect(change()).toBe("C'est la répartition actuelle du jeu.");
+  });
+
+  it("formats large numbers with thousands separators", () => {
+    const { value } = setup({ ...state, materialWorkers: 108_966, workers: 108_966 }, 108_966);
+    expect(value("optizzz-materials")).toBe("108 966");
+  });
+
+  it("moves workers between the two sides, keeping the total", () => {
+    const { field, value } = setup();
+    type(field("optizzz-food"), "100");
+    expect(value("optizzz-materials")).toBe("200");
+    expect(value("optizzz-split")).toBe("100");
+
+    type(field("optizzz-split"), "50");
+    expect(value("optizzz-food")).toBe("50");
+    expect(value("optizzz-materials")).toBe("250");
+  });
+
+  it("reads what is typed like a game number", () => {
+    const { field, value } = setup();
+    type(field("optizzz-food"), "1 20");
+    expect(value("optizzz-materials")).toBe("180");
+  });
+
+  it("shows idle workers apart, and food takes them first", () => {
+    const { field, value, idle, button } = setup(state, 400);
+    expect(idle()).toContain("100 ouvrières sans travail");
+    type(field("optizzz-food"), "50");
+    expect(value("optizzz-materials")).toBe("300");
+    type(field("optizzz-food"), "150");
+    expect(value("optizzz-materials")).toBe("250");
 
     // The balance point puts every idle worker to work.
-    [...panel.querySelectorAll("button")].find((element) => element.textContent === "Équilibre nourriture")?.click();
+    button("Juste assez de nourriture")?.click();
     expect(value("optizzz-food")).toBe("100");
     expect(value("optizzz-materials")).toBe("300");
     expect(idle()).toBe("");
   });
 
-  it("only takes from materials what food needs beyond the idle workers", () => {
-    const doc = parse(ressourcesHtml);
-    const panel = mountSimulator(doc, state, 400, () => now);
-    const input = (name: string) => panel.querySelector<HTMLInputElement>(`[name="${name}"]`);
-    type(input("optizzz-food"), "50");
-    expect(input("optizzz-materials")?.value).toBe("300");
-    type(input("optizzz-food"), "150");
-    expect(input("optizzz-materials")?.value).toBe("250");
+  it("finds the balance point and says when it is the one shown", () => {
+    const { value, button } = setup();
+    button("Juste assez de nourriture")?.click();
+    expect(value("optizzz-food")).toBe("100");
+    expect(value("optizzz-materials")).toBe("200");
+    expect(button("Juste assez de nourriture")?.getAttribute("aria-pressed")).toBe("true");
+    expect(button("Répartition actuelle")?.getAttribute("aria-pressed")).toBe("false");
+
+    button("Répartition actuelle")?.click();
+    expect(value("optizzz-food")).toBe("0");
+    expect(button("Appliquer")?.disabled).toBe(true);
   });
 
-  it("finds the balance point", () => {
-    const { field, button } = setup();
-    button("Équilibre nourriture")?.click();
-    expect(field("optizzz-food")?.value).toBe("100");
-    expect(field("optizzz-materials")?.value).toBe("200");
+  it("disables the balance point when no split avoids famine", () => {
+    const { button } = setup({ ...state, armyPerDay: 1_000_000 });
+    expect(button("Juste assez de nourriture")?.disabled).toBe(true);
   });
 
-  it("applies the split through the game's own form", () => {
-    const { doc, field, button } = setup();
+  it("details each day per resource, with the change from the current split", () => {
+    const { field, rows } = setup();
+    expect(rows().slice(0, 4)).toEqual([
+      ["Récolte du terrain", "0", "+14 400"],
+      ["Champignonnière", "0", ""],
+      ["Armée", "−4 800", ""],
+      ["Solde", "−4 800", "+14 400"],
+    ]);
+    type(field("optizzz-food"), "150");
+    expect(rows().slice(0, 4)).toEqual([
+      ["Récolte du terrain", "+7 200", "+7 200"],
+      ["Champignonnière", "0", ""],
+      ["Armée", "−4 800", ""],
+      ["Solde", "+2 400 | +7 200 par rapport à l'actuelle", "+7 200 | −7 200 par rapport à l'actuelle"],
+    ]);
+  });
+
+  it("names who takes the tribute", () => {
+    const { rows } = setup({ ...state, taxRate: 0.2 });
+    expect(rows()[3]).toEqual(["Pillage (20 %)", "0", "−2 880"]);
+  });
+
+  it("forecasts famine and full warehouses, against the current split", () => {
+    const { field, rows, panel } = setup();
+    const outlook = () => rows().at(-1);
+    expect(outlook()).toEqual([
+      "À venir",
+      "Famine dans 5 h 00",
+      "Capacité de l'entrepôt inconnue : ouvrez Construction",
+    ]);
+    expect(panel.querySelector(".optizzz-simulator-daily [data-row=outlook] td div")?.className).toContain(
+      "optizzz-text-danger",
+    );
+    type(field("optizzz-food"), "100");
+    expect(outlook()?.[1]).toBe("Pas de famine | actuellement : famine dans 5 h 00");
+  });
+
+  it("applies the split and the new workers' choice through the game's own form", () => {
+    const { doc, field, button, change } = setup();
     const submit = doc.querySelector<HTMLInputElement>("#ChangeRessource");
     const click = vi.fn((event: Event) => {
       event.preventDefault();
@@ -107,54 +170,20 @@ describe("mountSimulator", () => {
     submit?.addEventListener("click", click);
 
     type(field("optizzz-food"), "120");
+    button("Nourriture")?.click();
+    expect(change()).toBe("À appliquer : nourriture 0 → 120, matériaux 300 → 180, nouvelles ouvrières : nourriture.");
     button("Appliquer")?.click();
 
     expect(doc.querySelector<HTMLInputElement>("#RecolteNourriture")?.value).toBe("120");
     expect(doc.querySelector<HTMLInputElement>("#RecolteMateriaux")?.value).toBe("180");
+    expect(doc.querySelector<HTMLInputElement>('input[name="choixOuvriere"]:checked')?.value).toBe("nourriture");
     expect(click).toHaveBeenCalledOnce();
   });
 
-  it("compares daily food and materials, current against simulated", () => {
-    const { panel, field } = setup();
-    const daily = () =>
-      [...panel.querySelectorAll(".optizzz-simulator-daily tbody tr")].map((row) =>
-        [...row.querySelectorAll("th, td")].map((cell) => cell.textContent.trim()),
-      );
-    expect(daily()).toEqual([
-      ["Nourriture", "−4 800", "−4 800", ""],
-      ["Matériaux", "+14 400", "+14 400", ""],
-    ]);
-    type(field("optizzz-food"), "150");
-    expect(daily()).toEqual([
-      ["Nourriture", "−4 800", "+2 400", "+7 200"],
-      ["Matériaux", "+14 400", "+7 200", "−7 200"],
-    ]);
-  });
-
-  it("only applies a split that differs from the game's, and can go back to it", () => {
-    const { field, button } = setup();
-    expect(button("Appliquer")?.disabled).toBe(true);
-    type(field("optizzz-food"), "120");
-    expect(button("Appliquer")?.disabled).toBe(false);
-    button("Revenir à l'actuel")?.click();
-    expect(field("optizzz-food")?.value).toBe("0");
-    expect(field("optizzz-materials")?.value).toBe("300");
-    expect(button("Appliquer")?.disabled).toBe(true);
-  });
-
-  it("colours each outlook line by urgency", () => {
-    const { panel, field } = setup();
-    const lines = () =>
-      [...panel.querySelectorAll(".optizzz-simulator-outlook > div")].map((line) => [line.className, line.textContent]);
-    expect(lines()).toEqual([["optizzz-outlook-danger optizzz-text-danger", "Famine dans 5 h 00"]]);
-    type(field("optizzz-food"), "100");
-    expect(lines()).toEqual([["optizzz-simulator-ok", "Pas de famine"]]);
-  });
-
-  it("draws the split as a bar, idle workers included", () => {
-    const doc = parse(ressourcesHtml);
-    const panel = mountSimulator(doc, state, 400, () => now);
-    const width = (part: string) => panel.querySelector<HTMLElement>(`.optizzz-simulator-bar-${part}`)?.style.width;
-    expect([width("food"), width("materials"), width("idle")]).toEqual(["0%", "75%", "25%"]);
+  it("colours the slider's track by share, idle workers included", () => {
+    const { field } = setup(state, 400);
+    const split = field("optizzz-split");
+    expect(split?.style.getPropertyValue("--food")).toBe("0%");
+    expect(split?.style.getPropertyValue("--assigned")).toBe("75%");
   });
 });

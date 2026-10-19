@@ -41,7 +41,7 @@ export const featureCatalog = [
       { id: "costs", label: "Délais sur Construction et Laboratoire" },
       { id: "levels", label: "Coût des niveaux suivants sur Construction et Laboratoire" },
       { id: "outlook", label: "Famine et entrepôt plein dans l'en-tête" },
-      { id: "simulator", label: "Simulation de la répartition des ouvrières sur Ressources" },
+      { id: "simulator", label: "Répartition des ouvrières sur Ressources (simulée avant d'appliquer)" },
     ],
   },
   {
