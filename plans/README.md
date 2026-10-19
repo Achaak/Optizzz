@@ -48,7 +48,6 @@ These were found and checked but not selected for this batch. Each needs its own
    - `feature-toggles.md` counts are stale, and the `isFeatureEnabled` rule is unused; `CLAUDE.md` repeats that rule.
    - The roadmap stops at step 14.
    - The README misses 10 features and uses « tu ».
-   - Some questions marked open in `docs/reviews/README.md` are answered elsewhere: F8, G9, G10, G11.
 
 ## Findings considered and rejected
 

@@ -4,7 +4,7 @@
 
 ## Contexte
 
-La revue du 2026-10-08 (`docs/reviews/`) a relevé :
+La revue du 2026-10-08 (notes privées, hors du dépôt) a relevé :
 
 - 156 couleurs codées en dur (67 valeurs) dans 24 fichiers, sans aucune variable de thème, et deux familles visuelles : les encarts ajoutés au DOM du jeu reprenaient ses encadrés, les vues React avaient un panneau crème arrondi.
 - Une trentaine d'imports d'une feature vers une autre pour des briques qui ne sont pas des features : export public, lecteurs de pages, revenus, niveaux, armée, fins, attaques en route.
