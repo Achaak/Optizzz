@@ -202,7 +202,7 @@ Relevé le 2026-10-07 sur s5, en GET seulement.
 - Lancer = `POST AcquerirTerrain.php` avec `AcquerirTerrain`, `uniteN`, `t`, `ChoixArmee` (Calystene et Toolzzz). Réponse : « La chasse est lancée. ». Le jeton se relit par un nouveau `GET` avant chaque chasse.
 - Le formulaire de `Ressources.php` (`#AgrandirTerrain`, `form[action="AcquerirTerrain.php"]`) a une étape « Etes vous sûr de vouloir lancer une chasse si longue ? » (`input[name="validation_chasse_longue"]`, radios oui / non) ; le POST direct de l'armée ne passe pas par elle.
 
-## messagerie.php (rapports de chasse)
+## messagerie.php (rapports de chasse et de combat)
 
 - Les rapports sont regroupés en conversations `tr.en_tete_message[data-type="Chasses"]` (`id="conversation_<n>"`), titre `a.intitule_message` « Vos chasseuses ont conquis 610 cm² en 5 expéditions » ; le clic charge le détail en AJAX dans les lignes suivantes.
 - Un combat :
@@ -221,7 +221,37 @@ Vos chasseuses ont conquis 118 cm², les carcasses des prédateurs vous rapporte
 - Le TDC au combat et les niveaux ne sont pas dans le rapport. Mécaniques et validation : `chasse.md`.
 - Détail ouvert (relevé le 2026-10-07) : juste après l'en-tête, un `tr` vide puis `tr.contenu_conversation > td[colspan=5] > table`. Une ligne `tr#message_<n>` par combat, du plus ancien au plus récent : `td.expe` (« 07/10/26 à 11h08 ») et `td.message > div.contenuJoueur` (texte ci-dessus, nombres en `<strong>`, la nourriture suivie d'une `img` pomme). Puis `tr#reactions_<n>`.
 - Seuls les **10 derniers** combats sont chargés ; une ligne `tr.message_affiche` en tête porte le lien « Voir les messages précédents », qui ajoute les précédents dans le même tableau.
-- Types de conversation vus (`data-type`) : `Chasses`, `Alliance`, `Conversations`. Aucun rapport d'attaque ni de défense sur le compte relevé (sous protection).
+- Types de conversation vus (`data-type`) : `Chasses`, `Alliance`, `Conversations`, `Commerce`, `Combats`.
+
+### Conversations « Combats »
+
+Relevé le 2026-10-19 sur S2 et S5 (pseudos remplacés ; fixture `src/game/pages/__fixtures__/combat-conversations.html`). Même en-tête et même détail AJAX que les chasses (`tr.contenu_conversation`, une ligne `tr#message_<n>` par message, `td.expe` et `.contenuJoueur`), une conversation par événement et par adversaire. Titres vus :
+
+- « Attaque réussie contre X : votre armée a franchi le Terrain de Chasse » ;
+- « Attaque échouée contre X : votre armée est morte contre son colonisateur Y » ;
+- « Butin chez X : 6 044 cm² » ou « Butin chez X : 10 cm², 15 et 15 » (cm², nourriture, matériaux) ;
+- « Colonie conquise chez X ».
+
+Rapport d'attaque (un message) :
+
+```
+<strong>Vous attaquez le Terrain de Chasse de <a>X</a></strong><br>
+Troupes en attaque : 5 531 Jeunes Soldates Naines, 485 Soldates Naines, 29 Naines d’Elites. <br>
+Troupes en défense : 10 Jeunes Soldates Naines. <br><br>
+Vous infligez <strong>19 221 (+ 9 611)</strong> dégâts et tuez <strong>10</strong> ennemies.<br>
+L’ennemie inflige <strong>2 (+ 2)</strong> dégâts à vos fourmis et en tue <strong>0</strong>.<br><br>
+Écrasante victoire ! A peine le temps de se dégourdir les pattes qu’ils étaient tous morts ...<br>
+<strong>Vous avez gagné cette bataille !</strong>
+```
+
+- Lieu : « le Terrain de Chasse », « la fourmilière » (vus) ; la Loge pas encore vue. Le pseudo est un lien `Membre.php` dans le `strong` ; pas d'espace entre le `</strong>` et « Troupes » dans le texte.
+- Fourmilière tenue par un colonisateur : « Vous attaquez la fourmilière de X, mais une armée d'occupation est déjà présente. » ; « Troupes en défense » est alors l'armée d'occupation. Défaite : « Vous avez infiltré l’ennemi. Les informations sont bien rentrées ... mais pas vos soldates ! » puis « <strong>Vos troupes ont échoué</strong> ».
+- Dégâts « base (+ bonus) » des deux côtés : le bonus est +10 % par niveau d'Armes, **arrondi** (19 221 → + 9 611 : Armes 5 ; 1 589 060 → + 4 926 086 : Armes 31). Les Armes adverses se lisent donc dans le rapport dès 10 dégâts de base.
+- Un seul échange « Vous infligez … / L’ennemie inflige … » dans les deux rapports vus (combats déséquilibrés). Pas de promotions, ni de TDC ou de ressources : ils arrivent dans « Butin chez X », à la même minute.
+- Butin, un message par prise : « Vos fourmis ont <strong>conquis 6 044 cm²</strong> lors de leur dernière bataille. Ces terres appartenaient à <a>X</a>. » ; « Vos fourmis ont pillé <strong>15 <img alt="nourriture"> et 15 <img alt="matériaux"></strong> lors de leur dernières batailles, ces ressources appartenaient à <a>X</a>. ». Une conversation « Butin » regroupe plusieurs prises sur le même joueur (4 messages sur deux jours vus sur S5).
+- Une attaque sur un lieu vide ne donne pas de rapport de combat : seulement « Butin » (15 conversations « Butin » pour un seul rapport d'attaque sur S5).
+- Colonie : « Félicitations ! … Vous venez de prendre le contrôle d'une nouvelle colonie … son propriétaire <a>X</a> essayera sans doute de se révolter. ».
+- **Pas encore vu** : un rapport de défense (attaque subie), une attaque de la Loge, un combat en plusieurs échanges.
 
 ## commerce.php (convois)
 

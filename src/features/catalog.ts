@@ -145,6 +145,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "combat-reports",
+    label: "Rapports d'attaque",
+    description:
+      "Dans la messagerie : un tableau de vos attaques (armées, pertes, Armes adverses, butin) et un bouton pour les rejouer dans le simulateur.",
+    options: [],
+  },
+  {
     id: "combat-simulator",
     label: "Simulateur de combat",
     description:

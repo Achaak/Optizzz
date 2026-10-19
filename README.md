@@ -18,6 +18,7 @@ Chaque outil se désactive dans les paramètres (roue dentée dans la barre du j
 - **Prévisions de ressources** : quand tu pourras payer, famine, entrepôts pleins, et un simulateur de répartition des ouvrières.
 - **Planificateur de ponte** : raccourcis de ponte avec aperçu (tout payer, durée, bilan à zéro), fin, date de paiement et entretien sur la Reine.
 - **Rapports de chasse** : tableau des combats de chaque chasse dans la messagerie, avec les pertes prévues.
+- **Rapports d'attaque** : armées, pertes, Armes adverses et butin de chaque attaque dans la messagerie, à rejouer dans le simulateur de combat.
 - **Attaques et convois en cours** : une liste lisible avec décompte et heure d'arrivée, et un bouton pour copier chacun en une ligne.
 - **Sondes** : une fourmi gardée sur le Dôme et la Loge (et le Terrain si vous le voulez) pour voir l'armée de qui vous attaque ; un bouton pour les placer sur Armée, et le Lanceur de chasse comme le Plan de flood les laissent à la maison.
 - **Simulateur de combat** : depuis la page Armée ou le popup de l'extension.

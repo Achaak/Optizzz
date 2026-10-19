@@ -5,6 +5,7 @@ import { fakeBrowser } from "wxt/testing/fake-browser";
 import { armyFromKeys } from "@/game/army/units";
 import { storeLevels } from "@/data/levels";
 import { CombatSimulator } from "./CombatSimulator";
+import type { Opponent } from "./form";
 import { storeGarrison } from "@/data/garrison";
 
 // Smoke test of the page: it fills itself from what was remembered and shows a result. The look is checked by hand.
@@ -34,10 +35,10 @@ afterEach(() => {
   container.remove();
 });
 
-async function render(side: "attack" | "defend") {
+async function render(side: "attack" | "defend", opponent: Opponent | null = null) {
   const root = createRoot(container);
   await act(async () => {
-    root.render(<CombatSimulator server="s5.fourmizzz.fr" side={side} />);
+    root.render(<CombatSimulator server="s5.fourmizzz.fr" side={side} opponent={opponent} />);
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
   return root;
@@ -60,5 +61,21 @@ describe("CombatSimulator", () => {
     expect(valueOf("Jeune Soldate Naine, Loge Impériale")).toBe("19");
     expect(valueOf("Dôme")).toBe("2");
     expect(container.textContent).toContain("Ajoutez des unités à l'attaquant.");
+  });
+
+  it("fights again the army seen in a report, at the place attacked", async () => {
+    await render("attack", {
+      place: "nest",
+      army: { TuE: 28892 },
+      weapons: 31,
+      seen: "attaque du 19/10/26 10h36 contre Cible_1",
+    });
+    expect(valueOf("Jeune Soldate Naine")).toBe("1019");
+    expect(valueOf("Tueuse d’élite, Fourmilière")).toBe("28892");
+    expect(container.querySelector<HTMLInputElement>('input[name="target"]:checked')?.parentElement?.textContent).toBe(
+      "Fourmilière",
+    );
+    expect(container.textContent).toContain("l'armée vue lors de l'attaque du 19/10/26 10h36 contre Cible_1");
+    expect(container.textContent).toContain("avec les Armes 31 que montre son bonus");
   });
 });

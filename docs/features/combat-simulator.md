@@ -14,6 +14,7 @@ Savoir avant d'attaquer (ou en se préparant à défendre) qui gagne, ce que cha
 - **Pré-remplissage** : l'armée par lieu, le TDC et le stock (nourriture, matériaux) sont mémorisés à chaque passage sur `Armee.php` (avec les niveaux de Dôme et Loge), les autres niveaux viennent de `game-levels`. « J'attaque » met toute l'armée côté attaquant ; « Je défends », chaque lieu, le stock et le TDC côté défenseur. Sans serveur dans l'adresse (popup), le dernier serveur dont l'armée a été lue.
   - Une garnison lue vide (toute l'armée en chasse) est mémorisée telle quelle, mais la dernière armée vue avec des unités est gardée : le simulateur la reprend en le disant (« armée lue le …, la garnison était vide le … : armée en chasse ? »).
   - Armes et Bouclier jamais lus : un avertissement « passez par le Laboratoire » (comptés à 0).
+  - Depuis un rapport d'attaque (« Simuler », `combat-reports.md`) : l'armée adverse vue est mise côté défenseur, seule, au lieu attaqué (qui devient le lieu visé), avec les Armes que montre son bonus ; une note le dit et rappelle que Bouclier et bâtiments adverses sont à saisir. Mon armée vient d'Armée comme pour « J'attaque ». L'armée passe par l'adresse de la page (`opponent`, validée par zod).
   - Changer de côté (« Je défends / J'attaque avec mon armée ») ne remplace que mon côté : l'armée adverse collée reste ; mon ancien côté n'est vidé que si je ne l'ai pas modifié.
 - **Résultat**, recalculé à chaque saisie : verdict et gains, puis par lieu combattu : victoire ou défaite, riposte, pertes par unité des deux côtés, attaque actuelle et attaque nécessaire pour une riposte à 50 / 30 / 10 % (« plus de X » : le moteur exige strictement plus de 1,5 / 2 / 3 fois la vie). Avertissement si le TDC adverse est hors de la portée 50 % (inclus) – 300 % (exclu), la règle de `src/game/attack.ts`. En petite largeur, chaque côté défile horizontalement.
 - Interrupteur « Simulateur de combat » : coupé, pas de bouton dans la barre ; le simulateur reste ouvrable depuis « Outils ». L'armée est lue sur `Armee.php` par `collect` dans tous les cas.
@@ -24,17 +25,17 @@ Savoir avant d'attaquer (ou en se préparant à défendre) qui gagne, ce que cha
 
 ## Code
 
-| Fichier                                                                        | Rôle                                                   |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------ |
-| `src/game/army/rounds.ts`                                                      | Échange tour par tour, partagé avec la chasse          |
-| `src/game/army/battle.ts` (+ test)                                             | Combat entre joueurs, lieux, attaque nécessaire, gains |
-| `src/game/army/units.ts` (+ test)                                              | Défense des unités, lecture des effectifs écrits       |
-| `src/game/attack.ts` (+ test)                                                  | Portée, prise de 20 %, créneaux d'attaque              |
-| `src/data/garrison.ts` (+ test)                                                | Armée par lieu sur `Armee.php`, mémoire par serveur    |
-| `src/features/combat-simulator/form.ts` (+ test)                               | Pré-remplissage, rapport collé, entrée du moteur       |
-| `src/features/combat-simulator/CombatSimulator.tsx` (+ test)                   | La page (test de montage seulement)                    |
-| `src/features/combat-simulator/index.ts`, `open.ts`                            | Bouton de la barre du haut, adresse de la page         |
-| `src/features/combat-simulator/dialog.ts`, `src/utils/page-dialog.ts` (+ test) | Fenêtre par-dessus le jeu (iframe)                     |
-| `src/utils/menu-bar.ts` (+ test)                                               | Boutons d'Optizzz dans la barre du haut                |
-| `src/entrypoints/combat-simulator/`, `background.ts`                           | Page de l'extension, script d'arrière-plan             |
-| `src/features/settings/tools-section.ts`                                       | Onglet « Outils »                                      |
+| Fichier                                                                        | Rôle                                                                 |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `src/game/army/rounds.ts`                                                      | Échange tour par tour, partagé avec la chasse                        |
+| `src/game/army/battle.ts` (+ test)                                             | Combat entre joueurs, lieux, attaque nécessaire, gains               |
+| `src/game/army/units.ts` (+ test)                                              | Défense des unités, lecture des effectifs écrits                     |
+| `src/game/attack.ts` (+ test)                                                  | Portée, prise de 20 %, créneaux d'attaque                            |
+| `src/data/garrison.ts` (+ test)                                                | Armée par lieu sur `Armee.php`, mémoire par serveur                  |
+| `src/features/combat-simulator/form.ts` (+ test)                               | Pré-remplissage, rapport collé, armée d'un rapport, entrée du moteur |
+| `src/features/combat-simulator/CombatSimulator.tsx` (+ test)                   | La page (test de montage seulement)                                  |
+| `src/features/combat-simulator/index.ts`, `open.ts`                            | Bouton de la barre du haut, adresse de la page                       |
+| `src/features/combat-simulator/dialog.ts`, `src/utils/page-dialog.ts` (+ test) | Fenêtre par-dessus le jeu (iframe)                                   |
+| `src/utils/menu-bar.ts` (+ test)                                               | Boutons d'Optizzz dans la barre du haut                              |
+| `src/entrypoints/combat-simulator/`, `background.ts`                           | Page de l'extension, script d'arrière-plan                           |
+| `src/features/settings/tools-section.ts`                                       | Onglet « Outils »                                                    |

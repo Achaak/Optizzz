@@ -29,6 +29,7 @@ Votre fourmilière
 Chasse et combat
 • Lanceur de chasse : sur Ressources, combien chasser et avec quelles unités, puis lancer en un clic.
 • Rapports de chasse : dans la messagerie, un tableau des combats de chaque chasse avec les pertes prévues.
+• Rapports d'attaque : dans la messagerie, armées, pertes, Armes adverses et butin de chaque attaque, à rejouer dans le simulateur.
 • Simulateur de combat : depuis un bouton de la barre du haut, sur toutes les pages, ou depuis l'icône de l'extension.
 • Cibles à portée : sur Ennemies, les joueurs attaquables du plus proche au plus loin, avec le trajet, la prise possible, leur état, les pactes et les guerres.
 • Page Membres : le temps d'une attaque ou d'un convoi vers chaque membre, et son rôle dans la chaîne de TDC en couleur, deux colonnes triables.

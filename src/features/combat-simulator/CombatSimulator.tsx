@@ -4,7 +4,17 @@ import { armyAttack, UNITS } from "@/game/army/units";
 import { inRange } from "@/game/attack";
 import { formatNumber } from "@/utils/number-format";
 import { loadStoredLevels } from "@/data/levels";
-import { emptyForm, leaveSide, prefill, readArmyText, toBattle, type Counts, type SimulatorForm } from "./form";
+import {
+  emptyForm,
+  leaveSide,
+  prefill,
+  readArmyText,
+  toBattle,
+  withOpponent,
+  type Counts,
+  type Opponent,
+  type SimulatorForm,
+} from "./form";
 import { isEmptyGarrison, loadGarrison } from "@/data/garrison";
 import type { SimulatorSide } from "./open";
 import { formatPastTime } from "@/utils/time-format";
@@ -22,6 +32,8 @@ interface Props {
   side: SimulatorSide;
   /** Framed in the in-game dialog, which already shows the title. */
   embedded?: boolean;
+  /** An army seen in a report, on the defending side. */
+  opponent?: Opponent | null;
 }
 
 function NumberInput({ value, onChange, label }: { value: number; onChange: (value: number) => void; label: string }) {
@@ -147,9 +159,9 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
   );
 }
 
-export function CombatSimulator({ server, side: initialSide, embedded = false }: Props) {
+export function CombatSimulator({ server, side: initialSide, embedded = false, opponent = null }: Props) {
   const [side, setSide] = useState<SimulatorSide>(initialSide);
-  const [form, setForm] = useState<SimulatorForm>(emptyForm);
+  const [form, setForm] = useState<SimulatorForm>(() => (opponent ? withOpponent(emptyForm(), opponent) : emptyForm()));
   const [armyNote, setArmyNote] = useState<string | null>(null);
   const [levelsUnknown, setLevelsUnknown] = useState(false);
   // The form as filled in for the player: what they did not change is emptied when they change side.
@@ -224,6 +236,15 @@ export function CombatSimulator({ server, side: initialSide, embedded = false }:
           {server ? `Serveur ${server}` : "Aucun serveur connu : passez sur la page Armée du jeu pour pré-remplir."}
           {armyNote && ` · ${armyNote}`}
         </p>
+        {opponent && (
+          <p className="optizzz-note">
+            Défenseur : l'armée vue {opponent.seen ? `lors de l'${opponent.seen}` : "dans un rapport"}
+            {opponent.weapons === null
+              ? " (Armes illisibles dans le rapport : à saisir)."
+              : `, avec les Armes ${String(opponent.weapons)} que montre son bonus.`}{" "}
+            Son Bouclier et ses bâtiments ne sont pas dans le rapport : à saisir.
+          </p>
+        )}
         {levelsUnknown && (
           <p className="optizzz-callout optizzz-callout--warning">
             Armes et Bouclier inconnus : passez par le Laboratoire du jeu pour qu'Optizzz les lise (comptés à 0).

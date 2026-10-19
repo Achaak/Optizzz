@@ -52,6 +52,7 @@ describe("buildFeaturesSection", () => {
       "probes.nest",
       "probes.lodge",
       "hunt-reports",
+      "combat-reports",
       "combat-simulator",
       "alliance-map",
       "server-map",

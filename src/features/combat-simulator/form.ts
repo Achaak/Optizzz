@@ -1,4 +1,5 @@
 // The simulator's form, apart from React: what fills it and what the engine gets from it.
+import { z } from "zod";
 import { PLACES, type Attacker, type Defender, type Place } from "@/game/army/battle";
 import { armyFromKeys, armyToKeys, parseCounts, unitKeyOf, type Army } from "@/game/army/units";
 import type { StoredLevels } from "@/data/levels";
@@ -154,5 +155,48 @@ export function toBattle(form: SimulatorForm): { attacker: Attacker; defender: D
       dome: defender.dome,
       lodge: defender.lodge,
     },
+  };
+}
+
+/** The army an attack report showed at the place attacked (src/game/pages/combat-reports.ts), to fight it again. */
+export interface Opponent {
+  place: Place;
+  army: Counts;
+  /** Deduced from the report's bonus; null when it could not tell. */
+  weapons: number | null;
+  /** « attaque du 19/10/26 10h36 contre Cible_1 », said above the form. */
+  seen?: string;
+}
+
+const opponentSchema = z.object({
+  place: z.enum(PLACES),
+  army: z.record(z.string(), z.number().int().nonnegative()),
+  weapons: z.number().int().nonnegative().nullable(),
+  seen: z.string().optional(),
+});
+
+export const encodeOpponent = (opponent: Opponent): string => JSON.stringify(opponent);
+
+/** The opponent the page's address carries; null when there is none or it cannot be read. */
+export function decodeOpponent(text: string | null): Opponent | null {
+  if (!text) return null;
+  try {
+    const parsed = opponentSchema.safeParse(JSON.parse(text));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The opponent on the defending side, alone at the place attacked, which becomes the target. */
+export function withOpponent(form: SimulatorForm, opponent: Opponent): SimulatorForm {
+  return {
+    ...form,
+    defender: {
+      ...form.defender,
+      armies: { ...emptyForm().defender.armies, [opponent.place]: opponent.army },
+      weapons: opponent.weapons ?? form.defender.weapons,
+    },
+    target: opponent.place,
   };
 }

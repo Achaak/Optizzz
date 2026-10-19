@@ -1,6 +1,6 @@
 # Feature : Rapports de chasse
 
-Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Voir aussi `roadmap.md`. Rapports d'attaque et de défense : [#1](https://github.com/Achaak/Optizzz/issues/1).
+Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Voir aussi `roadmap.md`. Rapports d'attaque : `combat-reports.md`.
 
 ## But
 

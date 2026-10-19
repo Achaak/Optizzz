@@ -43,7 +43,8 @@ Ce que le simulateur de combat (`src/game/army/battle.ts`) suppose, d'où ça vi
 
 ## Supposé, à vérifier sur un vrai rapport ([#1](https://github.com/Achaak/Optizzz/issues/1))
 
-- **Tours** : on reprend le moteur de la chasse (tours jusqu'à la chute d'un camp). Outiiil lit des rapports d'attaque à plusieurs échanges « Vous infligez … et tuez … », ce qui va dans ce sens.
+- **Tours** : on reprend le moteur de la chasse (tours jusqu'à la chute d'un camp). Outiiil lit des rapports d'attaque à plusieurs échanges « Vous infligez … et tuez … », ce qui va dans ce sens. Les deux premiers vrais rapports (2026-10-19, `fourmizzz-pages.md`, « Combats ») n'ont qu'un échange, mais l'un des camps y meurt d'un coup.
+- Bonus d'Armes **vérifié** sur ces rapports : +10 % des dégâts de base par niveau, arrondi (19 221 → + 9 611 à Armes 5).
 - La riposte sur le TDC, « plus dure » selon le forum, sans formule connue : traitée comme ailleurs.
 - Fourmis mortes : celles tombées à 0 ; pas de règle de la demi-vie (vue en chasse seulement). Un camp vaincu perd tout ce qui a combattu.
 - Plafond de TDC compté sur les fourmis **survivantes** ; plafond de pillage partagé au prorata entre nourriture et matériaux.

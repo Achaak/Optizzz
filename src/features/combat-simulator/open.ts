@@ -9,20 +9,36 @@ export interface OpenSimulatorMessage {
   /** Game server whose remembered army and levels fill the form, e.g. "s5.fourmizzz.fr". */
   server: string;
   side: SimulatorSide;
+  /** An army seen in a report, to fight again (`encodeOpponent`, form.ts). */
+  opponent?: string;
 }
 
 /**
  * Without a server, the page falls back on the one whose army was read last. Embedded: framed in the in-game dialog,
  * which already shows the title.
  */
-export function simulatorUrl(server: string | null, side: SimulatorSide, { embedded = false } = {}): string {
-  const query = new URLSearchParams({ side, ...(server ? { server } : {}), ...(embedded ? { embedded: "1" } : {}) });
+export function simulatorUrl(
+  server: string | null,
+  side: SimulatorSide,
+  { embedded = false, opponent }: { embedded?: boolean; opponent?: string } = {},
+): string {
+  const query = new URLSearchParams({
+    side,
+    ...(server ? { server } : {}),
+    ...(embedded ? { embedded: "1" } : {}),
+    ...(opponent ? { opponent } : {}),
+  });
   return browser.runtime.getURL(`/combat-simulator.html?${query.toString()}`);
 }
 
 /** From a content script. */
-export function requestSimulator(server: string, side: SimulatorSide): Promise<unknown> {
-  const message: OpenSimulatorMessage = { type: "open-combat-simulator", server, side };
+export function requestSimulator(server: string, side: SimulatorSide, opponent?: string): Promise<unknown> {
+  const message: OpenSimulatorMessage = {
+    type: "open-combat-simulator",
+    server,
+    side,
+    ...(opponent ? { opponent } : {}),
+  };
   return browser.runtime.sendMessage(message);
 }
 

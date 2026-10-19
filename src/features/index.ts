@@ -4,6 +4,7 @@ import { allianceMapMenu } from "./alliance-map/menu";
 import { allianceSharingMenu } from "./alliance-sharing/menu";
 import { allianceStatsMenu } from "./alliance-stats/menu";
 import { attacksOnWay } from "./attacks-on-way";
+import { combatReports } from "./combat-reports";
 import { combatSimulator } from "./combat-simulator";
 import { convoyPlanner, convoyWorkers } from "./convoy";
 import { endTimes } from "./end-times";
@@ -41,6 +42,7 @@ export const features: Feature[] = [
   resourceForecast,
   alerts,
   huntReports,
+  combatReports,
   layingPlanner,
   convoyPlanner,
   convoyWorkers,

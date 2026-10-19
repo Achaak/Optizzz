@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { armyFromKeys } from "@/game/army/units";
-import { emptyForm, leaveSide, prefill, readArmyText, toBattle } from "./form";
+import {
+  decodeOpponent,
+  emptyForm,
+  encodeOpponent,
+  leaveSide,
+  prefill,
+  readArmyText,
+  toBattle,
+  withOpponent,
+} from "./form";
 import type { Garrison } from "@/data/garrison";
 
 const garrison: Garrison = {
@@ -93,5 +102,39 @@ describe("toBattle", () => {
     expect(attacker.army).toEqual(armyFromKeys({}));
     expect(defender.armies.lodge).toEqual(armyFromKeys({ JSN: 19, TuE: 5 }));
     expect(defender).toMatchObject({ weapons: 4, shield: 5, dome: 3, lodge: 1 });
+  });
+});
+
+describe("opponent", () => {
+  const opponent = { place: "nest", army: { TuE: 28892 }, weapons: 31 } as const;
+
+  it("puts the army seen in a report on the defending side, at the place attacked, with its Weapons", () => {
+    const form = withOpponent(prefill(emptyForm(), "attack", garrison, levels), opponent);
+    expect(form.defender.armies).toEqual({ field: {}, nest: { TuE: 28892 }, lodge: {} });
+    expect(form.defender.weapons).toBe(31);
+    expect(form.target).toBe("nest");
+    expect(form.attacker.army).toEqual({ JSN: 1219, Tk: 40, TuE: 5 });
+  });
+
+  it("leaves the defender's Weapons alone when the report could not tell them", () => {
+    const form = withOpponent(
+      { ...emptyForm(), defender: { ...emptyForm().defender, weapons: 7 } },
+      {
+        ...opponent,
+        weapons: null,
+      },
+    );
+    expect(form.defender.weapons).toBe(7);
+  });
+
+  it("goes through the page's address and back", () => {
+    expect(decodeOpponent(encodeOpponent(opponent))).toEqual(opponent);
+  });
+
+  it("is null for an address it cannot read", () => {
+    expect(decodeOpponent(null)).toBeNull();
+    expect(decodeOpponent("{")).toBeNull();
+    expect(decodeOpponent('{"place":"moon","army":{},"weapons":1}')).toBeNull();
+    expect(decodeOpponent('{"place":"field","army":{"JSN":-3},"weapons":1}')).toBeNull();
   });
 });

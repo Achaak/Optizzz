@@ -11,7 +11,7 @@ export default defineBackground(() => {
   // No answer is sent: the content script only asks for the tab.
   browser.runtime.onMessage.addListener((message: unknown) => {
     const url = isOpenSimulatorMessage(message)
-      ? simulatorUrl(message.server, message.side)
+      ? simulatorUrl(message.server, message.side, { opponent: message.opponent })
       : isOpenServerMapMessage(message)
         ? serverMapUrl(message.origin, message.target)
         : isOpenWatchlistMessage(message)
