@@ -6,7 +6,7 @@ import { allianceStatsMenu } from "./alliance-stats/menu";
 import { attacksOnWay } from "./attacks-on-way";
 import { combatReports } from "./combat-reports";
 import { combatSimulator } from "./combat-simulator";
-import { convoyPlanner, convoyWorkers } from "./convoy";
+import { convoyHistory, convoyPlanner, convoyWorkers } from "./convoy";
 import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
 import { floodPlanner } from "./flood";
@@ -46,6 +46,7 @@ export const features: Feature[] = [
   layingPlanner,
   convoyPlanner,
   convoyWorkers,
+  convoyHistory,
   targets,
   membersColumns,
   profileProduction,

@@ -3,7 +3,9 @@ import { fakeBrowser } from "wxt/testing/fake-browser";
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
 import reineHtml from "../end-times/__fixtures__/reine-laying.html?raw";
 import commerceHtml from "../convoy/__fixtures__/commerce.html?raw";
+import messagerieHtml from "@/game/pages/__fixtures__/messagerie-convoys.html?raw";
 import { loadConvoys } from "@/data/convoys";
+import { loadConvoyHistory } from "@/data/convoy-history";
 import { loadSections } from "@/data/end-times";
 import { collect } from "./index";
 
@@ -42,5 +44,14 @@ describe("collect", () => {
     const kept = await loadConvoys(ORIGIN);
     expect(kept?.convoys.map((convoy) => convoy.recipient)).toEqual(["Messor", "Tetramorium"]);
     expect(kept?.workers).toBe(4_995);
+  });
+
+  it("keeps the convoys delivered and received listed by the inbox, only when that option is on", async () => {
+    history.replaceState(null, "", "/messagerie.php");
+    document.body.innerHTML = new DOMParser().parseFromString(messagerieHtml, "text/html").body.innerHTML;
+    await collect.run(ctx, { "convoy.history": false });
+    expect(await loadConvoyHistory(ORIGIN)).toBeNull();
+    await collect.run(ctx, {});
+    expect((await loadConvoyHistory(ORIGIN))?.messages).toHaveLength(5);
   });
 });

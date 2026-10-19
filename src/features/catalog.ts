@@ -72,8 +72,11 @@ export const featureCatalog = [
     id: "convoy",
     label: "Calculateur de convoi",
     description:
-      "Sur les Convois : trajet et heure d'arrivée, ouvrières prises, destinataires suggérés. Dans l'en-tête : le total des ouvrières, convois en route compris.",
-    options: [{ id: "workers", label: "Total des ouvrières, convois compris, dans l'en-tête" }],
+      "Sur les Convois : trajet et heure d'arrivée, ouvrières prises, destinataires suggérés, et ce que vous avez livré et reçu par joueur d'après la messagerie. Dans l'en-tête : le total des ouvrières, convois en route compris.",
+    options: [
+      { id: "workers", label: "Total des ouvrières, convois compris, dans l'en-tête" },
+      { id: "history", label: "Convois livrés et reçus par joueur, d'après la messagerie" },
+    ],
   },
   {
     id: "targets",

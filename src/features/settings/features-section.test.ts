@@ -34,6 +34,7 @@ describe("buildFeaturesSection", () => {
       "laying-templates",
       "convoy",
       "convoy.workers",
+      "convoy.history",
       "targets",
       "members-columns",
       "members-columns.trips",

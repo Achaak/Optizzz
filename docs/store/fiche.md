@@ -23,7 +23,7 @@ Votre fourmilière
 • Alertes : sur l'icône de l'extension, le temps avant une famine ou un entrepôt plein pour tous vos serveurs, et des notifications au choix (famine, entrepôt plein, chantier terminé, chasse rentrée, attaque arrivée sur sa cible).
 • Suivis : suivez des joueurs et des alliances, et voyez ce qui a changé depuis votre dernière visite (alliance, TDC, vacances, membres, guerres, pactes), relevé chaque heure depuis l'export public, avec un résumé dans le popup et des notifications au choix.
 • Planificateur de ponte : sur la Reine, des raccourcis (tout payer, durée de ponte, bilan à zéro) avec un aperçu au survol, et la fin, le paiement et l'entretien de la ponte choisie.
-• Calculateur de convoi : trajet, heure d'arrivée, récolte perdue pendant le trajet et destinataires proposés, du plus proche au plus loin ; dans l'en-tête, le total de vos ouvrières, convois en route compris.
+• Calculateur de convoi : trajet, heure d'arrivée, récolte perdue pendant le trajet et destinataires proposés, du plus proche au plus loin ; ce que vous avez livré et reçu par joueur sur 24 h, 7 ou 30 jours, à copier pour votre alliance ; dans l'en-tête, le total de vos ouvrières, convois en route compris.
 • Rechargement sans risque : recharger une page ou revenir en arrière ne relance plus une ponte, une chasse ou une construction.
 
 Chasse et combat

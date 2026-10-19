@@ -2,6 +2,8 @@ import { readGarrison, storeGarrison } from "@/data/garrison";
 import { readSection, sourceOf } from "@/game/pages/end-times";
 import { storeSection } from "@/data/end-times";
 import { readKeptConvoys, storeConvoys } from "@/data/convoys";
+import { isInbox, keepConvoyMessages } from "@/data/convoy-history";
+import { readConvoyMessages } from "@/game/pages/messages";
 import type { Feature } from "../feature";
 import { storeLevels } from "@/data/levels";
 import { readLaying, storeLaying } from "@/data/laying";
@@ -42,6 +44,11 @@ export const collect: Feature = {
     if (path === "/commerce.php" && on("convoy", "workers")) {
       const convoys = readKeptConvoys(document, now);
       if (convoys) await storeConvoys(origin, convoys, now, readStock(document)?.workers);
+    }
+
+    // Convoys delivered and received, read in the inbox: the game deletes its messages after a week.
+    if (path === "/messagerie.php" && on("convoy", "history") && isInbox(document)) {
+      await keepConvoyMessages(origin, readConvoyMessages(document, now), now);
     }
 
     // The army by place: combat simulator, flood plan and its « Flood max » column, research advice.

@@ -253,6 +253,15 @@ L’ennemie inflige <strong>2 (+ 2)</strong> dégâts à vos fourmis et en tue <
 - Colonie : « Félicitations ! … Vous venez de prendre le contrôle d'une nouvelle colonie … son propriétaire <a>X</a> essayera sans doute de se révolter. ».
 - **Pas encore vu** : un rapport de défense (attaque subie), une attaque de la Loge, un combat en plusieurs échanges.
 
+## messagerie.php (convois livrés et reçus)
+
+Relevé le 2026-10-19 sur S5 (lecture seule, boîte de réception).
+
+- La boîte de réception (`GET messagerie.php`, sans ancre) liste toutes les conversations dans `div#liste_conversations > table#table_liste_conversations`, **sans pages** : le jeu efface les messages au bout d'environ une semaine (le plus ancien vu avait 7 jours et quelques heures). Les dossiers (`#Commerce`, `#Combat`…, ancre de l'URL) sont rechargés en AJAX par `POST traitement=afficher&dossier_special=<nom>` ; le dossier Commerce montre les mêmes conversations que la boîte de réception.
+- En-tête d'une conversation de convoi : `tr.en_tete_message[data-type="Commerce"]#conversation_<id>`, participant « Fourmizzz », `td.td_objet > span.message_affiche` (la date), puis `a.intitule_message` : « Convoi livré à X : 381 000 <img alt="matériaux"> », « Convoi reçu de X : 2 <img alt="nourriture"> et 1 <img alt="matériaux"> ». Une `img.icone_messagerie` suit chaque nombre ; son `alt` (« nourriture », « matériaux ») dit la ressource, une ressource à zéro n'est pas écrite. Une conversation non lue a son titre en gras et un `span.nbr_mess_non_lus_conv`.
+- Dates (heure de Paris) : « 05h48 » (aujourd'hui), « hier 21h03 », « samedi 05h53 » (de 2 à 6 jours), « 13 octobre 23h50 » (plus ancien, sans année).
+- Une conversation peut **regrouper plusieurs livraisons** au même joueur (deux livraisons à 22 min d'écart, une autre conversation entre elles) : l'en-tête donne leur somme et l'heure de la dernière. Ouvrir la conversation (`POST traitement=afficher&conversation=<id>`, ce que fait un clic, qui la marque comme lue) donne une ligne `tr#message_<n>` par livraison : `td.expe` « 19/10/26 à 05h26 » et le texte « Votre livraison de … est arrivée chez X. Vos ouvrières sont de retour. ».
+
 ## commerce.php (convois)
 
 Relevé le 2026-10-07 sur s5 (convoi de 1 nourriture vers Messor, envoyé à 20h15).
@@ -262,7 +271,7 @@ Relevé le 2026-10-07 sur s5 (convoi de 1 nourriture vers Messor, envoyé à 20h
 - Convois en cours : `h3` « Convois en cours: », puis une ligne par convoi : `<strong>- Vous allez livrer 1<img pomme> et 0<img bois> à <a href="Membre.php?Pseudo=X">X</a> dans 1H 22m 22s</strong><br>`. Le temps restant est écrit au chargement, **sans décompte `reste()`**. Avec Compte+ (relevé le 2026-10-13 sur S5), chaque ligne est suivie de ` - <small><em>Retour le 13 oct. à 21h59</em></small>` : l'heure de retour des ouvrières, égale à l'arrivée (pas de trajet retour). Tant que le convoi peut être annulé (relevé le 2026-10-17 sur S5), ` - <a href="commerce.php?annuler=<id>&t=<jeton>">Annuler</a>` suit ce `<small>`, avant le `<br>` ; les convois plus anciens n'en ont pas.
 - Convois reçus (relevé le 2026-10-18 sur S5, Compte+) : après les convois envoyés, une ligne vide (`<br /><br />`), puis une ligne par convoi reçu, dans un `span.gras` (pas un `strong`) : `<span class="gras">- Vous allez recevoir 2<img nourritures> et 1 <img materiaux> de <a href="Membre.php?Pseudo=X">X</a> dans 8H 6m 59s</span> - <small><em>Retour le 19 oct. à 02h15</em></small><br/>`. Le « Retour le » y est l'heure d'arrivée chez moi. Toujours sous le même `h3` « Convois en cours: » (non vérifié quand on ne reçoit que des convois). Les ouvrières d'un convoi reçu ne sont pas les miennes.
 - Les ouvrières ne font pas de trajet retour (observation du joueur) : le jeu les retire du compteur des ouvrières (`#nb_ouvrieres`, en-tête) au départ et les rend à l'arrivée du convoi.
-- Un message `data-type="Commerce"` arrive **au départ** : « 20h15 Convoi livré à Messor : 1 ».
+- Un message `data-type="Commerce"` « Convoi livré à X : 1 » (relevé le 2026-10-07, convoi d'une nourriture) ; son détail (relevé le 2026-10-19) dit « Votre livraison de 0 [nourriture] et 300 000 [matériaux] est arrivée chez X. Vos ouvrières sont de retour. » : il est daté de l'**arrivée**. Liste des conversations : voir « messagerie.php (convois livrés et reçus) ».
 
 ## simulateurDuree.php
 

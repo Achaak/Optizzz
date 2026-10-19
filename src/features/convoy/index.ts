@@ -11,6 +11,8 @@ import { loadStoredLevels } from "@/data/levels";
 import { HEADER_TIP_STYLE } from "@/utils/header-tip";
 import { workersAway } from "./convoy";
 import { CONVOY_WORKERS_STYLE, renderConvoyWorkers } from "./mount-workers";
+import { convoyHistoryOutdated, loadConvoyHistory, refreshConvoyHistory } from "@/data/convoy-history";
+import { CONVOY_HISTORY_STYLE, mountConvoyHistory } from "./mount-history";
 
 /**
  * On commerce.php: trip and arrival of the convoy being prepared, the workers it takes, recipient suggestions,
@@ -103,5 +105,30 @@ export const convoyWorkers: Feature = {
     const kept = await loadConvoys(origin);
     render(kept);
     if (convoysOutdated(kept, stock.workers, loadedAt)) render(await refreshConvoys(origin));
+  },
+};
+
+/**
+ * On commerce.php: the convoys delivered and received per player over a period, read in the inbox (kept by collect
+ * on messagerie.php, read again in the background when older than 15 min). See docs/features/convoy.md.
+ */
+export const convoyHistory: Feature = {
+  id: "convoy-history",
+  toggle: "convoy",
+  matches: (url) => url.pathname.toLowerCase() === "/commerce.php",
+  async run(_ctx, toggles) {
+    if (!isEnabled(toggles, "convoy", "history") || !document.getElementById("pseudo_convoi")) return;
+    const { origin } = location;
+    const style = document.createElement("style");
+    style.textContent = CONVOY_HISTORY_STYLE;
+    document.head.append(style);
+    const view = mountConvoyHistory(
+      document,
+      () => new Date(),
+      (text) => navigator.clipboard.writeText(text),
+    );
+    const kept = await loadConvoyHistory(origin);
+    if (kept) view.update(kept);
+    if (convoyHistoryOutdated(kept, new Date())) view.update(await refreshConvoyHistory(origin));
   },
 };
