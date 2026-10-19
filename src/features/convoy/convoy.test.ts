@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import commerceHtml from "./__fixtures__/commerce.html?raw";
-import { convoyMessage, planConvoy, readConvoysOnWay, recipients, workersAway, workersNeeded } from "./convoy";
+import { convoyMessage, planConvoy, readConvoysOnWay, recipients, workersAway } from "./convoy";
 
 const parse = (html: string) => new DOMParser().parseFromString(html, "text/html");
 const now = new Date(2026, 9, 7, 20, 31, 45);
@@ -33,14 +33,6 @@ describe("readConvoysOnWay", () => {
 
   it("reads nothing when no convoy is on its way", () => {
     expect(readConvoysOnWay(parse("<div id='centre'><h2>Convois</h2></div>"), now)).toEqual([]);
-  });
-});
-
-describe("workersNeeded", () => {
-  it("takes one worker per 10 resources, 5 % more per aphid stable level", () => {
-    expect(workersNeeded(1, 0)).toBe(1);
-    expect(workersNeeded(10_000, 0)).toBe(1000);
-    expect(workersNeeded(10_000, 4)).toBe(834);
   });
 });
 

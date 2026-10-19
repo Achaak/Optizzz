@@ -91,6 +91,16 @@ Directement dans `div#centre`, avant `div.Bas` et le tableau, une ligne par él�
 - Bâtiments (`construction.php`, même structure) : Champignonnière, Entrepôt de Nourriture, Entrepôt de Matériaux, Couveuse, Solarium, Laboratoire, Salle d'analyse, Salle de combat, Caserne, Dôme, Loge Impériale, Etable à pucerons, Etable à cochenilles (relevé sur s5).
 - Un `fetch('/laboratoire.php')` depuis une page du jeu renvoie la page complète (session par cookie).
 
+## Étables et Communication avec les animaux
+
+Relevé le 2026-10-19 sur S5 (`construction.php`, `laboratoire.php`) et recoupé avec Toolzzz (`toolzzz.fr/couts.php`, qui donne des coûts cumulés : le coût d'un niveau est la différence entre deux niveaux qui se suivent).
+
+- **Communication avec les animaux** : « Effet: Permet la création des étables à pucerons et à cochenilles. » Elle ne débloque rien d'autre : aucune unité de `Reine.php`, aucune autre ligne « Requis » des deux pages ne la cite. Niveau N : (80 ouvrières, 200 nourriture, 500 matériaux) × 2^(N−1) (niveau 8 : 10 240 / 25 600 / 64 000), et demande Laboratoire N.
+- **Étable à pucerons** (matériaux seulement) : 1 500 × 2^(N−1) (niveau 6 : 48 000). Le niveau N demande **Communication N + 2** (Étable 6 : « Requis:Communication avec les animaux niveau 8 »). Toolzzz ajoute un Entrepôt de matériaux d'environ N, que la page ne montre pas sur S5 (déjà atteint).
+- **Étable à cochenilles** : 10 000 × 2^(N−1). Le niveau N demande **Communication N + 9** (niveau 1 : Communication 10).
+- Tutoriel des constructions : l'Étable à pucerons « augmente la capacité de transport des fourmis de 1% lors des pillages et de 5% lors du commerce à chaque niveau » ; elle ajoute aussi 1 % à la taxe des colonies (`ressources-et-entretien.md`).
+- La ligne « Requis » montre ce que demande le **niveau suivant** seulement.
+
 ## Temps des chantiers
 
 - **Architecture** (construction) et **Salle d'analyse** (recherche) : chaque niveau multiplie le temps par 0,9 (« réduit de 10 % par niveau » s'entend du temps courant), déduit le 2026-10-16 sur S5 des temps du niveau 0 qui retombent alors sur des valeurs rondes. Architecture 7 (0,9⁷ = 0,478) : Étable à cochenilles 72 s (150), Caserne 96 s (200), Dôme 3m 11s (400), Loge Impériale 3m 59s (500). Salle d'analyse 3 (0,9³ = 0,729) : Génétique 2m 11s (180), Acide 2H 1m 30s (10 000 exactement), Poison 10H 7m 30s (50 000 exactement). Les lectures `1 / (1 + 0,1 n)` et `1 − 0,1 n` ne donnent pas de valeurs rondes.

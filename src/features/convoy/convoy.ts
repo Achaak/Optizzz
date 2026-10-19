@@ -4,6 +4,7 @@ import { isCancelLink } from "@/features/flood/attacks";
 import { distance, travelTime } from "@/game/travel";
 import { parseGameDuration } from "@/game/pages/work-queue";
 import { HARVESTS_PER_DAY } from "@/game/forecast";
+import { workersNeeded } from "@/game/aphids";
 import { parseGameInteger } from "@/utils/game-number";
 import { formatNumber } from "@/utils/number-format";
 import { formatEndTime, formatGameDuration } from "@/utils/time-format";
@@ -91,13 +92,6 @@ export function convoyMessage(
   const sent = `Vous allez ${what} ${convoy.player}${left > 0 ? ` dans ${formatGameDuration(left)}` : ""}`;
   const line = `${sent} · arrivée ${formatEndTime(convoy.arrivesAt, now)}`;
   return convoy.back && !convoy.incoming ? `${line} - ${convoy.back}` : line;
-}
-
-/** Resources one worker carries: 10, plus 5 % per Étable à pucerons level (help of commerce.php). */
-export const carriedPerWorker = (aphids: number) => 10 * (1 + 0.05 * aphids);
-
-export function workersNeeded(resources: number, aphids: number): number {
-  return Math.ceil(resources / carriedPerWorker(aphids) - 1e-9);
 }
 
 export interface ConvoyInput {

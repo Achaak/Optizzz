@@ -16,7 +16,7 @@ import { layingPlanner } from "./laying-planner";
 import { membersColumns } from "./members-columns";
 import { probes } from "./probes";
 import { profileProduction } from "./profile-production";
-import { layingBoostAdvice, researchAdviceFeature, speedUpAdvice } from "./research-advice";
+import { aphidsAdviceFeature, layingBoostAdvice, researchAdviceFeature, speedUpAdvice } from "./research-advice";
 import { resourceForecast } from "./resource-forecast";
 import { safeReload } from "./safe-reload";
 import { serverMap } from "./server-map";
@@ -51,6 +51,7 @@ export const features: Feature[] = [
   researchAdviceFeature,
   speedUpAdvice,
   layingBoostAdvice,
+  aphidsAdviceFeature,
   attacksOnWay,
   probes,
   combatSimulator,

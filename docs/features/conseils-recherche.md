@@ -9,7 +9,9 @@ Ajoutée le 2026-10-16 à la demande du joueur, d'après une autre extension qui
 
 - Savoir, entre Couveuse, Solarium et Technique de ponte (avec le Laboratoire qu'elle demande), lequel faire pour pondre plus vite : demandé par le joueur le 2026-10-17.
 
-Une entrée « Conseils » dans « Fonctionnalités », avec une option par conseil (`weapons-shield`, `architecture`, `analysis-room`, `laying-boost`).
+- Savoir si le niveau suivant d'Étable à pucerons (et la Communication avec les animaux qu'il demande) vaut son prix : demandé par le joueur le 2026-10-19.
+
+Une entrée « Conseils » dans « Fonctionnalités », avec une option par conseil (`weapons-shield`, `architecture`, `analysis-room`, `laying-boost`, `aphids`).
 
 ## Armes et Bouclier Thoracique
 
@@ -47,6 +49,20 @@ Une entrée « Conseils » dans « Fonctionnalités », avec une option par cons
 - Non comptés, dit dans l'infobulle : les niveaux de Laboratoire servent aussi aux autres recherches (comptés en entier quand même) ; les durées (Couveuse et Solarium partagent la file de construction avec le Laboratoire, Technique de ponte est au Laboratoire).
 - Un niveau en cours : la ligne montre déjà le coût du niveau d'après, le conseil part de là ; un prérequis atteint par un niveau en cours ne coûte rien.
 
+## Étable à pucerons et Communication avec les animaux
+
+Cadré le 2026-10-19 (`/grill-me`). Faits du jeu : `docs/research/fourmizzz-pages.md`, « Étables et Communication avec les animaux ».
+
+- **Question** : en combien de jours les colonies remboursent le niveau suivant. Un temps de retour, sans verdict : le joueur juge.
+- **Gain par jour** : ce que la taxe de chaque colonie gagne à +1 % (`colonyTaxRate`), sur sa production max (TDC × 48, comme « Production max » du profil). Les colonies et leur TDC viennent de l'export public du jeu (joueurs dont le maître est le joueur connecté). Une colonie qui manque d'ouvrières rapporte moins : le temps est écrit « au moins ».
+- **Coût** : le niveau suivant, plus les niveaux manquants de ses prérequis lus sur les lignes « Requis », ceux d'un prérequis compris (Étable 6 → Communication 8 → Laboratoire 8 ; `src/game/requirements.ts`, partagé avec le conseil de ponte). Nourriture et matériaux additionnés ; les ouvrières (Communication en coûte) écrites à part, hors remboursement. Le Laboratoire est compté en entier, bien qu'il serve aux autres recherches. L'Entrepôt de matériaux que demande Toolzzz n'est pas compté (le jeu ne l'affiche pas, déjà atteint en pratique).
+- **Pillage** : dépend des cibles, non chiffré ; dit seulement dans l'infobulle (la description du jeu le dit déjà).
+- **Convois** (demandé le 2026-10-19) : chaque ouvrière libre porte 0,5 ressource de plus par envoi (5 % de 10), et le niveau est remboursé en coût ÷ ce surplus envois. Ouvrières libres : celles de la fourmilière (en-tête) et celles parties en convoi (convois mémorisés par `collect`, relus au-delà de 15 min), moins une par cm² de TDC, qui récolte. Convois illisibles : « 3 076 ouvrières de moins par million envoyé ».
+- **Ligne** (revue le 2026-10-19 après l'avoir vue sur S5 : la réponse était noyée dans la ligne grise) : la réponse en gras, les chiffres dessous en une ligne grise. Sous l'Étable à pucerons de `construction.php` : « Conseil · Niveau 6 (avec Communication avec les animaux 8) : **remboursé en 7 jours au moins par vos colonies, ou en 4 envois de convoi** », puis « +72 000 par jour sur vos 2 colonies · +45 626 par envoi avec vos 91 253 ouvrières libres · coût 137 600 ressources et 10 240 ouvrières ». Sous Communication avec les animaux, seulement quand son niveau suivant est celui qu'attend l'Étable : « Débloque Étable à pucerons 6 (avec Laboratoire 8) : **remboursés ensemble en …** ».
+- Ni colonie ni convoi pour la rembourser : « ne rapporte qu'au pillage » ; « sans colonie », « colonies inconnues », « aucune ouvrière libre pour les convois » dans la ligne grise.
+- Le niveau suivant seulement (chaque niveau coûte plus pour le même +1 %) ; une Étable en file : le conseil part du niveau en file.
+- **Hors du conseil** : l'Étable à cochenilles (son gain se compte en promotions, son facteur n'est pas vérifié, `docs/research/promotions.md`) ; la comparaison avec la Champignonnière.
+
 ## Données (Armes et Bouclier)
 
 - **Armée** : `Armee.php` relue en arrière-plan à chaque visite du Laboratoire (garnison des trois lieux et troupes des attaques en cours), et `Ressources.php` pour les troupes des chasses (requête partagée avec les Prévisions de ressources). Sans Compte+, le jeu n'écrit pas les troupes des sorties : la note dit combien ne sont pas comptées. `Armee.php` illisible : la garnison mémorisée (ou la dernière vue avec des unités), troupes sorties non comptées.
@@ -61,7 +77,7 @@ Une entrée « Conseils » dans « Fonctionnalités », avec une option par cons
 
 ## Cohérence sur Construction et Laboratoire
 
-- Tout ce qu'Optizzz ajoute dans la description d'une ligne suit le même ordre, quel que soit l'ordre de dessin (`src/utils/row-extras.ts`) : la ligne ⏳ des Prévisions de ressources, la ligne « Conseil » d'accélération, la ligne « Conseil » de ponte, puis le bloc « Conseil » Armes / Bouclier.
+- Tout ce qu'Optizzz ajoute dans la description d'une ligne suit le même ordre, quel que soit l'ordre de dessin (`src/utils/row-extras.ts`) : la ligne ⏳ des Prévisions de ressources, la ligne « Conseil » d'accélération, la ligne « Conseil » de ponte, la ligne « Conseil » de l'Étable à pucerons, puis le bloc « Conseil » Armes / Bouclier.
 - Les deux conseils commencent par la même étiquette « Conseil ». Les nombres du bloc ne se coupent pas en fin de ligne (espaces insécables).
 - **Téléphone** (vu à 520 px, mise en page mobile du jeu) : les barres mettent libellé et valeur au-dessus de la barre, le tableau des unités défile dans son bloc, rien ne déborde de la page. Le tableau « Chantiers en cours » y masque « Temps restant » (« Fin » le dit) pour garder « Annuler » à l'écran.
 
@@ -77,6 +93,10 @@ Une entrée « Conseils » dans « Fonctionnalités », avec une option par cons
 | `src/features/research-advice/speed-up-rows.ts`, `speed-up-mount.ts` (+ `speed-up.test.ts`) | Lignes, files, niveau d'accélération ; ligne de conseil         |
 | `src/game/laying-boost.ts` (+ test)                                                         | Couveuse, Solarium, Technique de ponte : coût prérequis compris |
 | `src/features/research-advice/laying-boost.ts` (+ test)                                     | Prérequis lus, ligne de conseil                                 |
+| `src/game/requirements.ts` (+ test)                                                         | Coût d'un niveau, prérequis (et les leurs) compris              |
+| `src/game/pages/level-rows.ts`                                                              | Lignes de Construction et du Laboratoire avec leurs « Requis »  |
+| `src/game/aphids.ts` (+ test)                                                               | Étable à pucerons : taxe des colonies, pillage, convois         |
+| `src/features/research-advice/aphids.ts` (+ test)                                           | Temps de retour de l'Étable, ligne de conseil                   |
 | `src/utils/row-extras.ts` (+ test)                                                          | Ordre des ajouts dans la description d'une ligne                |
 | `src/data/laying.ts` (+ test)                                                               | Vitesse de ponte et unités débloquées, mémorisées par serveur   |
 | `src/game/pages/queen.ts`                                                                   | Lecture de Reine.php (vitesse, unités débloquées)               |

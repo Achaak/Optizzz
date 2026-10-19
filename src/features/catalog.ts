@@ -116,6 +116,7 @@ export const featureCatalog = [
       { id: "architecture", label: "Attendre Architecture avant une construction" },
       { id: "analysis-room", label: "Attendre la Salle d'analyse avant une recherche" },
       { id: "laying-boost", label: "Couveuse, Solarium ou Technique de ponte : le moins cher pour pondre plus vite" },
+      { id: "aphids", label: "Étable à pucerons : en combien de jours vos colonies la remboursent" },
     ],
   },
   {

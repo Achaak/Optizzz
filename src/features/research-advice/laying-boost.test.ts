@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { rankLayingBoosts } from "@/game/laying-boost";
-import { layingBoostText, mountLayingBoost, readBoostRows } from "./laying-boost";
+import { readLevelRows } from "@/game/pages/level-rows";
+import { layingBoostText, mountLayingBoost } from "./laying-boost";
 
 /** A row as construction.php and laboratoire.php show it (S5, 2026-10-17), the requirement repeated for phones. */
 const row = (name: string, level: number, time: string, food: string, materials: string, requires = "") => `
@@ -22,13 +23,13 @@ const construction = page(
     row("Laboratoire", 9, "2H 27m 54s", "0", "716 800"),
 );
 const laboratory = page(row("Technique de ponte", 9, "2H 52m 54s", "61 440", "61 440", "Laboratoire niveau 10"));
-const rows = readBoostRows([construction, laboratory]);
+const rows = readLevelRows([construction, laboratory]);
 const ranked = rankLayingBoosts(rows);
 /** The text with plain spaces: the numbers' are non-breaking. */
 const plain = (text: Record<string, string> | null | undefined) =>
   text && Object.fromEntries(Object.entries(text).map(([key, value]) => [key, value.replace(/\u00a0/g, " ")]));
 
-describe("readBoostRows", () => {
+describe("readLevelRows", () => {
   it("reads each missing requirement once", () => {
     expect(rows.find((candidate) => candidate.name === "Technique de ponte")?.requirements).toEqual([
       { name: "Laboratoire", level: 10 },

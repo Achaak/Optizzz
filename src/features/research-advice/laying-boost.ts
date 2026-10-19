@@ -1,8 +1,7 @@
 // A line under Couveuse, Solarium and Technique de ponte: which of them makes laying 10 % faster for the least, the
 // Laboratoire levels Technique de ponte needs included. See docs/features/conseils-recherche.md.
-import { type BoostRow, type LayingBoost, type Requirement } from "@/game/laying-boost";
+import type { LevelCost } from "@/game/requirements";
 import { sameName } from "@/game/levels";
-import { readTimedRows } from "@/game/pages/resources";
 import { formatDecimal, formatNumber as formatSpaced } from "@/utils/number-format";
 import { placeInRow } from "@/utils/row-extras";
 
@@ -11,38 +10,15 @@ export const LAYING_BOOST_STYLE = `
 .optizzz-laying-boost strong { color: var(--optizzz-success-text); }
 .optizzz-laying-boost-detail { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }`;
 
-/** What a row's next level is missing: « Requis : Laboratoire niveau 10 » (the phone layout may repeat it). */
-function readRequirements(description: Element): Requirement[] {
-  const found = new Map<string, number>();
-  for (const missing of description.querySelectorAll(".verificationNonOK")) {
-    const match = /^(.+?)\s+niveau\s+(\d+)/i.exec(missing.textContent.replace(/\s+/g, " ").trim());
-    if (match?.[1] && match[2]) found.set(match[1], Math.max(found.get(match[1]) ?? 0, Number(match[2])));
-  }
-  return [...found].map(([name, level]) => ({ name, level }));
-}
-
-/** The rows of the given pages, with what each is missing, and where to put the line. */
-export function readBoostRows(docs: readonly Document[]): (BoostRow & { description: Element })[] {
-  return docs.flatMap((doc) =>
-    readTimedRows(doc).map(({ name, level, cost, description }) => ({
-      name,
-      level,
-      cost,
-      description,
-      requirements: readRequirements(description),
-    })),
-  );
-}
-
 /** Numbers never break at the end of a line. */
 const formatNumber = (value: number) => formatSpaced(value).replace(/ /g, "\u00a0");
-const label = (boost: LayingBoost) => `${boost.name} ${String(boost.level)}`;
-const amount = (boost: LayingBoost) =>
+const label = (boost: LevelCost) => `${boost.name} ${String(boost.level)}`;
+const amount = (boost: LevelCost) =>
   `${formatNumber(boost.total)}${boost.complete ? "" : " au moins"}${
     boost.cost.workers > 0 ? ` et ${formatNumber(boost.cost.workers)} ouvrières` : ""
   }`;
 /** « Laboratoire 10 compris », or nothing. */
-const including = (boost: LayingBoost) =>
+const including = (boost: LevelCost) =>
   boost.requirements.length
     ? `${list(boost.requirements.map((requirement) => `${requirement.name} ${String(requirement.level)}`))} compris`
     : "";
@@ -54,7 +30,7 @@ const list = (items: string[]) =>
 const SAME = 1.05;
 
 /** What the line says in the row of `name`; null when fewer than two of them can be compared. */
-export function layingBoostText(name: string, ranked: readonly LayingBoost[]) {
+export function layingBoostText(name: string, ranked: readonly LevelCost[]) {
   const own = ranked.find((boost) => sameName(boost.name, name));
   const [best] = ranked;
   if (!own || !best || ranked.length < 2 || best.total <= 0) return null;
@@ -79,11 +55,7 @@ export function layingBoostText(name: string, ranked: readonly LayingBoost[]) {
 }
 
 /** Adds the line to the row of `boost`; returns it, or null. */
-export function mountLayingBoost(
-  description: Element,
-  name: string,
-  ranked: readonly LayingBoost[],
-): HTMLElement | null {
+export function mountLayingBoost(description: Element, name: string, ranked: readonly LevelCost[]): HTMLElement | null {
   const text = layingBoostText(name, ranked);
   if (!text) return null;
   const doc = description.ownerDocument;

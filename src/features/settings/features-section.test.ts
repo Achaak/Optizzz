@@ -45,6 +45,7 @@ describe("buildFeaturesSection", () => {
       "research-advice.architecture",
       "research-advice.analysis-room",
       "research-advice.laying-boost",
+      "research-advice.aphids",
       "attacks-on-way",
       "probes",
       "probes.field",

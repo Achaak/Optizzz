@@ -2,6 +2,7 @@
 import { EPSILON, resolveRounds, type Stack } from "./rounds";
 import { levelBonus, UNITS, type Army } from "./units";
 import { maxTake } from "../attack";
+import { lootShare } from "../aphids";
 
 /** Hunting field, nest (Fourmilière, Dôme bonus), imperial lodge (Loge Impériale). */
 export type Place = "field" | "nest" | "lodge";
@@ -144,7 +145,7 @@ export function spoils(result: BattleResult, target: Place, input: SpoilsInput):
   const field = Math.min(maxTake(input.field), ants);
   if (target !== "nest") return { field, food: 0, materials: 0, colony: target === "lodge" };
 
-  const share = 0.3 + 0.01 * input.aphids;
+  const share = lootShare(input.aphids);
   let food = Math.floor(share * input.food);
   let materials = Math.floor(share * input.materials);
   const attack =

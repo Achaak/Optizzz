@@ -6,7 +6,14 @@ import { readWholeArmy } from "./army";
 import { mountSpeedUp, SPEED_UP_STYLE } from "./speed-up-mount";
 import { readTimedRows } from "@/game/pages/resources";
 import { queueEnd, readSpeedUp, startsAt } from "./speed-up-rows";
-import { LAYING_BOOST_STYLE, mountLayingBoost, readBoostRows } from "./laying-boost";
+import { LAYING_BOOST_STYLE, mountLayingBoost } from "./laying-boost";
+import { readLevelRows } from "@/game/pages/level-rows";
+import { loadPlayersExport } from "@/data/exports";
+import { readLoggedInPseudo } from "@/game/pages/alliance";
+import { CONVOYS_MAX_AGE, loadConvoys, refreshConvoys } from "@/data/convoys";
+import { loadStoredLevels } from "@/data/levels";
+import { spareWorkers } from "@/game/aphids";
+import { aphidsAdvice, APHIDS_STYLE, COMMUNICATION, mountAphids, STABLE } from "./aphids";
 import { LAYING_BOOSTS, rankLayingBoosts } from "@/game/laying-boost";
 import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
 import type { ColonyState } from "@/game/forecast";
@@ -167,16 +174,78 @@ export const layingBoostAdvice: Feature = {
   matches: (url) => url.pathname.toLowerCase() in PAGES,
   async run(_ctx, toggles) {
     if (!isEnabled(toggles, "research-advice", "laying-boost")) return;
-    const rows = readBoostRows([document]);
+    const rows = readLevelRows([document]);
     const own = rows.filter((row) => LAYING_BOOSTS.some((name) => sameName(name, row.name)));
     if (own.length === 0) return;
     const page = PAGES[location.pathname.toLowerCase() as keyof typeof PAGES];
     const other = await fetchGamePage(`${location.origin}/${page.other}`).catch(() => null);
     if (!other) return;
-    const ranked = rankLayingBoosts([...rows, ...readBoostRows([other])]);
+    const ranked = rankLayingBoosts([...rows, ...readLevelRows([other])]);
     const style = document.createElement("style");
     style.textContent = LAYING_BOOST_STYLE;
     document.head.append(style);
     for (const row of own) mountLayingBoost(row.description, row.name, ranked);
+  },
+};
+
+/** The TDC of my colonies, from the last public export; null when unknown. */
+async function loadColonyFields(origin: string): Promise<number[] | null> {
+  const me = readLoggedInPseudo(document);
+  const players = me
+    ? await loadPlayersExport(origin).then(
+        (data) => data.players,
+        () => null,
+      )
+    : null;
+  const self = players?.find((player) => player.pseudo === me);
+  if (!players || !self) return null;
+  return players.filter((player) => player.masterPlayerId === self.id).map((player) => player.field);
+}
+
+/** The workers free for convoys: at home and carrying convoys, less the TDC; null when the convoys are unknown. */
+async function loadSpareWorkers(origin: string, aphids: number): Promise<number | null> {
+  const stock = readStock(document);
+  if (!stock) return null;
+  const now = new Date();
+  let kept = await loadConvoys(origin);
+  if (!kept || now.getTime() - kept.readAt.getTime() > CONVOYS_MAX_AGE) kept = (await refreshConvoys(origin)) ?? kept;
+  if (!kept) return null;
+  return spareWorkers({ atHome: stock.workers, huntingField: stock.huntingField }, kept.convoys, aphids, now);
+}
+
+/**
+ * On construction.php under the Étable à pucerons, and on laboratoire.php under Communication avec les animaux when
+ * its next level unlocks the stable's: how soon the colonies pay the next level back, its requirements included.
+ * See docs/features/conseils-recherche.md.
+ */
+export const aphidsAdviceFeature: Feature = {
+  id: "aphids-advice",
+  toggle: "research-advice",
+  matches: (url) => url.pathname.toLowerCase() in PAGES,
+  async run(_ctx, toggles) {
+    if (!isEnabled(toggles, "research-advice", "aphids")) return;
+    const own = readLevelRows([document]);
+    const stable = own.find((row) => sameName(row.name, STABLE));
+    const research = own.find((row) => sameName(row.name, COMMUNICATION));
+    if (!stable && !research) return;
+    const page = PAGES[location.pathname.toLowerCase() as keyof typeof PAGES];
+    const [other, colonies, built] = await Promise.all([
+      fetchGamePage(`${location.origin}/${page.other}`).catch(() => null),
+      loadColonyFields(location.origin),
+      loadStoredLevels(location.origin),
+    ]);
+    if (!other) return;
+    const rows = [...own, ...readLevelRows([other])];
+    const level = rows.find((row) => sameName(row.name, STABLE))?.level ?? 0;
+    const spare = await loadSpareWorkers(location.origin, built.aphids ?? level);
+    const advice = aphidsAdvice(rows, colonies, spare);
+    if (!advice) return;
+    const style = document.createElement("style");
+    style.textContent = APHIDS_STYLE;
+    document.head.append(style);
+    if (stable) mountAphids(stable.description, advice, "stable");
+    // Only when the research's next level is the one the stable waits for.
+    if (research && advice.unlockedBy?.level === research.level + 1)
+      mountAphids(research.description, advice, "research");
   },
 };

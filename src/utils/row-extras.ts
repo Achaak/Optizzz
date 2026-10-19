@@ -6,6 +6,7 @@ const ORDER = [
   "optizzz-forecast",
   "optizzz-speed-up",
   "optizzz-laying-boost",
+  "optizzz-aphids",
   "optizzz-advice",
   "optizzz-levels",
 ] as const;
