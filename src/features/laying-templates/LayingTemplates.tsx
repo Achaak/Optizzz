@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import type { Place } from "@/game/army/battle";
 import { unitLabel, UNITS } from "@/game/army/units";
-import { formatAmount, formatNumber } from "@/utils/number-format";
+import { formatAmount, formatDecimal, formatNumber } from "@/utils/number-format";
 import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";
 import { formatDuration, formatEndTime } from "@/utils/time-format";
@@ -341,6 +341,7 @@ function TemplateList(props: {
         <tr>
           <th>Modèle</th>
           <th>Unités</th>
+          <th className="optizzz-num">Coût</th>
           <th className="optizzz-num">Durée</th>
           <th>Fin</th>
           <th />
@@ -371,6 +372,7 @@ function TemplateList(props: {
                       .join(", ")
                   : "—"}
               </td>
+              <td className="optizzz-num">{plan ? <Amount value={plan.food} /> : "—"}</td>
               <td className="optizzz-num">{plan ? layingDuration(plan.duration) : "—"}</td>
               <td>
                 {plan?.lines.at(-1)?.endsAt ? formatEndTime(plan.lines.at(-1)?.endsAt ?? props.now, props.now) : "—"}
@@ -412,6 +414,7 @@ function TemplateEditor(props: {
   // The total laid differs from what is typed: shares scaled, or a rotation repeated.
   const showTotal = shares || template.rotations > 1;
   const { target } = template;
+  const totalUnits = plan ? unitsOf(plan) : 0;
   return (
     <div className="optizzz-well editor">
       <div className="optizzz-toolbar">
@@ -495,8 +498,9 @@ function TemplateEditor(props: {
       )}
       {shares && (
         <p className="optizzz-note">
-          Les nombres sont une répartition : chaque ligne garde sa part, arrondie à l'unité. Pour « 10 JSN pour 5 JS »,
-          écrivez 10 et 5.
+          Les nombres sont une répartition des unités pondues, pas du temps : chaque ligne garde sa part du nombre
+          d'unités, arrondie à l'unité. Pour « 10 JSN pour 5 JS », écrivez 10 et 5 ; pour des pourcentages, des parts
+          qui font 100.
         </p>
       )}
       <div className="optizzz-scroll">
@@ -507,6 +511,7 @@ function TemplateEditor(props: {
               <th>Destination</th>
               <th className="optizzz-num">{amountLabel}</th>
               {showTotal && <th className="optizzz-num">Pondues</th>}
+              <th className="optizzz-num">Coût</th>
               <th className="optizzz-num">Durée</th>
               <th>Fin</th>
               <th />
@@ -569,7 +574,18 @@ function TemplateEditor(props: {
                       }}
                     />
                   </td>
-                  {showTotal && <td className="optizzz-num">{planned ? <Amount value={planned.count} /> : "—"}</td>}
+                  {showTotal && (
+                    <td className="optizzz-num">
+                      {planned ? <Amount value={planned.count} /> : "—"}
+                      {planned && shares && totalUnits > 0 && (
+                        <span className="optizzz-muted">
+                          {" "}
+                          · {formatDecimal((planned.count / totalUnits) * 100, 0)} %
+                        </span>
+                      )}
+                    </td>
+                  )}
+                  <td className="optizzz-num">{planned ? <Amount value={planned.food} /> : "—"}</td>
                   <td className="optizzz-num">
                     {planned ? layingDuration(planned.duration) : "—"}
                     {planned?.tooLong && (

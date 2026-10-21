@@ -57,7 +57,8 @@
 
 .hours,
 .rotations {
-  width: 6ch;
+  /* A number field: room for « 168 » beside the browser's spin buttons */
+  width: 9ch;
 }
 
 .lines .actions {

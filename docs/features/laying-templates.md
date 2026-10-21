@@ -18,6 +18,8 @@ Mémoriser une ponte d'armée habituelle (plusieurs unités) et la mettre dans l
   - une **durée de ponte** du modèle lui-même (« 24 h ») ;
   - une **heure de fin** (« jusqu'à demain 8 h 00 »), après la file en cours ;
   - **ce que la nourriture paie maintenant**.
+- **Parts** (mode répartition) : une part de **nombre d'unités**, pas de temps (« 10 : 5 » = deux fois plus de la première unité, quelle que soit sa durée de ponte) ; la colonne « Pondues » donne aussi le pourcentage des unités de chaque ligne. Des parts qui font 100 se lisent comme des pourcentages. Précisé le 2026-10-21 : un joueur, qui avait essayé avec la même unité sur toutes les lignes (où temps et nombre se confondent), croyait les parts en temps.
+- **Coût** (demandé le 2026-10-21) : une colonne « Coût » (nourriture) dans la liste des modèles et dans les lignes de l'éditeur.
 - **Gérer** : créer à la main ou « Créer depuis la file en cours » (les pontes de la file deviennent les lignes), renommer, dupliquer, réordonner les lignes, supprimer. Mémorisés par serveur, sur cet appareil, sans partage, sans limite de nombre.
 - **Aperçu** avant le lancement : quantité par ligne, coût, durée, fin de ponte (après la file en cours), payable (maintenant / « dans 3 h 10 » / jamais), bilan de nourriture après entretien. Une ligne de **plus de 7 jours** n'est ni plafonnée ni coupée : un avertissement dit que le jeu pourrait la refuser.
 - **Refus avant le lancement** (bouton désactivé, raison écrite) :
