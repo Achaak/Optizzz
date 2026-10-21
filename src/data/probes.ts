@@ -62,6 +62,17 @@ export interface ProbesResult {
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
 
+interface MoveOptions {
+  fetchFn?: FetchFn;
+  wait?: (ms: number) => Promise<void>;
+}
+
+/** Between two moves, as between two layings or two hunts: sent back to back, the game dropped some (2026-10-21). */
+const DELAY_MS = 1000;
+/** A move the game did not take is sent once more, from a fresh page, before giving up. */
+const ATTEMPTS = 2;
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const parse = async (response: Response) => new DOMParser().parseFromString(await response.text(), "text/html");
 
 function moveBody(form: MoveForm, move: ProbeMove): string {
@@ -77,46 +88,52 @@ function moveBody(form: MoveForm, move: ProbeMove): string {
 type MovePlanner = typeof probeMoves;
 
 /** Brings each watched place up to its probes, one move after the other, reading Armee.php afresh each time. */
-export const placeProbes = (origin: string, plan: ProbePlan, fetchFn?: FetchFn) =>
-  applyMoves(origin, plan, probeMoves, fetchFn);
+export const placeProbes = (origin: string, plan: ProbePlan, options?: MoveOptions) =>
+  applyMoves(origin, plan, probeMoves, options);
 
 /** « Replacer l'armée »: every ant in the Loge but the probes of the other places, as `placeProbes` does. */
-export const storeArmy = (origin: string, plan: ProbePlan, fetchFn?: FetchFn) =>
-  applyMoves(origin, plan, storeMoves, fetchFn);
+export const storeArmy = (origin: string, plan: ProbePlan, options?: MoveOptions) =>
+  applyMoves(origin, plan, storeMoves, options);
 
 async function applyMoves(
   origin: string,
   plan: ProbePlan,
   planMoves: MovePlanner,
-  fetchFn: FetchFn = (url, init) => fetch(url, init),
+  { fetchFn = (url, init) => fetch(url, init), wait = sleep }: MoveOptions = {},
 ): Promise<ProbesResult> {
   const url = `${origin}/Armee.php`;
   const placed: Place[] = [];
-  let doc = await parse(await fetchFn(url));
+  let sent: { move: ProbeMove; before: number } | null = null;
+  let failures = 0;
   // A bounded number of moves: never a loop if the game keeps answering the same page.
-  for (let step = 0; step <= PLACES.length * UNITS.length; step++) {
+  for (let step = 0; step <= PLACES.length * UNITS.length + ATTEMPTS; step++) {
+    if (sent) await wait(DELAY_MS);
+    // Every move from a fresh page: the token of the moment, and the garrison that tells whether the last move went.
+    const doc = await parse(await fetchFn(url));
     const garrison = readGarrison(doc);
     if (!garrison) return { placed, missing: PLACES.filter((place) => plan[place]), failed: true };
+    if (sent) {
+      const { move, before } = sent;
+      if ((garrison.armies[move.to][move.unit] ?? 0) >= before + move.count) {
+        failures = 0;
+        if (!placed.includes(move.to)) placed.push(move.to);
+      } else if (++failures >= ATTEMPTS) {
+        return { placed, missing: placesWithoutProbe(garrison.armies, plan), failed: true };
+      }
+    }
     const { moves, missing } = planMoves(garrison.armies, plan);
     const [move] = moves;
     if (!move) return { placed, missing, failed: false };
     const form = readMoveForm(doc);
     if (!form) return { placed, missing: placesWithoutProbe(garrison.armies, plan), failed: true };
 
-    const response = await fetchFn(url, {
+    await fetchFn(url, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: moveBody(form, move),
       credentials: "include",
     });
-    const answer = await parse(response);
-    doc = readGarrison(answer) ? answer : await parse(await fetchFn(url));
-    const after = readGarrison(doc);
-    const before = garrison.armies[move.to][move.unit] ?? 0;
-    if (!after || (after.armies[move.to][move.unit] ?? 0) < before + move.count) {
-      return { placed, missing: placesWithoutProbe((after ?? garrison).armies, plan), failed: true };
-    }
-    if (!placed.includes(move.to)) placed.push(move.to);
+    sent = { move, before: garrison.armies[move.to][move.unit] ?? 0 };
   }
   return { placed, missing: [], failed: true };
 }

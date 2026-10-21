@@ -39,8 +39,9 @@ function armeePage(counts: Counts, token: string): string {
 }
 
 /** The game: GET shows Armee.php, POST moves troops when the token is the last one given. */
-function fakeGame(counts: Counts, { refuse = false } = {}) {
+function fakeGame(counts: Counts, { refuse = false, drop = 0 } = {}) {
   let token = 0;
+  let dropped = 0;
   const posts: Record<string, string>[] = [];
   const fetchFn = (url: string, init?: RequestInit) => {
     expect(url).toBe("https://s5.fourmizzz.fr/Armee.php");
@@ -51,7 +52,8 @@ function fakeGame(counts: Counts, { refuse = false } = {}) {
       const n = Number(body.nbTroupes);
       const from = Number(body.LieuOrigine) - 1;
       const to = Number(body.LieuDestination) - 1;
-      if (!refuse && places && body.t === `T${String(token)}` && (places[from] ?? 0) >= n) {
+      const taken = !refuse && dropped++ >= drop;
+      if (taken && places && body.t === `T${String(token)}` && (places[from] ?? 0) >= n) {
         places[from] = (places[from] ?? 0) - n;
         places[to] = (places[to] ?? 0) + n;
       }
@@ -59,7 +61,12 @@ function fakeGame(counts: Counts, { refuse = false } = {}) {
     token++;
     return Promise.resolve(new Response(armeePage(counts, `T${String(token)}`)));
   };
-  return { fetchFn, posts, counts };
+  const waits: number[] = [];
+  const wait = (ms: number) => {
+    waits.push(ms);
+    return Promise.resolve();
+  };
+  return { options: { fetchFn, wait }, posts, counts, waits };
 }
 
 describe("readMoveForm", () => {
@@ -83,45 +90,57 @@ describe("placeProbes", () => {
   const jsn = (count: number) => armyFromKeys({ JSN: count });
   const everywhere = { field: jsn(1), nest: jsn(1), lodge: jsn(1) };
 
-  it("moves the ants wanted, as many at once as needed, with the latest token", async () => {
+  it("moves the ants wanted, as many at once as needed, each from a fresh page and a second apart", async () => {
     const game = fakeGame({ unite1: [500, 0, 0], unite10: [0, 0, 40] });
-    expect(await placeProbes(origin, { nest: jsn(1), lodge: jsn(25) }, game.fetchFn)).toEqual({
+    expect(await placeProbes(origin, { nest: jsn(1), lodge: jsn(25) }, game.options)).toEqual({
       placed: ["nest", "lodge"],
       missing: [],
       failed: false,
     });
     expect(game.posts).toEqual([
       { t: "T1", nbTroupes: "1", ChoixUnite: "unite1", LieuOrigine: "1", LieuDestination: "2", Transferer: "Envoyer" },
-      { t: "T2", nbTroupes: "25", ChoixUnite: "unite1", LieuOrigine: "1", LieuDestination: "3", Transferer: "Envoyer" },
+      { t: "T3", nbTroupes: "25", ChoixUnite: "unite1", LieuOrigine: "1", LieuDestination: "3", Transferer: "Envoyer" },
     ]);
     expect(game.counts).toEqual({ unite1: [474, 1, 25], unite10: [0, 0, 40] });
+    expect(game.waits).toEqual([1000, 1000]);
+  });
+
+  it("sends a move the game dropped once more", async () => {
+    const game = fakeGame({ unite1: [500, 0, 0] }, { drop: 1 });
+    expect(await placeProbes(origin, { nest: jsn(1), lodge: jsn(1) }, game.options)).toEqual({
+      placed: ["nest", "lodge"],
+      missing: [],
+      failed: false,
+    });
+    expect(game.posts.map((post) => post.LieuDestination)).toEqual(["2", "2", "3"]);
+    expect(game.counts).toEqual({ unite1: [498, 1, 1] });
   });
 
   it("fills only the watched places, and says which ones it could not fill", async () => {
     const game = fakeGame({ unite1: [2, 0, 0] });
-    expect(await placeProbes(origin, everywhere, game.fetchFn)).toEqual({
+    expect(await placeProbes(origin, everywhere, game.options)).toEqual({
       placed: ["nest"],
       missing: ["lodge"],
       failed: false,
     });
-    expect(await placeProbes(origin, { field: jsn(1) }, fakeGame({ unite1: [0, 3, 0] }).fetchFn)).toMatchObject({
+    expect(await placeProbes(origin, { field: jsn(1) }, fakeGame({ unite1: [0, 3, 0] }).options)).toMatchObject({
       placed: ["field"],
     });
   });
 
-  it("stops when the game does not take the move", async () => {
+  it("stops when the game does not take the move twice", async () => {
     const game = fakeGame({ unite1: [500, 0, 0] }, { refuse: true });
-    expect(await placeProbes(origin, everywhere, game.fetchFn)).toEqual({
+    expect(await placeProbes(origin, everywhere, game.options)).toEqual({
       placed: [],
       missing: ["nest", "lodge"],
       failed: true,
     });
-    expect(game.posts).toHaveLength(1);
+    expect(game.posts).toHaveLength(2);
   });
 
   it("sends nothing when every probe is in place", async () => {
     const game = fakeGame({ unite1: [1, 1, 1] });
-    expect(await placeProbes(origin, everywhere, game.fetchFn)).toEqual({
+    expect(await placeProbes(origin, everywhere, game.options)).toEqual({
       placed: [],
       missing: [],
       failed: false,
@@ -133,7 +152,7 @@ describe("placeProbes", () => {
 describe("storeArmy", () => {
   it("puts every ant in the Loge but the probes of the other places", async () => {
     const game = fakeGame({ unite1: [500, 0, 0], unite10: [40, 0, 0] });
-    expect(await storeArmy("https://s5.fourmizzz.fr", { nest: armyFromKeys({ JSN: 1 }) }, game.fetchFn)).toEqual({
+    expect(await storeArmy("https://s5.fourmizzz.fr", { nest: armyFromKeys({ JSN: 1 }) }, game.options)).toEqual({
       placed: ["nest", "lodge"],
       missing: [],
       failed: false,
