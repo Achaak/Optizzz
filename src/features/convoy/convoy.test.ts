@@ -18,7 +18,13 @@ describe("readConvoysOnWay", () => {
       })),
     ).toEqual([
       { incoming: false, player: "Messor", food: 1, materials: 0, arrivesAt: new Date(2026, 9, 7, 21, 54, 7) },
-      { incoming: false, player: "Tetramorium", food: 0, materials: 12_500, arrivesAt: new Date(2026, 9, 8, 22, 34, 49) },
+      {
+        incoming: false,
+        player: "Tetramorium",
+        food: 0,
+        materials: 12_500,
+        arrivesAt: new Date(2026, 9, 8, 22, 34, 49),
+      },
       { incoming: true, player: "Polyergus", food: 2, materials: 1, arrivesAt: new Date(2026, 9, 8, 4, 38, 44) },
     ]);
   });

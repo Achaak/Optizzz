@@ -36,7 +36,7 @@ describe("proposeRoles", () => {
       Linepithema: passer1,
       Cataglyphis: passer1,
       Formica: passer1,
-      "Ectatomma": passer1,
+      Ectatomma: passer1,
       Tapinoma: passer1,
       Leptothorax: passer1,
       Anoplolepis: passer1,
