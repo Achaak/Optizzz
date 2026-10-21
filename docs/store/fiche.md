@@ -36,7 +36,7 @@ Chasse et combat
 • Production sur les profils : ce que le TDC d'un joueur récolte par jour au plus, taxe de colonie déduite s'il est soumis.
 • Plan de flood : sur le formulaire d'attaque, les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
 • Attaques et convois en cours : une liste lisible avec décompte, heure d'arrivée, lieu et troupes (Compte+), et un bouton pour copier chacun en une ligne.
-• Sondes : une fourmi gardée sur le Dôme et la Loge (et le Terrain au choix), pour que le rapport d'une attaque montre l'armée de l'attaquant ; un avertissement et un bouton sur Armée, et le Lanceur de chasse comme le Plan de flood les laissent à la maison.
+• Anti-sondes : une fourmi gardée sur le Dôme et la Loge (et le Terrain au choix), pour que le rapport d'une attaque montre l'armée de l'attaquant ; un avertissement et un bouton sur Armée, et le Lanceur de chasse comme le Plan de flood les laissent à la maison.
 
 Alliance
 • Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens et, au choix, leur rôle dans la chaîne de TDC.
@@ -45,7 +45,7 @@ Alliance
 • Historique de progression : les courbes du TDC et des scores jour après jour, pour vous, votre alliance et sur chaque profil.
 • Partage d'alliance : copiez vos niveaux, chantiers et armée pour les coller sur le Discord de votre alliance, et lisez ceux des autres membres.
 
-Optizzz ne joue jamais à votre place : une chasse n'est lancée, une répartition appliquée et un formulaire d'attaque rempli que lorsque vous cliquez ; les sondes ne sont déplacées qu'à votre clic ou juste après une chasse ou une attaque que vous avez envoyée.
+Optizzz ne joue jamais à votre place : une chasse n'est lancée, une répartition appliquée et un formulaire d'attaque rempli que lorsque vous cliquez ; les anti-sondes ne sont déplacées qu'à votre clic ou juste après une chasse ou une attaque que vous avez envoyée.
 
 Respect de votre vie privée : aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur ; le partage d'alliance passe uniquement par votre copier-coller. Code source ouvert (licence MIT) : https://github.com/Achaak/Optizzz
 
@@ -194,7 +194,7 @@ Recalculer chaque minute le badge de l'icône de l'extension (temps avant une fa
 Demandée seulement quand le joueur active une notification dans les paramètres (famine ou entrepôt plein dans moins d'1 h, chantier terminé, chasse rentrée, attaque arrivée, changements des joueurs et alliances suivis). Les notifications sont calculées à partir des données déjà enregistrées localement ou de l'export public de Fourmizzz ; rien n'est envoyé ailleurs.
 
 **Justification — autorisation d'accès à l'hôte `*://*.fourmizzz.fr/*`**
-L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les pages du jeu, lit les pages du jeu et l'API publique des exports du serveur, et envoie les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les sondes) uniquement quand le joueur clique.
+L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les pages du jeu, lit les pages du jeu et l'API publique des exports du serveur, et envoie les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) uniquement quand le joueur clique.
 
 **Code distant** : Non, je n'utilise pas de code distant.
 
@@ -208,7 +208,7 @@ L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les p
 
   > Sources jointes (optizzz-X.Y.Z-sources.zip). Build : `pnpm install --frozen-lockfile && pnpm build:firefox` (Node 24, pnpm 12), résultat dans `.output/firefox-mv3/`.
   >
-  > Aucune donnée n'est transmise à un tiers : toutes les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les sondes) ne sont envoyés que sur clic du joueur.
+  > Aucune donnée n'est transmise à un tiers : toutes les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) ne sont envoyés que sur clic du joueur.
   >
   > Les avertissements restants viennent de bibliothèques, pas de notre code (qui interdit innerHTML via ESLint) : React DOM (prise en charge de `dangerouslySetInnerHTML`, non utilisé), Apache ECharts (contenu HTML des infobulles et export SVG, alimentés par du texte échappé) et zod (test `Function("")` de disponibilité d'eval, désactivé par `z.config({ jitless: true })`).
 

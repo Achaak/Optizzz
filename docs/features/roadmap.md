@@ -27,7 +27,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 - **Modèle d'armée partagé** : `src/game/army/` (unités, proies, combat), sorti du lanceur de chasse ; combat, ponte, rapports et chasse s'en servent.
 - **Placement** : chaque outil s'insère sur la page du jeu où il sert (ADR 0001). Un accès depuis la roue seulement pour un outil sans page naturelle (simulateur de combat, peut-être).
 - **Historique** : export public nocturne pour le passé (jamais purgé, tous les joueurs), plus un point « maintenant » lu en direct.
-- **Actions de jeu** : un formulaire du jeu n'est envoyé que sur un clic du joueur (lancer une chasse, appliquer une répartition, déplacer les sondes) ; ailleurs, des liens pré-remplis que le joueur valide lui-même. Jamais d'envoi sur minuterie ni en arrière-plan.
+- **Actions de jeu** : un formulaire du jeu n'est envoyé que sur un clic du joueur (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) ; ailleurs, des liens pré-remplis que le joueur valide lui-même. Jamais d'envoi sur minuterie ni en arrière-plan.
 - **Alertes** :
   - étape 1, badge : background script + permission `alarms`, calculé depuis les données mémorisées (dont les fins mémorisées par « Heures de fin »), sans jamais interroger le jeu. Délai avant le premier problème (rouge < 2 h, orange < 12 h, rien sinon), « ? » gris si les données ont plus de 24 h, pire des serveurs avec le détail par serveur au survol ;
   - étape 2, notifications : permission `notifications` **optionnelle**, demandée à l'activation. Types activables un par un, tous coupés par défaut : famine, entrepôt plein, chantier terminé, chasse rentrée. Le serveur est nommé (« S5 : … »). Pas d'attaque entrante ;

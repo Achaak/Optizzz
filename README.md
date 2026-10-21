@@ -52,7 +52,7 @@ Une fois installée, ouvrez une page du jeu : les outils apparaissent d'eux-mêm
 - **Cibles à portée** : sur Ennemies, les joueurs attaquables triés par distance, avec trajet, état, pactes et guerres.
 - **Plan de flood** : les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
 - **Attaques en cours** : une liste lisible avec décompte, heure d'arrivée, lieu et troupes, et un bouton pour copier chacune.
-- **Sondes** : une fourmi gardée sur le Dôme et la Loge (et le Terrain si vous le voulez) pour que le rapport d'une attaque montre l'armée de l'attaquant.
+- **Anti-sondes** : une fourmi gardée sur le Dôme et la Loge (et le Terrain si vous le voulez) pour que le rapport d'une attaque montre l'armée de l'attaquant.
 - **Production sur les profils** : ce que le TDC d'un joueur récolte par jour au plus.
 
 ### Alliance et serveur
@@ -76,7 +76,7 @@ Le détail de chaque outil est dans [`docs/features/`](docs/features/).
 
 ## Optizzz ne joue pas à votre place
 
-Les formulaires du jeu ne sont envoyés que lorsque vous cliquez : une chasse n'est lancée, une répartition appliquée et une attaque remplie qu'à votre demande. Les sondes ne sont déplacées qu'à votre clic ou juste après une chasse ou une attaque que vous avez envoyée.
+Les formulaires du jeu ne sont envoyés que lorsque vous cliquez : une chasse n'est lancée, une répartition appliquée et une attaque remplie qu'à votre demande. Les anti-sondes ne sont déplacées qu'à votre clic ou juste après une chasse ou une attaque que vous avez envoyée.
 
 ## Confidentialité
 

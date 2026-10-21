@@ -133,7 +133,7 @@ export const featureCatalog = [
   },
   {
     id: "probes",
-    label: "Sondes",
+    label: "Anti-sondes",
     description:
       "Des fourmis gardées sur chaque lieu, pour qu'une attaque y livre combat et que le rapport montre l'armée de l'attaquant. Sur Armée : combien de chaque unité sur chaque lieu (une JSN par défaut), et un bouton pour les placer ; le Lanceur de chasse et le Plan de flood les laissent à la maison, et elles sont replacées après l'envoi.",
     options: [

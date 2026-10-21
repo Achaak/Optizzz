@@ -36,7 +36,7 @@ const setup = ({
     store,
     save,
     reload,
-    button: buttonNamed("Placer les sondes"),
+    button: buttonNamed("Placer les anti-sondes"),
     storeButton: buttonNamed("Replacer l'armée"),
   };
 };
@@ -45,8 +45,8 @@ describe("renderProbes", () => {
   it("warns above the garrison and says which ants would move where", () => {
     const { box, button } = setup({ targets: { ...DEFAULT_PROBE_TARGETS, lodge: { JSN: 1000 } } });
     expect(box?.nextElementSibling?.textContent).toContain("Troupes en Garnison");
-    expect(box?.textContent).toContain("Il manque des sondes sur la Loge");
-    expect(button?.textContent).toBe("Placer les sondes");
+    expect(box?.textContent).toContain("Il manque des anti-sondes sur la Loge");
+    expect(button?.textContent).toBe("Placer les anti-sondes");
     expect(box?.querySelector(".optizzz-probes-moves")?.textContent).toBe(
       " 1 000 JSN du Terrain de chasse vers la Loge",
     );
@@ -75,8 +75,8 @@ describe("renderProbes", () => {
     const { box, button } = setup({
       armies: { field: armyFromKeys({ JSN: 1 }), nest: armyFromKeys({}), lodge: armyFromKeys({}) },
     });
-    expect(box?.textContent).toContain("Il manque des sondes sur le Dôme et la Loge");
-    expect(box?.textContent).toContain("Pas assez de fourmis à la maison pour les sondes du Dôme et de la Loge");
+    expect(box?.textContent).toContain("Il manque des anti-sondes sur le Dôme et la Loge");
+    expect(box?.textContent).toContain("Pas assez de fourmis à la maison pour les anti-sondes du Dôme et de la Loge");
     expect(button).toBeNull();
   });
 
@@ -86,7 +86,7 @@ describe("renderProbes", () => {
       targets: { field: {}, nest: { JSN: 10 }, lodge: { JSN: 1 } },
       watched: ["nest", "lodge"],
     });
-    expect(box?.querySelector("p")?.textContent).toBe("✓ Sondes en place : Dôme 10 JSN · Loge 1 JSN.");
+    expect(box?.querySelector("p")?.textContent).toBe("✓ Anti-sondes en place : Dôme 10 JSN · Loge 1 JSN.");
     expect(button).toBeNull();
   });
 
@@ -102,7 +102,7 @@ describe("renderProbes", () => {
       expect(reload).toHaveBeenCalled();
     });
     expect(store).toHaveBeenCalledOnce();
-    expect(box?.textContent).toContain("Sondes en place");
+    expect(box?.textContent).toContain("Anti-sondes en place");
   });
 
   it("offers no « Replacer » once the army is put away", () => {

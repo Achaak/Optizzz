@@ -224,7 +224,7 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
       unknownOnWay > 0
         ? `${plural(unknownOnWay, "attaque")} lancée${unknownOnWay > 1 ? "s" : ""} sans ce plan : leur prise n'est pas comptée.`
         : "",
-      probesKept ? `Sondes gardées au nid : ${probesKept}.` : "",
+      probesKept ? `Anti-sondes gardées au nid : ${probesKept}.` : "",
     ]
       .filter(Boolean)
       .join(" ");

@@ -79,7 +79,7 @@ describe("mountFloodPlanner", () => {
       probes,
     });
     expect(rows().map((cells) => cells[1])).toEqual(["49 S"]);
-    expect(text()).toContain("Sondes gardées au nid : 2 JSN, 1 S.");
+    expect(text()).toContain("Anti-sondes gardées au nid : 2 JSN, 1 S.");
     // The 5 000 JSN of the lodge, left out, stay home.
     expect(setup({ probes }).rows()[0]?.[1]).toBe("400 JSN");
   });

@@ -69,12 +69,12 @@ export function renderProbes(doc: Document, panel: ProbesPanel): void {
   const status = doc.createElement("p");
   status.textContent =
     short.length > 0
-      ? `⚠ Il manque des sondes sur ${placeList(short)}.`
-      : `✓ Sondes en place : ${watched.map((place) => `${placeTitle(place)} ${armyText(plan[place] ?? [])}`).join(" · ")}.`;
+      ? `⚠ Il manque des anti-sondes sur ${placeList(short)}.`
+      : `✓ Anti-sondes en place : ${watched.map((place) => `${placeTitle(place)} ${armyText(plan[place] ?? [])}`).join(" · ")}.`;
   box.append(status);
 
   const { moves, missing } = probeMoves(armies, plan);
-  if (moves.length > 0) box.append(actionLine(doc, "Placer les sondes", moves, short, panel.place, panel.reload));
+  if (moves.length > 0) box.append(actionLine(doc, "Placer les anti-sondes", moves, short, panel.place, panel.reload));
   // After an army comes back: its ants are wherever it left from, the probes may be gone.
   const stored = storeMoves(armies, plan);
   if (stored.moves.length > 0) {
@@ -82,7 +82,7 @@ export function renderProbes(doc: Document, panel: ProbesPanel): void {
   }
   if (missing.length > 0) {
     const line = doc.createElement("p");
-    line.textContent = `Pas assez de fourmis à la maison pour les sondes ${placeList(missing, PLACE_FROM)}, sans prendre celles d'un autre lieu.`;
+    line.textContent = `Pas assez de fourmis à la maison pour les anti-sondes ${placeList(missing, PLACE_FROM)}, sans prendre celles d'un autre lieu.`;
     box.append(line);
   }
   box.append(settingsForm(doc, panel));
@@ -120,7 +120,7 @@ function actionLine(
           return;
         }
         outcome.hidden = false;
-        outcome.textContent = `Le jeu n'a pas pris le déplacement${result.placed.length > 0 ? ` (sondes placées sur ${placeList(result.placed)})` : ""}. Rechargez la page pour réessayer.`;
+        outcome.textContent = `Le jeu n'a pas pris le déplacement${result.placed.length > 0 ? ` (anti-sondes placées sur ${placeList(result.placed)})` : ""}. Rechargez la page pour réessayer.`;
         button.textContent = "Échec";
       });
   });
@@ -133,7 +133,7 @@ function settingsForm(doc: Document, panel: ProbesPanel): HTMLDetailsElement {
   const { armies, watched, targets } = panel;
   const details = doc.createElement("details");
   const summary = doc.createElement("summary");
-  summary.textContent = "Régler les sondes";
+  summary.textContent = "Régler les anti-sondes";
   details.append(summary);
 
   const form = doc.createElement("form");

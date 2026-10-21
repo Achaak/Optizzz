@@ -19,7 +19,7 @@ Ces requêtes partent de votre navigateur vers Fourmizzz uniquement, comme si vo
 
 ## Ce que l'extension envoie au jeu
 
-Seulement sur une action de votre part : le formulaire du jeu pour lancer une chasse (Lanceur de chasse), celui pour appliquer une répartition des ouvrières (Prévisions de ressources), et celui de la page Armée pour déplacer les sondes (une fourmi gardée sur le Dôme et la Loge), avec le bouton Sondes ou juste après une chasse ou une attaque que vous avez envoyée. Rien n'est envoyé sans une action de votre part.
+Seulement sur une action de votre part : le formulaire du jeu pour lancer une chasse (Lanceur de chasse), celui pour appliquer une répartition des ouvrières (Prévisions de ressources), et celui de la page Armée pour déplacer les anti-sondes (une fourmi gardée sur le Dôme et la Loge), avec le bouton Anti-sondes ou juste après une chasse ou une attaque que vous avez envoyée. Rien n'est envoyé sans une action de votre part.
 
 ## Ce que l'extension enregistre
 

@@ -25,7 +25,7 @@ Ces règles vivent dans `src/game/attack.ts` (prise, portée avec marge, prise �
 - **Unités** : sans défense, les moins chères d'abord (JSN), car toute fourmi prend 1 cm².
 - **Sur le formulaire d'attaque** (`ennemie.php?Attaquer=<id>`), sous le formulaire du jeu, dans cet ordre :
   - quand le jeu dit que je suis sous protection débutant, le rappel encadré qu'attaquer y met fin ;
-  - les chiffres clés en pavés : TDC de la cible (lu sur son profil `Membre.php`, sinon l'export), le mien, les attaques possibles, le trajet et l'arrivée ; dessous, en petit, ce qui les explique (attaques en route, lancées sans le plan, sondes gardées) ;
+  - les chiffres clés en pavés : TDC de la cible (lu sur son profil `Membre.php`, sinon l'export), le mien, les attaques possibles, le trajet et l'arrivée ; dessous, en petit, ce qui les explique (attaques en route, lancées sans le plan, anti-sondes gardées) ;
   - la case « Compter les troupes de la Loge » (décochée, mémorisée par serveur) ;
   - ce qui empêche le plan (hors de portée, trop juste, armée trop faible…), encadré ;
   - un tableau N° | Armée | (Pertes) | Prise | Son TDC après | Mon TDC après | « Remplir », avec une ligne Total (prise cumulée, TDC finaux, nombre d'attaques). La colonne Pertes n'apparaît que contre une défense ;
@@ -38,7 +38,7 @@ Ces règles vivent dans `src/game/attack.ts` (prise, portée avec marge, prise �
   - une attaque listée mais pas notée a été lancée sans le plan : elle prend un créneau, sa prise n'est pas comptée (l'encart le dit) ;
   - l'heure d'arrivée du jeu remplace celle estimée.
 - **Cibles à portée** : colonne « Flood max », triable, d'après l'armée mémorisée sur `Armee.php` (Terrain + Dôme, + Loge si la case est cochée), les défenses collées et les mêmes attaques en route que ce plan (`src/data/on-way.ts`).
-- **Sondes** (`sondes.md`) : l'armée planifiée garde une fourmi par lieu surveillé.
+- **Anti-sondes** (`sondes.md`) : l'armée planifiée garde une fourmi par lieu surveillé.
 - Interrupteur « Plan de flood » : coupé, rien sur le formulaire, pas de colonne, aucune lecture.
 
 ## Hors v1

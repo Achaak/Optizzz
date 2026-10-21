@@ -107,7 +107,7 @@ export function PlayerData({ read, levels, onLevel, layingSpeed, available, rese
         <p className="optizzz-note">
           Le reste est gardé à la maison, et mémorisé pour les prochaines chasses.
           {Object.keys(probes).length > 0 &&
-            ` Les sondes (${unitsText(armyToKeys(probeArmy(probes)))}) restent aussi, remises en place après le lancement.`}
+            ` Les anti-sondes (${unitsText(armyToKeys(probeArmy(probes)))}) restent aussi, remises en place après le lancement.`}
         </p>
       </div>
     </div>
