@@ -17,6 +17,7 @@
   "dependencies": {
     "@base-ui/react": "^1.9.0",
     "@optizzz/game": "workspace:*",
+    "@optizzz/map": "workspace:*",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@t3-oss/env-nextjs": "^0.13.11",
@@ -26,6 +27,8 @@
     "@trpc/server": "^11.19.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
+    "echarts": "^6.1.0",
+    "echarts-for-react": "^3.0.6",
     "next": "^16.4.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

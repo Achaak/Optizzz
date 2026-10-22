@@ -47,6 +47,7 @@ describe("feature catalog", () => {
           "./alerts/background.ts",
           "./settings/notifications-section.ts",
           "../entrypoints/popup/main.ts",
+          "../entrypoints/server-map/main.tsx",
         ].flatMap((path) => {
           try {
             return [source(path)];

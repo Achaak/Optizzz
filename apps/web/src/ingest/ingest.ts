@@ -11,6 +11,8 @@ import {
   type Player,
 } from "@optizzz/game/exports";
 import type { GameServer } from "@optizzz/game/servers";
+import { encodeMapData } from "@optizzz/map/map-data";
+import { gzipSync } from "node:zlib";
 import { z } from "zod";
 import type { Alliance as AllianceRow, Player as PlayerRow, PrismaClient } from "~/generated/prisma/client";
 import { columnDay, dayColumn, missingDays } from "./days";
@@ -184,6 +186,23 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     );
     report.updated = true;
     report.changes = notes.length;
+  }
+
+  // The map's file follows the current state; written again when missing (a server read before the map existed).
+  const map = await db.mapFile.findUnique({ where: { server: server.id }, select: { version: true } });
+  if (map?.version !== latest.players) {
+    const current = report.updated
+      ? { players: await players(latest.players), alliances: await alliances(latest.alliances) }
+      : {
+          players: (await db.player.findMany({ where: { server: server.id } })).map(toPlayer),
+          alliances: (await db.alliance.findMany({ where: { server: server.id } })).map(toAlliance),
+        };
+    const gzip = gzipSync(JSON.stringify(encodeMapData(latest.players, current.players, current.alliances)));
+    await db.mapFile.upsert({
+      where: { server: server.id },
+      create: { server: server.id, version: latest.players, gzip },
+      update: { version: latest.players, gzip },
+    });
   }
 
   const storedPlayerDays = await db.playerDay.findMany({

@@ -20,6 +20,7 @@ export default async function ServerLayout({
     { href: `/${server.id}`, label: "Vue d'ensemble" },
     { href: `/${server.id}/joueurs`, label: "Joueurs" },
     { href: `/${server.id}/alliances`, label: "Alliances" },
+    { href: `/${server.id}/carte`, label: "Carte" },
   ];
   return (
     <div className="space-y-6">

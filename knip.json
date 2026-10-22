@@ -18,6 +18,9 @@
       "project": ["src/**/*.{ts,tsx,js}", "scripts/**/*.ts"],
       "ignore": ["src/components/ui/**"],
       "ignoreDependencies": ["@prisma/client", "shadcn", "tailwindcss", "tw-animate-css"]
+    },
+    "packages/map": {
+      "project": ["src/**/*.ts"]
     }
   },
   "rules": {

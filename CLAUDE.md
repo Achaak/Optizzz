@@ -7,7 +7,7 @@ Extension navigateur (Chrome + Firefox, MV3) d'aide au jeu [Fourmizzz.fr](http:/
 
 ## Commandes
 
-Monorepo pnpm + Turborepo (ADR 0006) : `apps/extension` (l'extension WXT), `apps/web` (le Site Optizzz, `docs/features/site-public.md`), `packages/game` (règles du jeu, lecteurs de pages, formats, Changements : partagés par les deux). Tout se lance à la racine ; `pnpm --filter <paquet> <script>` pour un script d'un seul paquet.
+Monorepo pnpm + Turborepo (ADR 0006) : `apps/extension` (l'extension WXT), `apps/web` (le Site Optizzz, `docs/features/site-public.md`), `packages/game` (règles du jeu, lecteurs de pages, formats, Changements) et `packages/map` (la carte d'un serveur : puces, filtres, noms, axes, option ECharts, format des données du site), partagés par les deux. Tout se lance à la racine ; `pnpm --filter <paquet> <script>` pour un script d'un seul paquet.
 
 ```bash
 pnpm dev            # dev Chrome (recharge à chaud)
@@ -50,7 +50,7 @@ bash scripts/setup-site.sh                     # mise en ligne : Neon, secrets G
 - L'habillage du jeu (`src/features/game-look/`, `docs/features/game-look.md`) est toujours actif, hors catalogue : une feuille sous `html.optizzz-game-look`, posée à `document_start`. Les outils suivent par les variables de `src/theme/theme.css`.
 - La feature `collect` (toujours active, hors catalogue) mémorise ce que montre la page courante, sans requête, pour toutes les features allumées qui en ont besoin : couper une feature n'ôte que son affichage et ses relectures.
 - Site (`apps/web`, ADR 0006) : Next.js (App Router), tRPC, Prisma 7 (adaptateur `pg`) sur PostgreSQL, shadcn/ui (`src/components/ui/` : écrits par le CLI shadcn, ni lintés ni retouchés à la main), courbes Recharts. Pages en composants serveur qui lisent `src/server/queries.ts`, reconstruites par le cron (`api/revalidate`). Seul le cron (`scripts/ingest.ts`, `.github/workflows/ingest.yml`) écrit en base ; le site lit avec un rôle en lecture seule.
-- Briques partagées à réutiliser plutôt que recopier : dans `@optizzz/game/format/`, `formatNumber` / `formatDecimal` (nombres comme le jeu), `parseGameInteger`, `time-format` ; dans `src/utils/`, `NumberField` (champ numérique React qui garde la saisie), `useStoredSettings` (réglages d'une vue React), `fetchGamePage` (relire une page du jeu en arrière-plan, partagé entre features), `alliance-menu` / `alliance-views`, `map-chart/` (carte x/y à axes de même échelle et son zoom), `page-dialog` (page de l'extension dans une fenêtre par-dessus le jeu).
+- Briques partagées à réutiliser plutôt que recopier : dans `@optizzz/game/format/`, `formatNumber` / `formatDecimal` (nombres comme le jeu), `parseGameInteger`, `time-format`, `parseNumberField`, `escapeHtml` ; dans `@optizzz/map/`, la carte x/y à axes de même échelle, son zoom et ses noms ; dans `src/utils/`, `NumberField` (champ numérique React qui garde la saisie), `useStoredSettings` (réglages d'une vue React), `fetchGamePage` (relire une page du jeu en arrière-plan, partagé entre features), `alliance-menu` / `alliance-views`, `page-dialog` (page de l'extension dans une fenêtre par-dessus le jeu).
 - Extension : seul hôte autorisé `*://*.fourmizzz.fr/*`. Aucune donnée n'est envoyée ailleurs (`data_collection_permissions: none` côté Firefox) ; si ça change, mettre à jour le manifest.
 
 ## Documentation

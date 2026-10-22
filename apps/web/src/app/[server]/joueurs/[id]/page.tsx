@@ -59,6 +59,12 @@ export default async function PlayerPage({ params }: Props) {
             <span className="text-muted-foreground">
               · Position {player.x} : {player.y}
             </span>
+            <Link
+              href={`/${server.id}/carte?joueur=${String(player.id)}`}
+              className="underline-offset-2 hover:underline"
+            >
+              Voir sur la carte
+            </Link>
             {master && (
               <Badge variant="secondary">
                 <Link href={`/${server.id}/joueurs/${String(master.id)}`}>Colonisé par {master.pseudo}</Link>

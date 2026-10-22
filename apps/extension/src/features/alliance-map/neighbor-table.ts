@@ -1,5 +1,5 @@
 import { membersByDistance, type Position } from "./neighbors";
-import { travelTime } from "@optizzz/game/travel";
+import { travelTime, type Level, type Trip } from "@optizzz/game/travel";
 
 export interface KnownLevels {
   myId: number | null;
@@ -13,12 +13,6 @@ export interface KnownLevels {
   enteredAt?: ReadonlyMap<number, Date>;
   /** Attack Speed from the states the members shared (« Partage »), with when it was read. */
   shared?: ReadonlyMap<number, { level: number; at: Date }>;
-}
-
-export interface Level {
-  level: number;
-  /** True when the player's level is unknown and the global level is used. */
-  estimated: boolean;
 }
 
 export function globalLevel(levels: KnownLevels): number {
@@ -35,10 +29,6 @@ export function levelOf(playerId: number, levels: KnownLevels): Level {
   if (playerId === levels.myId && levels.labLevel !== null) return { level: levels.labLevel, estimated: false };
   if (shared) return { level: shared.level, estimated: false };
   return { level: globalLevel(levels), estimated: true };
-}
-
-export interface Trip extends Level {
-  seconds: number;
 }
 
 export interface Row<P extends Position> {

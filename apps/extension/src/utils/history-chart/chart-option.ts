@@ -1,7 +1,7 @@
 // ECharts option of the history curves (players, alliances).
 import type { EChartsCoreOption } from "echarts/core";
 import { CHART_COLORS } from "@/theme";
-import { escapeHtml } from "@/utils/html";
+import { escapeHtml } from "@optizzz/game/format/escape-html";
 import { formatAmount, formatNumber } from "@optizzz/game/format/number-format";
 import { formatDateTime } from "@optizzz/game/format/time-format";
 

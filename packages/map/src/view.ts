@@ -1,8 +1,8 @@
 // What the server map draws and lists from the chosen players. See docs/features/carte-serveur.md.
 import type { Player } from "@optizzz/game/exports";
 import { distance, travelTime } from "@optizzz/game/travel";
-import type { Level, Trip } from "@/features/alliance-map/neighbor-table";
-import { fittedWindow, type AxisRange, type MapWindow } from "@/utils/map-chart/axes";
+import type { Level, Trip } from "@optizzz/game/travel";
+import { fittedWindow, type AxisRange, type MapWindow } from "./axes";
 import type { Chip } from "./selection";
 
 /** Above this many chosen players in view, alliances show their tag instead of each member's pseudo. */

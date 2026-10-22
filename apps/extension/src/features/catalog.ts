@@ -172,6 +172,7 @@ export const featureCatalog = [
       { id: "button", label: "Bouton dans la barre du haut" },
       { id: "profile", label: "Lien « Voir sur la carte » sur les profils" },
       { id: "alliance", label: "Lien « Voir sur la carte » sur les pages d'alliance" },
+      { id: "site", label: "Lire les positions sur optizzz.fr (plus léger)" },
     ],
   },
   {

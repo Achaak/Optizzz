@@ -1,12 +1,12 @@
 # Politique de confidentialité — Optizzz
 
-_Dernière mise à jour : 16 octobre 2026_
+_Dernière mise à jour : 22 octobre 2026_
 
 Optizzz est une extension pour le jeu [Fourmizzz](http://www.fourmizzz.fr). Elle ne fonctionne que sur les pages `*.fourmizzz.fr`.
 
 ## Aucune donnée collectée
 
-Optizzz **ne collecte, ne transmet et ne vend aucune donnée**. Il n'y a ni serveur Optizzz, ni statistiques d'usage, ni publicité, ni traceur.
+Optizzz **ne collecte, ne transmet et ne vend aucune donnée** vous concernant. Il n'y a ni compte, ni statistiques d'usage, ni publicité, ni traceur.
 
 ## Ce que l'extension lit
 
@@ -15,7 +15,9 @@ Uniquement sur les pages du jeu, depuis votre navigateur :
 - l'API publique des exports de Fourmizzz (`/api/exports/`) du serveur sur lequel vous jouez : positions, alliances et scores des joueurs, déjà publics en jeu ;
 - les pages du jeu que vous ouvrez ou que l'extension consulte pour vous (Ressources, Construction, Laboratoire, Reine, Armée, Membres, messagerie de chasse…) : votre pseudo, vos ressources, vos niveaux de construction et de recherche, vos unités, les heures de fin et le terrain de chasse des membres de votre alliance.
 
-Ces requêtes partent de votre navigateur vers Fourmizzz uniquement, comme si vous ouvriez ces pages vous-même.
+Ces requêtes partent de votre navigateur vers Fourmizzz, comme si vous ouvriez ces pages vous-même.
+
+Une exception : la Carte du serveur lit les positions des joueurs sur le site d'Optizzz (`https://optizzz.fr/api/<serveur>/carte`), bien plus léger que l'export de Fourmizzz. Ce sont les mêmes données publiques, tirées de cet export ; la requête ne contient ni compte, ni cookie, ni rien de vous, mais comme toute visite d'un site, elle fait connaître votre adresse IP à son hébergeur (Vercel), qui garde un temps les journaux techniques. Pour ne contacter que Fourmizzz, décochez « Lire les positions sur optizzz.fr » dans les options de la Carte du serveur (« Fonctionnalités ») : la carte lit alors l'export, comme avant.
 
 ## Ce que l'extension envoie au jeu
 

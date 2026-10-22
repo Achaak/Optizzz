@@ -8,8 +8,8 @@ import { useMemo } from "react";
 import { buildChartOption, zoomWindowAround, type MapMember } from "./chart-option";
 import type { KnownLevels } from "./neighbor-table";
 import type { MemberBubble } from "@/features/tdc-chain/role-styles";
-import { chartHeightFor } from "@/utils/map-chart/axes";
-import { useMapChart } from "@/utils/map-chart/useMapChart";
+import { chartHeightFor } from "@optizzz/map/axes";
+import { useMapChart } from "@optizzz/map/use-map-chart";
 
 echarts.use([GraphChart, GridComponent, TooltipComponent, DataZoomComponent, CanvasRenderer]);
 

@@ -12,7 +12,7 @@ import {
   setBound,
   type ChipFilter,
   type FilterKey,
-} from "./filter";
+} from "@optizzz/map/filter";
 import {
   countUnaffiliated,
   playersOf,
@@ -21,7 +21,7 @@ import {
   UNAFFILIATED_LABEL,
   type Chip,
   type ChipTarget,
-} from "./selection";
+} from "@optizzz/map/selection";
 
 interface Props {
   players: readonly Player[];

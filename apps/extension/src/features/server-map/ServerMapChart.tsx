@@ -7,13 +7,14 @@ import { CanvasRenderer } from "echarts/renderers";
 import ReactECharts from "echarts-for-react/esm/core";
 import { useEffect, useMemo, useState } from "react";
 import type { Player } from "@optizzz/game/exports";
-import type { Level } from "@/features/alliance-map/neighbor-table";
-import { fittedGrid, fittedHeight, type AxisRange, type MapWindow } from "@/utils/map-chart/axes";
-import { useMapChart } from "@/utils/map-chart/useMapChart";
-import { buildServerMapOption, playerAt } from "./chart-option";
-import type { Chip } from "./selection";
+import type { Level } from "@optizzz/game/travel";
+import { fittedGrid, fittedHeight, type AxisRange, type MapWindow } from "@optizzz/map/axes";
+import { CHART_COLORS } from "@/theme";
+import { useMapChart } from "@optizzz/map/use-map-chart";
+import { buildServerMapOption, playerAt } from "@optizzz/map/chart-option";
+import type { Chip } from "@optizzz/map/selection";
 import type { MapDisplay } from "./settings";
-import { showPseudos, type ZoomRequest } from "./view";
+import { showPseudos, type ZoomRequest } from "@optizzz/map/view";
 
 echarts.use([ScatterChart, GridComponent, TooltipComponent, DataZoomComponent, LabelLayout, CanvasRenderer]);
 
@@ -87,6 +88,7 @@ export function ServerMapChart(props: Props) {
   const option = useMemo(
     () =>
       buildServerMapOption({
+        palette: CHART_COLORS,
         players,
         highlighted,
         me: marked,

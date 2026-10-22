@@ -1,5 +1,6 @@
 import type { MapMember } from "./chart-option";
-import { levelOf, type KnownLevels, type Row, type Trip } from "./neighbor-table";
+import type { Trip } from "@optizzz/game/travel";
+import { levelOf, type KnownLevels, type Row } from "./neighbor-table";
 import { formatDecimal } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";

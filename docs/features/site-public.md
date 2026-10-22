@@ -45,7 +45,7 @@ shadcn/ui, neutre, en clair et sombre selon le système, avec un accent tiré du
 
 ### L'extension en 2a
 
-Elle ne lit rien sur le site : sans compte, elle ne contacte que Fourmizzz (ADR 0005). Un lien « Voir sur optizzz.fr » viendra une fois les pages en ligne.
+Elle ne lit rien sur le site en 2a. Depuis la révision de l'ADR 0005 (2026-10-22), elle pourra le faire sans compte, pour les données publiques, sans rien envoyer du joueur ; chaque feature qui s'en servira le décidera dans son cadrage.
 
 ### Environnements
 

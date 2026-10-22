@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type InputHTMLAttributes } from "react";
 import { formatNumber } from "@optizzz/game/format/number-format";
-import { parseNumberField, type NumberFieldRules } from "./number-field";
+import { parseNumberField, type NumberFieldRules } from "@optizzz/game/format/number-field";
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type" | "min" | "max">;
 

@@ -1,5 +1,17 @@
 // Travel times between two nests: alliance map, TDC chain, targets, flood plan and convoy calculator.
 
+/** An Attack Speed level, and whether it is only estimated. */
+export interface Level {
+  level: number;
+  /** True when the player's level is unknown and a default level is used. */
+  estimated: boolean;
+}
+
+/** A travel time with the level it was computed with. */
+export interface Trip extends Level {
+  seconds: number;
+}
+
 /**
  * Travel time (attack or convoy) in seconds for a given distance,
  * depending on the sender's Attack Speed ("Vitesse d'attaque") research level.

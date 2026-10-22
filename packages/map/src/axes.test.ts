@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { bounds, chartHeightFor, fittedBounds, fittedGrid, fittedHeight, fittedWindow, squareGrid } from "./axes";
+import {
+  bounds,
+  chartHeightFor,
+  fittedBounds,
+  fittedGrid,
+  fittedHeight,
+  fittedWindow,
+  plotShape,
+  squareGrid,
+  type MapWindow,
+} from "./axes";
 
 describe("map bounds", () => {
   const members = [
@@ -95,5 +105,38 @@ describe("map fitted to the server's shape", () => {
         full,
       ),
     ).toEqual({ x: full.x, y: full.y });
+  });
+});
+
+describe("a very tall server (S4: 50 × 2 058 squares)", () => {
+  const full: MapWindow = { x: [-4, 50], y: [-2, 2060] };
+
+  it("plots a band at most 1.5 times taller than wide, the axes still holding the whole server", () => {
+    expect(plotShape(full)).toEqual({ x: [-4, 50], y: [-2, 79] });
+    expect(plotShape({ x: [0, 100], y: [0, 74] })).toEqual({ x: [0, 100], y: [0, 74] });
+    const grid = fittedGrid(400, fittedHeight(400, 720, full), full);
+    expect((fittedHeight(400, 720, full) - grid.top - grid.bottom) / (400 - grid.left - grid.right)).toBeCloseTo(1.5);
+  });
+
+  it("opens on a band around the players, never on the whole needle", () => {
+    const window = fittedWindow(
+      [
+        { x: 0, y: 1000 },
+        { x: 40, y: 1010 },
+      ],
+      full,
+    );
+    expect(window.x).toEqual([-2, 42]);
+    expect(window.y[1] - window.y[0]).toBeCloseTo(66);
+    expect(window.y[0]).toBeLessThan(1000);
+    expect(window.y[1]).toBeGreaterThan(1010);
+  });
+});
+
+describe("a server of 216 000 players", () => {
+  it("is measured without overflowing the stack", () => {
+    const players = Array.from({ length: 216_654 }, (_, i) => ({ x: i % 50, y: Math.floor(i / 105) }));
+    expect(fittedBounds(players)).toEqual({ x: [-2, 51], y: [-2, 2065] });
+    expect(fittedWindow(players, fittedBounds(players)).x).toEqual([-2, 51]);
   });
 });

@@ -1,6 +1,6 @@
 // Opening the server map page: over the game in a dialog (src/utils/page-dialog.ts), or in a tab asked of the
 // background script (an extension page can be opened by the extension only; tabs.create needs no permission).
-import type { ChipTarget } from "./selection";
+import type { ChipTarget } from "@optizzz/map/selection";
 
 export interface OpenServerMapMessage {
   type: "open-server-map";

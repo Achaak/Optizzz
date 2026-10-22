@@ -8,7 +8,8 @@ Jusqu'ici, rien ne sortait de Fourmizzz par l'extension (`docs/features/partage-
 
 ## Décision
 
-- **Facultatif** : sans Compte Optizzz, l'extension marche comme avant et n'envoie rien. L'Envoi se fait catégorie par catégorie (armée, chasses, convois…), coupé par défaut, choisi par la personne.
+- **Facultatif** : sans Compte Optizzz, l'extension marche comme avant et n'envoie rien de la personne. L'Envoi se fait catégorie par catégorie (armée, chasses, convois…), coupé par défaut, choisi par la personne.
+- **Lire le site, oui ; s'y identifier, non** (révisé le 2026-10-22) : sans compte, l'extension peut lire sur le site ce qu'il publie pour tous (données des serveurs tirées de l'export public), comme n'importe quel visiteur : ni identifiant, ni compte, ni donnée du joueur dans la requête. Seuls un Compte Optizzz et un Envoi autorisé font partir des données du joueur.
 - **Chiffré de bout en bout** : les données d'une alliance sont chiffrées par une Clé d'alliance que seuls ses membres détiennent. Le Site Optizzz stocke et relaie du chiffré ; tout calcul (statistiques, qui doit donner à qui) se fait dans le navigateur, après déchiffrement.
 - Restent lisibles par le site : le Serveur, le tag d'alliance, les pseudos et les heures. La composition des alliances est déjà publique dans l'export.
 - **Le site déchiffre dans le navigateur.** Le chiffrement protège de qui lit la base de données, pas de qui modifie le code déployé : un site modifié pourrait faire fuiter la Clé d'alliance. Pour que ça laisse une trace publique, le code est public et le site n'est déployé que par GitHub Actions depuis `main`. On l'écrit tel quel dans `PRIVACY.md`.
@@ -29,4 +30,4 @@ Jusqu'ici, rien ne sortait de Fourmizzz par l'extension (`docs/features/partage-
 - Un départ de l'alliance impose de changer la Clé d'alliance ; ce que l'ex-membre a déjà lu reste lu.
 - Une Clé d'alliance perdue par tous les membres rend leurs données illisibles, sans recours.
 - Le Partage par copier-coller (`docs/features/partage-alliance.md`) reste pour qui n'a pas de compte.
-- Nouvelle permission d'hôte : mettre à jour `PRIVACY.md`, `docs/store/fiche.md` et `data_collection_permissions`.
+- Nouvelle permission d'hôte : mettre à jour `PRIVACY.md`, `docs/store/fiche.md` et `data_collection_permissions`. Une lecture du site, même sans compte, transmet l'adresse IP du joueur à `optizzz.fr` : `PRIVACY.md` le dit.

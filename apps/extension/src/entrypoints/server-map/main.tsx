@@ -35,7 +35,13 @@ function Page() {
     );
   }
   return (
-    <ServerMap origin={origin} target={target} embedded={embedded} sharing={isEnabled(toggles, "alliance-sharing")} />
+    <ServerMap
+      origin={origin}
+      target={target}
+      embedded={embedded}
+      sharing={isEnabled(toggles, "alliance-sharing")}
+      siteAllowed={isEnabled(toggles, "server-map", "site")}
+    />
   );
 }
 

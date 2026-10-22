@@ -56,6 +56,12 @@ export default async function AlliancePage({ params }: Props) {
         <h1 className="text-2xl font-semibold tracking-tight">
           {alliance.tag} <span className="font-normal text-muted-foreground">{alliance.name.trim()}</span>
         </h1>
+        <Link
+          href={`/${server.id}/carte?alliance=${encodeURIComponent(alliance.tag)}`}
+          className="text-sm underline-offset-2 hover:underline"
+        >
+          Voir sur la carte
+        </Link>
       </header>
 
       <section aria-label="Totaux" className="grid grid-cols-2 gap-3 sm:grid-cols-5">

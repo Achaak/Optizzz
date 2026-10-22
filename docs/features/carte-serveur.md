@@ -33,8 +33,8 @@ Vue distincte de la Carte de l'alliance (`alliance-map.md`), pensée pour l'orga
   - double-clic : ouvre son profil.
 - **Tableau** sous la carte : les joueurs des puces triés par distance à la référence, tri par clic sur les en-têtes (flèche sur la seule colonne cliquée), défilement interne de hauteur fixe. Colonnes : pseudo (lien profil), alliance (couleur de la puce), coordonnées, distance (« 18,4 »), trajet référence → joueur, TDC (export), état (vacances, ⛓, banni). Loupe : zoom sur le joueur. Survol d'une ligne ↔ joueur mis en évidence sur la carte.
 - **Trajet** (`../research/temps-de-trajet.md`) : même règle que la Carte de l'alliance (`levelOf`) : un niveau saisi sur la Carte de l'alliance, le vôtre relu sur le Laboratoire (`game-levels`, sans requête depuis la carte), ou la vitesse partagée d'un membre (« Partage d'alliance ») ; sinon le niveau par défaut (le vôtre), marqué « ≈ ». Un seul sens : la vitesse des joueurs hors alliance est inconnue.
-- **Données** : dernière version de l'export des joueurs et des alliances (`apps/extension/src/data/exports.ts`, une par heure), date en tête à l'heure de Paris (« Positions de l'export public (aujourd'hui 14 h 00) ») ; l'API injoignable, la dernière version en cache, dont la date dit l'âge. Pas de TDC en direct (on ne l'a que pour son alliance).
-- **Interrupteur** « Carte du serveur », options cochées par défaut : « Bouton dans la barre du haut », « Lien « Voir sur la carte » sur les profils », « Lien « Voir sur la carte » sur les pages d'alliance ». Coupée : ni bouton ni lien ; la page affiche « Carte du serveur désactivée ».
+- **Données** : depuis le 2026-10-22, d'abord sur le site d'Optizzz (`apps/extension/src/data/site-map.ts`, `/api/[server]/carte`, « (via optizzz.fr) » après la date), bien plus léger ; le site injoignable, sa réponse invalide ou l'option coupée, la dernière version de l'export des joueurs et des alliances (`apps/extension/src/data/exports.ts`, une par heure), date en tête à l'heure de Paris (« Positions de l'export public (aujourd'hui 14 h 00) ») ; l'API injoignable, la dernière version en cache, dont la date dit l'âge. Pas de TDC en direct (on ne l'a que pour son alliance). Voir `site-carte.md`.
+- **Interrupteur** « Carte du serveur », options cochées par défaut : « Bouton dans la barre du haut », « Lien « Voir sur la carte » sur les profils », « Lien « Voir sur la carte » sur les pages d'alliance », « Lire les positions sur optizzz.fr (plus léger) ». Coupée : ni bouton ni lien ; la page affiche « Carte du serveur désactivée ».
 - **Petits écrans** : sous 600 px, le panneau prend toute la largeur, la carte aussi (pas de marge réservée aux noms, graduations espacées d'environ 70 px), le tableau masque Coordonnées et État et coupe les pseudos longs. Sur écran tactile, l'aide parle de pincer et de toucher.
 - **Mémorisé par serveur** (`browser.storage.local`) : sélection, couleurs et cases « Afficher : » ; le pseudo connecté et le serveur du dernier onglet (pour la popup), notés par le script léger.
 - Zoom : ouverture, ajout de puces, loupe et boutons font une « demande » de cadrage ; la zone affichée est la dernière demande ou le dernier zoom à la main (lu sur la grille par `convertFromPixel`), le plus récent des deux. Elle décide pseudos ou tags (40 joueurs choisis en vue au plus).
@@ -45,20 +45,17 @@ Zones autour des alliances, recherche par coordonnées, trajet dans les deux sen
 
 ## Code
 
-| Fichier                                                                    | Rôle                                                                        |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `apps/extension/src/features/server-map/index.ts` (+ test)                 | Bouton de la barre du haut, liens « Voir sur la carte », mémoire            |
-| `apps/extension/src/features/server-map/open.ts` (+ test)                  | Adresse de la page, message au script d'arrière-plan                        |
-| `apps/extension/src/features/server-map/selection.ts` (+ test)             | Recherche, puces, couleurs, sélection à l'ouverture                         |
-| `apps/extension/src/features/server-map/filter.ts` (+ test)                | Filtre d'une puce : bornes TDC, Fourmilière, Technologie                    |
-| `apps/extension/src/features/server-map/view.ts` (+ test)                  | Pseudos ou tags, centres des alliances, lignes du tableau, zoom             |
-| `apps/extension/src/features/server-map/chart-option.ts` (+ test)          | Option ECharts : fond, joueurs choisis, vous, tags                          |
-| `apps/extension/src/features/server-map/ServerMap.tsx` (+ test de montage) | La page                                                                     |
-| `ChipBar.tsx`, `ServerMapChart.tsx`, `PlayerTable.tsx`                     | Recherche et puces, carte, tableau                                          |
-| `apps/extension/src/features/server-map/settings.ts`                       | Mémoire par serveur                                                         |
-| `packages/game/src/diplomacy.ts` (+ test)                                  | Pactes et guerres (partagé avec les Cibles)                                 |
-| `apps/extension/src/utils/map-chart/`                                      | Axes, zone, zoom, placement des noms (partagés avec la Carte de l'alliance) |
-| `apps/extension/src/utils/page-dialog.ts` (+ test), `page-dialog-frame.ts` | Fenêtre par-dessus le jeu (partagée avec le Simulateur)                     |
-| `apps/extension/src/entrypoints/server-map/`                               | Page de l'extension                                                         |
+| Fichier                                                                    | Rôle                                                                                |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `apps/extension/src/features/server-map/index.ts` (+ test)                 | Bouton de la barre du haut, liens « Voir sur la carte », mémoire                    |
+| `apps/extension/src/features/server-map/open.ts` (+ test)                  | Adresse de la page, message au script d'arrière-plan                                |
+| `packages/map/src/` (`@optizzz/map`, + tests)                              | Puces, filtres, noms, axes, option ECharts, données du site (partagés avec le site) |
+| `apps/extension/src/features/server-map/ServerMap.tsx` (+ test de montage) | La page                                                                             |
+| `ChipBar.tsx`, `ServerMapChart.tsx`, `PlayerTable.tsx`                     | Recherche et puces, carte, tableau                                                  |
+| `apps/extension/src/features/server-map/settings.ts`                       | Mémoire par serveur                                                                 |
+| `packages/game/src/diplomacy.ts` (+ test)                                  | Pactes et guerres (partagé avec les Cibles)                                         |
+| `apps/extension/src/data/site-map.ts` (+ test)                             | Positions lues sur le site, repli sur l'export                                      |
+| `apps/extension/src/utils/page-dialog.ts` (+ test), `page-dialog-frame.ts` | Fenêtre par-dessus le jeu (partagée avec le Simulateur)                             |
+| `apps/extension/src/entrypoints/server-map/`                               | Page de l'extension                                                                 |
 
 La carte elle-même se vérifie à la main.

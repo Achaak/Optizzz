@@ -1,7 +1,6 @@
 // Who the server map shows in colour: chips of players and alliances. See docs/features/carte-serveur.md.
 import type { Alliance, Player } from "@optizzz/game/exports";
 import { sameTag } from "@optizzz/game/diplomacy";
-import { CHART_COLORS } from "@/theme";
 import { formatAmount } from "@optizzz/game/format/number-format";
 import { passesFilter, type ChipFilter } from "./filter";
 
@@ -9,8 +8,6 @@ import { passesFilter, type ChipFilter } from "./filter";
 export type ChipTarget = { kind: "player"; id: number } | { kind: "alliance"; tag: string } | { kind: "unaffiliated" };
 /** `filter`: only the players within it are drawn in colour (alliances and « Sans alliance »). */
 export type Chip = ChipTarget & { color: string; filter?: ChipFilter };
-
-export const MY_ALLIANCE_COLOR = CHART_COLORS.member;
 
 export interface Suggestion {
   target: ChipTarget;
@@ -93,7 +90,7 @@ export function playersOf(target: ChipTarget, players: readonly Player[]): Playe
 }
 
 /** Adds a target once, with the first colour of `palette` no chip uses yet (cycling when all are used). */
-export function addChip(chips: readonly Chip[], target: ChipTarget, palette: readonly string[] = CHART_COLORS.chips) {
+export function addChip(chips: readonly Chip[], target: ChipTarget, palette: readonly string[]) {
   if (chips.some((chip) => sameTarget(chip, target))) return [...chips];
   const used = new Set(chips.map((chip) => chip.color));
   const color = palette.find((candidate) => !used.has(candidate)) ?? palette[chips.length % palette.length] ?? "#000";
@@ -101,13 +98,18 @@ export function addChip(chips: readonly Chip[], target: ChipTarget, palette: rea
 }
 
 /**
- * Chips at opening: what was chosen last, else my alliance. Opened on a target (« Voir sur la carte »): my alliance
- * and that target only.
+ * Chips at opening: what was chosen last, else my alliance (in its own colour). Opened on a target (« Voir sur la
+ * carte »): my alliance and that target only, the target in the first of `palette`.
  */
-export function initialChips(stored: readonly Chip[] | null, myTag: string | null, target: ChipTarget | null): Chip[] {
-  const mine: Chip[] = myTag ? [{ kind: "alliance", tag: myTag, color: MY_ALLIANCE_COLOR }] : [];
-  if (target) return addChip(mine, target);
-  return stored ? [...stored] : mine;
+export function initialChips(
+  stored: readonly Chip[] | null,
+  mine: { tag: string; color: string } | null,
+  target: ChipTarget | null,
+  palette: readonly string[],
+): Chip[] {
+  const myChips: Chip[] = mine ? [{ kind: "alliance", tag: mine.tag, color: mine.color }] : [];
+  if (target) return addChip(myChips, target, palette);
+  return stored ? [...stored] : myChips;
 }
 
 /**

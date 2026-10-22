@@ -206,9 +206,9 @@ L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les p
 - Politique de confidentialité : coller le contenu de `PRIVACY.md`
 - Notes pour les relecteurs :
 
-  > Sources jointes (optizzz-X.Y.Z-sources.zip). Build : `pnpm install --frozen-lockfile && pnpm build:firefox` (Node 24, pnpm 12), résultat dans `.output/firefox-mv3/`.
+  > Sources jointes (optizzz-X.Y.Z-sources.zip, un monorepo pnpm). Build à la racine : `pnpm install --frozen-lockfile && pnpm build:firefox` (Node 24, pnpm 12), résultat dans `apps/extension/.output/firefox-mv3/`.
   >
-  > Aucune donnée n'est transmise à un tiers : toutes les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) ne sont envoyés que sur clic du joueur.
+  > Aucune donnée de l'utilisateur n'est transmise à un tiers : les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) ne sont envoyés que sur clic du joueur. Seule exception, la Carte du serveur lit les positions publiques des joueurs sur `https://optizzz.fr/api/<serveur>/carte` (notre site, même export public, sans cookie ni identifiant, option désactivable) ; la réponse est validée avec zod et n'est que des données, jamais du code.
   >
   > Les avertissements restants viennent de bibliothèques, pas de notre code (qui interdit innerHTML via ESLint) : React DOM (prise en charge de `dangerouslySetInnerHTML`, non utilisé), Apache ECharts (contenu HTML des infobulles et export SVG, alimentés par du texte échappé) et zod (test `Function("")` de disponibilité d'eval, désactivé par `z.config({ jitless: true })`).
 

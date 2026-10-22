@@ -17,16 +17,29 @@ export interface MapAxes {
 /** A part of the map: a range on each axis. */
 export type MapWindow = Pick<MapAxes, "x" | "y">;
 
+/** Lowest and highest of `values`, in one loop: spreading 100 000 values (S4's players) into Math.min overflows the stack. */
+function extent(values: readonly number[]): [number, number] {
+  let low = Infinity;
+  let high = -Infinity;
+  for (const value of values) {
+    if (value < low) low = value;
+    if (value > high) high = value;
+  }
+  return [low, high];
+}
+
 /** The tick step for these points, and where each axis starts and how long it must be to hold them. */
 function fitTicks(points: readonly { x: number; y: number }[]) {
   const xs = points.map((m) => m.x);
   const ys = points.map((m) => m.y);
-  const extent = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 4) + 2 * MARGIN;
-  const step = NICE_STEPS.find((candidate) => extent / candidate <= 10) ?? 1000;
+  const [xMin, xMax] = extent(xs);
+  const [yMin, yMax] = extent(ys);
+  const size = Math.max(xMax - xMin, yMax - yMin, 4) + 2 * MARGIN;
+  const step = NICE_STEPS.find((candidate) => size / candidate <= 10) ?? 1000;
   const fit = (values: number[]) => {
-    const min = Math.min(...values);
+    const [min, max] = extent(values);
     const start = Math.floor((min - MARGIN) / step) * step;
-    return { start, needed: Math.ceil((Math.max(...values) + MARGIN - start) / step) * step, min };
+    return { start, needed: Math.ceil((max + MARGIN - start) / step) * step, min };
   };
   return { fits: { x: fit(xs), y: fit(ys) }, step };
 }
@@ -66,22 +79,37 @@ export function squareGrid(width: number, height: number) {
  * to ECharts (`mapAxis` without a step), round in any zoom window.
  */
 export function fittedBounds(points: readonly { x: number; y: number }[]): MapWindow {
-  const axis = (values: number[]) => [Math.min(...values) - MARGIN, Math.max(...values) + MARGIN] as const;
+  const axis = (values: number[]) => {
+    const [min, max] = extent(values);
+    return [min - MARGIN, max + MARGIN] as const;
+  };
   return { x: axis(points.map((p) => p.x)), y: axis(points.map((p) => p.y)) };
 }
 
 /** Height of the plot over its width, for one scale on both axes. */
 const aspectOf = (axes: MapWindow) => (axes.y[1] - axes.y[0]) / (axes.x[1] - axes.x[0]);
 
-/** Chart height for a width, so that the plot area has the shape of `axes`. */
+/** A plot at most this much taller than wide: a server far taller (S4: 50 × 2 058 squares) is seen a band at a time. */
+const MAX_ASPECT = 1.5;
+
+/**
+ * The shape the plot takes for the server `full`: `full` itself, or for a very tall server, its top band as tall as
+ * `MAX_ASPECT` allows. Sizes the chart and the zoom windows; the axes still hold the whole server.
+ */
+export function plotShape(full: MapWindow): MapWindow {
+  if (aspectOf(full) <= MAX_ASPECT) return full;
+  return { x: full.x, y: [full.y[0], full.y[0] + (full.x[1] - full.x[0]) * MAX_ASPECT] };
+}
+
+/** Chart height for a width, so that the plot area has the shape of `axes` (`plotShape`). */
 export function fittedHeight(width: number, maxHeight: number, axes: MapWindow): number {
-  const plot = Math.max(100, width - GRID.left - FITTED_RIGHT) * aspectOf(axes);
+  const plot = Math.max(100, width - GRID.left - FITTED_RIGHT) * aspectOf(plotShape(axes));
   return Math.min(maxHeight, Math.max(160, plot + GRID.top + GRID.bottom));
 }
 
-/** Grid leaving a plot area with the shape of `axes`, centered; labels sit to the right of the points. */
+/** Grid leaving a plot area with the shape of `axes` (`plotShape`), centered; labels sit to the right of the points. */
 export function fittedGrid(width: number, height: number, axes: MapWindow) {
-  const aspect = aspectOf(axes);
+  const aspect = aspectOf(plotShape(axes));
   const room = { width: Math.max(100, width - GRID.left - FITTED_RIGHT), height: height - GRID.top - GRID.bottom };
   const plotHeight = Math.min(room.height, room.width * aspect);
   const extra = Math.max(0, room.width - plotHeight / aspect) / 2;
@@ -97,26 +125,25 @@ export function fittedGrid(width: number, height: number, axes: MapWindow) {
 const MIN_WINDOW = 10;
 
 /**
- * The window around `points` with the shape of `full` (the plot's), so a zoom keeps one scale; slid back inside `full`
- * near an edge, and `full` itself when it would be as large.
+ * The window around `points` with the plot's shape (`plotShape`), so a zoom keeps one scale; slid back inside `full`
+ * near an edge, and `full` itself when it would be as large. On a very tall server, never more than a band.
  */
 export function fittedWindow(points: readonly { x: number; y: number }[], full: MapWindow): MapWindow {
   const xs = points.map((p) => p.x);
   const ys = points.map((p) => p.y);
-  const aspect = aspectOf(full);
-  const span = {
-    x: Math.max(...xs) - Math.min(...xs) + 2 * MARGIN,
-    y: Math.max(...ys) - Math.min(...ys) + 2 * MARGIN,
-  };
-  const width = Math.max(span.x, span.y / aspect, MIN_WINDOW);
-  if (width >= full.x[1] - full.x[0]) return { x: full.x, y: full.y };
+  const aspect = aspectOf(plotShape(full));
+  const [xMin, xMax] = extent(xs);
+  const [yMin, yMax] = extent(ys);
+  const span = { x: xMax - xMin + 2 * MARGIN, y: yMax - yMin + 2 * MARGIN };
+  const width = Math.min(Math.max(span.x, span.y / aspect, MIN_WINDOW), full.x[1] - full.x[0]);
+  if (width * aspect >= full.y[1] - full.y[0]) return { x: full.x, y: full.y };
   const place = (center: number, size: number, range: AxisRange) => {
     const from = Math.min(Math.max(center - size / 2, range[0]), range[1] - size);
     return [from, from + size] as const;
   };
   return {
-    x: place((Math.max(...xs) + Math.min(...xs)) / 2, width, full.x),
-    y: place((Math.max(...ys) + Math.min(...ys)) / 2, width * aspect, full.y),
+    x: place((xMax + xMin) / 2, width, full.x),
+    y: place((yMax + yMin) / 2, width * aspect, full.y),
   };
 }
 

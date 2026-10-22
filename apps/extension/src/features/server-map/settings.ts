@@ -1,5 +1,5 @@
 import { storage } from "wxt/utils/storage";
-import type { Chip } from "./selection";
+import type { Chip } from "@optizzz/map/selection";
 
 /** What the map shows besides the chosen players (« Afficher : »). */
 export interface MapDisplay {

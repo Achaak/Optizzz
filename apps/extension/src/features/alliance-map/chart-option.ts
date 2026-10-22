@@ -8,9 +8,9 @@ import { roleLabel } from "@/features/tdc-chain/roles";
 import { CHART_COLORS } from "@/theme";
 import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration } from "@optizzz/game/format/time-format";
-import { escapeHtml } from "@/utils/html";
-import { bounds, MAP_ZOOM, mapAxis, squareGrid } from "@/utils/map-chart/axes";
-import { measureName, NAME_HEIGHT, placeLabels, plotProjection, spotLabel } from "@/utils/map-chart/labels";
+import { escapeHtml } from "@optizzz/game/format/escape-html";
+import { bounds, MAP_ZOOM, mapAxis, squareGrid } from "@optizzz/map/axes";
+import { measureName, NAME_HEIGHT, placeLabels, plotProjection, spotLabel } from "@optizzz/map/labels";
 
 export interface MapMember extends Player {
   /** Hunting field read live on the members page, otherwise the export's. */

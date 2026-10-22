@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Alliance, Player } from "@optizzz/game/exports";
-import {
-  addChip,
-  highlightedPlayers,
-  initialChips,
-  MY_ALLIANCE_COLOR,
-  searchSuggestions,
-  type Chip,
-} from "./selection";
+import { addChip, highlightedPlayers, initialChips, searchSuggestions, type Chip } from "./selection";
 
 let nextId = 1;
 const player = (pseudo: string, fields: Partial<Player> = {}): Player => ({
@@ -83,7 +76,7 @@ describe("addChip", () => {
     let chips = addChip([], { kind: "alliance", tag: "EVO" }, palette);
     chips = addChip(chips, { kind: "player", id: 3 }, palette);
     chips = addChip(chips, { kind: "alliance", tag: "EVO" }, palette);
-    expect(addChip(addChip([], { kind: "unaffiliated" }), { kind: "unaffiliated" })).toHaveLength(1);
+    expect(addChip(addChip([], { kind: "unaffiliated" }, palette), { kind: "unaffiliated" }, palette)).toHaveLength(1);
     expect(chips).toEqual([
       { kind: "alliance", tag: "EVO", color: "#a" },
       { kind: "player", id: 3, color: "#b" },
@@ -94,20 +87,22 @@ describe("addChip", () => {
 
 describe("initialChips", () => {
   const stored: Chip[] = [{ kind: "alliance", tag: "EVO", color: "#123" }];
+  const mine = { tag: "ANGE", color: "#mine" };
+  const palette = ["#a", "#b"];
 
   it("starts with my alliance, then keeps what was chosen last", () => {
-    expect(initialChips(null, "ANGE", null)).toEqual([{ kind: "alliance", tag: "ANGE", color: MY_ALLIANCE_COLOR }]);
-    expect(initialChips(stored, "ANGE", null)).toEqual(stored);
-    expect(initialChips(null, null, null)).toEqual([]);
+    expect(initialChips(null, mine, null, palette)).toEqual([{ kind: "alliance", tag: "ANGE", color: "#mine" }]);
+    expect(initialChips(stored, mine, null, palette)).toEqual(stored);
+    expect(initialChips(null, null, null, palette)).toEqual([]);
   });
 
   it("opened on a target: my alliance and that target, whatever was chosen last", () => {
-    const chips = initialChips(stored, "ANGE", { kind: "player", id: 7 });
+    const chips = initialChips(stored, mine, { kind: "player", id: 7 }, palette);
     expect(
       chips.map((chip) => (chip.kind === "player" ? chip.id : chip.kind === "alliance" ? chip.tag : null)),
     ).toEqual(["ANGE", 7]);
     expect(chips.map((chip) => chip.kind)).toEqual(["alliance", "player"]);
-    expect(initialChips(stored, "ANGE", { kind: "alliance", tag: "ange" })).toHaveLength(1);
+    expect(initialChips(stored, mine, { kind: "alliance", tag: "ange" }, palette)).toHaveLength(1);
   });
 });
 

@@ -1,6 +1,7 @@
 import { Amount } from "@/utils/Amount";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadAlliancesExport, loadPlayersExport, type AlliancesExport, type PlayersExport } from "@/data/exports";
+import { loadSiteMap } from "@/data/site-map";
 import { type Player } from "@optizzz/game/exports";
 import { loadStoredLevels } from "@/data/levels";
 import { levelOf, type KnownLevels } from "@/features/alliance-map/neighbor-table";
@@ -9,11 +10,18 @@ import { enteredAtOf, useSharedAttackSpeeds } from "@/features/alliance-map/shar
 import { diplomaticCamps } from "@optizzz/game/diplomacy";
 import { CHART_COLORS } from "@/theme";
 import { formatExportVersion } from "@/utils/export-date";
-import { fittedBounds } from "@/utils/map-chart/axes";
+import { fittedBounds } from "@optizzz/map/axes";
 import { ChipBar } from "./ChipBar";
 import { PlayerTable } from "./PlayerTable";
 import { ServerMapChart } from "./ServerMapChart";
-import { addChip, highlightedPlayers, initialChips, sameTarget, type Chip, type ChipTarget } from "./selection";
+import {
+  addChip,
+  highlightedPlayers,
+  initialChips,
+  sameTarget,
+  type Chip,
+  type ChipTarget,
+} from "@optizzz/map/selection";
 import {
   DEFAULT_DISPLAY,
   loadPlayerPseudo,
@@ -21,7 +29,7 @@ import {
   writeServerMapSettings,
   type MapDisplay,
 } from "./settings";
-import { frameRequest, tableRows, zoomAround, type ZoomRequest } from "./view";
+import { frameRequest, tableRows, zoomAround, type ZoomRequest } from "@optizzz/map/view";
 
 interface Props {
   origin: string;
@@ -30,29 +38,59 @@ interface Props {
   embedded: boolean;
   /** « Partage d'alliance » is on: the Attack Speed members shared counts. */
   sharing: boolean;
+  /** The option « Lire les positions sur optizzz.fr » is on. */
+  siteAllowed: boolean;
 }
 
-/** The export, and whether it came from the cache because the API did not answer. */
-function useExports(origin: string) {
+/**
+ * The positions: from the Optizzz site when allowed (much lighter), else, or when it does not answer, from the export
+ * (its cache when the API does not answer). `fromSite` tells where they came from.
+ */
+function usePositions(origin: string, siteAllowed: boolean) {
   const [players, setPlayers] = useState<PlayersExport | null>(null);
   const [alliances, setAlliances] = useState<AlliancesExport | null>(null);
+  const [fromSite, setFromSite] = useState(false);
   const [error, setError] = useState(false);
   useEffect(() => {
-    loadPlayersExport(origin).then(setPlayers, (e: unknown) => {
-      console.error("[Optizzz] server map: loading the players export failed", e);
-      setError(true);
-    });
-    // Without alliances, only the pacts and wars buttons are missing.
-    loadAlliancesExport(origin).then(setAlliances, (e: unknown) => {
-      console.warn("[Optizzz] server map: loading the alliances export failed", e);
-    });
-  }, [origin]);
-  return { players, alliances, error };
+    let current = true;
+    const fromExport = () => {
+      loadPlayersExport(origin).then(
+        (loaded) => current && setPlayers(loaded),
+        (e: unknown) => {
+          console.error("[Optizzz] server map: loading the players export failed", e);
+          if (current) setError(true);
+        },
+      );
+      // Without alliances, only the pacts and wars buttons are missing.
+      loadAlliancesExport(origin).then(
+        (loaded) => current && setAlliances(loaded),
+        (e: unknown) => {
+          console.warn("[Optizzz] server map: loading the alliances export failed", e);
+        },
+      );
+    };
+    if (!siteAllowed) fromExport();
+    else
+      void loadSiteMap(origin).then((site) => {
+        if (!current) return;
+        if (!site) {
+          fromExport();
+          return;
+        }
+        setFromSite(true);
+        setPlayers(site.players);
+        setAlliances(site.alliances);
+      });
+    return () => {
+      current = false;
+    };
+  }, [origin, siteAllowed]);
+  return { players, alliances, fromSite, error };
 }
 
-export function ServerMap({ origin, target, embedded, sharing }: Props) {
+export function ServerMap({ origin, target, embedded, sharing, siteAllowed }: Props) {
   const host = new URL(origin).host;
-  const { players: playersExport, alliances: alliancesExport, error } = useExports(origin);
+  const { players: playersExport, alliances: alliancesExport, fromSite, error } = usePositions(origin, siteAllowed);
   /** Null until the chips at opening are known. */
   const [storedChips, setStoredChips] = useState<Chip[] | null>(null);
   const [display, setDisplay] = useState<MapDisplay>(DEFAULT_DISPLAY);
@@ -91,7 +129,8 @@ export function ServerMap({ origin, target, embedded, sharing }: Props) {
     if (!ready || opened.current) return;
     opened.current = true;
     void readServerMapSettings(host).then((settings) => {
-      const chips = initialChips(settings.chips, myTag, target);
+      const mine = myTag ? { tag: myTag, color: CHART_COLORS.member } : null;
+      const chips = initialChips(settings.chips, mine, target, CHART_COLORS.chips);
       setStoredChips(chips);
       setDisplay({ showMe: settings.showMe, others: settings.others, allNames: settings.allNames });
       frame(chips, settings.showMe);
@@ -159,6 +198,7 @@ export function ServerMap({ origin, target, embedded, sharing }: Props) {
       <h2 className="optizzz-panel-title">Carte du serveur {host.split(".")[0]?.toUpperCase()}</h2>
       <p className="optizzz-note">
         <Amount value={players.length} /> joueurs · positions du {formatExportVersion(playersExport.version)}
+        {fromSite && " (via optizzz.fr)"}
         {!me && " · connectez-vous au jeu sur ce serveur pour vous situer sur la carte"}
       </p>
       <ChipBar
@@ -166,7 +206,7 @@ export function ServerMap({ origin, target, embedded, sharing }: Props) {
         alliances={alliancesExport?.alliances ?? []}
         chips={chips}
         camps={camps}
-        onAdd={(target) => setChips(addChip(chips, target), { reframe: true })}
+        onAdd={(target) => setChips(addChip(chips, target, CHART_COLORS.chips), { reframe: true })}
         onAddCamp={(camp) => {
           const palette = camp === "pacts" ? CHART_COLORS.allies : CHART_COLORS.enemies;
           // One hue family per camp: each alliance takes the next colour of its camp.

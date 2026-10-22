@@ -1,24 +1,18 @@
 import type { EChartsCoreOption } from "echarts/core";
 import type { Player } from "@optizzz/game/exports";
-import type { Level } from "@/features/alliance-map/neighbor-table";
+import type { Level } from "@optizzz/game/travel";
 import { distance, travelTime } from "@optizzz/game/travel";
-import { CHART_COLORS } from "@/theme";
-import { escapeHtml } from "@/utils/html";
-import { fittedGrid, MAP_ZOOM, mapAxis, ticksFor, type MapWindow } from "@/utils/map-chart/axes";
-import {
-  measureName,
-  NAME_HEIGHT,
-  placeLabels,
-  plotProjection,
-  spotLabel,
-  type LabelSpot,
-} from "@/utils/map-chart/labels";
+import { escapeHtml } from "@optizzz/game/format/escape-html";
+import { fittedGrid, MAP_ZOOM, mapAxis, ticksFor, type MapWindow } from "./axes";
+import { measureName, NAME_HEIGHT, placeLabels, plotProjection, spotLabel, type LabelSpot } from "./labels";
 import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration } from "@optizzz/game/format/time-format";
+import type { MapPalette } from "./palette";
 import type { Chip } from "./selection";
 import { allianceCenters } from "./view";
 
 export interface ServerMapInput {
+  palette: MapPalette;
   /** Every player of the server, the banned left out. */
   players: readonly Player[];
   highlighted: ReadonlyMap<Player, Chip>;
@@ -122,13 +116,13 @@ export function buildServerMapOption(input: ServerMapInput): EChartsCoreOption {
       itemStyle: {
         color: chip.color,
         opacity: player.onHoliday ? 0.45 : 1,
-        borderColor: CHART_COLORS.text,
+        borderColor: input.palette.text,
         borderWidth: isSet ? 2 : 0,
       },
       label: {
         ...spotLabel(spots.get(player.id)),
         formatter: nameOf(player),
-        color: player.onHoliday ? CHART_COLORS.holiday : CHART_COLORS.text,
+        color: player.onHoliday ? input.palette.holiday : input.palette.text,
         fontWeight: player.id === reference?.id && player.id !== input.plainId ? "bold" : "normal",
       },
     };
@@ -163,7 +157,7 @@ export function buildServerMapOption(input: ServerMapInput): EChartsCoreOption {
         large: true,
         largeThreshold: 2000,
         symbolSize: 4,
-        itemStyle: { color: CHART_COLORS.background },
+        itemStyle: { color: input.palette.background },
         data: input.others === false ? [] : players.map((player) => [player.x, player.y]),
         emphasis: { disabled: true },
       },
@@ -182,8 +176,8 @@ export function buildServerMapOption(input: ServerMapInput): EChartsCoreOption {
                 symbol: "diamond",
                 symbolSize: SIZE.me,
                 itemStyle: {
-                  color: highlighted.get(me)?.color ?? CHART_COLORS.selected,
-                  borderColor: CHART_COLORS.selected,
+                  color: highlighted.get(me)?.color ?? input.palette.selected,
+                  borderColor: input.palette.selected,
                   borderWidth: me.id === reference?.id ? 3 : 2,
                 },
                 // Always written: where no spot is free, to the right as before.
@@ -191,7 +185,7 @@ export function buildServerMapOption(input: ServerMapInput): EChartsCoreOption {
               },
             ]
           : [],
-        label: { fontSize: 12, color: CHART_COLORS.text },
+        label: { fontSize: 12, color: input.palette.text },
         z: 4,
         emphasis: { scale: false },
       },
@@ -208,7 +202,7 @@ export function buildServerMapOption(input: ServerMapInput): EChartsCoreOption {
           position: "inside",
           fontSize: 15,
           fontWeight: "bold",
-          textBorderColor: CHART_COLORS.halo,
+          textBorderColor: input.palette.halo,
           textBorderWidth: 3,
         },
         labelLayout: { hideOverlap: true },

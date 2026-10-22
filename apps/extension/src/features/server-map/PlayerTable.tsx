@@ -3,7 +3,7 @@ import type { Player } from "@optizzz/game/exports";
 import { formatDecimal } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { formatDuration } from "@optizzz/game/format/time-format";
-import { sortRows, type SortKey, type TableRow } from "./view";
+import { sortRows, type SortKey, type TableRow } from "@optizzz/map/view";
 
 interface Props {
   rows: TableRow[];

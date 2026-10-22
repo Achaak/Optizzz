@@ -8,7 +8,7 @@ import { createPageDialog } from "@/utils/page-dialog";
 import type { Feature } from "../feature";
 import { isEnabled } from "../toggles";
 import { decodeTarget, encodeTarget, requestServerMap, serverMapUrl } from "./open";
-import type { ChipTarget } from "./selection";
+import type { ChipTarget } from "@optizzz/map/selection";
 import { rememberPlayer } from "./settings";
 
 export const SERVER_MAP_BUTTON_CLASS = "optizzz-server-map-button";

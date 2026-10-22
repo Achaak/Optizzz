@@ -57,6 +57,7 @@ describe("buildFeaturesSection", () => {
       "server-map.button",
       "server-map.profile",
       "server-map.alliance",
+      "server-map.site",
       "watchlist",
       "watchlist.button",
       "watchlist.follow",

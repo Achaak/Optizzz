@@ -54,6 +54,9 @@ vi.mock("@/data/exports", () => ({
     Promise.resolve({ version: "202610160800", alliances: [alliance("MOI"), alliance("EVO", ["moi"])] }),
 }));
 
+const siteMap = vi.hoisted(() => ({ load: vi.fn<() => Promise<unknown>>(() => Promise.resolve(null)) }));
+vi.mock("@/data/site-map", () => ({ loadSiteMap: siteMap.load }));
+
 let container: HTMLElement;
 
 beforeEach(async () => {
@@ -67,10 +70,10 @@ afterEach(() => {
   container.remove();
 });
 
-async function render(target: Parameters<typeof ServerMap>[0]["target"] = null) {
+async function render(target: Parameters<typeof ServerMap>[0]["target"] = null, siteAllowed = false) {
   const root = createRoot(container);
   await act(async () => {
-    root.render(<ServerMap origin={ORIGIN} target={target} embedded sharing={false} />);
+    root.render(<ServerMap origin={ORIGIN} target={target} embedded sharing={false} siteAllowed={siteAllowed} />);
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
   return root;
@@ -162,5 +165,25 @@ describe("ServerMap", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect((await readServerMapSettings("s5.fourmizzz.fr")).allNames).toBe(true);
+  });
+
+  it("reads the positions on the site when allowed, and says so", async () => {
+    siteMap.load.mockResolvedValueOnce({
+      players: {
+        version: "202610221400",
+        players: [player(1, "Moi", "MOI", 10, 10), player(6, "Site", "MOI", 12, 12)],
+      },
+      alliances: { version: "202610221400", alliances: [alliance("MOI")] },
+    });
+    await render(null, true);
+    expect(container.textContent).toContain("(via optizzz.fr)");
+    expect(container.textContent).toContain("Site");
+  });
+
+  it("falls back on the export when the site does not answer", async () => {
+    siteMap.load.mockResolvedValueOnce(null);
+    await render(null, true);
+    expect(container.textContent).not.toContain("via optizzz.fr");
+    expect(container.textContent).toContain("Amie");
   });
 });

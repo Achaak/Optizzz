@@ -33,6 +33,16 @@ describe("server map option", () => {
   const other = player("Autre", 30, 5);
   const evo: Chip = { kind: "alliance", tag: "EVO", color: "#e" };
   const input = (pseudos: boolean): ServerMapInput => ({
+    palette: {
+      text: "#t",
+      holiday: "#h",
+      background: "#bg",
+      selected: "#s",
+      halo: "#halo",
+      chips: ["#c"],
+      allies: ["#al"],
+      enemies: ["#en"],
+    },
     players: [me, a, b, solo, other],
     highlighted: new Map<Player, Chip>([
       [me, { kind: "alliance", tag: "MOI", color: "#m" }],
