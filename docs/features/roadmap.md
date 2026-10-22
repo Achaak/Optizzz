@@ -32,3 +32,7 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
   - étape 1, badge : background script + permission `alarms`, calculé depuis les données mémorisées (dont les fins mémorisées par « Heures de fin »), sans jamais interroger le jeu. Délai avant le premier problème (rouge < 2 h, orange < 12 h, rien sinon), « ? » gris si les données ont plus de 24 h, pire des serveurs avec le détail par serveur au survol ;
   - étape 2, notifications : permission `notifications` **optionnelle**, demandée à l'activation. Types activables un par un, tous coupés par défaut : famine, entrepôt plein, chantier terminé, chasse rentrée. Le serveur est nommé (« S5 : … »). Pas d'attaque entrante ;
   - mettre à jour `PRIVACY.md` et `docs/store/fiche.md` avant de publier.
+
+## Site Optizzz
+
+Cadré le 2026-10-22 (`/grill-with-docs`) : un site `optizzz.fr` lié à l'extension, avec des outils publics et des Espaces d'alliance chiffrés de bout en bout. Ordre, envois et Demandes : voir `site-optizzz.md` ; ADR 0005 à 0007.

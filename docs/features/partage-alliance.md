@@ -9,7 +9,7 @@ Partager entre membres d'une alliance ses niveaux de bâtiments et de recherches
 ## Règles du jeu et confidentialité
 
 - Le script ne joue pas à la place du joueur : tout partage et toute relecture partent d'un clic du joueur ; rien n'est publié tout seul.
-- Rien ne sort de Fourmizzz par l'extension : ni serveur Optizzz, ni webhook, ni permission nouvelle. Le joueur copie son état et le colle lui-même dans un salon Discord privé de son alliance ; c'est Discord (les rôles réglés par l'alliance) qui décide qui le lit.
+- Rien ne sort de Fourmizzz par l'extension : ni serveur Optizzz, ni webhook, ni permission nouvelle. _Depuis le 2026-10-22, un Site Optizzz facultatif et chiffré de bout en bout s'y ajoute (ADR 0005, `site-optizzz.md`) ; ce copier-coller reste pour qui n'a pas de compte._ Le joueur copie son état et le colle lui-même dans un salon Discord privé de son alliance ; c'est Discord (les rôles réglés par l'alliance) qui décide qui le lit.
 - Forum d'alliance écarté pour cette version : selon sa configuration, une section est lue par l'alliance seule ou par deux alliances en pacte, et rien ne dit encore si la page l'indique.
 - Un membre lit ce que lisent les membres : contre un espion, seulement moins de données par défaut (armée en nombre), l'heure de chaque relevé, et pas d'export de toute l'alliance.
 - La ligne de données n'est pas chiffrée (base64 se relit en une seconde) ; on ne la présente pas comme protégée.
