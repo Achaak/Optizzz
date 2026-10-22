@@ -1,57 +1,108 @@
 <div id="centre">
-  <center>
-    <form method="get" action="classementAlliance.php">
-      Classer par
-      <select name="critere">
-        <option value="terrain" selected>Terrain</option>
-        <option value="technologie">Technologie</option>
-        <option value="fourmiliere">Fourmilière</option>
-        <option value="membres">Nombre de membres</option>
-      </select>
-    </form>
-    <p>Votre alliance est classée 2ième en Terrain</p>
-    <table class="simulateur tab_triable">
-      <tr>
-        <th>PLACE</th>
-        <th>TAG</th>
-        <th>NOM</th>
-        <th>TERRAIN</th>
-        <th>TECHNOLOGIE</th>
-        <th>FOURMILIERE</th>
-        <th>MEMBRES</th>
-      </tr>
-      <tr>
-        <td>1</td>
-        <td><a href="classementAlliance.php?alliance=V">V</a></td>
-        <td>Victory</td>
-        <td>2 167 103</td>
-        <td>4 757</td>
-        <td>9 793</td>
-        <td>137</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td><a href="classementAlliance.php?alliance=MOI">MOI</a></td>
-        <td>Mon alliance</td>
-        <td>1 204 551</td>
-        <td>3 120</td>
-        <td>6 018</td>
-        <td>58</td>
-      </tr>
-      <tr>
-        <td>3</td>
-        <td><a href="classementAlliance.php?alliance=L%26R">L&amp;R</a></td>
-        <td>Lions et Rats</td>
-        <td>980 003</td>
-        <td>2 870</td>
-        <td>5 400</td>
-        <td>41</td>
-      </tr>
-    </table>
-    <p>
-      <a href="classementAlliance.php?page=1">1</a>
-      <a href="classementAlliance.php?page=2">2</a>
-      <a href="classementAlliance.php?page=3">3</a>
-    </p>
-  </center>
+  <h2>Classements des Alliances</h2>
+  <table class="simulateur" style="position: relative; width: 100%">
+    <tr>
+      <td>
+        <form method="post" action="classementAlliance.php">
+          Chercher un joueur ou une alliance
+          <input type="text" id="pseudoJoueur" name="requete" style="text-align: left" />
+          <input type="hidden" value="joueur" name="prioriteRecherche" />
+          <input type="submit" value="Rechercher" name="recherche" />
+        </form>
+        <br />
+        <div id="formulaire_classement">
+          <label for="type_classement">Type de Classement</label>
+          <select name="type_classement" id="type_classement" style="margin-right: 50px">
+            <option value="alliance_total" selected>Total des Points</option>
+            <option value="alliance_moyenne">Moyenne par Joueur</option></select
+          ><label for="league">League</label>
+          <select name="league" id="league" style="margin-right: 50px">
+            <option value="0" selected>Toutes</option>
+            <option value="21" style="background-color: #111111; color: white">-30 joueurs</option>
+            <option value="11">-20 joueurs</option>
+            <option value="2">-10 joueurs</option>
+            <option value="1">1 joueur</option></select
+          ><label for="critere">Critère</label>
+          <select name="critere" id="critere">
+            <option value="terrain" selected>Terrain</option>
+            <option value="construction">Fourmilière</option>
+            <option value="technologie">Technologie</option>
+            <option value="elo">Trophées</option>
+            <option value="membre">Membres</option>
+          </select>
+        </div>
+        <div id="page" style="display: none">1</div>
+        <span class="zone_liste_page" style="float: right"
+          ><div class="bouton_page" style="display: inline-block; padding: 3px; font-weight: bold">1</div></span
+        >
+        <div id="zone_message" style="font-size: 1.2em; font-weight: bold; margin: auto; text-align: center">
+          <span onclick="aller_au_joueur(1)" class="cliquable2">Votre alliance est 3<sup>e</sup> en Terrain</span>
+        </div>
+        <div id="zone_classement">
+          <table class="tab_triable" cellspacing="0" style="width: 100%">
+            <tr class="alt" align="center">
+              <th style="padding: 4px 12px 4px 16px">Rang</th>
+              <th>Alliance</th>
+              <th
+                style="padding: 4px 12px 4px 16px"
+                class="bouton_classement cliquable2"
+                id="terrain"
+                title="Taille du Terrain de Chasse"
+              >
+                Terrain
+              </th>
+              <th
+                style="padding: 4px 12px 4px 16px"
+                class="bouton_classement cliquable2"
+                id="construction"
+                title="Nombre de Bâtiments"
+              >
+                Fourmilière
+              </th>
+              <th class="bouton_classement cliquable2" id="technologie" title="Nombre de Recherches">Technologie</th>
+              <th
+                style="padding: 4px 12px 4px 16px"
+                class="bouton_classement cliquable2"
+                id="elo"
+                title="Nombre de Trophées"
+              >
+                Trophées
+              </th>
+              <th class="bouton_classement cliquable2" id="membre">Membres</th>
+            </tr>
+            <tr align="center" class=" ">
+              <td>1</td>
+              <td><a href="classementAlliance.php?alliance=V">V</a></td>
+              <td>6 195 861</td>
+              <td>12 421</td>
+              <td>6 363</td>
+              <td>760</td>
+              <td>141</td>
+            </tr>
+            <tr align="center" class="pacte_97">
+              <td>2</td>
+              <td><a href="classementAlliance.php?alliance=-AP-">-AP-</a></td>
+              <td>3 729 813</td>
+              <td>4 728</td>
+              <td>2 523</td>
+              <td>0</td>
+              <td>51</td>
+            </tr>
+            <tr align="center" class="alt monAlliance" style="font-weight: bold" id="ancre">
+              <td>3</td>
+              <td><a href="classementAlliance.php?alliance=MOI">MOI</a></td>
+              <td>1 327 542</td>
+              <td>2 137</td>
+              <td>1 108</td>
+              <td>0</td>
+              <td>23</td>
+            </tr>
+          </table>
+        </div>
+        <span class="zone_liste_page" style="position: absolute; right: 20px"
+          ><div class="bouton_page" style="display: inline-block; padding: 3px; font-weight: bold">1</div></span
+        ><br />
+      </td>
+    </tr>
+  </table>
 </div>

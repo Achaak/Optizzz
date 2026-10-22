@@ -164,13 +164,28 @@ Relevé le 2026-10-07 sur s5 (sans Compte+).
 
 Relevé le 2026-10-16 sur S5.
 
-- **Sans paramètre** : le classement des alliances, en 3 pages. Critère au choix (Terrain, Technologie, Fourmilière, Nombre de membres ; pas de Combat), « Votre alliance est classée 19ième en Terrain », puis PLACE | TAG | NOM | TERRAIN | TECHNOLOGIE | FOURMILIERE | MEMBRES.
-- **Ce classement est moins frais que la page d'une alliance** : V y avait 2 167 103 de Terrain quand sa page affichait 2 541 586. Optizzz n'en lit pas les scores, seulement le tag de chaque ligne (lien `classementAlliance.php?alliance=TAG`) pour y ajouter la colonne « Graphique » (`statistiques-alliance.md`). Le balisage exact (classe du tableau, `th` de l'en-tête, liens de pages) reste à relever.
+- **Sans paramètre** : redirige vers `classement.php?type_classement=alliance_total` (relevé le 2026-10-22 sur S5), voir plus bas.
+- Optizzz lit le tag de chaque ligne du classement (lien `classementAlliance.php?alliance=TAG`) pour y ajouter la colonne « Graphique » (`statistiques-alliance.md`), pas ses scores.
 - **`?alliance=TAG`** (tag sans la casse : `xyz` = `XYZ`) : la page publique d'une alliance. Dans `#centre` : `h2` = nom de l'alliance, `div.contenuJoueur` (description), puis des `center` :
   - `<h2>Classement</h2>` suivi de `table.simulateur.tab_triable` : en-tête `th` vide | Score | Classement, puis une ligne par score, `<td>Terrain|Fourmilière|Technologie|Combat|Membres</td><td>2 545 127</td><td>1</td>`. Valeurs en direct (elles bougent d'une minute à l'autre), rangs du jeu ;
   - `<h2>Les membres de l’Alliance</h2>` et `table#tabMembresAlliance` (RANG | grade | PSEUDO | TERRAIN | TECHNOLOGIE | FOURMILIERE) ;
   - `<h2>Diplomatie</h2>` : pactes avec leur type, guerres.
 - **Tag inconnu** : la page répond quand même, avec un `h2` vide et des scores à 0 (rangs en dernier). Le `h2` vide signale l'absence de l'alliance.
+
+## classement.php (classements des joueurs et des alliances)
+
+Relevé le 2026-10-22 sur S5. Fixture réduite : `src/game/pages/__fixtures__/alliances-ranking.html`.
+
+- **Une seule page pour les deux classements** : sans paramètre, celui des joueurs (`h2` « Classements des Joueurs », Rang | Pseudo | Terrain | Fourmilière | Technologie | Trophées, et **un lien `classementAlliance.php?alliance=TAG` par ligne**, l'alliance du joueur) ; `?type_classement=alliance_total` (ou `alliance_moyenne`) celui des alliances. Seul le menu `select#type_classement` les distingue : absent chez les joueurs, `alliance_total` / `alliance_moyenne` chez les alliances.
+- Dans `#centre` : `<h2>Classements des Alliances</h2>`, puis un cadre `table.simulateur` dont l'unique cellule contient :
+  - un formulaire de recherche (POST vers `classementAlliance.php`, `input#pseudoJoueur`) ;
+  - `div#formulaire_classement` : `select#type_classement` (Total des Points, Moyenne par Joueur), `select#league` (Toutes, -30, -20, -10 joueurs, 1 joueur), `select#critere` (`terrain`, `construction` = Fourmilière, `technologie`, `elo` = Trophées, `membre`) ;
+  - `div#page` (masqué, numéro de page), `span.zone_liste_page` (une `div.bouton_page` par page ; S5 n'en a qu'une, 75 alliances) ;
+  - `div#zone_message` : « Votre alliance est 18<sup>e</sup> en Terrain » (cliquable, fait défiler jusqu'à `#ancre`) ;
+  - `div#zone_classement` > `table.tab_triable` : en-tête `tr.alt` de `th` (Rang | Alliance | Terrain | Fourmilière | Technologie | Trophées | Membres ; les `th` de score ont `class="bouton_classement cliquable2"` et pour `id` la valeur du critère, celui choisi souligné), puis une ligne par alliance, `<td>1</td><td><a href="classementAlliance.php?alliance=V">V</a></td><td>6 195 861</td>…`. Lignes alternées `alt` ; un pacte ajoute `pacte_<n>` ; mon alliance `class="alt monAlliance" id="ancre"` en gras ;
+  - le même `span.zone_liste_page` sous le tableau.
+- **Tout passe par AJAX, l'URL ne change pas** : changer un menu, cliquer un `th.bouton_classement` ou une `div.bouton_page` appelle `classement.php?changer_classement=ok&type_classement=…&league=…&critere=…&page=…`, qui répond en JSON (`formulaire_classement`, `liste_page`, `message_classement`, `tableau_classement`) ; le script de la page remplace le contenu de `#formulaire_classement`, `.zone_liste_page`, `#zone_message` et `#zone_classement`. Ce qu'on ajoute au tableau disparaît donc à chaque changement.
+- Les valeurs sont celles du classement, moins fraîches que la page d'une alliance (V : 2 167 103 de Terrain ici quand sa page affichait 2 541 586, le 2026-10-16).
 
 ## colonies.php et profil
 

@@ -1,6 +1,6 @@
 // The « Graphique » column of the alliances' ranking and the colour of each curve — see docs/features/statistiques-alliance.md.
 import { sameTag } from "@/game/diplomacy";
-import type { AlliancesRankingTable } from "@/game/pages/alliances-ranking";
+import { readAlliancesRanking, type AlliancesRankingTable } from "@/game/pages/alliances-ranking";
 import { CHART_COLORS } from "@/theme";
 
 /** One colour each, never twice on the chart: mine and up to seven others. */
@@ -37,6 +37,21 @@ export function addCurveColumn(ranking: AlliancesRankingTable): CurveCell[] {
     row.append(cell);
     return { tag, cell };
   });
+}
+
+/**
+ * Adds the column again each time the game draws the table anew (criterion, page, league, a click on a title) and
+ * hands the new cells over. Returns what stops following.
+ */
+export function followRanking(zone: HTMLElement, onCells: (cells: CurveCell[]) => void): () => void {
+  const observer = new MutationObserver(() => {
+    const ranking = readAlliancesRanking(zone.ownerDocument);
+    if (!ranking) return;
+    const cells = addCurveColumn(ranking);
+    if (cells.length > 0) onCells(cells);
+  });
+  observer.observe(zone, { childList: true });
+  return () => observer.disconnect();
 }
 
 /**
