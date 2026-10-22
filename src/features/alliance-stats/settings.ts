@@ -10,9 +10,17 @@ export interface AllianceStatsSettings {
   metric: AllianceMetric;
   /** Per member rather than in total. */
   average: boolean;
+  /** The colour of each compared alliance on the charts, by tag: kept while others come and go. */
+  colors: Record<string, string>;
 }
 
-export const DEFAULT_SETTINGS: AllianceStatsSettings = { compared: [], days: 14, metric: "field", average: false };
+export const DEFAULT_SETTINGS: AllianceStatsSettings = {
+  compared: [],
+  days: 14,
+  metric: "field",
+  average: false,
+  colors: {},
+};
 
 const key = (host: string) => `local:alliance-stats:${host}:settings` as const;
 

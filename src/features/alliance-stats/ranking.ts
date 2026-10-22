@@ -1,5 +1,4 @@
-// The « Graphique » column of the alliances' ranking and the colour of each curve — see docs/features/statistiques-alliance.md.
-import { sameTag } from "@/game/diplomacy";
+// The « Graphique » column of the alliances' ranking — see docs/features/statistiques-alliance.md.
 import { readAlliancesRanking, type AlliancesRankingTable } from "@/game/pages/alliances-ranking";
 import { CHART_COLORS } from "@/theme";
 
@@ -52,33 +51,4 @@ export function followRanking(zone: HTMLElement, onCells: (cells: CurveCell[]) =
   });
   observer.observe(zone, { childList: true });
   return () => observer.disconnect();
-}
-
-/**
- * A colour for each tag, the one it had before when it still can: an alliance keeps its colour while others come
- * and go. The new ones take the first colour left, in the palette's order.
- */
-export function assignColors(
-  tags: readonly string[],
-  previous: ReadonlyMap<string, string>,
-  palette: readonly string[] = CHART_COLORS.series,
-): Map<string, string> {
-  const colors = new Map<string, string>();
-  const used = new Set<string>();
-  const before = (tag: string) => [...previous].find(([other]) => sameTag(other, tag))?.[1];
-  for (const tag of tags) {
-    const color = before(tag);
-    if (color && !used.has(color)) {
-      colors.set(tag, color);
-      used.add(color);
-    }
-  }
-  for (const tag of tags) {
-    if (colors.has(tag)) continue;
-    const color = palette.find((candidate) => !used.has(candidate)) ?? palette[colors.size % palette.length];
-    if (!color) continue;
-    colors.set(tag, color);
-    used.add(color);
-  }
-  return colors;
 }

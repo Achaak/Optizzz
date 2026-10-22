@@ -13,6 +13,7 @@ import { dayMonth } from "@/utils/time-format";
 import { formatDecimal } from "@/utils/number-format";
 import { Amount } from "@/utils/Amount";
 import { useStoredSettings } from "@/utils/useStoredSettings";
+import { useAllianceColors } from "./colors";
 import { AverageToggle, formatRankChange, formatValue } from "./common";
 import { ViewSwitch } from "@/utils/history-chart/ViewSwitch";
 import { ALLIANCE_METRICS, metricLabel } from "./metrics";
@@ -134,14 +135,16 @@ export function AllianceStats({
     [snapshots, metric, average, myTag, live],
   );
 
+  const colors = useAllianceColors(myTag, compared, settings, updateSettings);
   const curves = useMemo<Curve[]>(
     () =>
       [...(myTag ? [myTag] : []), ...compared].map((tag) => ({
         name: tag,
         points: seriesOf(tag),
         highlight: myTag !== null && sameTag(tag, myTag),
+        color: colors.get(tag),
       })),
-    [myTag, compared, seriesOf],
+    [myTag, compared, seriesOf, colors],
   );
 
   const rows = useMemo<Row[]>(() => {

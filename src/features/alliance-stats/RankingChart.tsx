@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { createPortal } from "react-dom";
 import { sameTag } from "@/game/diplomacy";
 import type { Curve } from "@/utils/history-chart/chart-option";
@@ -8,7 +8,8 @@ import { useStoredSettings } from "@/utils/useStoredSettings";
 import { AverageToggle } from "./common";
 import { STATS_LINK } from "./menu";
 import { ALLIANCE_METRICS } from "./metrics";
-import { assignColors, MAX_SHOWN, type CurveCell } from "./ranking";
+import { useAllianceColors } from "./colors";
+import { MAX_SHOWN, type CurveCell } from "./ranking";
 import { allianceSeries, type AllianceMetric } from "./series";
 import { readAllianceStatsSettings, writeAllianceStatsSettings } from "./settings";
 import { useAllianceHistory } from "./useAllianceHistory";
@@ -22,9 +23,6 @@ interface Props {
   /** Whether the « Statistiques » view is on, for its link. */
   statsView: boolean;
 }
-
-const sameColors = (a: ReadonlyMap<string, string>, b: ReadonlyMap<string, string>) =>
-  a.size === b.size && [...a].every(([tag, color]) => b.get(tag) === color);
 
 /**
  * « Comparer les alliances », over the alliances' ranking: the curves of the alliances ticked in its « Graphique »
@@ -43,11 +41,7 @@ export function RankingChart({ origin, myTag, cells, statsView }: Props) {
   );
   const shown = useMemo(() => [...(myTag ? [myTag] : []), ...compared], [myTag, compared]);
 
-  // Kept from one render to the next: an alliance does not change colour when another is ticked or unticked.
-  // Set during the render, React draws again at once with the new colours.
-  const [colors, setColors] = useState<ReadonlyMap<string, string>>(new Map());
-  const nextColors = assignColors(shown, colors);
-  if (!sameColors(nextColors, colors)) setColors(nextColors);
+  const colors = useAllianceColors(myTag, compared, settings, updateSettings);
 
   const curves = useMemo<Curve[]>(
     () =>
