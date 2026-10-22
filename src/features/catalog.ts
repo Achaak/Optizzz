@@ -212,10 +212,11 @@ export const featureCatalog = [
     id: "alliance-stats",
     label: "Statistiques d'alliance",
     description:
-      "Entrée « Statistiques » dans le menu d'alliance : les totaux de l'alliance maintenant et dans le temps, comparés à d'autres alliances.",
+      "Entrée « Statistiques » dans le menu d'alliance : les totaux de l'alliance maintenant et dans le temps, comparés à d'autres alliances, aussi depuis le classement des alliances.",
     options: [
       { id: "alliance", label: "Entrée « Statistiques » dans le menu d'alliance (l'alliance entière)" },
       { id: "page", label: "Encart « Progression » sur les pages d'alliance" },
+      { id: "ranking", label: "Graphique « Comparer les alliances » sur le classement des alliances" },
     ],
   },
   {

@@ -74,3 +74,29 @@ details.detail > summary {
   border-radius: 50%;
   cursor: help;
 }
+
+/* « Comparer les alliances », over the alliances' ranking: the chips are the chart's legend. */
+.ranking-chart .empty {
+  padding: var(--optizzz-space-6) 0;
+  text-align: center;
+}
+
+.curve-legend {
+  justify-content: center;
+}
+
+.curve-legend .swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.curve-legend a.mine {
+  font-weight: bold;
+}
+
+.curve-legend li:not(.optizzz-chip) {
+  display: inline-flex;
+  align-items: center;
+}

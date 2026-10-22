@@ -23,3 +23,23 @@ describe("history chart tooltip", () => {
     expect(html).toContain("<b>1 234</b>");
   });
 });
+
+describe("history chart colours", () => {
+  it("keeps a curve's own colour", () => {
+    const option = buildHistoryOption(
+      [
+        { name: "A", points: [], color: "#123456" },
+        { name: "B", points: [] },
+      ],
+      false,
+    );
+    const series = option.series as { color?: string }[];
+    expect(series[0]?.color).toBe("#123456");
+    expect(series[1]?.color).toBeUndefined();
+  });
+
+  it("drops ECharts' legend when asked", () => {
+    expect(buildHistoryOption([], false, false).legend).toBeUndefined();
+    expect(buildHistoryOption([], false).legend).toBeDefined();
+  });
+});

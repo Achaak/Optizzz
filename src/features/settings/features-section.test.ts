@@ -71,6 +71,7 @@ describe("buildFeaturesSection", () => {
       "alliance-stats",
       "alliance-stats.alliance",
       "alliance-stats.page",
+      "alliance-stats.ranking",
       "alliance-sharing",
       "hunt-launcher",
       "safe-reload",

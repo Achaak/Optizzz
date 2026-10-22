@@ -12,10 +12,12 @@ echarts.use([LineChart, GridComponent, LegendComponent, TooltipComponent, Canvas
 interface Props {
   curves: Curve[];
   compact?: boolean;
+  /** ECharts' legend; by default on the full-size chart only. */
+  legend?: boolean;
 }
 
-export function HistoryChart({ curves, compact = false }: Props) {
-  const option = useMemo(() => buildHistoryOption(curves, compact), [curves, compact]);
+export function HistoryChart({ curves, compact = false, legend = !compact }: Props) {
+  const option = useMemo(() => buildHistoryOption(curves, compact, legend), [curves, compact, legend]);
   return (
     <ReactECharts echarts={echarts} option={option} notMerge style={{ height: compact ? 220 : 380, width: "100%" }} />
   );

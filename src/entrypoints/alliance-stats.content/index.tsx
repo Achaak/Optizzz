@@ -1,14 +1,18 @@
-// Separate script: the statistics bundle React + ECharts, so they only load on alliance.php and the alliances' pages.
+// Separate script: the statistics bundle React + ECharts, so they only load on alliance.php, the alliances' pages
+// and their ranking.
 import { createRoot, type Root } from "react-dom/client";
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
 import { AllianceBox } from "@/features/alliance-stats/AllianceBox";
 import { AllianceStats } from "@/features/alliance-stats/AllianceStats";
 import { STATS_HASH } from "@/features/alliance-stats/menu";
+import { addCurveColumn, RANKING_COLUMN_STYLE } from "@/features/alliance-stats/ranking";
+import { RankingChart } from "@/features/alliance-stats/RankingChart";
 import type { Scores } from "@/features/history/api";
 import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles, type Toggles } from "@/features/toggles";
 import { readAllianceTag, readLoggedInPseudo } from "@/game/pages/alliance";
 import { findAllianceRankingTable, readAllianceRanking, type AllianceRanking } from "@/game/pages/alliance-ranking";
+import { readAlliancesRanking } from "@/game/pages/alliances-ranking";
 import { readStock } from "@/game/pages/resources";
 import { readMembersScores } from "@/game/pages/scores";
 import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
@@ -132,6 +136,32 @@ async function mountAllianceBox(ctx: ContentScriptContext, statsView: boolean) {
   ui.mount();
 }
 
+/** « Comparer les alliances » over the alliances' ranking, and its « Graphique » column in the game's table. */
+async function mountRankingChart(ctx: ContentScriptContext, statsView: boolean) {
+  const ranking = readAlliancesRanking(document);
+  if (!ranking) return;
+  const style = document.createElement("style");
+  style.textContent = RANKING_COLUMN_STYLE;
+  document.head.append(style);
+  const cells = addCurveColumn(ranking);
+
+  const ui = await createShadowRootUi<Root>(ctx, {
+    name: "optizzz-ranking-chart",
+    position: "inline",
+    anchor: ranking.table,
+    append: "before",
+    onMount(container) {
+      const root = createRoot(container);
+      root.render(
+        <RankingChart origin={location.origin} myTag={readAllianceTag(document)} cells={cells} statsView={statsView} />,
+      );
+      return root;
+    },
+    onRemove: (root) => root?.unmount(),
+  });
+  ui.mount();
+}
+
 export default defineContentScript({
   matches: ["*://*.fourmizzz.fr/alliance.php*", "*://*.fourmizzz.fr/classementAlliance.php*"],
   cssInjectionMode: "ui",
@@ -141,8 +171,10 @@ export default defineContentScript({
     const statsView = isEnabled(toggles, "alliance-stats", "alliance");
     if (location.pathname === "/alliance.php") {
       if (statsView) await mountStatsView(ctx, toggles);
-    } else if (isEnabled(toggles, "alliance-stats", "page")) {
-      await mountAllianceBox(ctx, statsView);
+    } else if (new URLSearchParams(location.search).has("alliance")) {
+      if (isEnabled(toggles, "alliance-stats", "page")) await mountAllianceBox(ctx, statsView);
+    } else if (isEnabled(toggles, "alliance-stats", "ranking")) {
+      await mountRankingChart(ctx, statsView);
     }
   },
 });

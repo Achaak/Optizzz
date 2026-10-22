@@ -19,6 +19,8 @@ export interface Curve {
   /** Drawn thicker: me, or the profile's player. */
   highlight?: boolean;
   dashed?: boolean;
+  /** Its own colour, kept while other curves come and go; else the palette's, in order. */
+  color?: string;
 }
 
 const day = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "Europe/Paris" });
@@ -29,12 +31,13 @@ interface TooltipParam {
   data: { value: [number, number]; live: boolean };
 }
 
-export function buildHistoryOption(curves: readonly Curve[], compact: boolean): EChartsCoreOption {
+/** `legend`: drawn by ECharts; off when the view lists the curves itself. */
+export function buildHistoryOption(curves: readonly Curve[], compact: boolean, legend = !compact): EChartsCoreOption {
   return {
     animation: false,
     color: [...CHART_COLORS.series],
-    grid: { left: 8, right: 16, top: compact ? 12 : 36, bottom: 8, containLabel: true },
-    legend: compact ? undefined : { type: "scroll", top: 0 },
+    grid: { left: 8, right: 16, top: legend ? 36 : 12, bottom: 8, containLabel: true },
+    legend: legend ? { type: "scroll", top: 0 } : undefined,
     tooltip: {
       trigger: "item",
       formatter: (param: TooltipParam) =>
@@ -46,6 +49,7 @@ export function buildHistoryOption(curves: readonly Curve[], compact: boolean): 
     series: curves.map((curve) => ({
       type: "line",
       name: curve.name,
+      ...(curve.color && { color: curve.color }),
       showSymbol: true,
       symbol: "circle",
       symbolSize: curve.highlight ? 7 : 5,

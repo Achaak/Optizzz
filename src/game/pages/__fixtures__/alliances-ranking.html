@@ -1,0 +1,57 @@
+<div id="centre">
+  <center>
+    <form method="get" action="classementAlliance.php">
+      Classer par
+      <select name="critere">
+        <option value="terrain" selected>Terrain</option>
+        <option value="technologie">Technologie</option>
+        <option value="fourmiliere">Fourmilière</option>
+        <option value="membres">Nombre de membres</option>
+      </select>
+    </form>
+    <p>Votre alliance est classée 2ième en Terrain</p>
+    <table class="simulateur tab_triable">
+      <tr>
+        <th>PLACE</th>
+        <th>TAG</th>
+        <th>NOM</th>
+        <th>TERRAIN</th>
+        <th>TECHNOLOGIE</th>
+        <th>FOURMILIERE</th>
+        <th>MEMBRES</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td><a href="classementAlliance.php?alliance=V">V</a></td>
+        <td>Victory</td>
+        <td>2 167 103</td>
+        <td>4 757</td>
+        <td>9 793</td>
+        <td>137</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><a href="classementAlliance.php?alliance=MOI">MOI</a></td>
+        <td>Mon alliance</td>
+        <td>1 204 551</td>
+        <td>3 120</td>
+        <td>6 018</td>
+        <td>58</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><a href="classementAlliance.php?alliance=L%26R">L&amp;R</a></td>
+        <td>Lions et Rats</td>
+        <td>980 003</td>
+        <td>2 870</td>
+        <td>5 400</td>
+        <td>41</td>
+      </tr>
+    </table>
+    <p>
+      <a href="classementAlliance.php?page=1">1</a>
+      <a href="classementAlliance.php?page=2">2</a>
+      <a href="classementAlliance.php?page=3">3</a>
+    </p>
+  </center>
+</div>

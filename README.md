@@ -62,7 +62,7 @@ Une fois installée, ouvrez une page du jeu : les outils apparaissent d'eux-mêm
 - **Colonnes de la page Membres** : le trajet vers chaque membre et son rôle dans la chaîne de TDC, triables.
 - **Chaîne de TDC** : qui peut prendre à qui, les rôles et l'ordre des floods pour faire monter le TDC.
 - **Historique de progression** : les courbes du TDC et des scores dans le temps, pour vous, votre alliance et sur chaque profil.
-- **Statistiques d'alliance** : les totaux de l'alliance maintenant et dans le temps, comparés à d'autres alliances.
+- **Statistiques d'alliance** : les totaux de l'alliance maintenant et dans le temps, comparés à d'autres alliances, aussi en cochant des alliances sur le classement des alliances.
 - **Suivis** : ce qui a changé chez les joueurs et alliances que vous suivez (alliance, TDC, guerres, pactes) depuis votre dernière visite.
 - **Partage d'alliance** : copiez votre état pour le coller sur le Discord de l'alliance, et lisez celui des autres membres.
 
