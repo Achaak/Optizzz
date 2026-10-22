@@ -1,12 +1,12 @@
 # Chasse : mécaniques et validation
 
-Ce qu'on sait du déroulement d'une chasse, d'où on le tient, et ce que les rapports réels confirment. Le moteur (`src/game/army/` pour les unités, proies et combat ; `src/features/hunt-launcher/engine/` pour le reste) suit ce document.
+Ce qu'on sait du déroulement d'une chasse, d'où on le tient, et ce que les rapports réels confirment. Le moteur (`packages/game/src/army/` pour les unités, proies et combat ; `apps/extension/src/features/hunt-launcher/engine/` pour le reste) suit ce document.
 
 Sources :
 
 - **Calystene**, simulateur de chasse v2.00.38 (userscript, 2014-2024, aucune licence) : <http://alliancead2.free.fr/Outils/Repository/HuntSimv2.00/Simulator_2.00.00.html>. On lui doit la formule de difficulté et les **tables de pertes** par ratio (statistiques sur plus de 1 500 chasses simulées par ratio), reprises en citant la source.
 - **Chasse à zéro perte** (<https://fourmizzz-zero-perte.pages.dev/>, auteur inconnu, aucune licence) : reconstruction du simulateur officiel à partir d'environ 30 000 relevés sur le serveur de test (tirage des proies, combat, promotions). Les règles sont réécrites ici, pas le code.
-- **Rapports réels** : 35 combats de chasse sur s5, du 05/10/26 au 07/10/26 (JSN + SN), relevés dans la messagerie. Fixture : `src/game/army/__fixtures__/hunt-reports.ts`.
+- **Rapports réels** : 35 combats de chasse sur s5, du 05/10/26 au 07/10/26 (JSN + SN), relevés dans la messagerie. Fixture : `packages/game/src/army/__fixtures__/hunt-reports.ts`.
 
 ## Difficulté
 
@@ -58,7 +58,7 @@ Valeur `d` d'une proie = `√(vie × dégâts) / 1,1` arrondie à 0,05 ; nourrit
 - Attaque × (1 + 0,1 × Armes), vie × (1 + 0,1 × Bouclier).
 - **Surpuissance au premier tour** : si notre attaque dépasse la vie totale des proies, leurs dégâts sont multipliés par 0,1 (rapport > 3), 0,3 (> 2), 0,5 (> 1,5).
 - Victoire si toutes les proies sont mortes et qu'il nous reste quelqu'un. En cas de défaite, toute l'armée envoyée est perdue.
-- **Vérifié** (`src/game/army/combat.test.ts`, Armes déduites du bonus affiché : « 6 358 (+ 2 544) » = Armes 4) :
+- **Vérifié** (`packages/game/src/army/combat.test.ts`, Armes déduites du bonus affiché : « 6 358 (+ 2 544) » = Armes 4) :
   - sur les 35 rapports : notre attaque affichée = Σ effectif × attaque, bonus = × 0,1 × Armes **arrondi au supérieur** ; « L'ennemie inflige N » = dégâts bruts des proies × la surpuissance, **arrondis au supérieur** (07/10 11h08 : 43 petites araignées × 13 = 559 → × 0,1 = 55,9 → « 56 ») ;
   - sur les 7 rapports du 07/10 (Bouclier connu) : « en tue N » = **arrondi inférieur** de dégâts / vie d'une JSN avec Bouclier (55,9 / 11,2 = 4,99 → 4) : le rapport ne compte que les unités tombées à 0.
 - **Pertes réelles** (Zéro perte, d'après des joueurs du jeu réel ; non vérifiable dans les rapports) : une unité qui a perdu **plus de la moitié** de sa vie ne rentre pas, même si le rapport dit « 0 tuée ». Le lanceur compte les pertes ainsi (prudent) et affiche aussi le chiffre du rapport.
@@ -86,7 +86,7 @@ Poids : JSN 85, SN 125, NE 170, JS 227, S 312, C 434, CE 592, A 295, AE 349, SE 
 | ----------------- | --- | --- | --- | --- | --- | ---- | ---- | ---- | ---- | ---- | ---- | --- | ---- |
 | Réplique 10 % (%) | 0   | 0   | 0   | 1,6 | 9,3 | 34,5 | 57,8 | 75,3 | 83,7 | 87,4 | 93,7 | 96  | 98,9 |
 
-Coefficients min / moyen / max : `src/features/hunt-launcher/engine/calystene.ts`. Les tables ignorent la composition de l'armée et la règle de la demi-vie ; on les affiche en petit pour voir si les deux modèles divergent.
+Coefficients min / moyen / max : `apps/extension/src/features/hunt-launcher/engine/calystene.ts`. Les tables ignorent la composition de l'armée et la règle de la demi-vie ; on les affiche en petit pour voir si les deux modèles divergent.
 
 ## Ce que ça change pour le joueur
 

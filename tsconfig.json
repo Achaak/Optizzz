@@ -1,9 +1,12 @@
 {
-  "extends": "./.wxt/tsconfig.json",
+  // Root config files only: each app and package has its own tsconfig.json.
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "jsx": "react-jsx"
-  }
+    "skipLibCheck": true
+  },
+  "include": ["*.ts"]
 }

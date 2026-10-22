@@ -39,15 +39,15 @@ Mémoriser une ponte d'armée habituelle (plusieurs unités) et la mettre dans l
 
 ## Code
 
-| Fichier                                              | Rôle                                                                                     |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `src/features/laying-templates/template.ts` (+ test) | Plan d'un modèle : quantités selon la cible, coût, durée, fins, payable, bilan, blocages |
-| `src/features/laying-templates/pages.ts` (+ test)    | File de ponte de `Reine.php` → lignes de modèle                                          |
-| `src/features/laying-templates/launch.ts` (+ test)   | Lancement : jeton neuf, POST, ponte vue dans la file renvoyée, arrêt au premier échec    |
-| `src/features/laying-templates/storage.ts` (+ test)  | Modèles et état de l'encart, par serveur ; ce qui est illisible est écarté               |
-| `src/features/laying-templates/LayingTemplates.tsx`  | L'encart (liste, éditeur, aperçu, état du lancement)                                     |
-| `src/entrypoints/laying-templates.content/index.tsx` | Script dédié à `Reine.php` (React), monté avant le tableau des unités                    |
+| Fichier                                                             | Rôle                                                                                     |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `apps/extension/src/features/laying-templates/template.ts` (+ test) | Plan d'un modèle : quantités selon la cible, coût, durée, fins, payable, bilan, blocages |
+| `apps/extension/src/features/laying-templates/pages.ts` (+ test)    | File de ponte de `Reine.php` → lignes de modèle                                          |
+| `apps/extension/src/features/laying-templates/launch.ts` (+ test)   | Lancement : jeton neuf, POST, ponte vue dans la file renvoyée, arrêt au premier échec    |
+| `apps/extension/src/features/laying-templates/storage.ts` (+ test)  | Modèles et état de l'encart, par serveur ; ce qui est illisible est écarté               |
+| `apps/extension/src/features/laying-templates/LayingTemplates.tsx`  | L'encart (liste, éditeur, aperçu, état du lancement)                                     |
+| `apps/extension/src/entrypoints/laying-templates.content/index.tsx` | Script dédié à `Reine.php` (React), monté avant le tableau des unités                    |
 
 - Succès d'une ponte : la page renvoyée par le POST a une nouvelle dernière ligne de cette unité dans « Pontes en cours » (ou une dernière ligne de cette unité qui a grandi, au cas où le jeu fusionnerait, ce qu'il n'a pas fait sur S2).
-- Coût et durée d'une unité : `ncaste` / `tcaste` (`src/game/army/units.ts`, ouvrière : 5 de nourriture, 60 s) × la vitesse lue dans le script de la page.
+- Coût et durée d'une unité : `ncaste` / `tcaste` (`packages/game/src/army/units.ts`, ouvrière : 5 de nourriture, 60 s) × la vitesse lue dans le script de la page.
 - Tests vitest aux quatre interfaces ci-dessus (fixture `__fixtures__/reine.html`, fetch simulé, fakeBrowser). L'encart se vérifie dans le jeu (vérifié le 2026-10-18 sur S5, et lancé sur S2 : 100 JSN en Loge).

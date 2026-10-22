@@ -17,8 +17,8 @@ Un point d'entrée unique pour l'extension, accessible depuis la barre d'outils 
 
 ## Fichiers
 
-- `src/features/settings/menu-button.ts` (+ test) : la roue dans la barre du jeu.
-- `src/features/settings/dialog.ts` (+ test) : la fenêtre et ses onglets ; `panel.ts` : son montage dans la page.
-- `src/features/settings/about-section.ts` : l'onglet « À propos » ; `features-section.ts` (+ test) : l'onglet « Fonctionnalités » ; `notifications-section.ts` (+ test) : l'onglet « Notifications » ; `tools-section.ts` : l'onglet « Outils ».
-- `src/features/settings/links.ts` (+ test) : URL des issues ; `.github/ISSUE_TEMPLATE/` : les formulaires.
-- `src/entrypoints/popup/` : la popup de l'icône.
+- `apps/extension/src/features/settings/menu-button.ts` (+ test) : la roue dans la barre du jeu.
+- `apps/extension/src/features/settings/dialog.ts` (+ test) : la fenêtre et ses onglets ; `panel.ts` : son montage dans la page.
+- `apps/extension/src/features/settings/about-section.ts` : l'onglet « À propos » ; `features-section.ts` (+ test) : l'onglet « Fonctionnalités » ; `notifications-section.ts` (+ test) : l'onglet « Notifications » ; `tools-section.ts` : l'onglet « Outils ».
+- `apps/extension/src/features/settings/links.ts` (+ test) : URL des issues ; `.github/ISSUE_TEMPLATE/` : les formulaires.
+- `apps/extension/src/entrypoints/popup/` : la popup de l'icône.

@@ -16,7 +16,7 @@ Les variables de thème de l'[ADR 0002](0002-theme-et-briques-partagees.md) avai
 
 ## Décision
 
-- `src/theme/theme.css` porte, en plus des couleurs, une échelle de texte (11 à 18 px), d'espacements (2 à 16 px) et d'arrondis, puis des composants globaux préfixés `optizzz-` (panneau, titres, note, message, tableau, choix segmenté, pastilles, chiffres clés, dépliable, barre…), décrits dans `docs/design-system.md`.
+- `apps/extension/src/theme/theme.css` porte, en plus des couleurs, une échelle de texte (11 à 18 px), d'espacements (2 à 16 px) et d'arrondis, puis des composants globaux préfixés `optizzz-` (panneau, titres, note, message, tableau, choix segmenté, pastilles, chiffres clés, dépliable, barre…), décrits dans `docs/design-system.md`.
 - Les composants ne sont pas dans une `@layer`, pour ne pas perdre contre les règles du jeu ; la règle d'une feature, chargée après, garde la main à égalité.
 - Les encarts posés dans la page et les vues React utilisent les mêmes classes. Une feature n'écrit plus que ce qui lui est propre.
 - Le texte grisé passe à `#5a4c2e` (5:1) ; les états ont une couleur de texte foncée (`--optizzz-*-text`, au moins 4,5:1).

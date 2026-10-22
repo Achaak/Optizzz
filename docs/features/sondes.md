@@ -29,12 +29,12 @@ Le POST du formulaire de déplacement marche (2026-10-21, chez un joueur : deux 
 
 ## Code
 
-| Fichier                                       | Rôle                                                                                                                                                 |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/game/probes.ts` (+ test)                 | Lieux sans anti-sonde, déplacements à faire (anti-sondes, `storeMoves`), fourmis à garder lors d'un envoi                                            |
-| `src/data/probes.ts` (+ test)                 | Formulaire « Déplacer son armée », placement des anti-sondes, `storeArmy`, marque, anti-sondes voulues par serveur (et reprise des anciens réglages) |
-| `src/data/garrison.ts` (+ test)               | Garnison d'`Armee.php` (ancien et nouveau balisage)                                                                                                  |
-| `src/features/probes/index.ts` (+ test)       | La feature, `loadProbePlan` pour le Lanceur de chasse et le Plan de flood                                                                            |
-| `src/features/probes/mount.ts` (+ test)       | L'encart sur Armée : état, bouton, réglage                                                                                                           |
-| `src/features/hunt-launcher/HuntLauncher.tsx` | Anti-sondes gardées et replacées après le lancement                                                                                                  |
-| `src/features/flood/mount.ts` (+ test)        | Anti-sondes gardées dans le plan                                                                                                                     |
+| Fichier                                                      | Rôle                                                                                                                                                 |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/game/src/probes.ts` (+ test)                       | Lieux sans anti-sonde, déplacements à faire (anti-sondes, `storeMoves`), fourmis à garder lors d'un envoi                                            |
+| `apps/extension/src/data/probes.ts` (+ test)                 | Formulaire « Déplacer son armée », placement des anti-sondes, `storeArmy`, marque, anti-sondes voulues par serveur (et reprise des anciens réglages) |
+| `apps/extension/src/data/garrison.ts` (+ test)               | Garnison d'`Armee.php` (ancien et nouveau balisage)                                                                                                  |
+| `apps/extension/src/features/probes/index.ts` (+ test)       | La feature, `loadProbePlan` pour le Lanceur de chasse et le Plan de flood                                                                            |
+| `apps/extension/src/features/probes/mount.ts` (+ test)       | L'encart sur Armée : état, bouton, réglage                                                                                                           |
+| `apps/extension/src/features/hunt-launcher/HuntLauncher.tsx` | Anti-sondes gardées et replacées après le lancement                                                                                                  |
+| `apps/extension/src/features/flood/mount.ts` (+ test)        | Anti-sondes gardées dans le plan                                                                                                                     |

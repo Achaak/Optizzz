@@ -7,8 +7,8 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- src/data/launches.ts src/data/launches.test.ts src/features/alliance-sharing/share-text.ts src/features/alliance-sharing/share-text.test.ts`
-> `src/data/launches.ts` and its test are expected to have changed if plan 005 landed (`recordLaunches`,
+> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- apps/extension/src/data/launches.ts apps/extension/src/data/launches.test.ts apps/extension/src/features/alliance-sharing/share-text.ts apps/extension/src/features/alliance-sharing/share-text.test.ts`
+> `apps/extension/src/data/launches.ts` and its test are expected to have changed if plan 005 landed (`recordLaunches`,
 > `flushQueuedLaunches` order). Any other mismatch with "Current state" is a STOP condition.
 
 ## Status
@@ -16,7 +16,7 @@
 - **Priority**: P2
 - **Effort**: S
 - **Risk**: LOW
-- **Depends on**: plans/005-keep-flood-launches.md (same file `src/data/launches.ts`)
+- **Depends on**: plans/005-keep-flood-launches.md (same file `apps/extension/src/data/launches.ts`)
 - **Category**: security
 - **Planned at**: commit `9361968`, 2026-10-16
 
@@ -40,7 +40,7 @@ are dropped (and named to the player for shares), and sizes are capped.
 
 ## Current state
 
-- `src/data/launches.ts:47-57`:
+- `apps/extension/src/data/launches.ts:47-57`:
 
   ```ts
   // The game leaves the page as soon as the form is sent: an asynchronous write could be lost. The launch is first
@@ -60,38 +60,38 @@ are dropped (and named to the player for shares), and sizes are capped.
   (lines 6–17). `launches.ts` is loaded on **every** game page (the flood feature runs everywhere), so do **not**
   add `zod` here (a separate effort is trying to keep zod out of the every-page bundle): write a small type guard.
 
-- `src/features/alliance-sharing/share-text.ts:9-34` — zod `payloadSchema` (`s`, `a`, `p` strings; `t` int minutes
+- `apps/extension/src/features/alliance-sharing/share-text.ts:9-34` — zod `payloadSchema` (`s`, `a`, `p` strings; `t` int minutes
   since 1970; optional `f`, `w`, `b`, `r` level arrays, `c` works `[index|name, level, endsAtMinutes]`, `m` army
   `{ n, u?, i, r? }`). `fromMinutes(minutes)` → `Date`. `MAX_LENGTH = 2000` (one Discord message, used when
   _writing_). `parseShares(text, context)` (lines 210–235) decodes each `[optizzz:v1:…]` data line and pushes a
   reason to `ignored` for skipped ones, in French, e.g. `` `${state.pseudo} : autre serveur (${state.server})` ``.
   `ShareContext` = `{ server; alliance; members }` (lines 191–196). Only caller:
-  `src/features/alliance-sharing/AllianceSharing.tsx:137`.
+  `apps/extension/src/features/alliance-sharing/AllianceSharing.tsx:137`.
 - `BUILDINGS`, `RESEARCH` (`@/game/levels`), `UNITS` (`@/game/army/units`) are the arrays the level/unit arrays index.
-- Tests: `src/data/launches.test.ts` (`describe("queued launches")`, `sessionStorage.clear()` in `beforeEach`);
-  `src/features/alliance-sharing/share-text.test.ts` (`state` fixture dated `2026-10-09T11:36:00Z`,
+- Tests: `apps/extension/src/data/launches.test.ts` (`describe("queued launches")`, `sessionStorage.clear()` in `beforeEach`);
+  `apps/extension/src/features/alliance-sharing/share-text.test.ts` (`state` fixture dated `2026-10-09T11:36:00Z`,
   `context = { server: "s5", alliance: "ABC", members: ["Éloïse", "Bob"] }`, round-trip via `formatShare` then
   `parseShares`; "reports a damaged data line" at ~line 132 is the pattern for rejections).
 - Player-facing text is French and addresses the player as « vous ».
 
 ## Commands you will need
 
-| Purpose   | Command                                                                   | Expected on success |
-| --------- | ------------------------------------------------------------------------- | ------------------- |
-| Typecheck | `pnpm typecheck`                                                          | exit 0              |
-| Tests     | `pnpm vitest run src/data/launches.test.ts src/features/alliance-sharing` | all pass            |
-| All tests | `pnpm vitest run`                                                         | all pass            |
-| Lint      | `pnpm lint`                                                               | 0 errors            |
+| Purpose   | Command                                                                                                 | Expected on success |
+| --------- | ------------------------------------------------------------------------------------------------------- | ------------------- |
+| Typecheck | `pnpm typecheck`                                                                                        | exit 0              |
+| Tests     | `pnpm vitest run apps/extension/src/data/launches.test.ts apps/extension/src/features/alliance-sharing` | all pass            |
+| All tests | `pnpm vitest run`                                                                                       | all pass            |
+| Lint      | `pnpm lint`                                                                                             | 0 errors            |
 
 ## Scope
 
-**In scope**: `src/data/launches.ts`, `src/data/launches.test.ts`, `src/features/alliance-sharing/share-text.ts`,
-`src/features/alliance-sharing/share-text.test.ts`.
+**In scope**: `apps/extension/src/data/launches.ts`, `apps/extension/src/data/launches.test.ts`, `apps/extension/src/features/alliance-sharing/share-text.ts`,
+`apps/extension/src/features/alliance-sharing/share-text.test.ts`.
 
 **Out of scope**:
 
 - The share format version (`v1`) and what it carries; writing (`formatShare`) stays unchanged.
-- `importStates` merge rules in `src/data/shared-states.ts`.
+- `importStates` merge rules in `apps/extension/src/data/shared-states.ts`.
 - `AllianceSharing.tsx` (the `now` defaults inside `parseShares`; no caller change needed).
 
 ## Git workflow
@@ -139,7 +139,7 @@ const isStoredLaunch = (value: unknown, now: number): value is StoredLaunch => {
 (Prettier will reformat; write it however the linter accepts. Avoid `as` casts beyond the one for indexing if
 `typescript-eslint` complains — use `"targetId" in value` checks instead.)
 
-**Verify**: `pnpm vitest run src/data/launches.test.ts` → all pass, 4 new.
+**Verify**: `pnpm vitest run apps/extension/src/data/launches.test.ts` → all pass, 4 new.
 
 ### Step 2: Bound the share payload (test first)
 
@@ -165,7 +165,7 @@ Implementation:
   `else if (state.readAt.getTime() > now.getTime() + 5 * MINUTE) ignored.push(`${member} : date dans le futur`);`
   (`member` is the members-page spelling of the pseudo at that point).
 
-**Verify**: `pnpm vitest run src/features/alliance-sharing` → all pass, including the existing "fits in one Discord
+**Verify**: `pnpm vitest run apps/extension/src/features/alliance-sharing` → all pass, including the existing "fits in one Discord
 message" and round-trip tests.
 
 ### Step 3: Full gate
@@ -178,8 +178,8 @@ message" and round-trip tests.
 
 ## Done criteria
 
-- [ ] `grep -n "as StoredLaunch\[\]" src/data/launches.ts` returns nothing
-- [ ] `grep -n "date dans le futur" src/features/alliance-sharing/share-text.ts` returns one line
+- [ ] `grep -n "as StoredLaunch\[\]" apps/extension/src/data/launches.ts` returns nothing
+- [ ] `grep -n "date dans le futur" apps/extension/src/features/alliance-sharing/share-text.ts` returns one line
 - [ ] `pnpm typecheck`, `pnpm lint`, `pnpm vitest run`, `pnpm knip` exit 0
 - [ ] Only in-scope files modified
 - [ ] `plans/README.md` status row updated

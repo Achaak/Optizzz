@@ -57,11 +57,11 @@ Ajouté le 2026-10-22, à la demande d'un joueur : comparer des alliances depuis
 - **Au-dessus du cadre du classement** (recherche, menus et tableau du jeu), un panneau « Comparer les alliances » : mêmes onglets (TDC, Production, Fourmilière, Technologie, Combat = trophées, Membres), bascule **Total / Moyenne par membre** et période que la vue.
 - **Colonne « Graphique »** ajoutée **à la fin** des lignes du tableau du jeu (une colonne en tête décalerait le tri du jeu) : une case par alliance. Cocher l'ajoute au graphique, décocher l'en retire. Une case cochée montre la couleur de sa courbe.
 - **Les alliances cochées sont les alliances comparées** de la vue Statistiques (même réglage) : cocher ici les retrouve là-bas, et inversement. Mon alliance est toujours affichée (case cochée, grisée), en gras, en rouge comme le premier joueur des autres graphiques.
-- **8 alliances au plus**, la mienne comprise : une couleur chacune, jamais deux fois la même (palette `CHART_COLORS.series`, vérifiée pour les daltoniens). Au-delà, les cases non cochées sont grisées avec la raison en infobulle. Une alliance garde sa couleur quand une autre arrive ou part : la couleur de chaque alliance comparée est mémorisée avec les réglages, la même ici et dans la vue, après rechargement aussi. Le rouge reste à mon alliance ; une nouvelle venue prend la première couleur libre (`src/features/alliance-stats/colors.ts`).
+- **8 alliances au plus**, la mienne comprise : une couleur chacune, jamais deux fois la même (palette `CHART_COLORS.series`, vérifiée pour les daltoniens). Au-delà, les cases non cochées sont grisées avec la raison en infobulle. Une alliance garde sa couleur quand une autre arrive ou part : la couleur de chaque alliance comparée est mémorisée avec les réglages, la même ici et dans la vue, après rechargement aussi. Le rouge reste à mon alliance ; une nouvelle venue prend la première couleur libre (`apps/extension/src/features/alliance-stats/colors.ts`).
 - **Légende en pastilles** sous le graphique (couleur, tag, « (vous) », ✕ pour retirer, « Tout retirer ») : elle sert aussi pour les alliances cochées sur une autre page, une autre league ou un autre type de classement, absentes du tableau affiché. Le nom de l'alliance est dans l'infobulle du tag : une couleur n'est jamais seule à dire de quelle alliance il s'agit.
 - **Pas de point « en direct »** : le classement du jeu est moins frais que la page d'une alliance (`../research/fourmizzz-pages.md`). Les courbes s'arrêtent au dernier export de minuit.
 - Sans alliance et rien de coché : à la place du graphique, « Cochez des alliances dans la colonne « Graphique » du tableau… ».
-- Lecture du tableau par les liens `classementAlliance.php?alliance=TAG` de ses lignes, pas par le numéro de colonne : la table de `#centre` qui en a le plus (`src/game/pages/alliances-ranking.ts`), seulement quand `#type_classement` vaut `alliance_*` (le classement des joueurs, même page, a aussi un lien d'alliance par ligne). Fixture copiée de la vraie page le 2026-10-22 (S5), réduite à trois lignes.
+- Lecture du tableau par les liens `classementAlliance.php?alliance=TAG` de ses lignes, pas par le numéro de colonne : la table de `#centre` qui en a le plus (`packages/game/src/pages/alliances-ranking.ts`), seulement quand `#type_classement` vaut `alliance_*` (le classement des joueurs, même page, a aussi un lien d'alliance par ligne). Fixture copiée de la vraie page le 2026-10-22 (S5), réduite à trois lignes.
 - Le jeu réécrit `#zone_classement` en AJAX (critère, league, type, page, clic sur un en-tête) : un `MutationObserver` remet la colonne à chaque fois (`followRanking`). Le panneau est hors de cette zone.
 
 ### Réglages et interrupteur
@@ -77,18 +77,18 @@ Ajouté le 2026-10-22, à la demande d'un joueur : comparer des alliances depuis
 
 ## Code
 
-| Fichier                                                                                     | Rôle                                                                           |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `src/data/export-history.ts` (+ test)                                                       | Versions d'un jour de Paris, chargement progressif (partagé avec l'Historique) |
-| `src/utils/history-chart/`                                                                  | Graphique, onglets, période, barre de progression, formats (partagés)          |
-| `src/features/alliance-stats/api.ts` (+ test)                                               | Historique de toutes les alliances, cache compact par version                  |
-| `src/features/alliance-stats/production.ts` (+ test)                                        | Production de l'alliance : plafond, réel, taxes hors alliance                  |
-| `src/features/alliance-stats/series.ts` (+ test)                                            | Courbe d'une alliance, rang, suggestions, répartition                          |
-| `src/game/pages/alliance-ranking.ts` (+ test)                                               | Scores et rangs en direct de `classementAlliance.php?alliance=TAG`             |
-| `src/game/pages/alliances-ranking.ts` (+ test)                                              | Lignes du classement des alliances (`classement.php`), tag par ligne           |
-| `src/features/alliance-stats/ranking.ts` (+ test), `RankingChart.tsx`                       | Colonne « Graphique » (remise après l'AJAX), panneau « Comparer »              |
-| `src/features/alliance-stats/colors.ts` (+ test)                                            | Couleur mémorisée de chaque alliance, la même dans la vue et le classement     |
-| `src/features/alliance-stats/settings.ts`                                                   | Réglages mémorisés                                                             |
-| `src/features/alliance-stats/AllianceStats.tsx`, `AllianceBox.tsx`, `useAllianceHistory.ts` | Vues React                                                                     |
-| `src/features/alliance-stats/menu.ts`                                                       | Entrée de menu (script léger, toutes les pages)                                |
-| `src/entrypoints/alliance-stats.content/index.tsx`                                          | Script dédié à `alliance.php`, `classementAlliance.php`, `classement.php`      |
+| Fichier                                                                                                    | Rôle                                                                           |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `apps/extension/src/data/export-history.ts` (+ test)                                                       | Versions d'un jour de Paris, chargement progressif (partagé avec l'Historique) |
+| `apps/extension/src/utils/history-chart/`                                                                  | Graphique, onglets, période, barre de progression, formats (partagés)          |
+| `apps/extension/src/features/alliance-stats/api.ts` (+ test)                                               | Historique de toutes les alliances, cache compact par version                  |
+| `apps/extension/src/features/alliance-stats/production.ts` (+ test)                                        | Production de l'alliance : plafond, réel, taxes hors alliance                  |
+| `apps/extension/src/features/alliance-stats/series.ts` (+ test)                                            | Courbe d'une alliance, rang, suggestions, répartition                          |
+| `packages/game/src/pages/alliance-ranking.ts` (+ test)                                                     | Scores et rangs en direct de `classementAlliance.php?alliance=TAG`             |
+| `packages/game/src/pages/alliances-ranking.ts` (+ test)                                                    | Lignes du classement des alliances (`classement.php`), tag par ligne           |
+| `apps/extension/src/features/alliance-stats/ranking.ts` (+ test), `RankingChart.tsx`                       | Colonne « Graphique » (remise après l'AJAX), panneau « Comparer »              |
+| `apps/extension/src/features/alliance-stats/colors.ts` (+ test)                                            | Couleur mémorisée de chaque alliance, la même dans la vue et le classement     |
+| `apps/extension/src/features/alliance-stats/settings.ts`                                                   | Réglages mémorisés                                                             |
+| `apps/extension/src/features/alliance-stats/AllianceStats.tsx`, `AllianceBox.tsx`, `useAllianceHistory.ts` | Vues React                                                                     |
+| `apps/extension/src/features/alliance-stats/menu.ts`                                                       | Entrée de menu (script léger, toutes les pages)                                |
+| `apps/extension/src/entrypoints/alliance-stats.content/index.tsx`                                          | Script dédié à `alliance.php`, `classementAlliance.php`, `classement.php`      |

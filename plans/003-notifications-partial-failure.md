@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- src/features/alerts/background.ts src/features/alerts/notifications.ts src/features/alerts/notifications.test.ts`
+> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- apps/extension/src/features/alerts/background.ts apps/extension/src/features/alerts/notifications.ts apps/extension/src/features/alerts/notifications.test.ts`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
@@ -33,7 +33,7 @@ as soon as it is shown, a failing one is logged and skipped, and the list is alw
 
 ## Current state
 
-- `src/features/alerts/background.ts:31-56` — `sendNotifications`:
+- `apps/extension/src/features/alerts/background.ts:31-56` — `sendNotifications`:
 
   ```ts
   const stored = (await storage.getItem<SentNotifications>(SENT_KEY)) ?? {};
@@ -56,7 +56,7 @@ as soon as it is shown, a failing one is logged and skipped, and the list is alw
   Errors bubble to `refresh()` (lines 66–78), which only logs `[Optizzz] could not update the alerts`.
   `background.ts` has no test file (it calls `browser.*` APIs directly).
 
-- `src/features/alerts/notifications.ts` — pure logic, tested in `notifications.test.ts`. Relevant types:
+- `apps/extension/src/features/alerts/notifications.ts` — pure logic, tested in `notifications.test.ts`. Relevant types:
 
   ```ts
   export type SentNotifications = Partial<Record<string, { at: number; url: string }>>;
@@ -69,25 +69,25 @@ as soon as it is shown, a failing one is logged and skipped, and the list is alw
   ```
 
 - Conventions: English code/comments, console messages prefixed `[Optizzz]` and written as
-  `console.warn("[Optizzz] could not …", error)` (see `src/data/launches.ts` `queueLaunch`). Tests: vitest,
+  `console.warn("[Optizzz] could not …", error)` (see `apps/extension/src/data/launches.ts` `queueLaunch`). Tests: vitest,
   `describe`/`it`/`expect`; `vi.fn()` is available from `vitest`.
 
 ## Commands you will need
 
-| Purpose   | Command                               | Expected on success |
-| --------- | ------------------------------------- | ------------------- |
-| Typecheck | `pnpm typecheck`                      | exit 0              |
-| Tests     | `pnpm vitest run src/features/alerts` | all pass            |
-| All tests | `pnpm vitest run`                     | all pass            |
-| Lint      | `pnpm lint`                           | 0 errors            |
+| Purpose   | Command                                              | Expected on success |
+| --------- | ---------------------------------------------------- | ------------------- |
+| Typecheck | `pnpm typecheck`                                     | exit 0              |
+| Tests     | `pnpm vitest run apps/extension/src/features/alerts` | all pass            |
+| All tests | `pnpm vitest run`                                    | all pass            |
+| Lint      | `pnpm lint`                                          | 0 errors            |
 
 ## Scope
 
 **In scope**:
 
-- `src/features/alerts/notifications.ts` (add `deliverNotices`)
-- `src/features/alerts/notifications.test.ts` (add tests)
-- `src/features/alerts/background.ts` (use it)
+- `apps/extension/src/features/alerts/notifications.ts` (add `deliverNotices`)
+- `apps/extension/src/features/alerts/notifications.test.ts` (add tests)
+- `apps/extension/src/features/alerts/background.ts` (use it)
 
 **Out of scope**:
 
@@ -138,7 +138,7 @@ export async function deliverNotices(
 }
 ```
 
-**Verify**: `pnpm vitest run src/features/alerts/notifications.test.ts` → all pass (3 new).
+**Verify**: `pnpm vitest run apps/extension/src/features/alerts/notifications.test.ts` → all pass (3 new).
 
 ### Step 2: Use it in `background.ts`
 
@@ -158,7 +158,7 @@ await storage.setItem(SENT_KEY, updated);
 
 Add `deliverNotices` to the existing `import { dueNotifications, type SentNotifications } from "./notifications";`.
 
-**Verify**: `pnpm typecheck` → exit 0; `grep -n "notifications.create" src/features/alerts/background.ts` → one
+**Verify**: `pnpm typecheck` → exit 0; `grep -n "notifications.create" apps/extension/src/features/alerts/background.ts` → one
 line, inside the `deliverNotices` callback.
 
 ### Step 3: Full gate

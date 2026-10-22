@@ -14,12 +14,12 @@ Un mode « moderne » est prévu : il doit pouvoir changer tout le style sans to
 
 ## Décision
 
-- **Thème** : `src/theme/theme.css` définit les variables `--optizzz-*` (texte, encadrés, bordures, états, action principale, ressources). Le thème classique copie les encadrés du jeu (parchemin, bordure brune, titres rouges en italique) ; les vues React l'adoptent aussi. Les variables sont posées sur les pages du jeu (`injectTheme`, au début du content script commun), dans chaque Shadow DOM (`import "@/theme/theme.css"` des scripts lourds, `THEME_CSS` de la fenêtre Paramètres) et sur les pages de l'extension. Aucun style n'écrit de couleur : il lit une variable. Les graphiques ECharts, qui dessinent sur un canvas, prennent `CHART_COLORS`. Seules exceptions : les couleurs du badge de l'icône (`src/utils/urgency.ts`), que l'API du navigateur veut en clair.
+- **Thème** : `apps/extension/src/theme/theme.css` définit les variables `--optizzz-*` (texte, encadrés, bordures, états, action principale, ressources). Le thème classique copie les encadrés du jeu (parchemin, bordure brune, titres rouges en italique) ; les vues React l'adoptent aussi. Les variables sont posées sur les pages du jeu (`injectTheme`, au début du content script commun), dans chaque Shadow DOM (`import "@/theme/theme.css"` des scripts lourds, `THEME_CSS` de la fenêtre Paramètres) et sur les pages de l'extension. Aucun style n'écrit de couleur : il lit une variable. Les graphiques ECharts, qui dessinent sur un canvas, prennent `CHART_COLORS`. Seules exceptions : les couleurs du badge de l'icône (`apps/extension/src/utils/urgency.ts`), que l'API du navigateur veut en clair.
 - **Briques partagées** :
-  - `src/game/` : règles du jeu (`attack.ts`, `flood.ts`, `travel.ts`, `forecast.ts`, `army/`) ;
-  - `src/game/pages/` : lecteurs purs des pages du jeu ;
-  - `src/data/` : données mémorisées par serveur et relues en arrière-plan ;
-  - `src/utils/` : formats, champ numérique, réglages des vues, page du jeu relue et partagée (`fetchGamePage`).
+  - `packages/game/src/` : règles du jeu (`attack.ts`, `flood.ts`, `travel.ts`, `forecast.ts`, `army/`) ;
+  - `packages/game/src/pages/` : lecteurs purs des pages du jeu ;
+  - `apps/extension/src/data/` : données mémorisées par serveur et relues en arrière-plan ;
+  - `apps/extension/src/utils/` : formats, champ numérique, réglages des vues, page du jeu relue et partagée (`fetchGamePage`).
 - **Collecte** : la feature `collect`, toujours active, mémorise ce que montre la page courante (sans requête) pour toutes les features allumées qui en ont besoin. Couper une feature n'ôte que son affichage et ses relectures en arrière-plan.
 
 ## Conséquences

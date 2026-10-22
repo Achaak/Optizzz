@@ -1,6 +1,6 @@
 # Pages du jeu : structure et sélecteurs
 
-Relevés en direct sur S5 le 2026-10-07 (compte connecté, via Claude in Chrome). Les fixtures de test (`src/features/*/__fixtures__/`) reproduisent cette structure avec des pseudos fictifs : le HTML brut n'est pas copié car les liens contiennent des jetons de session.
+Relevés en direct sur S5 le 2026-10-07 (compte connecté, via Claude in Chrome). Les fixtures de test (`apps/extension/src/features/*/__fixtures__/`) reproduisent cette structure avec des pseudos fictifs : le HTML brut n'est pas copié car les liens contiennent des jetons de session.
 
 ## Serveur et URL
 
@@ -15,7 +15,7 @@ Relevés en direct sur S5 le 2026-10-07 (compte connecté, via Claude in Chrome)
 - Menu d'alliance : `ul#menuAlliance.menu_colonne`, une `li > a.bouton<Nom>` par entrée : `boutonChat` (`alliance.php`), `boutonForum` (`?forum_menu`), `boutonMembres` (`?Membres`), `boutonCandidature` (`?voirCandidature`), `boutonMC` (`?messCollectif`), `boutonDiplomatie` (`?Diplomatie2`), `boutonDescription` (`?Description`), `boutonOptions` (`?Options`).
 - Absent quand le joueur n'a pas d'alliance.
 - Menu Fourmilière : `ul#menuFourmiliere.menu_colonne`, de `boutonReine` (`Reine.php`) à `boutonMaFourmiliere` (`fourmiliere.php`), le dernier (relevé le 2026-10-09 sur S5).
-- Barre du haut : `#menu` (`position: fixed`, `z-index: 20000`, 30 px de haut). Onglets `ul#menu_horizontal li` à `width: 19.9%` (en ajouter un fait passer à la ligne) ; `ul#menu_horizontal` a `margin-right: 45px` pour `a#boutonDeconnexion` (`position: absolute; right: 0; width: 45px`). Optizzz y place ses boutons dans un `div.optizzz-menu-bar` à `right: 45px` et élargit la marge de 45 px par bouton ; sur téléphone (< 41em, où le jeu rétrécit déjà ses onglets), ils se replient derrière un seul bouton « … » qui les déroule avec leur nom (`src/utils/menu-bar.ts`).
+- Barre du haut : `#menu` (`position: fixed`, `z-index: 20000`, 30 px de haut). Onglets `ul#menu_horizontal li` à `width: 19.9%` (en ajouter un fait passer à la ligne) ; `ul#menu_horizontal` a `margin-right: 45px` pour `a#boutonDeconnexion` (`position: absolute; right: 0; width: 45px`). Optizzz y place ses boutons dans un `div.optizzz-menu-bar` à `right: 45px` et élargit la marge de 45 px par bouton ; sur téléphone (< 41em, où le jeu rétrécit déjà ses onglets), ils se replient derrière un seul bouton « … » qui les déroule avec leur nom (`apps/extension/src/utils/menu-bar.ts`).
 - Autres liens utiles : `boutonSimulateurDuree` → `simulateurDuree.php`, carte du jeu `carte2.php` (vue isométrique).
 
 ## En-tête du joueur
@@ -174,7 +174,7 @@ Relevé le 2026-10-16 sur S5.
 
 ## classement.php (classements des joueurs et des alliances)
 
-Relevé le 2026-10-22 sur S5. Fixture réduite : `src/game/pages/__fixtures__/alliances-ranking.html`.
+Relevé le 2026-10-22 sur S5. Fixture réduite : `packages/game/src/pages/__fixtures__/alliances-ranking.html`.
 
 - **Une seule page pour les deux classements** : sans paramètre, celui des joueurs (`h2` « Classements des Joueurs », Rang | Pseudo | Terrain | Fourmilière | Technologie | Trophées, et **un lien `classementAlliance.php?alliance=TAG` par ligne**, l'alliance du joueur) ; `?type_classement=alliance_total` (ou `alliance_moyenne`) celui des alliances. Seul le menu `select#type_classement` les distingue : absent chez les joueurs, `alliance_total` / `alliance_moyenne` chez les alliances.
 - Dans `#centre` : `<h2>Classements des Alliances</h2>`, puis un cadre `table.simulateur` dont l'unique cellule contient :
@@ -191,7 +191,7 @@ Relevé le 2026-10-22 sur S5. Fixture réduite : `src/game/pages/__fixtures__/al
 
 - Colonisé : `div.simulateur` avec `<h2>Vous êtes colonisés par …</h2>`, la force d'occupation, un lien « Déclencher une rebellion ».
 - Relevé le 2026-10-19 sur S2 (colonisé et maître d'une colonie) : le bloc du maître est `#centre > center > div.simulateur` : `<h2>Vous êtes colonisés par X</h2>`, « Des fourmis obéissant à `<a href="Membre.php?Pseudo=X">` occupent votre fourmilière… », « La force d'occupation est composée de<br>Aucune troupe<br> », `<strong><a href="ennemie.php?rebellion">Déclencher une rebellion</a></strong>`.
-- Mes colonies : une `div.caseColonie` par colonie, directement dans `#centre`, après le `center` : `<h4>Nom de la colonie: <strong><a href="Membre.php?Pseudo=C">C</a></strong></h4>`, puis `<p> Troupes présentes:<br>10 Jeunes Soldates Naines<br><br> <a href="colonies.php?retour=<id>&t=<jeton>">Rappeler l'armée</a> - <a href="colonies.php?liberation=<id>&t=<jeton>"> Libérer la colonie</a></p>`, puis `<p>Cette colonie vous appartient depuis 24m 42s <br> Elle vous a rapporté <span class="sur_une_ligne">0</span> nourriture et <span class="sur_une_ligne">0</span> matériaux</p>`. Plusieurs unités : sans doute une par ligne (non vu). Les troupes qui occupent une colonie ne sont pas dans la garnison d'`Armee.php`. Lu par `readColonies` (`src/game/pages/colonies.ts`).
+- Mes colonies : une `div.caseColonie` par colonie, directement dans `#centre`, après le `center` : `<h4>Nom de la colonie: <strong><a href="Membre.php?Pseudo=C">C</a></strong></h4>`, puis `<p> Troupes présentes:<br>10 Jeunes Soldates Naines<br><br> <a href="colonies.php?retour=<id>&t=<jeton>">Rappeler l'armée</a> - <a href="colonies.php?liberation=<id>&t=<jeton>"> Libérer la colonie</a></p>`, puis `<p>Cette colonie vous appartient depuis 24m 42s <br> Elle vous a rapporté <span class="sur_une_ligne">0</span> nourriture et <span class="sur_une_ligne">0</span> matériaux</p>`. Plusieurs unités : sans doute une par ligne (non vu). Les troupes qui occupent une colonie ne sont pas dans la garnison d'`Armee.php`. Lu par `readColonies` (`packages/game/src/pages/colonies.ts`).
 - `Membre.php` : ligne « Etat : » → « Fourmilière libre » ou « Fourmilière soumise par <a href="Membre.php?Pseudo=X">X</a> » (relevé le 2026-10-16 sur S5). Suivent « Nombre de Colonie : », « Localisation : », « Distance : », « Temps de trajet : », dans le même tableau (sans classe) de la première `div.boite_membre`.
 - `Membre.php` (relevé le 2026-10-08 sur S5) : `div#centre > center > h2` = pseudo du joueur affiché, puis `div.boite_membre` « Informations » contenant `table.tableau_score` : une ligne par score, `<td>Terrain|Fourmilière|Technologie|Combat</td><td>valeur</td><td>classement</td>`. Fourmilière et Technologie = `buildingScore` et `technologyScore` de l'export, plus frais que lui ; Combat = sans doute `trophyScore`. Deuxième `div.boite_membre` : « Action ».
 
@@ -241,7 +241,7 @@ Vos chasseuses ont conquis 118 cm², les carcasses des prédateurs vous rapporte
 
 ### Conversations « Combats »
 
-Relevé le 2026-10-19 sur S2 et S5 (pseudos remplacés ; fixture `src/game/pages/__fixtures__/combat-conversations.html`). Même en-tête et même détail AJAX que les chasses (`tr.contenu_conversation`, une ligne `tr#message_<n>` par message, `td.expe` et `.contenuJoueur`), une conversation par événement et par adversaire. Titres vus :
+Relevé le 2026-10-19 sur S2 et S5 (pseudos remplacés ; fixture `packages/game/src/pages/__fixtures__/combat-conversations.html`). Même en-tête et même détail AJAX que les chasses (`tr.contenu_conversation`, une ligne `tr#message_<n>` par message, `td.expe` et `.contenuJoueur`), une conversation par événement et par adversaire. Titres vus :
 
 - « Attaque réussie contre X : votre armée a franchi le Terrain de Chasse » ;
 - « Attaque échouée contre X : votre armée est morte contre son colonisateur Y » ;

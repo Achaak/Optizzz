@@ -35,12 +35,12 @@ Gain apporté par le niveau, durée mémorisée au lancement.
 
 ## Code
 
-| Fichier                               | Rôle                                                        |
-| ------------------------------------- | ----------------------------------------------------------- |
-| `src/game/pages/work-queue.ts`        | Lecture des chantiers en cours, file pleine, durée affichée |
-| `src/features/work-queue/progress.ts` | Début et progression d'un élément                           |
-| `src/features/work-queue/mount.ts`    | Masque les lignes du jeu, monte et redessine le tableau     |
-| `src/features/work-queue/index.ts`    | Feature du registre (script léger), style, rafraîchissement |
-| `src/utils/time-format.ts`            | Durées et heures (« 3 h 12 », « demain 2 h 10 »), partagé   |
+| Fichier                                              | Rôle                                                        |
+| ---------------------------------------------------- | ----------------------------------------------------------- |
+| `packages/game/src/pages/work-queue.ts`              | Lecture des chantiers en cours, file pleine, durée affichée |
+| `apps/extension/src/features/work-queue/progress.ts` | Début et progression d'un élément                           |
+| `apps/extension/src/features/work-queue/mount.ts`    | Masque les lignes du jeu, monte et redessine le tableau     |
+| `apps/extension/src/features/work-queue/index.ts`    | Feature du registre (script léger), style, rafraîchissement |
+| `packages/game/src/format/time-format.ts`            | Durées et heures (« 3 h 12 », « demain 2 h 10 »), partagé   |
 
 Tests vitest aux interfaces : `queue` (fixtures), `progress`, `mount` (fixtures, happy-dom), `time-format`. Le tableau avec une file pleine se vérifie dans le jeu.

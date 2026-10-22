@@ -23,9 +23,9 @@ Choisir une ponte en un clic, voir avant de cliquer ce qu'elle donnera, et savoi
 
 ## Code
 
-| Fichier                                            | Rôle                                                                   |
-| -------------------------------------------------- | ---------------------------------------------------------------------- |
-| `src/features/laying-planner/laying.ts` (+ test)   | Lignes de ponte, commande, coût d'une unité, plan, raccourcis, maximum |
-| `src/features/laying-planner/settings.ts` (+ test) | Réglages des raccourcis, mémorisés par serveur                         |
-| `src/features/laying-planner/mount.ts` (+ test)    | Bloc dans la description : raccourcis, aperçu, résumé, réglages        |
-| `src/features/laying-planner/index.ts`             | La feature                                                             |
+| Fichier                                                           | Rôle                                                                   |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `apps/extension/src/features/laying-planner/laying.ts` (+ test)   | Lignes de ponte, commande, coût d'une unité, plan, raccourcis, maximum |
+| `apps/extension/src/features/laying-planner/settings.ts` (+ test) | Réglages des raccourcis, mémorisés par serveur                         |
+| `apps/extension/src/features/laying-planner/mount.ts` (+ test)    | Bloc dans la description : raccourcis, aperçu, résumé, réglages        |
+| `apps/extension/src/features/laying-planner/index.ts`             | La feature                                                             |

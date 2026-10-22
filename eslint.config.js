@@ -7,7 +7,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  globalIgnores([".output/", ".wxt/", "node_modules/", ".claude/"]),
+  globalIgnores(["**/.output/", "**/.wxt/", "**/node_modules/", ".claude/", "coverage/", ".turbo/", "**/.turbo/"]),
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,
@@ -22,7 +22,7 @@ export default defineConfig(
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
       // Short arrow event handlers returning a void call are idiomatic in React.
       "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
-      // Store reviewers (AMO) flag HTML injection: build DOM with src/utils/html.ts or textContent.
+      // Store reviewers (AMO) flag HTML injection: build DOM with apps/extension/src/utils/html.ts or textContent.
       "no-restricted-properties": [
         "error",
         { property: "innerHTML", message: "Use htmlElement/svgElement (src/utils/html.ts) or textContent." },

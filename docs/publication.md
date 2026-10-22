@@ -2,12 +2,12 @@
 
 ## Une nouvelle version (une fois les fiches créées)
 
-1. Mettre à jour `version` dans `package.json` (source unique de la version), commiter (`chore(release): 1.2.3`) et pousser sur `main`. Rien d'autre : pas de tag à créer.
-2. Le workflow `.github/workflows/release.yml` part de lui-même dès qu'un push sur `main` touche `package.json`. Si le tag `v1.2.3` existe déjà, il s'arrête là (version déjà publiée). Sinon il relance toutes les vérifications de la CI, construit les zips, les soumet aux deux stores (`wxt submit`) et crée la release GitHub avec les zips, qui pose le tag `v1.2.3`.
+1. Mettre à jour `version` dans `apps/extension/package.json` (source unique de la version), commiter (`chore(release): 1.2.3`) et pousser sur `main`. Rien d'autre : pas de tag à créer.
+2. Le workflow `.github/workflows/release.yml` part de lui-même dès qu'un push sur `main` touche `apps/extension/package.json`. Si le tag `v1.2.3` existe déjà, il s'arrête là (version déjà publiée). Sinon il relance toutes les vérifications de la CI, construit les zips, les soumet aux deux stores (`wxt submit`) et crée la release GitHub avec les zips, qui pose le tag `v1.2.3`.
 3. Si une version précédente est encore en examen chez Chrome, son examen est annulé et la nouvelle version prend sa place (`--chrome-cancel-pending`) : l'examen repart de zéro.
 4. Si la soumission échoue (secret refusé, store indisponible…), corriger puis relancer à la main : _Actions → Release → Run workflow_ sur `main`, ou `gh workflow run release.yml`. Faute de tag, la version est republiée.
 
-Les stores refusent une version déjà soumise : toute nouvelle publication passe par une nouvelle version dans `package.json`.
+Les stores refusent une version déjà soumise : toute nouvelle publication passe par une nouvelle version dans `apps/extension/package.json`.
 
 ## Première publication (à la main, une seule fois)
 
@@ -17,8 +17,8 @@ Les fiches doivent exister avant que le workflow puisse publier.
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm zip            # .output/optizzz-X.Y.Z-chrome.zip
-pnpm zip:firefox    # .output/optizzz-X.Y.Z-firefox.zip + optizzz-X.Y.Z-sources.zip
+pnpm zip            # apps/extension/.output/optizzz-X.Y.Z-chrome.zip
+pnpm zip:firefox    # apps/extension/.output/optizzz-X.Y.Z-firefox.zip + optizzz-X.Y.Z-sources.zip
 ```
 
 ### Chrome Web Store
@@ -53,4 +53,4 @@ Dans _Settings → Secrets and variables → Actions_ du dépôt :
 | `FIREFOX_EXTENSION_ID`                      | `optizzz@achaak.github.io`                                                                               |
 | `FIREFOX_JWT_ISSUER` / `FIREFOX_JWT_SECRET` | https://addons.mozilla.org/developers/addon/api/key/                                                     |
 
-Pour les créer pas à pas : `bash scripts/setup-release-secrets.sh`. L'assistant ouvre chaque page (Google Cloud, console Chrome, AMO), récupère les valeurs, les pose en secrets GitHub avec `gh secret set`, en garde une copie dans `.env.submit` (ignoré par git), vérifie l'authentification avec `wxt submit --dry-run` puis propose de lancer la publication. On peut le relancer : il garde les valeurs déjà saisies. Ancienne méthode : `pnpm dlx publish-extension init` (écrit dans `.env.submit`, ignoré par git), puis `pnpm wxt submit --dry-run` vérifie l'authentification sans rien publier.
+Pour les créer pas à pas : `bash scripts/setup-release-secrets.sh`. L'assistant ouvre chaque page (Google Cloud, console Chrome, AMO), récupère les valeurs, les pose en secrets GitHub avec `gh secret set`, en garde une copie dans `apps/extension/.env.submit` (ignoré par git), vérifie l'authentification avec `wxt submit --dry-run` puis propose de lancer la publication. On peut le relancer : il garde les valeurs déjà saisies. Ancienne méthode, dans `apps/extension` : `pnpm dlx publish-extension init` (écrit dans `.env.submit`, ignoré par git), puis `pnpm exec wxt submit --dry-run` vérifie l'authentification sans rien publier.

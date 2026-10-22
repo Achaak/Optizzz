@@ -15,7 +15,7 @@ Savoir quand on pourra payer un bâtiment ou une recherche, quand on tombera en 
   - taxe de colonie `pourcentagePillage` quand elle est présente, sur la récolte et la champignonnière.
 - **Chasses en cours** : à leur retour, le TDC gagné met au travail des ouvrières sans travail (min(gain, ouvrières sans travail)). Avec Compte+, elles vont selon `choixOuvriere` ; sans, elles restent sans travail.
 - **Capacités des entrepôts** : lues sur `construction.php` (« Capacité actuelle »). Le stock ne dépasse jamais la capacité.
-- **Sources** : `Ressources.php` rechargée en arrière-plan à chaque affichage de Construction et Laboratoire ; ailleurs, cache de moins de 15 min (mémorisé par serveur), relu en arrière-plan sinon. Une page relue au même moment par une autre feature n'est lue qu'une fois (`src/utils/game-page.ts`). Sans revenus lisibles ni mémorisés (session expirée, maintenance), rien n'est affiché (avertissement en console seulement).
+- **Sources** : `Ressources.php` rechargée en arrière-plan à chaque affichage de Construction et Laboratoire ; ailleurs, cache de moins de 15 min (mémorisé par serveur), relu en arrière-plan sinon. Une page relue au même moment par une autre feature n'est lue qu'une fois (`apps/extension/src/utils/game-page.ts`). Sans revenus lisibles ni mémorisés (session expirée, maintenance), rien n'est affiché (avertissement en console seulement).
 
 ## 1. Délais sur Construction et Laboratoire
 
@@ -31,7 +31,7 @@ Savoir quand on pourra payer un bâtiment ou une recherche, quand on tombera en 
 ## 2. Famine et entrepôt plein (en-tête, toutes les pages)
 
 - Sous la jauge de nourriture : « Famine dans 9 h 32 », sinon « Entrepôt plein dans 4 h », sinon le solde « Solde : +3 223 / jour » ; sous la jauge des matériaux : « Entrepôt plein dans … ».
-- Couleurs : neutre au-delà de 24 h, orange en dessous de 24 h, rouge en dessous de 6 h (`src/utils/urgency.ts`, la même échelle que le simulateur et le badge des Alertes).
+- Couleurs : neutre au-delà de 24 h, orange en dessous de 24 h, rouge en dessous de 6 h (`apps/extension/src/utils/urgency.ts`, la même échelle que le simulateur et le badge des Alertes).
 - Infobulle (toujours présente), une ligne par information : solde par jour (détail récolte, champignonnière, armée, taxe), ouvrières à mettre sur la nourriture pour rester à l'équilibre, « Capacité des entrepôts inconnue : ouvrez Construction… » tant que Construction n'a pas été lue (pas d'alerte d'entrepôt plein sans elle), retours de chasse prévus. C'est une infobulle d'Optizzz : celle du jeu (jQuery UI, sur la cellule de la jauge) aplatissait les lignes, elle ne s'ouvre plus au-dessus de notre ligne.
 
 ## 3. Répartition des ouvrières sur Ressources
@@ -70,17 +70,17 @@ Achats planifiés (stock réservé), délai des ouvrières via la ponte, optimis
 
 ## Code
 
-| Fichier                                                  | Rôle                                                                    |
-| -------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `src/game/pages/resources.ts`                            | Lecture : `#data`, Ressources, coûts, capacités des entrepôts           |
-| `src/game/forecast.ts`                                   | Moteur : payable quand, famine, entrepôts pleins, équilibre, file       |
-| `src/data/income.ts`                                     | Revenus et capacités lus en arrière-plan, cache par serveur             |
-| `src/features/resource-forecast/mount-costs.ts`          | Ligne de délai dans les tableaux de coûts                               |
-| `src/features/resource-forecast/mount-outlook.ts`        | Famine et entrepôt plein sous les jauges de l'en-tête                   |
-| `src/features/resource-forecast/mount-simulator.ts`      | Simulateur de répartition sur Ressources                                |
-| `src/features/resource-forecast/mount-levels.ts`         | Dépliable « Niveaux suivants » ; cumul dans `src/game/speed-up.ts`      |
-| `src/features/resource-forecast/index.ts`                | Feature du registre (script léger), style, rafraîchissement à la minute |
-| `src/utils/number-format.ts`, `src/utils/time-format.ts` | Nombres « 12 348 », durées et heures                                    |
+| Fichier                                                                                | Rôle                                                                        |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `packages/game/src/pages/resources.ts`                                                 | Lecture : `#data`, Ressources, coûts, capacités des entrepôts               |
+| `packages/game/src/forecast.ts`                                                        | Moteur : payable quand, famine, entrepôts pleins, équilibre, file           |
+| `apps/extension/src/data/income.ts`                                                    | Revenus et capacités lus en arrière-plan, cache par serveur                 |
+| `apps/extension/src/features/resource-forecast/mount-costs.ts`                         | Ligne de délai dans les tableaux de coûts                                   |
+| `apps/extension/src/features/resource-forecast/mount-outlook.ts`                       | Famine et entrepôt plein sous les jauges de l'en-tête                       |
+| `apps/extension/src/features/resource-forecast/mount-simulator.ts`                     | Simulateur de répartition sur Ressources                                    |
+| `apps/extension/src/features/resource-forecast/mount-levels.ts`                        | Dépliable « Niveaux suivants » ; cumul dans `packages/game/src/speed-up.ts` |
+| `apps/extension/src/features/resource-forecast/index.ts`                               | Feature du registre (script léger), style, rafraîchissement à la minute     |
+| `packages/game/src/format/number-format.ts`, `packages/game/src/format/time-format.ts` | Nombres « 12 348 », durées et heures                                        |
 
 Les prévisions partent de l'instant où la page a été chargée (le stock de `#data` ne bouge pas ensuite) ; le rafraîchissement ne fait qu'avancer les décomptes. La page Ressources avec Compte+ n'a pas de `var champi` (la page colonisée en a une) : la production de la champignonnière se lit alors dans le résumé.
 

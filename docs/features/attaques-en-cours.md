@@ -19,10 +19,10 @@ Lire d'un coup d'œil les attaques parties, et pouvoir en coller une (Discord de
 
 ## Code
 
-| Fichier                                         | Rôle                                                                  |
-| ----------------------------------------------- | --------------------------------------------------------------------- |
-| `src/features/flood/attacks.ts` (+ test)        | Lecture des attaques (`readAttackLines`), texte du jeu à copier       |
-| `src/features/attacks-on-way/mount.ts` (+ test) | La liste à la place des lignes du jeu                                 |
-| `src/features/attacks-on-way/index.ts`          | La feature                                                            |
-| `src/utils/on-way-list.ts`                      | Liste partagée avec les convois : lignes, décompte, bouton « Copier » |
-| `src/game/army/units.ts`                        | `readTroops` : troupes écrites par le jeu → effectifs par unité       |
+| Fichier                                                        | Rôle                                                                  |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `apps/extension/src/features/flood/attacks.ts` (+ test)        | Lecture des attaques (`readAttackLines`), texte du jeu à copier       |
+| `apps/extension/src/features/attacks-on-way/mount.ts` (+ test) | La liste à la place des lignes du jeu                                 |
+| `apps/extension/src/features/attacks-on-way/index.ts`          | La feature                                                            |
+| `apps/extension/src/utils/on-way-list.ts`                      | Liste partagée avec les convois : lignes, décompte, bouton « Copier » |
+| `packages/game/src/army/units.ts`                              | `readTroops` : troupes écrites par le jeu → effectifs par unité       |

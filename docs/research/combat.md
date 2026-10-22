@@ -1,6 +1,6 @@
 # Combat entre joueurs : règles et sources
 
-Ce que le simulateur de combat (`src/game/army/battle.ts`) suppose, d'où ça vient, et ce qui n'est pas vérifié. Le combat de chasse, vérifié sur de vrais rapports, est dans `chasse.md`.
+Ce que le simulateur de combat (`packages/game/src/army/battle.ts`) suppose, d'où ça vient, et ce qui n'est pas vérifié. Le combat de chasse, vérifié sur de vrais rapports, est dans `chasse.md`.
 
 ## Sources
 

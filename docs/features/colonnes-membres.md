@@ -22,7 +22,7 @@ Voir sur la page Membres de l'alliance combien de temps met une attaque ou un co
 
 ## Fichiers
 
-- `src/features/members-columns/trips.ts` : trajets depuis ma position (pur).
-- `src/features/members-columns/roles.ts` : rôle et pastille de chaque membre, comme la Chaîne et la Carte (pur).
-- `src/features/members-columns/mount.ts` : les colonnes et leur tri.
-- `src/features/members-columns/index.ts` : chargement de l'export, des niveaux et des réglages de la Chaîne, observation du tableau.
+- `apps/extension/src/features/members-columns/trips.ts` : trajets depuis ma position (pur).
+- `apps/extension/src/features/members-columns/roles.ts` : rôle et pastille de chaque membre, comme la Chaîne et la Carte (pur).
+- `apps/extension/src/features/members-columns/mount.ts` : les colonnes et leur tri.
+- `apps/extension/src/features/members-columns/index.ts` : chargement de l'export, des niveaux et des réglages de la Chaîne, observation du tableau.

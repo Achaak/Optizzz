@@ -22,9 +22,9 @@ Lire d'un coup d'œil ce qu'a donné une attaque, et la rejouer dans le simulate
 
 ## Code
 
-| Fichier                                         | Rôle                                                           |
-| ----------------------------------------------- | -------------------------------------------------------------- |
-| `src/game/pages/combat-reports.ts` (+ test)     | Lecture des attaques et du butin, Armes déduites du bonus      |
-| `src/features/combat-reports/mount.ts` (+ test) | Tableau, butin des autres conversations, bouton « Simuler »    |
-| `src/features/combat-reports/index.ts`          | La feature : repère les conversations « Combats » ouvertes     |
-| `src/features/combat-simulator/form.ts`         | `Opponent` : l'armée d'un rapport dans l'adresse du simulateur |
+| Fichier                                                        | Rôle                                                           |
+| -------------------------------------------------------------- | -------------------------------------------------------------- |
+| `packages/game/src/pages/combat-reports.ts` (+ test)           | Lecture des attaques et du butin, Armes déduites du bonus      |
+| `apps/extension/src/features/combat-reports/mount.ts` (+ test) | Tableau, butin des autres conversations, bouton « Simuler »    |
+| `apps/extension/src/features/combat-reports/index.ts`          | La feature : repère les conversations « Combats » ouvertes     |
+| `apps/extension/src/features/combat-simulator/form.ts`         | `Opponent` : l'armée d'un rapport dans l'adresse du simulateur |

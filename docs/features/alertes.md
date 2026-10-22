@@ -11,7 +11,7 @@ Voir sans ouvrir le jeu que la famine approche ou qu'un entrepôt va être plein
 - Calculé par le background script à partir des données mémorisées, **sans jamais interroger le jeu**. Seule exception dans le background : le relevé horaire des Suivis télécharge l'export public (`suivis.md`), jamais une page du jeu ; ses notifications passent par la même file (`sendNotice`) pour que le clic ouvre la bonne page. Recalcul toutes les minutes (alarme `alarms`), et tout de suite quand une page mémorise un nouveau stock ou qu'un interrupteur change.
 - Par serveur, le premier problème : famine, entrepôt de nourriture plein ou entrepôt de matériaux plein (`outlook()` des Prévisions de ressources), calculé à partir du moment où le stock a été lu.
 - Le badge montre le pire serveur :
-  - même échelle que l'en-tête des Prévisions (`src/utils/urgency.ts`) : rouge en dessous de 6 h, orange en dessous de 24 h, avec les mêmes couleurs ;
+  - même échelle que l'en-tête des Prévisions (`apps/extension/src/utils/urgency.ts`) : rouge en dessous de 6 h, orange en dessous de 24 h, avec les mêmes couleurs ;
   - « 45m » en dessous d'1 h, « 1h40 » jusqu'à 2 h, puis heures entières arrondies vers le bas (« 5h », « 15h ») ;
   - « ! » rouge si le problème est déjà arrivé ;
   - rien au-delà de 24 h ;
@@ -55,16 +55,16 @@ Un content script n'a pas l'API `permissions` : la fenêtre Paramètres demande 
 
 ## Code
 
-| Fichier                                                   | Rôle                                                        |
-| --------------------------------------------------------- | ----------------------------------------------------------- |
-| `src/features/alerts/badge.ts` (+ test)                   | Texte, couleur et survol du badge à partir des données      |
-| `src/features/alerts/store.ts` (+ test)                   | Stock par serveur, et tout ce que le background doit lire   |
-| `src/features/alerts/index.ts`                            | Feature du registre : mémorise le stock de chaque page      |
-| `src/features/alerts/background.ts`                       | Alarme, écoute du stockage, `action.setBadge*` / `setTitle` |
-| `src/features/alerts/notifications.ts` (+ test)           | Notifications à envoyer, à partir des données               |
-| `src/features/alerts/notification-settings.ts`            | Les cases, mémorisées                                       |
-| `src/features/alerts/permission.ts`                       | Messages de permission entre content scripts et background  |
-| `src/features/settings/notifications-section.ts` (+ test) | Onglet « Notifications » (fenêtre et popup)                 |
-| `src/entrypoints/notifications-permission/`               | Page qui demande la permission sur un clic                  |
-| `src/entrypoints/popup/main.ts`                           | Popup de l'icône : mêmes onglets que la fenêtre             |
-| `src/entrypoints/background.ts`                           | Lance le badge                                              |
+| Fichier                                                                  | Rôle                                                        |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `apps/extension/src/features/alerts/badge.ts` (+ test)                   | Texte, couleur et survol du badge à partir des données      |
+| `apps/extension/src/features/alerts/store.ts` (+ test)                   | Stock par serveur, et tout ce que le background doit lire   |
+| `apps/extension/src/features/alerts/index.ts`                            | Feature du registre : mémorise le stock de chaque page      |
+| `apps/extension/src/features/alerts/background.ts`                       | Alarme, écoute du stockage, `action.setBadge*` / `setTitle` |
+| `apps/extension/src/features/alerts/notifications.ts` (+ test)           | Notifications à envoyer, à partir des données               |
+| `apps/extension/src/features/alerts/notification-settings.ts`            | Les cases, mémorisées                                       |
+| `apps/extension/src/features/alerts/permission.ts`                       | Messages de permission entre content scripts et background  |
+| `apps/extension/src/features/settings/notifications-section.ts` (+ test) | Onglet « Notifications » (fenêtre et popup)                 |
+| `apps/extension/src/entrypoints/notifications-permission/`               | Page qui demande la permission sur un clic                  |
+| `apps/extension/src/entrypoints/popup/main.ts`                           | Popup de l'icône : mêmes onglets que la fenêtre             |
+| `apps/extension/src/entrypoints/background.ts`                           | Lance le badge                                              |

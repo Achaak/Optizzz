@@ -1,6 +1,7 @@
-.output
-.wxt
+**/.output
+**/.wxt
+.turbo
 pnpm-lock.yaml
 .claude/skills
 # Game markup kept as the game writes it (a <form> misnested in a table): Prettier cannot parse it.
-src/data/__fixtures__/armee-move.html
+apps/extension/src/data/__fixtures__/armee-move.html

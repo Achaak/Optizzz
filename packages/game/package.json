@@ -1,0 +1,24 @@
+{
+  "name": "@optizzz/game",
+  "private": true,
+  "description": "Règles du jeu Fourmizzz et lecteurs purs de ses pages, partagés par l'extension et le site.",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts",
+    "./pages/__fixtures__/*": "./src/pages/__fixtures__/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "happy-dom": "^20.14.5",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "license": "MIT"
+}

@@ -28,7 +28,7 @@ L'écart possible (≈ 4 %) sur le convoi n'est pas tranché : l'heure du messag
 
 ## À vérifier
 
-Relever deux ou trois autres couples sur des profils (`Membre.php`) pour confirmer l'arrondi en dessous (contre « au plus proche »), et les ajouter aux cas de test de `src/game/travel.test.ts`.
+Relever deux ou trois autres couples sur des profils (`Membre.php`) pour confirmer l'arrondi en dessous (contre « au plus proche »), et les ajouter aux cas de test de `packages/game/src/travel.test.ts`.
 
 ## Ce qu'on peut savoir des niveaux
 

@@ -1,0 +1,214 @@
+import { describe, expect, it, vi } from "vitest";
+import { armyFromKeys, emptyArmy } from "@optizzz/game/army/units";
+import formHtml from "./__fixtures__/attack-form.html?raw";
+import { mountFloodPlanner, type FloodContext } from "./mount";
+
+const now = new Date(2026, 9, 8, 10, 0, 0);
+
+const setup = (options: Partial<FloodContext> = {}) => {
+  const doc = new DOMParser().parseFromString(formHtml, "text/html");
+  const context: FloodContext = {
+    me: { field: 1000, weapons: 0, shield: 0 },
+    target: { id: 101, pseudo: "Cible_1", field: 2000 },
+    // Field 1 000 JSN + 50 S, nest 200 JSN, lodge 5 000 JSN (the fixture).
+    available: {
+      field: armyFromKeys({ JSN: 1000, S: 50 }),
+      nest: armyFromKeys({ JSN: 200 }),
+      lodge: armyFromKeys({ JSN: 5000 }),
+    },
+    attackSpeed: 2,
+    travelSeconds: 1800,
+    onWay: { launches: [], unknown: 0 },
+    defense: null,
+    countLodge: false,
+    probes: {},
+    margin: 0,
+    onCountLodgeChange: () => undefined,
+    onDefenseChange: () => undefined,
+    onSend: () => undefined,
+    ...options,
+  };
+  mountFloodPlanner(doc, context, () => now);
+  const rows = () =>
+    [...doc.querySelectorAll(".optizzz-flood tbody tr")].map((row) =>
+      [...row.querySelectorAll("td")].map((cell) => cell.textContent.trim()),
+    );
+  const text = () => doc.querySelector(".optizzz-flood")?.textContent ?? "";
+  const unit = (id: string) => (doc.getElementById(id) as HTMLInputElement).value;
+  return { doc, rows, text, unit };
+};
+
+describe("mountFloodPlanner", () => {
+  it("plans the flood under the game's form with my free slots and army, lodge left out", () => {
+    const { doc, rows, text } = setup();
+    expect(doc.getElementById("formulaireChoixArmee")?.nextElementSibling?.classList.contains("optizzz-flood")).toBe(
+      true,
+    );
+    // 3 slots (Attack Speed 2 + 1), 1 250 ants: 400, 320, 256, cheapest first.
+    expect(rows()).toEqual([
+      ["1", "400 JSN", "400", "1 600", "1 400", "Remplir"],
+      ["2", "320 JSN", "320", "1 280", "1 720", "Remplir"],
+      ["3", "256 JSN", "256", "1 024", "1 976", "Remplir"],
+    ]);
+    const foot = [...doc.querySelectorAll(".optizzz-flood tfoot td")].map((cell) => cell.textContent);
+    expect(foot).toEqual(["Total", "976 cm²", "1 024", "1 976", "3 attaques"]);
+    expect(text()).toContain("arrivée ≈ 10 h 30");
+  });
+
+  it("fills the game's form with an attack, the player sends it", () => {
+    const { doc, unit } = setup();
+    const buttons = [...doc.querySelectorAll<HTMLButtonElement>(".optizzz-flood tbody button")];
+    buttons[1]?.click();
+    expect([unit("unite1"), unit("unite5")]).toEqual(["320", "0"]);
+    // Not by its colour alone: the button says it.
+    const marked = [...doc.querySelectorAll(".optizzz-flood tbody tr")].map((row) => [
+      row.classList.contains("optizzz-flood-filled"),
+      row.querySelector("button")?.textContent,
+    ]);
+    expect(marked).toEqual([
+      [false, "Remplir"],
+      [true, "✓ Rempli"],
+      [false, "Remplir"],
+    ]);
+  });
+
+  it("keeps the probes home, unit by unit, unless ants stay home anyway", () => {
+    const probes = { nest: armyFromKeys({ JSN: 1 }), lodge: armyFromKeys({ JSN: 1, S: 1 }) };
+    const { rows, text } = setup({
+      available: { field: armyFromKeys({ JSN: 2, S: 50 }), nest: emptyArmy(), lodge: emptyArmy() },
+      probes,
+    });
+    expect(rows().map((cells) => cells[1])).toEqual(["49 S"]);
+    expect(text()).toContain("Anti-sondes gardées au nid : 2 JSN, 1 S.");
+    // The 5 000 JSN of the lodge, left out, stay home.
+    expect(setup({ probes }).rows()[0]?.[1]).toBe("400 JSN");
+  });
+
+  it("counts the attacks already on their way", () => {
+    const { rows } = setup({
+      onWay: {
+        launches: [{ targetId: 101, target: "Cible_1", ants: 400, take: 400, arrivesAt: new Date(2026, 9, 8, 10, 20) }],
+        unknown: 0,
+      },
+    });
+    // 2 slots left; it will have 1 600, me 1 400.
+    expect(rows().map((cells) => cells[2])).toEqual(["320", "256"]);
+  });
+
+  it("counts the attacks sent without Optizzz as taken slots, their take unknown", () => {
+    const { rows, text } = setup({ onWay: { launches: [], unknown: 2 } });
+    expect(rows()).toHaveLength(1);
+    expect(text()).toContain("2 attaques lancées sans ce plan : leur prise n'est pas comptée");
+  });
+
+  it("can count the lodge, and remembers it", () => {
+    const onCountLodgeChange = vi.fn();
+    const { doc, text } = setup({
+      available: { field: emptyArmy(), nest: emptyArmy(), lodge: armyFromKeys({ JSN: 5000 }) },
+      onCountLodgeChange,
+    });
+    expect(text()).toContain("Votre armée est en Loge");
+    const box = doc.querySelector<HTMLInputElement>(".optizzz-flood-lodge");
+    box?.click();
+    expect(onCountLodgeChange).toHaveBeenCalledWith(true);
+    expect(doc.querySelectorAll(".optizzz-flood tbody tr")).toHaveLength(3);
+  });
+
+  it("opens with a wave that crushes a pasted defense", () => {
+    const onDefenseChange = vi.fn();
+    const { doc, rows } = setup({ onDefenseChange });
+    const area = doc.querySelector<HTMLTextAreaElement>(".optizzz-flood-defense textarea");
+    if (area) area.value = "Troupes en défense : 100 Jeunes Soldates Naines.";
+    area?.dispatchEvent(new Event("input"));
+    doc.querySelector<HTMLButtonElement>(".optizzz-flood-defense-use")?.click();
+    expect(onDefenseChange).toHaveBeenCalledWith(armyFromKeys({ JSN: 100 }));
+    // Strongest first: 50 S + 551 JSN deal 750 + 1 653 > 3 × 800 hp; 649 JSN left: 320, then 256.
+    expect(rows().map((cells) => cells[1])).toEqual(["551 JSN, 50 S", "320 JSN", "256 JSN"]);
+    const heads = [...doc.querySelectorAll(".optizzz-flood thead th")].map((th) => th.textContent);
+    expect(heads[2]).toBe("Pertes");
+    expect(rows()[1]?.[2]).toBe("");
+  });
+
+  it("shows « Effacer » only for a known defense", () => {
+    const clear = (options: Partial<FloodContext>) =>
+      setup(options).doc.querySelector<HTMLButtonElement>(".optizzz-flood-defense-clear")?.hidden;
+    expect(clear({})).toBe(true);
+    expect(clear({ defense: { army: armyFromKeys({ JSN: 10 }), readAt: now } })).toBe(false);
+  });
+
+  it("says when my army cannot beat the defense", () => {
+    const { text, rows } = setup({ defense: { army: armyFromKeys({ JSN: 1000 }), readAt: now } });
+    expect(rows()).toEqual([]);
+    expect(text()).toContain("Votre armée ne suffit pas");
+  });
+
+  it("says when the target is out of range", () => {
+    const { text } = setup({ target: { id: 101, pseudo: "Cible_1", field: 400 } });
+    expect(text()).toContain("hors de portée");
+  });
+
+  it("remembers what the player sends, to plan the next attack", () => {
+    const onSend = vi.fn();
+    const { doc } = setup({ onSend });
+    doc.querySelector<HTMLButtonElement>(".optizzz-flood tbody button")?.click();
+    const form = doc.getElementById("formulaireChoixArmee") as HTMLFormElement;
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(onSend).toHaveBeenCalledWith({
+      targetId: 101,
+      target: "Cible_1",
+      ants: 400,
+      take: 400,
+      arrivesAt: new Date(2026, 9, 8, 10, 30),
+    });
+  });
+
+  it("counts the cm² of an attack on the nest too: the hunting field is fought first", () => {
+    const onSend = vi.fn();
+    const { doc } = setup({ onSend });
+    doc.querySelector<HTMLButtonElement>(".optizzz-flood tbody button")?.click();
+    const place = doc.querySelector<HTMLSelectElement>("#formulaireChoixArmee select#lieu");
+    if (place) place.value = "2";
+    const form = doc.getElementById("formulaireChoixArmee") as HTMLFormElement;
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(onSend).toHaveBeenCalledWith(expect.objectContaining({ ants: 400, take: 400 }));
+  });
+
+  it("takes what the plan expected for a filled attack against a defense", () => {
+    const onSend = vi.fn<(launch: unknown) => void>();
+    const { doc } = setup({ onSend, defense: { army: armyFromKeys({ JSN: 10 }), readAt: now } });
+    doc.querySelector<HTMLButtonElement>(".optizzz-flood tbody button")?.click();
+    const column = [...doc.querySelectorAll(".optizzz-flood thead th")].findIndex((th) => th.textContent === "Prise");
+    const planned = doc.querySelectorAll(".optizzz-flood tbody tr td")[column]?.textContent;
+    const form = doc.getElementById("formulaireChoixArmee") as HTMLFormElement;
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(onSend).toHaveBeenCalledWith(expect.objectContaining({ take: Number(planned?.replace(/\s/g, "")) }));
+  });
+
+  it("does not take an unreadable text for « no defense »", () => {
+    const onDefenseChange = vi.fn();
+    const { doc, text } = setup({ onDefenseChange });
+    const area = doc.querySelector<HTMLTextAreaElement>(".optizzz-flood-defense textarea");
+    const use = doc.querySelector<HTMLButtonElement>(".optizzz-flood-defense-use");
+    expect(use?.disabled).toBe(true);
+    if (area) area.value = "bonjour";
+    area?.dispatchEvent(new Event("input"));
+    use?.click();
+    expect(onDefenseChange).not.toHaveBeenCalled();
+    expect(text()).toContain("Aucune unité reconnue");
+  });
+
+  it("plans nothing on a target within the margin above 50 %, and says why", () => {
+    const { rows, text } = setup({ target: { id: 101, pseudo: "Cible_1", field: 503 }, margin: 0.01 });
+    expect(rows()).toEqual([]);
+    expect(text()).toContain("trop juste");
+  });
+});

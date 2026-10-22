@@ -1,4 +1,4 @@
-<p align="center"><img src="src/assets/icon.svg" width="96" alt=""></p>
+<p align="center"><img src="apps/extension/src/assets/icon.svg" width="96" alt=""></p>
 
 <h1 align="center">Optizzz</h1>
 
@@ -109,9 +109,11 @@ Les commits suivent [Conventional Commits](https://www.conventionalcommits.org/f
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm build:firefox  # résultat : .output/firefox-mv3/
-pnpm build          # Chrome : .output/chrome-mv3/
+pnpm build:firefox  # résultat : apps/extension/.output/firefox-mv3/
+pnpm build          # Chrome : apps/extension/.output/chrome-mv3/
 ```
+
+Le dépôt est un monorepo pnpm : l'extension est dans `apps/extension`, les règles du jeu partagées dans `packages/game`. Les deux commandes se lancent à la racine.
 
 Aucun code distant n'est chargé.
 

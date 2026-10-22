@@ -43,18 +43,18 @@ Voir en courbes le TDC et les scores (Fourmilière, Technologie, Combat) dans le
 
 ## Code
 
-| Fichier                                                                        | Rôle                                                                                                                          |
-| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `src/data/export-history.ts` (+ test)                                          | Date d'une version, une version par jour de Paris, cache et chargement progressif (partagés avec les Statistiques d'alliance) |
-| `src/features/history/api.ts` (+ test)                                         | Historique de tous les joueurs, cache compact par version                                                                     |
-| `src/features/history/series.ts` (+ test)                                      | Courbe d'un joueur, moyenne, progression sur la période                                                                       |
-| `src/features/history/alliance-moves.ts` (+ test)                              | Changements d'alliance d'un joueur, et leur jour                                                                              |
-| `src/game/pages/scores.ts` (+ test)                                            | Scores en direct : profil (`table.tableau_score`), tableau Membres                                                            |
-| `src/features/history/settings.ts`                                             | Réglages mémorisés                                                                                                            |
-| `src/utils/history-chart/`                                                     | Graphique ECharts (ligne, axe temps), onglets et période, progression, `style.css` (partagés)                                 |
-| `src/features/history/useHistory.ts`                                           | Chargement progressif de la période                                                                                           |
-| `src/features/history/AllianceHistory.tsx`, `ProfileHistory.tsx`, `metrics.ts` | Vues React                                                                                                                    |
-| `src/features/history/menu.ts`                                                 | Entrée de menu (script léger, toutes les pages)                                                                               |
-| `src/entrypoints/history.content/index.tsx`                                    | Script dédié à `alliance.php` et `Membre.php` : monte les vues (Shadow DOM)                                                   |
+| Fichier                                                                                       | Rôle                                                                                                                          |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `apps/extension/src/data/export-history.ts` (+ test)                                          | Date d'une version, une version par jour de Paris, cache et chargement progressif (partagés avec les Statistiques d'alliance) |
+| `apps/extension/src/features/history/api.ts` (+ test)                                         | Historique de tous les joueurs, cache compact par version                                                                     |
+| `apps/extension/src/features/history/series.ts` (+ test)                                      | Courbe d'un joueur, moyenne, progression sur la période                                                                       |
+| `apps/extension/src/features/history/alliance-moves.ts` (+ test)                              | Changements d'alliance d'un joueur, et leur jour                                                                              |
+| `packages/game/src/pages/scores.ts` (+ test)                                                  | Scores en direct : profil (`table.tableau_score`), tableau Membres                                                            |
+| `apps/extension/src/features/history/settings.ts`                                             | Réglages mémorisés                                                                                                            |
+| `apps/extension/src/utils/history-chart/`                                                     | Graphique ECharts (ligne, axe temps), onglets et période, progression, `style.css` (partagés)                                 |
+| `apps/extension/src/features/history/useHistory.ts`                                           | Chargement progressif de la période                                                                                           |
+| `apps/extension/src/features/history/AllianceHistory.tsx`, `ProfileHistory.tsx`, `metrics.ts` | Vues React                                                                                                                    |
+| `apps/extension/src/features/history/menu.ts`                                                 | Entrée de menu (script léger, toutes les pages)                                                                               |
+| `apps/extension/src/entrypoints/history.content/index.tsx`                                    | Script dédié à `alliance.php` et `Membre.php` : monte les vues (Shadow DOM)                                                   |
 
 Vérifié dans le jeu (S5, 2026-10-08) : profil (le mien, un joueur sans alliance), vue d'alliance (15 membres, courbes cochées, moyenne, onglet Combat, retour à Membres).

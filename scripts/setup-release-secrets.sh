@@ -186,10 +186,10 @@ finish() {
 # ──────────────────────────────────────────────────────────────────────────
 
 # Creates the store credentials used by .github/workflows/release.yml, sets them as GitHub secrets
-# and keeps a local copy in .env.submit (git-ignored) for `pnpm wxt submit --dry-run`.
+# and keeps a local copy in apps/extension/.env.submit (git-ignored) for `wxt submit --dry-run`.
 # Run from the repository root: bash scripts/setup-release-secrets.sh
 
-ENV_FILE=".env.submit"
+ENV_FILE="apps/extension/.env.submit"
 TOTAL_STAGES=6
 
 cd "$(dirname "$0")/.."
@@ -309,22 +309,22 @@ stage "Vérifier l'authentification (sans rien publier)"
 say "Construit les zips puis lance wxt submit --dry-run avec .env.submit : il se connecte aux"
 say "deux stores sans rien envoyer."
 if confirm "Lancer la vérification maintenant (environ une minute) ?"; then
-  if pnpm zip >/dev/null && pnpm zip:firefox >/dev/null && pnpm wxt submit --dry-run \
+  if pnpm zip >/dev/null && pnpm zip:firefox >/dev/null && (cd apps/extension && pnpm exec wxt submit --dry-run \
     --chrome-zip .output/*-chrome.zip --chrome-api-version v2 \
-    --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip; then
+    --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip); then
     printf '  %s✓ authentification acceptée par les deux stores%s\n' "$GREEN" "$RESET"
   else
     warn "La vérification a échoué : relisez le message ci-dessus, corrigez puis relancez l'assistant."
     SKIPPED+=("vérification wxt submit --dry-run en échec")
   fi
 else
-  SKIPPED+=("vérification : pnpm wxt submit --dry-run (voir docs/publication.md)")
+  SKIPPED+=("vérification : wxt submit --dry-run dans apps/extension (voir docs/publication.md)")
 fi
 pause
 
 # ──────────────────────────────────────────────────────────────────────────
 stage "Publier la version courante"
-version=$(node -p 'require("./package.json").version')
+version=$(node -p 'require("./apps/extension/package.json").version')
 say "La version $version n'a pas encore de tag : le workflow Release peut la publier."
 say "Il faut que le nouveau release.yml (déclenchement manuel) soit déjà poussé sur main."
 warn "Publier envoie la version aux deux stores : c'est irréversible."

@@ -1,6 +1,6 @@
 # Promotions (XP) après une chasse
 
-D'où vient la formule des promotions qu'utilise le moteur (`promotions` dans `src/game/army/combat.ts`, section « Promotions » de `chasse.md`), ce que chaque source en dit et ce que les rapports réels confirment. Recherche du 2026-10-18.
+D'où vient la formule des promotions qu'utilise le moteur (`promotions` dans `packages/game/src/army/combat.ts`, section « Promotions » de `chasse.md`), ce que chaque source en dit et ce que les rapports réels confirment. Recherche du 2026-10-18.
 
 ## Formule retenue
 
@@ -58,7 +58,7 @@ La formule du projet est **confirmée** sur les rapports réels. Elle est équiv
 
 ## Rejeu sur les rapports réels
 
-Fixture : `src/game/army/__fixtures__/hunt-reports.ts`, 35 combats du 05/10 au 07/10/26, **seulement JSN + SN**. Le test existant (`combat.test.ts`) ne rejoue les promotions que sur les 8 combats datés du 07/10, Bouclier 4. Pour ce rejeu, un test vitest temporaire a appelé `fight` (survivantes fractionnaires comme dans le code) pour chaque Bouclier de 0 à 6 ; le fichier a été supprimé ensuite.
+Fixture : `packages/game/src/army/__fixtures__/hunt-reports.ts`, 35 combats du 05/10 au 07/10/26, **seulement JSN + SN**. Le test existant (`combat.test.ts`) ne rejoue les promotions que sur les 8 combats datés du 07/10, Bouclier 4. Pour ce rejeu, un test vitest temporaire a appelé `fight` (survivantes fractionnaires comme dans le code) pour chaque Bouclier de 0 à 6 ; le fichier a été supprimé ensuite.
 
 Niveaux couverts :
 
@@ -103,13 +103,13 @@ La formule de `promotions` et la section « Promotions » de `chasse.md` sont ju
    - préciser que l'Étable n'est vérifiée qu'à 0 ;
    - citer Zzzelp comme source d'origine des poids et de la forme ;
    - renvoyer à ce fichier.
-2. `src/game/army/units.ts` (pas `combat.ts`) : passer `promotesTo` de C à `"CE"` et de Tk à `"TkE"` **une fois qu'un rapport l'aura confirmé** (voir plus bas). `promotions` n'a pas à changer, elle suit `promotesTo`. Les poids de C et Tk comptent déjà dans W.
-3. `src/game/army/units.ts`, commentaire d'en-tête : les poids viennent de Zzzelp (`Armee.php`, `get_PuissanceXP`), repris par Zéro perte.
+2. `packages/game/src/army/units.ts` (pas `combat.ts`) : passer `promotesTo` de C à `"CE"` et de Tk à `"TkE"` **une fois qu'un rapport l'aura confirmé** (voir plus bas). `promotions` n'a pas à changer, elle suit `promotesTo`. Les poids de C et Tk comptent déjà dans W.
+3. `packages/game/src/army/units.ts`, commentaire d'en-tête : les poids viennent de Zzzelp (`Armee.php`, `get_PuissanceXP`), repris par Zéro perte.
 4. Le test des promotions (`combat.test.ts`) pourrait couvrir les 35 combats avec l'historique de Bouclier ci-dessus, en le présentant comme déduit.
 
 ## Faut-il chercher à optimiser l'XP ? (mesures du 2026-10-18)
 
-Simulations d'Optizzz (moteur de `src/features/hunt-launcher/engine/`, formule ci-dessus, Étable extrapolée au-delà de 0) sur 408 situations : armées de 1 000 à 5 millions de fourmis (JSN seules, début, milieu, tanks, tueuses), TdC de 1 000 à 5 millions de cm², niveaux bas (A2 B2 É0) à hauts (A20 B20 É15), et Étable 20.
+Simulations d'Optizzz (moteur de `apps/extension/src/features/hunt-launcher/engine/`, formule ci-dessus, Étable extrapolée au-delà de 0) sur 408 situations : armées de 1 000 à 5 millions de fourmis (JSN seules, début, milieu, tanks, tueuses), TdC de 1 000 à 5 millions de cm², niveaux bas (A2 B2 É0) à hauts (A20 B20 É15), et Étable 20.
 
 - **Baisser le ratio** : en nourriture, les promotions en plus ne couvrent jamais les pertes en plus (médiane 16 % en niveaux bas, 49 % avec Étable 20, en passant de 8 à 7 ; moins encore plus bas). En temps de ponte, seul le passage de 8 à 7 s'équilibre, avec Étable 15–20 et une armée de JSN.
 - **Une chasse au lieu de plusieurs** : +70 % de promotions vers 1 000 fourmis (l'arrondi par chasse), rien au-delà de 100 000 ; moins de cm² par heure.

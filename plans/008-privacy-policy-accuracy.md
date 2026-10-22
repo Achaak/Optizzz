@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- PRIVACY.md docs/store/fiche.md docs/features/roadmap.md src/features/toggles.ts src/features/alerts/notification-settings.ts src/data/probes.ts`
+> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- PRIVACY.md docs/store/fiche.md docs/features/roadmap.md apps/extension/src/features/toggles.ts apps/extension/src/features/alerts/notification-settings.ts apps/extension/src/data/probes.ts`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
@@ -47,10 +47,10 @@ the roadmap rule all describe the actual behaviour.
   - line 26: `Dans le stockage local de ton navigateur (\`storage.local\`), et nulle part ailleurs :` followed by a bullet list (lines 28–33) with no bullet for alliance sharing.
   - line 41: permission `storage` : « enregistrer les paramètres et le cache décrits ci-dessus ».
 - Code facts (do not change code):
-  - `src/features/toggles.ts:11` — `export const TOGGLES_KEY = "sync:featureToggles";`
-  - `src/features/alerts/notification-settings.ts:5` — `export const NOTIFICATIONS_KEY = "sync:alertNotifications";`
-  - `src/data/probes.ts:74-79` — POSTs `${origin}/Armee.php` with `credentials: "include"` to move a probe.
-  - `src/data/shared-states.ts` — key `` `local:allianceSharing:${host}:states` ``: members' pasted states, values
+  - `apps/extension/src/features/toggles.ts:11` — `export const TOGGLES_KEY = "sync:featureToggles";`
+  - `apps/extension/src/features/alerts/notification-settings.ts:5` — `export const NOTIFICATIONS_KEY = "sync:alertNotifications";`
+  - `apps/extension/src/data/probes.ts:74-79` — POSTs `${origin}/Armee.php` with `credentials: "include"` to move a probe.
+  - `apps/extension/src/data/shared-states.ts` — key `` `local:allianceSharing:${host}:states` ``: members' pasted states, values
     typed by hand, and the player's own last share.
   - Every other key is `local:` (`grep -rhoE '"(local|sync|session):[A-Za-z]+' src` and the same with a backtick).
 - `docs/store/fiche.md`:

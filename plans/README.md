@@ -23,27 +23,27 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 ## Dependency notes
 
-- 004 after 002: both edit `src/data/shared-states.ts` (002 adds a parameter to `forgetFormerMembers`, 004 wraps it in a lock).
-- 005 after 004: uses `withStorageLock` from `src/utils/storage-lock.ts`, created by 004.
-- 007 after 005: both edit `src/data/launches.ts` (`readQueue` / `flushQueuedLaunches`).
+- 004 after 002: both edit `apps/extension/src/data/shared-states.ts` (002 adds a parameter to `forgetFormerMembers`, 004 wraps it in a lock).
+- 005 after 004: uses `withStorageLock` from `apps/extension/src/utils/storage-lock.ts`, created by 004.
+- 007 after 005: both edit `apps/extension/src/data/launches.ts` (`readQueue` / `flushQueuedLaunches`).
 - 001, 003, 006, 008 are independent and can run in parallel with anything.
 
 ## Findings not planned yet (from the same audit, ranked)
 
 These were found and checked but not selected for this batch. Each needs its own plan before work starts.
 
-1. **zod is about a third of the script loaded on every game page**: `src/data/exports.ts:2`, which reaches `fourmizzz.js` through `src/features/index.ts`. S-M.
-2. **The daily export history is never purged**, and the « tout » view downloads every missing day back to back: `src/data/export-history.ts:1-2, 49-67`. S-M.
+1. **zod is about a third of the script loaded on every game page**: `apps/extension/src/data/exports.ts:2`, which reaches `fourmizzz.js` through `apps/extension/src/features/index.ts`. S-M.
+2. **The daily export history is never purged**, and the « tout » view downloads every missing day back to back: `apps/extension/src/data/export-history.ts:1-2, 49-67`. S-M.
 3. **Five React/ECharts bundles (about 3.4 MB) are injected on every `alliance.php` load**, even though at most one view shows. M, MED risk.
-4. **Shared layers import from features**: `src/game/pages/end-times.ts:3,6`, `src/data/on-way.ts:3`, `src/utils/alliance-views.ts:3-8`. There are also about 25 sibling-feature imports. M.
-5. **Game rules and helpers still copied in places**: `src/data/levels.ts:19-40` (a second level reader); `src/features/work-queue/progress.ts:13` (the 1.6/1.7 factors); `src/features/server-map/filter.ts:52` (the range); `FLOOD_MARGIN` / `CHAIN_MARGIN`; 4 integer parses written by hand. S each. Do this after 4.
+4. **Shared layers import from features**: `apps/extension/src/features/end-times/end-pages.ts:3,6`, `apps/extension/src/data/on-way.ts:3`, `apps/extension/src/utils/alliance-views.ts:3-8`. There are also about 25 sibling-feature imports. M.
+5. **Game rules and helpers still copied in places**: `apps/extension/src/data/levels.ts:19-40` (a second level reader); `apps/extension/src/features/work-queue/progress.ts:13` (the 1.6/1.7 factors); `apps/extension/src/features/server-map/filter.ts:52` (the range); `FLOOD_MARGIN` / `CHAIN_MARGIN`; 4 integer parses written by hand. S each. Do this after 4.
 6. **`TdcChain.tsx` is 792 lines** with logic inside the view. Coverage is low: tdc-chain 52 %, history 22 %, hunt-launcher 29 %. Extract the pure parts and test them. M.
 7. **All 124 test files run in happy-dom**, which is 61 % of test time; about 45 files need no DOM (`vitest.config.ts:7`). S. After that, consider a lighter pre-commit hook.
 8. **Smaller bugs**:
-   - Importing your own share hides your ↑/↓ markers, because of minute rounding (`src/data/shared-states.ts:211-218`).
-   - `useStoredSettings` writes the whole object from a stale copy (`src/utils/useStoredSettings.ts`).
+   - Importing your own share hides your ↑/↓ markers, because of minute rounding (`apps/extension/src/data/shared-states.ts:211-218`).
+   - `useStoredSettings` writes the whole object from a stale copy (`apps/extension/src/utils/useStoredSettings.ts`).
    - Async effects are not cancelled (`CombatSimulator.tsx:160-182`).
-   - `dailyVersions` is off by one day around DST changes (`src/data/export-history.ts:23`).
+   - `dailyVersions` is off by one day around DST changes (`apps/extension/src/data/export-history.ts:23`).
 9. **Docs pass**:
    - `feature-toggles.md` counts are stale, and the `isFeatureEnabled` rule is unused; `CLAUDE.md` repeats that rule.
    - The roadmap stops at step 14.
@@ -51,8 +51,8 @@ These were found and checked but not selected for this batch. Each needs its own
 
 ## Findings considered and rejected
 
-- **The flood plan's loop (`src/game/flood.ts`) and the chain's (`src/features/tdc-chain/chain.ts`) differ.** They only split the last, ant-capped wave differently, and the total taken is the same. Merging them is not worth the risk.
-- **O(M×P) scan in `src/features/alliance-stats/production.ts:118,129`.** It is about 600k comparisons for a large alliance, which is negligible.
+- **The flood plan's loop (`packages/game/src/flood.ts`) and the chain's (`apps/extension/src/features/tdc-chain/chain.ts`) differ.** They only split the last, ant-capped wave differently, and the total taken is the same. Merging them is not worth the risk.
+- **O(M×P) scan in `apps/extension/src/features/alliance-stats/production.ts:118,129`.** It is about 600k comparisons for a large alliance, which is negligible.
 - **627 KB of always-on CSS with images inlined (`game-look`).** The size is real, but its paint cost has not been measured. Measure it before planning anything.
 - **`@vitest/coverage-v8` pinned exactly while `vitest` is a range.** Too minor to plan.
 - **Storage race on `local:alerts:stocks` between two different servers.** Those are two origins, so Web Locks cannot help. The lost write only reverts that server's stock to its previous reading until its next page load. Recorded in plan 004.

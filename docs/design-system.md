@@ -1,6 +1,6 @@
 # Design système
 
-Tout ce qu'Optizzz affiche (encarts posés dans les pages du jeu, vues React en Shadow DOM, popup, pages de l'extension) se construit avec les mêmes jetons et les mêmes composants, définis dans `src/theme/theme.css`. Une feature n'écrit que ce qui lui est propre : sa mise en page, ses colonnes, ses largeurs. Décision : [ADR 0004](adr/0004-design-systeme.md).
+Tout ce qu'Optizzz affiche (encarts posés dans les pages du jeu, vues React en Shadow DOM, popup, pages de l'extension) se construit avec les mêmes jetons et les mêmes composants, définis dans `apps/extension/src/theme/theme.css`. Une feature n'écrit que ce qui lui est propre : sa mise en page, ses colonnes, ses largeurs. Décision : [ADR 0004](adr/0004-design-systeme.md).
 
 Planche de démonstration : `docs/design-system/specimen.html`, qui charge le vrai `theme.css`. Pour l'ouvrir, servir la racine du dépôt (`python3 -m http.server 4178`, ou la configuration `design-system` de `.claude/launch.json`), puis aller sur `/docs/design-system/specimen.html`.
 
@@ -25,7 +25,7 @@ Planche de démonstration : `docs/design-system/specimen.html`, qui charge le vr
 | Choix            | `--optizzz-selected`, `--optizzz-selected-text`                                                                                       | Le bouton choisi d'un groupe, une pastille cochée                                                                                                                                               |
 | Menu sombre      | `--optizzz-menu-text`, `--optizzz-menu-warning`, `--optizzz-menu-danger`                                                              | Ce qu'Optizzz écrit dans les boîtes sombres du menu (ressources de l'en-tête) : jamais les couleurs `-text`, faites pour le parchemin                                                           |
 
-Les graphiques ECharts, qui dessinent sur un canvas, prennent `CHART_COLORS` (`src/theme/index.ts`).
+Les graphiques ECharts, qui dessinent sur un canvas, prennent `CHART_COLORS` (`apps/extension/src/theme/index.ts`).
 
 ## Composants
 
@@ -53,7 +53,7 @@ Classes globales, préfixées `optizzz-`, valables dans un Shadow DOM comme dans
 
 Les champs, listes, cases, `fieldset` et `legend` prennent le style du thème sans classe, dans un Shadow DOM ou sous un élément dont une classe commence par `optizzz-` (couche `optizzz-controls`). Une page de l'extension pose donc une classe `optizzz-…` sur sa racine (`optizzz-popup`, `optizzz-simulator-page`).
 
-L'habillage du jeu (`src/features/game-look/style.css`) ne touche ni aux titres ni aux champs d'un bloc Optizzz.
+L'habillage du jeu (`apps/extension/src/features/game-look/style.css`) ne touche ni aux titres ni aux champs d'un bloc Optizzz.
 
 ## Écrire une nouvelle vue
 

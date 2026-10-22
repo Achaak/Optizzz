@@ -1,18 +1,14 @@
 import { defineConfig } from "vitest/config";
-import { WxtVitest } from "wxt/testing/vitest-plugin";
 
+// `pnpm test` runs every app's and package's tests together; each has its own vitest.config.ts.
 export default defineConfig({
-  plugins: [WxtVitest()],
   test: {
-    environment: "happy-dom",
-    setupFiles: ["./vitest.setup.ts"],
-    // Dates in the tests are written in local time, and the game's times are Paris time.
-    env: { TZ: "Europe/Paris" },
+    projects: ["apps/*", "packages/*"],
     // `pnpm test:coverage` → coverage/index.html
     coverage: {
       provider: "v8",
-      include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}", "src/**/__fixtures__/**", "src/entrypoints/**"],
+      include: ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+      exclude: ["**/*.test.{ts,tsx}", "**/__fixtures__/**", "apps/extension/src/entrypoints/**"],
       reporter: ["text-summary", "html"],
     },
   },

@@ -8,14 +8,14 @@ Lire d'un coup d'œil les grands nombres du jeu et d'Optizzz : « 1,23M » plut�
 
 ## Règles
 
-- **Écriture** : trois chiffres significatifs, virgule française, suffixe collé en majuscule : `12,3K`, `123K`, `1,23M`, `4,51G`. Zéros inutiles ôtés (`10K`, `1,5M`). Un arrondi qui atteint 1 000 passe à l'unité suivante (999 999 → `1M`). `formatCompact` (`src/utils/number-format.ts`).
+- **Écriture** : trois chiffres significatifs, virgule française, suffixe collé en majuscule : `12,3K`, `123K`, `1,23M`, `4,51G`. Zéros inutiles ôtés (`10K`, `1,5M`). Un arrondi qui atteint 1 000 passe à l'unité suivante (999 999 → `1M`). `formatCompact` (`packages/game/src/format/number-format.ts`).
 - **Seuil** : dès 10 000. En dessous, le nombre est écrit en entier (« 9 999 » n'est pas plus long que « 10K »).
 - **Éteinte par défaut** (`offByDefault` sur la feature) ; deux sous-options, allumées avec elle : **pages du jeu** et **tableaux et encarts d'Optizzz**.
 - **Restent exacts** : les champs, les textes à copier (Discord, plan de la chaîne, bilan des convois), les quantités que le joueur envoie ou pond (attaques du plan de flood et de la chaîne de TDC, surface par chasse, quantités de ponte), les infobulles qui donnent déjà la valeur exacte, les libellés mémorisés (« Chasse 1 250 cm² » des Heures de fin).
 
 ## Pages du jeu (sous-option « game »)
 
-Le nombre du jeu reste dans la page, masqué visuellement, et le texte court est dessiné par CSS (`::after { content: attr(data-compact) }`) : `textContent` et `innerText` ne changent pas. Les lecteurs d'Optizzz (`src/game/pages/`), les scripts du jeu (`$('#cout_…').text()` sur la Reine) et le tri des tableaux (`tablesort.js`) lisent toujours le nombre exact, et copier le texte copie le nombre exact. La valeur exacte s'affiche au survol ; là où le jeu a déjà une infobulle (en-tête : « entrepôt rempli à 7% »), elle passe devant son texte.
+Le nombre du jeu reste dans la page, masqué visuellement, et le texte court est dessiné par CSS (`::after { content: attr(data-compact) }`) : `textContent` et `innerText` ne changent pas. Les lecteurs d'Optizzz (`packages/game/src/pages/`), les scripts du jeu (`$('#cout_…').text()` sur la Reine) et le tri des tableaux (`tablesort.js`) lisent toujours le nombre exact, et copier le texte copie le nombre exact. La valeur exacte s'affiche au survol ; là où le jeu a déjà une infobulle (en-tête : « entrepôt rempli à 7% »), elle passe devant son texte.
 
 Seuls les nombres écrits comme le jeu les affiche, avec séparateurs de milliers (« 1 234 567 »), sont pris : les nombres bruts des scripts (`#nb_nourriture` « 208302916.16 », `#armee_initial`, `tps_restant`) n'en ont pas.
 
@@ -44,17 +44,17 @@ La feature passe **en dernier** dans le registre, après les autres features qui
 
 ## Tableaux et encarts d'Optizzz (sous-option « extension »)
 
-`formatAmount` (`src/utils/number-format.ts`) écrit une quantité à lire : courte quand la sous-option est allumée, entière sinon. `formatNumber` reste l'écriture exacte (champs, textes à copier, quantités à envoyer). L'interrupteur est lu une fois par chaque content script et chaque page de l'extension avant de dessiner (`applyCompactNumbers` / `loadCompactNumbers`, `src/features/compact-numbers/index.ts`) ; le content script commun le pose dans la première feature du registre.
+`formatAmount` (`packages/game/src/format/number-format.ts`) écrit une quantité à lire : courte quand la sous-option est allumée, entière sinon. `formatNumber` reste l'écriture exacte (champs, textes à copier, quantités à envoyer). L'interrupteur est lu une fois par chaque content script et chaque page de l'extension avant de dessiner (`applyCompactNumbers` / `loadCompactNumbers`, `apps/extension/src/features/compact-numbers/index.ts`) ; le content script commun le pose dans la première feature du registre.
 
 Recensement du 2026-10-19 : 240 appels à `formatNumber` / `formatDecimal` dans 57 fichiers. `formatDecimal` (distances, ratios, pourcentages) reste tel quel : ces nombres restent petits. Les axes des graphiques de progression sont courts, leur infobulle exacte.
 
-**Valeur exacte au survol** : `<Amount value={…} />` (`src/utils/Amount.tsx`) dans les vues React (chaîne de TDC, cartes, suivis, statistiques, historique, partage, lanceur de chasse, simulateur, modèles de ponte), `showExactAmount` pour les cellules construites en DOM (Cibles, plan de flood, rapports de chasse, convois livrés et reçus). Un nombre pris dans une phrase n'a pas d'infobulle.
+**Valeur exacte au survol** : `<Amount value={…} />` (`apps/extension/src/utils/Amount.tsx`) dans les vues React (chaîne de TDC, cartes, suivis, statistiques, historique, partage, lanceur de chasse, simulateur, modèles de ponte), `showExactAmount` pour les cellules construites en DOM (Cibles, plan de flood, rapports de chasse, convois livrés et reçus). Un nombre pris dans une phrase n'a pas d'infobulle.
 
 ## Code
 
-| Fichier                                                 | Rôle                                                                                   |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `src/utils/number-format.ts` (+ test)                   | `formatCompact`, `formatAmount`, `setCompactNumbers`, `isCompacted`, `showExactAmount` |
-| `src/utils/Amount.tsx` (+ test)                         | Une quantité dans une vue React, exacte au survol si abrégée                           |
-| `src/features/compact-numbers/game-numbers.ts` (+ test) | Zones des pages du jeu, rapports de la messagerie, remplacement visuel des nombres     |
-| `src/features/compact-numbers/index.ts`                 | Les deux features (interrupteur en premier, pages du jeu en dernier)                   |
+| Fichier                                                                | Rôle                                                                                   |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `packages/game/src/format/number-format.ts` (+ test)                   | `formatCompact`, `formatAmount`, `setCompactNumbers`, `isCompacted`, `showExactAmount` |
+| `apps/extension/src/utils/Amount.tsx` (+ test)                         | Une quantité dans une vue React, exacte au survol si abrégée                           |
+| `apps/extension/src/features/compact-numbers/game-numbers.ts` (+ test) | Zones des pages du jeu, rapports de la messagerie, remplacement visuel des nombres     |
+| `apps/extension/src/features/compact-numbers/index.ts`                 | Les deux features (interrupteur en premier, pages du jeu en dernier)                   |

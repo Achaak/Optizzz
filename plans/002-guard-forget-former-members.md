@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- src/data/shared-states.ts src/data/shared-states.test.ts src/features/alliance-sharing/AllianceSharing.tsx src/entrypoints/alliance-sharing.content/index.tsx`
+> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- apps/extension/src/data/shared-states.ts apps/extension/src/data/shared-states.test.ts apps/extension/src/features/alliance-sharing/AllianceSharing.tsx apps/extension/src/entrypoints/alliance-sharing.content/index.tsx`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
@@ -33,7 +33,7 @@ runs when the members list is plausibly complete: non-empty, and containing the 
 
 ## Current state
 
-- `src/data/shared-states.ts:173-180` — the deletion:
+- `apps/extension/src/data/shared-states.ts:173-180` — the deletion:
 
   ```ts
   /** Forgets the members no longer on the members page; everything when the player is now in another alliance. */
@@ -53,7 +53,7 @@ runs when the members list is plausibly complete: non-empty, and containing the 
   ("everything when the player is now in another alliance" is handled by `readStored`, lines 108–112, which
   returns an empty record when the stored alliance differs; keep that behaviour.)
 
-- `src/features/alliance-sharing/AllianceSharing.tsx:113-121` — calls it as soon as `members` is non-null:
+- `apps/extension/src/features/alliance-sharing/AllianceSharing.tsx:113-121` — calls it as soon as `members` is non-null:
 
   ```ts
   // Former members are forgotten, and my own last share shows in my row.
@@ -70,17 +70,17 @@ runs when the members list is plausibly complete: non-empty, and containing the 
 
   Props (lines 18–25): `origin`, `alliance: string | null`, `members: string[] | null`.
 
-- `src/entrypoints/alliance-sharing.content/index.tsx:52-91` — `mountAllianceSharing` reads
+- `apps/extension/src/entrypoints/alliance-sharing.content/index.tsx:52-91` — `mountAllianceSharing` reads
   `members = [...readMembersHuntingField(document).keys()]` once `#tabMembresAlliance` exists (line 88–90) and
   renders `<AllianceSharing origin={location.origin} alliance={alliance} members={members} />` (line 59).
-  `readMembersHuntingField` (`src/game/pages/alliance.ts:8-17`) silently skips rows whose pseudo or field cell
+  `readMembersHuntingField` (`packages/game/src/pages/alliance.ts:8-17`) silently skips rows whose pseudo or field cell
   is missing, so a layout change yields an empty map.
 
-- `readLoggedInPseudo(document)` (`src/game/pages/alliance.ts:19-23`) returns the logged-in player's pseudo
+- `readLoggedInPseudo(document)` (`packages/game/src/pages/alliance.ts:19-23`) returns the logged-in player's pseudo
   from `#pseudo`, or null. It is already imported in this entrypoint (line 9) and used for « Mon état » (line 25).
   A correct members table of _my_ alliance always contains me.
 
-- Tests: `src/data/shared-states.test.ts` uses `fakeBrowser` from `wxt/testing/fake-browser`
+- Tests: `apps/extension/src/data/shared-states.test.ts` uses `fakeBrowser` from `wxt/testing/fake-browser`
   (`beforeEach(() => fakeBrowser.reset())`), origin `https://s5.fourmizzz.fr`, helper `bob(readAt, weapons)`.
   Existing `describe("forgetting")` at lines 98–116 — both existing tests must keep passing unchanged
   **except** for the added argument.
@@ -89,21 +89,21 @@ runs when the members list is plausibly complete: non-empty, and containing the 
 
 ## Commands you will need
 
-| Purpose   | Command                                          | Expected on success |
-| --------- | ------------------------------------------------ | ------------------- |
-| Typecheck | `pnpm typecheck`                                 | exit 0              |
-| Tests     | `pnpm vitest run src/data/shared-states.test.ts` | all pass            |
-| All tests | `pnpm vitest run`                                | all pass            |
-| Lint      | `pnpm lint`                                      | 0 errors            |
+| Purpose   | Command                                                         | Expected on success |
+| --------- | --------------------------------------------------------------- | ------------------- |
+| Typecheck | `pnpm typecheck`                                                | exit 0              |
+| Tests     | `pnpm vitest run apps/extension/src/data/shared-states.test.ts` | all pass            |
+| All tests | `pnpm vitest run`                                               | all pass            |
+| Lint      | `pnpm lint`                                                     | 0 errors            |
 
 ## Scope
 
 **In scope**:
 
-- `src/data/shared-states.ts`
-- `src/data/shared-states.test.ts`
-- `src/features/alliance-sharing/AllianceSharing.tsx`
-- `src/entrypoints/alliance-sharing.content/index.tsx`
+- `apps/extension/src/data/shared-states.ts`
+- `apps/extension/src/data/shared-states.test.ts`
+- `apps/extension/src/features/alliance-sharing/AllianceSharing.tsx`
+- `apps/extension/src/entrypoints/alliance-sharing.content/index.tsx`
 
 **Out of scope**:
 
@@ -121,7 +121,7 @@ runs when the members list is plausibly complete: non-empty, and containing the 
 
 ### Step 1: Write the failing tests first
 
-In `src/data/shared-states.test.ts`, inside `describe("forgetting")`, add:
+In `apps/extension/src/data/shared-states.test.ts`, inside `describe("forgetting")`, add:
 
 1. "keeps everything when the members list is empty": import Bob, set a manual value for Ann, call
    `forgetFormerMembers(ORIGIN, "ABC", [], "Me")`, assert Bob's state and Ann's value are still there.
@@ -133,7 +133,7 @@ In `src/data/shared-states.test.ts`, inside `describe("forgetting")`, add:
 Update the two existing calls to pass a 4th argument that is in the list (e.g. `["Carl"]` → `["Carl"], "Carl"`
 and `["Bob"]` → `["Bob"], "Bob"`) so their expectations stay valid.
 
-**Verify**: `pnpm vitest run src/data/shared-states.test.ts` → the new tests fail (typecheck errors on the
+**Verify**: `pnpm vitest run apps/extension/src/data/shared-states.test.ts` → the new tests fail (typecheck errors on the
 argument count are expected at this point in the editor, vitest still runs).
 
 ### Step 2: Guard `forgetFormerMembers`
@@ -144,7 +144,7 @@ return early, **without writing**, when `members.length === 0` or when `me !== n
 Update the doc comment: "…only when `members` looks like a full read: not empty, and with me in it when my
 pseudo is known."
 
-**Verify**: `pnpm vitest run src/data/shared-states.test.ts` → all pass.
+**Verify**: `pnpm vitest run apps/extension/src/data/shared-states.test.ts` → all pass.
 
 ### Step 3: Pass the logged-in pseudo through
 
@@ -161,13 +161,13 @@ pseudo is known."
 
 ## Test plan
 
-Three new cases in `src/data/shared-states.test.ts` (Step 1); two existing ones adapted. Pattern: the
+Three new cases in `apps/extension/src/data/shared-states.test.ts` (Step 1); two existing ones adapted. Pattern: the
 existing `describe("forgetting")` block.
 
 ## Done criteria
 
 - [ ] `pnpm typecheck`, `pnpm lint`, `pnpm vitest run` exit 0
-- [ ] `src/data/shared-states.test.ts` has the 3 new tests, passing
+- [ ] `apps/extension/src/data/shared-states.test.ts` has the 3 new tests, passing
 - [ ] Only in-scope files modified (`git status`)
 - [ ] `plans/README.md` status row updated
 
@@ -181,6 +181,6 @@ existing `describe("forgetting")` block.
 
 - A partially filled table that still contains me can still forget members; the risk is much lower than an
   empty read. If that is ever observed, read the members when the row count is stable rather than on the
-  first mutation (`waitForElement` in `src/utils/wait-for-element.ts`).
+  first mutation (`waitForElement` in `apps/extension/src/utils/wait-for-element.ts`).
 - Any future "forget" over stored data driven by a page read should carry the same "the read looks complete"
   guard.

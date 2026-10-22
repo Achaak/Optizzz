@@ -12,11 +12,11 @@ Prendre le plus de TDC possible à une cible en plusieurs attaques (un flood), a
 - La portée 50 % (inclus) – 300 % (exclu) est revérifiée à chaque arrivée, les deux TDC ayant bougé.
 - Attaques simultanées : Vitesse d'attaque + 1 (vérifié sur le simulateur de flood du jeu).
 
-Ces règles vivent dans `src/game/attack.ts` (prise, portée avec marge, prise à la limite, créneaux), partagées avec les Cibles, la Chaîne de TDC et le simulateur. L'encart les rappelle dans « Règles utilisées », replié en bas.
+Ces règles vivent dans `packages/game/src/attack.ts` (prise, portée avec marge, prise à la limite, créneaux), partagées avec les Cibles, la Chaîne de TDC et le simulateur. L'encart les rappelle dans « Règles utilisées », replié en bas.
 
 ## Comportement
 
-- **Calcul** (`src/game/flood.ts`) :
+- **Calcul** (`packages/game/src/flood.ts`) :
   - attaques de 20 % tant que la cible reste à portée pour la suivante ;
   - chaque vague, la première comprise (aussi contre une défense), demande la cible à 50 % de mon TDC + 1 % de marge : entre 50 % et 50,5 %, rien n'est proposé et l'encart dit « trop juste » ;
   - quand 20 % la ferait sortir et qu'il reste une attaque, la plus grosse prise qui la laisse à 50 % de mon TDC + 1 % de marge, puis une dernière de 20 % ;
@@ -37,7 +37,7 @@ Ces règles vivent dans `src/game/attack.ts` (prise, portée avec marge, prise �
   - une attaque notée que le jeu ne liste plus a été **annulée** : oubliée ;
   - une attaque listée mais pas notée a été lancée sans le plan : elle prend un créneau, sa prise n'est pas comptée (l'encart le dit) ;
   - l'heure d'arrivée du jeu remplace celle estimée.
-- **Cibles à portée** : colonne « Flood max », triable, d'après l'armée mémorisée sur `Armee.php` (Terrain + Dôme, + Loge si la case est cochée), les défenses collées et les mêmes attaques en route que ce plan (`src/data/on-way.ts`).
+- **Cibles à portée** : colonne « Flood max », triable, d'après l'armée mémorisée sur `Armee.php` (Terrain + Dôme, + Loge si la case est cochée), les défenses collées et les mêmes attaques en route que ce plan (`apps/extension/src/data/on-way.ts`).
 - **Anti-sondes** (`sondes.md`) : l'armée planifiée garde une fourmi par lieu surveillé.
 - Interrupteur « Plan de flood » : coupé, rien sur le formulaire, pas de colonne, aucune lecture.
 
@@ -47,17 +47,17 @@ Floods furtifs (tailles arrondies), antisonde, floods entre membres d'une chaîn
 
 ## Code
 
-| Fichier                                  | Rôle                                                                              |
-| ---------------------------------------- | --------------------------------------------------------------------------------- |
-| `src/game/attack.ts` (+ test)            | Prise de 20 %, portée avec marge, prise à la limite, créneaux d'attaque           |
-| `src/game/flood.ts` (+ test)             | Plan des prises, première vague contre une défense, unités envoyées               |
-| `src/features/flood/page.ts` (+ test)    | Lecture et remplissage du formulaire d'attaque, envoi, TDC du profil              |
-| `src/data/launches.ts` (+ test)          | Attaques en route, défenses collées, case Loge, file de session                   |
-| `src/features/flood/attacks.ts` (+ test) | Rapprochement avec la liste « Attaque(s) en cours » d'`Armee.php`                 |
-| `src/data/on-way.ts` (+ test)            | Attaques en route vérifiées, TDC et créneaux une fois arrivées (+ Cibles)         |
-| `src/features/flood/mount.ts` (+ test)   | L'encart sous le formulaire                                                       |
-| `src/features/flood/index.ts`            | La feature (interrupteur `flood`), mémorise l'armée sur `Armee.php`               |
-| `src/features/targets/mount.ts` (+ test) | Colonne « Flood max »                                                             |
-| `src/features/flood/__fixtures__/*.html` | Formulaire d'attaque, profil et `Armee.php` relevés, effectifs et pseudos fictifs |
+| Fichier                                                 | Rôle                                                                              |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `packages/game/src/attack.ts` (+ test)                  | Prise de 20 %, portée avec marge, prise à la limite, créneaux d'attaque           |
+| `packages/game/src/flood.ts` (+ test)                   | Plan des prises, première vague contre une défense, unités envoyées               |
+| `apps/extension/src/features/flood/page.ts` (+ test)    | Lecture et remplissage du formulaire d'attaque, envoi, TDC du profil              |
+| `apps/extension/src/data/launches.ts` (+ test)          | Attaques en route, défenses collées, case Loge, file de session                   |
+| `apps/extension/src/features/flood/attacks.ts` (+ test) | Rapprochement avec la liste « Attaque(s) en cours » d'`Armee.php`                 |
+| `apps/extension/src/data/on-way.ts` (+ test)            | Attaques en route vérifiées, TDC et créneaux une fois arrivées (+ Cibles)         |
+| `apps/extension/src/features/flood/mount.ts` (+ test)   | L'encart sous le formulaire                                                       |
+| `apps/extension/src/features/flood/index.ts`            | La feature (interrupteur `flood`), mémorise l'armée sur `Armee.php`               |
+| `apps/extension/src/features/targets/mount.ts` (+ test) | Colonne « Flood max »                                                             |
+| `apps/extension/src/features/flood/__fixtures__/*.html` | Formulaire d'attaque, profil et `Armee.php` relevés, effectifs et pseudos fictifs |
 
-Réutilise aussi `src/data/garrison.ts` (armée par lieu), `combat-simulator/form.ts` (défense collée) et `src/game/pages/resources.ts` (TDC de l'en-tête).
+Réutilise aussi `apps/extension/src/data/garrison.ts` (armée par lieu), `combat-simulator/form.ts` (défense collée) et `packages/game/src/pages/resources.ts` (TDC de l'en-tête).

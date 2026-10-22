@@ -67,15 +67,15 @@ Décidé le 2026-10-12 : les icônes du jeu (17 à 72 px, souvent des GIF) étai
   2. `python3 scripts/game-icons/prepare.py <originaux> <entrée>` : étend les couleurs sous la transparence (sinon le blanc de fond des GIF déborde sur les bords) ;
   3. `realesrgan-ncnn-vulkan -i <entrée> -o <sortie> -n realesrgan-x4plus -s 4 -f png` ([Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN), binaire `ncnn-vulkan` pour macOS) ;
   4. `python3 scripts/game-icons/finish.py <originaux> <sortie> <final>` : lisse le bord des GIF (transparence tout ou rien), ramène à 3× (sprite 2×), WebP qualité 90 (Pillow et numpy requis) ;
-  5. copier dans `src/features/game-look/icons/` sous le chemin du jeu, et ajouter la règle dans `icons.css`.
+  5. copier dans `apps/extension/src/features/game-look/icons/` sous le chemin du jeu, et ajouter la règle dans `icons.css`.
 
 ## Code
 
-| Fichier                                      | Rôle                                                                   |
-| -------------------------------------------- | ---------------------------------------------------------------------- |
-| `src/features/game-look/style.css`           | La feuille du jeu, tout sous `html.optizzz-game-look`                  |
-| `src/features/game-look/icons.css`           | Les icônes du jeu agrandies, à la place des originales                 |
-| `src/features/game-look/icons/`              | Les WebP, rangés comme dans `images/` du jeu                           |
-| `scripts/game-icons/`                        | Préparation et finition de l'agrandissement (voir « Icônes »)          |
-| `src/entrypoints/game-look.content/index.ts` | Pose la classe sur `<html>` à `document_start`                         |
-| `src/theme/theme.css`                        | Variables des outils et contrôles restylés (`@layer optizzz-controls`) |
+| Fichier                                                     | Rôle                                                                   |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `apps/extension/src/features/game-look/style.css`           | La feuille du jeu, tout sous `html.optizzz-game-look`                  |
+| `apps/extension/src/features/game-look/icons.css`           | Les icônes du jeu agrandies, à la place des originales                 |
+| `apps/extension/src/features/game-look/icons/`              | Les WebP, rangés comme dans `images/` du jeu                           |
+| `scripts/game-icons/`                                       | Préparation et finition de l'agrandissement (voir « Icônes »)          |
+| `apps/extension/src/entrypoints/game-look.content/index.ts` | Pose la classe sur `<html>` à `document_start`                         |
+| `apps/extension/src/theme/theme.css`                        | Variables des outils et contrôles restylés (`@layer optizzz-controls`) |

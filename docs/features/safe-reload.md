@@ -19,7 +19,7 @@ Le jeu ne redirige pas après un formulaire : la page affichée après une ponte
 
 ## Code
 
-| Fichier                                | Rôle                                 |
-| -------------------------------------- | ------------------------------------ |
-| `src/features/safe-reload/safe-url.ts` | Adresse sûre (sans requête d'action) |
-| `src/features/safe-reload/index.ts`    | Remplace l'entrée de l'historique    |
+| Fichier                                               | Rôle                                 |
+| ----------------------------------------------------- | ------------------------------------ |
+| `apps/extension/src/features/safe-reload/safe-url.ts` | Adresse sûre (sans requête d'action) |
+| `apps/extension/src/features/safe-reload/index.ts`    | Remplace l'entrée de l'historique    |

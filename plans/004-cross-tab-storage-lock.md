@@ -7,8 +7,8 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- src/utils/storage-lock.ts src/data/end-times.ts src/data/levels.ts src/features/alerts/store.ts src/data/shared-states.ts`
-> `src/data/shared-states.ts` is expected to have changed if plan 002 landed (a 4th parameter on
+> **Drift check (run first)**: `git diff --stat 9361968..HEAD -- apps/extension/src/utils/storage-lock.ts apps/extension/src/data/end-times.ts apps/extension/src/data/levels.ts apps/extension/src/features/alerts/store.ts apps/extension/src/data/shared-states.ts`
+> `apps/extension/src/data/shared-states.ts` is expected to have changed if plan 002 landed (a 4th parameter on
 > `forgetFormerMembers`); that is fine. Any other mismatch with "Current state" is a STOP condition.
 
 ## Status
@@ -16,7 +16,7 @@
 - **Priority**: P1
 - **Effort**: M
 - **Risk**: LOW
-- **Depends on**: plans/002-guard-forget-former-members.md (both edit `src/data/shared-states.ts`)
+- **Depends on**: plans/002-guard-forget-former-members.md (both edit `apps/extension/src/data/shared-states.ts`)
 - **Category**: bug
 - **Planned at**: commit `9361968`, 2026-10-16
 
@@ -39,7 +39,7 @@ missing (the test environment, happy-dom, returns `null` for `navigator.locks`).
 
 ## Current state
 
-- `src/data/end-times.ts:28-42`:
+- `apps/extension/src/data/end-times.ts:28-42`:
 
   ```ts
   // Read-modify-write: two writes at once (two tabs' features, a page read again) must not drop a section.
@@ -61,10 +61,10 @@ missing (the test environment, happy-dom, returns `null` for `navigator.locks`).
 
   `key(origin)` (line 13) is `` `local:endTimes:${host}:sections` ``.
 
-- `src/features/alerts/store.ts:13-26` — same pattern for `STOCKS_KEY = "local:alerts:stocks"` (one key for
+- `apps/extension/src/features/alerts/store.ts:13-26` — same pattern for `STOCKS_KEY = "local:alerts:stocks"` (one key for
   **all** servers, written by content scripts of every server).
 
-- `src/data/levels.ts:57-64` — no serialization:
+- `apps/extension/src/data/levels.ts:57-64` — no serialization:
 
   ```ts
   export async function storeLevels(origin: string, levels: StoredLevels, page?: LevelsPage, readAt = new Date()) {
@@ -76,43 +76,43 @@ missing (the test environment, happy-dom, returns `null` for `navigator.locks`).
   }
   ```
 
-  Callers: `src/features/collect/index.ts:52` (Armee.php), `src/features/game-levels/index.ts:10`,
-  `src/data/levels.ts:117` (background re-read).
+  Callers: `apps/extension/src/features/collect/index.ts:52` (Armee.php), `apps/extension/src/features/game-levels/index.ts:10`,
+  `apps/extension/src/data/levels.ts:117` (background re-read).
 
-- `src/data/shared-states.ts` — `setManualValue` (~line 157), `forgetFormerMembers` (~174),
+- `apps/extension/src/data/shared-states.ts` — `setManualValue` (~line 157), `forgetFormerMembers` (~174),
   `rememberMyShare` (~183), `importStates` (~203) each do `readStored(origin, alliance)` then
   `storage.setItem(key(origin), …)` on `` `local:allianceSharing:${host}:states` `` with no serialization.
 
 - `storage` is `import { storage } from "wxt/utils/storage"`. Tests use `fakeBrowser` from
-  `wxt/testing/fake-browser` and `beforeEach(() => fakeBrowser.reset())` (see `src/data/end-times.test.ts`,
-  `src/features/alerts/store.test.ts`).
+  `wxt/testing/fake-browser` and `beforeEach(() => fakeBrowser.reset())` (see `apps/extension/src/data/end-times.test.ts`,
+  `apps/extension/src/features/alerts/store.test.ts`).
 
 - Conventions: English code/comments; one short comment line above non-obvious code; new shared helpers go in
-  `src/utils/` with a sibling `*.test.ts` (e.g. `src/utils/wait-for-element.ts` + `.test.ts`).
+  `apps/extension/src/utils/` with a sibling `*.test.ts` (e.g. `apps/extension/src/utils/wait-for-element.ts` + `.test.ts`).
 
 ## Commands you will need
 
-| Purpose   | Command                                                                       | Expected on success |
-| --------- | ----------------------------------------------------------------------------- | ------------------- |
-| Typecheck | `pnpm typecheck`                                                              | exit 0              |
-| Tests     | `pnpm vitest run src/utils/storage-lock.test.ts src/data src/features/alerts` | all pass            |
-| All tests | `pnpm vitest run`                                                             | all pass            |
-| Lint      | `pnpm lint`                                                                   | 0 errors            |
-| Build     | `pnpm build && pnpm build:firefox`                                            | exit 0              |
+| Purpose   | Command                                                                                                                    | Expected on success |
+| --------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| Typecheck | `pnpm typecheck`                                                                                                           | exit 0              |
+| Tests     | `pnpm vitest run apps/extension/src/utils/storage-lock.test.ts apps/extension/src/data apps/extension/src/features/alerts` | all pass            |
+| All tests | `pnpm vitest run`                                                                                                          | all pass            |
+| Lint      | `pnpm lint`                                                                                                                | 0 errors            |
+| Build     | `pnpm build && pnpm build:firefox`                                                                                         | exit 0              |
 
 ## Scope
 
 **In scope**:
 
-- `src/utils/storage-lock.ts`, `src/utils/storage-lock.test.ts` (create)
-- `src/data/end-times.ts`, `src/data/levels.ts`, `src/features/alerts/store.ts`, `src/data/shared-states.ts`
-- Their existing test files, only to add concurrency tests: `src/data/levels.test.ts`, `src/data/shared-states.test.ts`
+- `apps/extension/src/utils/storage-lock.ts`, `apps/extension/src/utils/storage-lock.test.ts` (create)
+- `apps/extension/src/data/end-times.ts`, `apps/extension/src/data/levels.ts`, `apps/extension/src/features/alerts/store.ts`, `apps/extension/src/data/shared-states.ts`
+- Their existing test files, only to add concurrency tests: `apps/extension/src/data/levels.test.ts`, `apps/extension/src/data/shared-states.test.ts`
 
 **Out of scope**:
 
-- `src/data/launches.ts` and `src/data/on-way.ts` — plan 005 handles them and will reuse this helper.
+- `apps/extension/src/data/launches.ts` and `apps/extension/src/data/on-way.ts` — plan 005 handles them and will reuse this helper.
 - Changing storage key names or layouts (no migration in this plan).
-- `src/features/alerts/store.ts` cross-**server** races (s2 and s5 tabs are different origins, so Web Locks
+- `apps/extension/src/features/alerts/store.ts` cross-**server** races (s2 and s5 tabs are different origins, so Web Locks
   cannot serialize them); a lost write there only reverts one server's stock to its previous reading until
   that server's next page load. Leave as is; fix the comment (Step 4).
 
@@ -124,9 +124,9 @@ missing (the test environment, happy-dom, returns `null` for `navigator.locks`).
 
 ## Steps
 
-### Step 1: Create `src/utils/storage-lock.ts` (test first)
+### Step 1: Create `apps/extension/src/utils/storage-lock.ts` (test first)
 
-Tests in `src/utils/storage-lock.test.ts`:
+Tests in `apps/extension/src/utils/storage-lock.test.ts`:
 
 1. "runs tasks with the same name one after the other": start two `withStorageLock("k", …)` tasks where the
    first awaits a manually resolved promise; assert the second has not started until the first resolves.
@@ -158,35 +158,35 @@ export function withStorageLock<T>(name: string, task: () => Promise<T>): Promis
 (If `LockManager` is not in the TypeScript DOM lib used here, type `locks` minimally as
 `{ request<T>(name: string, task: () => Promise<T>): Promise<T> } | null | undefined`.)
 
-**Verify**: `pnpm vitest run src/utils/storage-lock.test.ts` → 3 pass. `pnpm typecheck` → exit 0.
+**Verify**: `pnpm vitest run apps/extension/src/utils/storage-lock.test.ts` → 3 pass. `pnpm typecheck` → exit 0.
 
 ### Step 2: Use it in `storeSection`
 
-Replace the `pendingWrite` variable and chain in `src/data/end-times.ts` with
+Replace the `pendingWrite` variable and chain in `apps/extension/src/data/end-times.ts` with
 `return withStorageLock(key(origin), async () => { …same body… });`. Delete `pendingWrite`. Update the comment to:
 `// Read-modify-write, one at a time across this server's tabs: a page read again must not drop another's section.`
 
-**Verify**: `pnpm vitest run src/data/end-times.test.ts` → all pass; `grep -n pendingWrite src/data/end-times.ts` → nothing.
+**Verify**: `pnpm vitest run apps/extension/src/data/end-times.test.ts` → all pass; `grep -n pendingWrite apps/extension/src/data/end-times.ts` → nothing.
 
 ### Step 3: Use it in `storeLevels`
 
 Wrap the whole body of `storeLevels` in `withStorageLock(storageKey(origin), async () => { … })` and return it
 (both keys are updated inside one lock; the readAt key is per server too). Add a test in
-`src/data/levels.test.ts`: call `storeLevels(ORIGIN, { dome: 3 })` and `storeLevels(ORIGIN, { weapons: 7 }, "laboratoire.php")`
+`apps/extension/src/data/levels.test.ts`: call `storeLevels(ORIGIN, { dome: 3 })` and `storeLevels(ORIGIN, { weapons: 7 }, "laboratoire.php")`
 **without awaiting the first**, then `await Promise.all(...)`, and assert `loadStoredLevels(ORIGIN)` contains both
 `dome: 3` and `weapons: 7`. (Use the origin constant and key names the existing test file uses; check
 `StoredLevels` for valid keys.)
 
-**Verify**: `pnpm vitest run src/data/levels.test.ts` → all pass, including the new test.
+**Verify**: `pnpm vitest run apps/extension/src/data/levels.test.ts` → all pass, including the new test.
 
 ### Step 4: Use it in `storeStock`
 
-In `src/features/alerts/store.ts`, replace `pendingWrite` with `withStorageLock(STOCKS_KEY, …)`. Replace the
+In `apps/extension/src/features/alerts/store.ts`, replace `pendingWrite` with `withStorageLock(STOCKS_KEY, …)`. Replace the
 comment with:
 `// Read-modify-write, one at a time across this server's tabs. Tabs of two servers (two origins) can still race: the`
 `// loser keeps its previous stock until its next page load.`
 
-**Verify**: `pnpm vitest run src/features/alerts` → all pass.
+**Verify**: `pnpm vitest run apps/extension/src/features/alerts` → all pass.
 
 ### Step 5: Use it in `shared-states.ts`
 
@@ -196,7 +196,7 @@ returns an `ImportReport`). Keep any early return (e.g. plan 002's guard) **insi
 both are fine, but do not change behaviour. Add one test: `importStates(…bob…)` and
 `setManualValue(…"Ann"…)` started together then awaited with `Promise.all`; both are present afterwards.
 
-**Verify**: `pnpm vitest run src/data/shared-states.test.ts` → all pass.
+**Verify**: `pnpm vitest run apps/extension/src/data/shared-states.test.ts` → all pass.
 
 ### Step 6: Full gate and builds
 
@@ -205,13 +205,13 @@ both are fine, but do not change behaviour. Add one test: `importStates(…bob�
 
 ## Test plan
 
-- `src/utils/storage-lock.test.ts`: ordering, failure isolation, Web Locks delegation.
+- `apps/extension/src/utils/storage-lock.test.ts`: ordering, failure isolation, Web Locks delegation.
 - One concurrency test each in `levels.test.ts` and `shared-states.test.ts`. Existing end-times and alerts
   store tests must still pass unchanged.
 
 ## Done criteria
 
-- [ ] `src/utils/storage-lock.ts` exists and is used by the 4 modules listed
+- [ ] `apps/extension/src/utils/storage-lock.ts` exists and is used by the 4 modules listed
 - [ ] `grep -rn "pendingWrite" src` returns nothing
 - [ ] `pnpm typecheck`, `pnpm lint`, `pnpm vitest run`, `pnpm knip`, `pnpm build`, `pnpm build:firefox` exit 0
 - [ ] Only in-scope files modified

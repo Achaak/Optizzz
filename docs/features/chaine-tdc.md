@@ -11,7 +11,7 @@ Faire passer du TDC entre membres d'une alliance : qui peut prendre à qui, et l
 - Une attaque gagnée prend `min(fourmis, floor(20 % du TDC de la cible))` : il faut envoyer autant de fourmis que de cm² à prendre.
 - La portée 50 % (inclus) – 300 % (exclu) est vérifiée à **chaque arrivée**, avec 1 % de marge au-dessus des 50 % (comme le Plan de flood) : d'autres attaques ou chasses peuvent bouger les TDC avant.
 - Attaques en route à la fois : Vitesse d'attaque + 1, par attaquant, sur tout le plan ; pour moi, moins mes attaques déjà en route notées par le Plan de flood.
-- Ces règles viennent de `src/game/attack.ts`, comme pour le Plan de flood et les Cibles.
+- Ces règles viennent de `packages/game/src/attack.ts`, comme pour le Plan de flood et les Cibles.
 - Personne ne défend son Terrain de Chasse : la vue le rappelle dans un bandeau.
 
 ## Comportement
@@ -47,18 +47,18 @@ Faire passer du TDC entre membres d'une alliance : qui peut prendre à qui, et l
 
 ## Code
 
-| Fichier                                            | Rôle                                                                          |
-| -------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `src/features/tdc-chain/roles.ts` (+ test)         | Rôles, proposition d'après le TDC, partage texte, échelons                    |
-| `src/features/tdc-chain/chain.ts` (+ test)         | Qui peut prendre à qui, transfert, plan de la chaîne, chaîne cassée           |
-| `src/features/tdc-chain/schedule.ts` (+ test)      | Départs et arrivées, première arrivée par défaut                              |
-| `src/features/tdc-chain/plan-text.ts` (+ test)     | Texte « Copier le plan »                                                      |
-| `src/features/tdc-chain/settings.ts`               | Rôles, TDC à garder et couleurs mémorisés ; suivi par la Carte                |
-| `src/features/tdc-chain/role-styles.ts` (+ test)   | Couleur et taille de bulle par rôle, bulles des membres pour la Carte         |
-| `src/features/tdc-chain/menu.ts`                   | Entrée de menu (script léger, toutes les pages)                               |
-| `src/features/tdc-chain/TdcChain.tsx`, `style.css` | Vue React                                                                     |
-| `src/entrypoints/tdc-chain.content/index.tsx`      | Script dédié à `alliance.php` : monte la vue dans un Shadow DOM               |
-| `src/utils/alliance-views.ts` (+ test)             | Vues Optizzz de la page Membres (`#carte`, `#chaine`, `#historique`) allumées |
-| `src/utils/alliance-menu.ts` (+ test)              | Entrées Optizzz du menu d'alliance, dans l'ordre, partagé                     |
+| Fichier                                                           | Rôle                                                                          |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `apps/extension/src/features/tdc-chain/roles.ts` (+ test)         | Rôles, proposition d'après le TDC, partage texte, échelons                    |
+| `apps/extension/src/features/tdc-chain/chain.ts` (+ test)         | Qui peut prendre à qui, transfert, plan de la chaîne, chaîne cassée           |
+| `apps/extension/src/features/tdc-chain/schedule.ts` (+ test)      | Départs et arrivées, première arrivée par défaut                              |
+| `apps/extension/src/features/tdc-chain/plan-text.ts` (+ test)     | Texte « Copier le plan »                                                      |
+| `apps/extension/src/features/tdc-chain/settings.ts`               | Rôles, TDC à garder et couleurs mémorisés ; suivi par la Carte                |
+| `apps/extension/src/features/tdc-chain/role-styles.ts` (+ test)   | Couleur et taille de bulle par rôle, bulles des membres pour la Carte         |
+| `apps/extension/src/features/tdc-chain/menu.ts`                   | Entrée de menu (script léger, toutes les pages)                               |
+| `apps/extension/src/features/tdc-chain/TdcChain.tsx`, `style.css` | Vue React                                                                     |
+| `apps/extension/src/entrypoints/tdc-chain.content/index.tsx`      | Script dédié à `alliance.php` : monte la vue dans un Shadow DOM               |
+| `apps/extension/src/utils/alliance-views.ts` (+ test)             | Vues Optizzz de la page Membres (`#carte`, `#chaine`, `#historique`) allumées |
+| `apps/extension/src/utils/alliance-menu.ts` (+ test)              | Entrées Optizzz du menu d'alliance, dans l'ordre, partagé                     |
 
 La vue se vérifie dans le jeu (S5, 2026-10-08 : 15 membres, plan de la chaîne, transfert, liens, bascule Carte / Chaîne / Membres).

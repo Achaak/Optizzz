@@ -23,9 +23,9 @@ Sur le profil d'un joueur (`Membre.php`), estimer ce qu'il produit par jour à p
 
 ## Code
 
-| Fichier                                    | Rôle                                            |
-| ------------------------------------------ | ----------------------------------------------- |
-| `src/game/production.ts`                   | Production d'un TDC, taux de taxe de colonie    |
-| `src/game/pages/scores.ts`                 | `readProfileState` : libre ou soumise, et à qui |
-| `src/features/profile-production/mount.ts` | Texte et ligne sous « Etat »                    |
-| `src/features/profile-production/index.ts` | Choix du taux de taxe (connu ou minimal)        |
+| Fichier                                                   | Rôle                                            |
+| --------------------------------------------------------- | ----------------------------------------------- |
+| `packages/game/src/production.ts`                         | Production d'un TDC, taux de taxe de colonie    |
+| `packages/game/src/pages/scores.ts`                       | `readProfileState` : libre ou soumise, et à qui |
+| `apps/extension/src/features/profile-production/mount.ts` | Texte et ligne sous « Etat »                    |
+| `apps/extension/src/features/profile-production/index.ts` | Choix du taux de taxe (connu ou minimal)        |

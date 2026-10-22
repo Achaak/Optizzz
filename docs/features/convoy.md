@@ -29,16 +29,16 @@ Savoir, en préparant un convoi, quand il arrivera et ce qu'il coûte en ouvriè
 
 ## Code
 
-| Fichier                                         | Rôle                                                               |
-| ----------------------------------------------- | ------------------------------------------------------------------ |
-| `src/game/travel.ts` (+ test)                   | Temps de trajet et distance, partagés avec la carte d'alliance     |
-| `src/features/convoy/convoy.ts` (+ test)        | Convois en cours, message à copier, ouvrières, plan                |
-| `src/features/convoy/mount.ts` (+ test)         | Affichage sous le formulaire, suggestions, liste des convois       |
-| `src/features/convoy/mount-workers.ts` (+ test) | Total des ouvrières sous la ligne de l'en-tête                     |
-| `src/features/convoy/index.ts`                  | Les features (calculateur, total de l'en-tête)                     |
-| `src/data/convoys.ts` (+ test)                  | Convois en route mémorisés par serveur, relus en arrière-plan      |
-| `src/utils/on-way-list.ts`                      | Liste partagée avec les attaques en cours (`attaques-en-cours.md`) |
-| `src/game/pages/messages.ts` (+ test)           | En-têtes des conversations de convoi de la messagerie, dates       |
-| `src/data/convoy-history.ts` (+ test)           | Convois livrés et reçus gardés 30 jours, relus en arrière-plan     |
-| `src/features/convoy/history.ts` (+ test)       | Totaux par joueur sur une période, texte à copier                  |
-| `src/features/convoy/mount-history.ts` (+ test) | Encart « Convois livrés et reçus » sur commerce.php                |
+| Fichier                                                        | Rôle                                                               |
+| -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `packages/game/src/travel.ts` (+ test)                         | Temps de trajet et distance, partagés avec la carte d'alliance     |
+| `apps/extension/src/features/convoy/convoy.ts` (+ test)        | Convois en cours, message à copier, ouvrières, plan                |
+| `apps/extension/src/features/convoy/mount.ts` (+ test)         | Affichage sous le formulaire, suggestions, liste des convois       |
+| `apps/extension/src/features/convoy/mount-workers.ts` (+ test) | Total des ouvrières sous la ligne de l'en-tête                     |
+| `apps/extension/src/features/convoy/index.ts`                  | Les features (calculateur, total de l'en-tête)                     |
+| `apps/extension/src/data/convoys.ts` (+ test)                  | Convois en route mémorisés par serveur, relus en arrière-plan      |
+| `apps/extension/src/utils/on-way-list.ts`                      | Liste partagée avec les attaques en cours (`attaques-en-cours.md`) |
+| `packages/game/src/pages/messages.ts` (+ test)                 | En-têtes des conversations de convoi de la messagerie, dates       |
+| `apps/extension/src/data/convoy-history.ts` (+ test)           | Convois livrés et reçus gardés 30 jours, relus en arrière-plan     |
+| `apps/extension/src/features/convoy/history.ts` (+ test)       | Totaux par joueur sur une période, texte à copier                  |
+| `apps/extension/src/features/convoy/mount-history.ts` (+ test) | Encart « Convois livrés et reçus » sur commerce.php                |

@@ -34,13 +34,13 @@ Elle filtre 50 à 300 % de mon TDC et trie (TDC, distance, alliance, pseudo), ma
 
 ## Code
 
-| Fichier                                    | Rôle                                                                               |
-| ------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `src/data/exports.ts` (+ test)             | Exports des joueurs et des alliances (`loadAlliancesExport`), en cache, zod        |
-| `src/features/targets/targets.ts` (+ test) | Lecture de `#tabEnnemie`, portée, prise max, diplomatie, état, liste des cibles    |
-| `src/features/targets/mount.ts` (+ test)   | L'encart : tableau, filtres, tri, « voir plus », liens                             |
-| `src/features/targets/index.ts`            | La feature (interrupteur `targets`), chargement des exports et des niveaux         |
-| `src/features/targets/__fixtures__/*.html` | `ennemie.php` relevée sur S2 (tous les états) et S5 (« Nouveau »), pseudos fictifs |
+| Fichier                                                   | Rôle                                                                               |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `apps/extension/src/data/exports.ts` (+ test)             | Exports des joueurs et des alliances (`loadAlliancesExport`), en cache, zod        |
+| `apps/extension/src/features/targets/targets.ts` (+ test) | Lecture de `#tabEnnemie`, portée, prise max, diplomatie, état, liste des cibles    |
+| `apps/extension/src/features/targets/mount.ts` (+ test)   | L'encart : tableau, filtres, tri, « voir plus », liens                             |
+| `apps/extension/src/features/targets/index.ts`            | La feature (interrupteur `targets`), chargement des exports et des niveaux         |
+| `apps/extension/src/features/targets/__fixtures__/*.html` | `ennemie.php` relevée sur S2 (tous les états) et S5 (« Nouveau »), pseudos fictifs |
 
 ## Plus tard
 
