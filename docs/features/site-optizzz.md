@@ -55,7 +55,7 @@ L'URL du webhook est un secret de l'alliance, chiffrée. Le détail part du clie
 ## Ordre
 
 1. Migration en monorepo (`git mv` vers `apps/extension`, `packages/game`, `release.yml`, CLAUDE.md), sans changement de fonction.
-2. Site public sans compte : cron des exports, données des serveurs, carte, simulateurs, trajets.
+2. Site public sans compte (`site-public.md`) : 2a, la fondation (cron des exports, données des serveurs) ; 2b, les outils un à un (carte, trajets, coûts, combat, chasse, flood).
 3. Comptes, Espaces d'alliance, chiffrement.
 4. Envois et leurs vues : floods, convois, attaques reçues.
 5. Demandes et Priorité.

@@ -12,6 +12,14 @@ _À éviter_ : monde, univers ; jamais pour désigner le Site Optizzz.
 Un pseudo sur un Serveur. Une même personne peut avoir un Joueur par Serveur.
 _À éviter_ : compte, utilisateur.
 
+**Changement** :
+Ce qui a bougé pour un joueur ou une alliance entre deux exports publics : alliance quittée, colonisation, vacances, guerre déclarée… Jamais une simple variation de TDC ou de score.
+_À éviter_ : événement, modification, mise à jour.
+
+**Journal** :
+La liste datée des Changements d'un joueur, d'une alliance ou d'un serveur.
+_À éviter_ : historique (ce sont les courbes des scores), log.
+
 ## Site
 
 **Site Optizzz** :
