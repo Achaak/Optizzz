@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { cachedVersion, loadEachVersion } from "@/data/export-history";
 import { getJson } from "@/data/exports";
-import { allianceSchema } from "@optizzz/game/exports";
+import { allianceSchema, exportUrl } from "@optizzz/game/exports";
 import type { AllianceScores } from "@optizzz/game/pages/alliance-ranking";
 
 /** Every alliance's totals in one export. */
@@ -62,9 +62,7 @@ function fromStored(version: string, stored: StoredSnapshot): AllianceSnapshot {
 
 async function loadSnapshot(origin: string, version: string): Promise<AllianceSnapshot> {
   const stored = await cachedVersion(cacheKey(origin, version), async () =>
-    toStored(
-      z.array(historyAllianceSchema).parse(await getJson(`${origin}/api/exports/alliances/?version=${version}`)),
-    ),
+    toStored(z.array(historyAllianceSchema).parse(await getJson(exportUrl(origin, "alliances", version)))),
   );
   return fromStored(version, stored);
 }

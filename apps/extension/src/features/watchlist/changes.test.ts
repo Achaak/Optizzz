@@ -50,7 +50,16 @@ describe("readState", () => {
     expect(readState(entries, "202610171000", players, alliances)).toEqual({
       version: "202610171000",
       players: {
-        "player:1": { pseudo: "Rival", alliance: "ABC", field: 1000, onHoliday: false, isBanned: false, x: 3, y: 0 },
+        "player:1": {
+          pseudo: "Rival",
+          alliance: "ABC",
+          field: 1000,
+          onHoliday: false,
+          isBanned: false,
+          x: 3,
+          y: 0,
+          master: null,
+        },
       },
       alliances: {
         "alliance:abc": {

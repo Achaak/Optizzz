@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { cachedVersion, loadEachVersion } from "@/data/export-history";
 import { getJson } from "@/data/exports";
-import { playerSchema } from "@optizzz/game/exports";
+import { exportUrl, playerSchema } from "@optizzz/game/exports";
 import type { Scores } from "@optizzz/game/pages/scores";
 
 /** Every player's scores in one export. */
@@ -72,8 +72,7 @@ function fromStored(version: string, stored: StoredSnapshot): Snapshot {
 async function loadSnapshot(origin: string, version: string): Promise<Snapshot> {
   const stored = await cachedVersion(
     cacheKey(origin, version),
-    async () =>
-      toStored(z.array(historyPlayerSchema).parse(await getJson(`${origin}/api/exports/players/?version=${version}`))),
+    async () => toStored(z.array(historyPlayerSchema).parse(await getJson(exportUrl(origin, "players", version)))),
     (cached: StoredSnapshot) => cached.tags !== undefined,
   );
   return fromStored(version, stored);

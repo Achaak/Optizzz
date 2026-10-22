@@ -1,20 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { JournalEntry } from "./changes";
-import { describeChange, describeWhen, watchNotice } from "./describe";
+import { describeWhen, watchNotice } from "./describe";
 
 const now = new Date(Date.UTC(2026, 9, 17, 12, 30));
-
-describe("describeChange", () => {
-  it("says each change after the entry's name", () => {
-    expect(describeChange({ kind: "alliance", from: "ABC", to: "XYZ" })).toBe("a quitté ABC pour XYZ");
-    expect(describeChange({ kind: "alliance", from: null, to: "XYZ" })).toBe("a rejoint XYZ");
-    expect(describeChange({ kind: "alliance", from: "ABC", to: null })).toBe("a quitté ABC");
-    expect(describeChange({ kind: "war", tag: "EVO", declaredBy: "them" })).toBe("EVO lui a déclaré la guerre");
-    expect(describeChange({ kind: "pact-ended", tag: "AMI", name: "PNA" })).toBe("pacte (PNA) rompu avec AMI");
-    expect(describeChange({ kind: "joined", pseudo: "Nouveau" })).toBe("arrivée de Nouveau");
-    expect(describeChange({ kind: "left", pseudo: "Arrivant" })).toBe("départ d'Arrivant");
-  });
-});
 
 describe("describeWhen", () => {
   it("dates by the second reading an hour apart, and gives the range after a gap", () => {

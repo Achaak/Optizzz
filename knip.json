@@ -12,6 +12,12 @@
     },
     "packages/game": {
       "project": ["src/**/*.ts"]
+    },
+    "apps/web": {
+      "entry": ["scripts/*.ts"],
+      "project": ["src/**/*.{ts,tsx,js}", "scripts/**/*.ts"],
+      "ignore": ["src/components/ui/**"],
+      "ignoreDependencies": ["@prisma/client", "shadcn", "tailwindcss", "tw-animate-css"]
     }
   },
   "rules": {

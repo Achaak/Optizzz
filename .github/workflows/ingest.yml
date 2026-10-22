@@ -1,0 +1,45 @@
+name: Ingest
+
+# The site's hourly cron (docs/features/site-public.md): applies the pending migrations, then reads every server's
+# public exports into the database and asks the site to rebuild its pages. Run it by hand for one server.
+on:
+  schedule:
+    # The exports are published on the hour.
+    - cron: "10 * * * *"
+  push:
+    branches: [main]
+    paths: [apps/web/prisma/migrations/**]
+  workflow_dispatch:
+    inputs:
+      server:
+        description: "One server only (s1 … s5); empty for all"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @optizzz/web exec prisma migrate deploy
+      - name: Read the exports
+        run: pnpm --filter @optizzz/web ingest ${SERVER:+-- --server "$SERVER"}
+        env:
+          SERVER: ${{ inputs.server }}

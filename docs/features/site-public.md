@@ -21,7 +21,7 @@ S1 à S5, les seuls qui publient leur export (S1 à S4 en HTTP seulement, S5 en 
 
 ### Cron
 
-Un script de `apps/web/scripts/`, lancé chaque heure par GitHub Actions, lit les exports publics et écrit dans Neon avec Prisma ; il ne télécharge une version que si elle a changé. À la fin, il appelle une route de revalidation du site protégée par un secret : les pages sont reconstruites une fois par heure, sans requête vers la base à chaque visite. Seul le cron écrit ; les aperçus Vercel lisent avec un rôle Postgres en lecture seule.
+Un script de `apps/web/scripts/`, lancé chaque heure par GitHub Actions, lit les exports publics et écrit dans Neon avec Prisma ; il ne télécharge une version que si elle a changé. À la fin, il appelle une route de revalidation du site protégée par un secret : les pages sont reconstruites une fois par heure, sans requête vers la base à chaque visite. Seul le cron écrit ; le site (production et aperçus Vercel) lit avec un rôle Postgres en lecture seule.
 
 ### Changements partagés avec l'extension
 
@@ -49,8 +49,26 @@ Elle ne lit rien sur le site : sans compte, elle ne contacte que Fourmizzz (ADR 
 
 ### Environnements
 
-- Local : Postgres dans Docker (`docker compose up`) et un script qui le remplit avec l'export courant d'un serveur.
-- Mise en place de Vercel (racine `apps/web`), Neon, rôles Postgres, secrets GitHub et domaine `optizzz.fr` : un assistant pas à pas (`/wizard`) dans `scripts/`.
+- Local : Postgres dans Docker (`apps/web/docker-compose.yml`, port 5433 : le 5432 est souvent pris) et le script du cron lancé sur un serveur (`pnpm --filter @optizzz/web ingest -- --server s5`).
+- Mise en place de Vercel (racine `apps/web`), Neon, rôles Postgres, secrets GitHub et domaine `optizzz.fr` : `bash scripts/setup-site.sh`, un assistant pas à pas.
+
+### Code
+
+| Fichier                                                       | Rôle                                                                                |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `packages/game/src/servers.ts` (+ test)                       | Les serveurs et l'adresse de leur export                                            |
+| `packages/game/src/exports.ts`, `export-versions.ts` (+ test) | Schémas de l'export public, ses versions, le premier export de chaque jour de Paris |
+| `packages/game/src/changes.ts` (+ test)                       | Les Changements, partagés avec les Suivis, et leur texte                            |
+| `apps/web/prisma/schema.prisma`                               | État courant, relevés quotidiens, Journal                                           |
+| `apps/web/src/ingest/diff.ts` (+ test)                        | Le Journal entre deux relevés d'un serveur                                          |
+| `apps/web/src/ingest/days.ts` (+ test)                        | Les jours qui manquent aux courbes (10 par passage)                                 |
+| `apps/web/src/ingest/ingest.ts`, `scripts/ingest.ts`          | Un passage du cron : téléchargement, écriture, reconstruction des pages             |
+| `.github/workflows/ingest.yml`                                | Le cron horaire (et les migrations)                                                 |
+| `apps/web/src/server/queries.ts`                              | Ce que lisent les pages                                                             |
+| `apps/web/src/app/`                                           | Les pages ; `api/revalidate` pour le cron, `api/trpc` pour la recherche de joueur   |
+| `scripts/setup-site.sh`                                       | Mise en ligne pas à pas                                                             |
+
+Vérifié en local le 2026-10-22 : S5 (1 857 joueurs) et S2 (20 559 joueurs, 29 s par passage avec 10 jours d'historique) relus, Journal noté sur un changement provoqué, pages en clair, sombre et largeur de téléphone.
 
 ## 2b
 

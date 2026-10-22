@@ -27,6 +27,7 @@ const KINDS: { kind: NotificationKind; label: string }[] = [
 const WATCH_KINDS: { kind: WatchNotificationKind; label: string }[] = [
   { kind: "watch-field", label: "TDC perdu d'au moins" },
   { kind: "watch-alliance", label: "Changement d'alliance d'un joueur" },
+  { kind: "watch-colony", label: "Joueur colonisé ou libéré" },
   { kind: "watch-holiday", label: "Départ ou retour de vacances" },
   { kind: "watch-war", label: "Nouvelle guerre d'une alliance" },
   { kind: "watch-pact", label: "Pacte rompu par une alliance" },

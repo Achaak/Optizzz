@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { loadPlayersExport, loadPlayersVersions, type PlayersExport } from "@/data/exports";
 import { loadHistory, type Snapshot } from "./api";
-import { dailyVersions } from "@/data/export-history";
+import { dailyVersions } from "@optizzz/game/export-versions";
 
 export interface HistoryState {
   /** Latest export: names, alliances and ids of today's players. */

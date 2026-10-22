@@ -1,7 +1,8 @@
 // The toolbar popup's summary of a server's watch list, from what the last reading stored: no download.
 import { watchKey, type WatchEntry, type WatchKey } from "@/data/watchlist";
 import { fieldGap, unseen, type JournalEntry, type WatchState } from "./changes";
-import { describeChange, describeWhen } from "./describe";
+import { describeChange } from "@optizzz/game/changes";
+import { describeWhen } from "./describe";
 
 export interface ServerSummary {
   /** Watched entries with something new: a change, or the field moved enough since « seen ». */

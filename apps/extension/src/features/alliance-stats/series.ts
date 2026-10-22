@@ -1,5 +1,5 @@
 // Curves, ranks and suggestions drawn from the alliances' history.
-import { versionDate } from "@/data/export-history";
+import { versionDate } from "@optizzz/game/export-versions";
 import type { Alliance } from "@optizzz/game/exports";
 import { diplomacyWith, sameTag, type WarSide } from "@optizzz/game/diplomacy";
 import { HARVESTS_PER_DAY } from "@optizzz/game/forecast";

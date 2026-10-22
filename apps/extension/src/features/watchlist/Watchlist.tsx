@@ -1,6 +1,6 @@
 // The « Suivis » view: the watched players and alliances, what changed since « seen » — see docs/features/suivis.md.
 import { useEffect, useMemo, useState } from "react";
-import { versionDate } from "@/data/export-history";
+import { versionDate } from "@optizzz/game/export-versions";
 import { loadAlliancesExport, loadPlayersExport, type AlliancesExport, type PlayersExport } from "@/data/exports";
 import { loadStoredLevels } from "@/data/levels";
 import {
@@ -19,7 +19,8 @@ import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format"
 import { Amount } from "@/utils/Amount";
 import { formatDuration, formatPastTime } from "@optizzz/game/format/time-format";
 import type { JournalEntry } from "./changes";
-import { describeChange, describeWhen } from "./describe";
+import { describeChange } from "@optizzz/game/changes";
+import { describeWhen } from "./describe";
 import { loadJournal, loadMe, loadWatchState, watchReadings } from "./reading";
 import { buildRows, type AllianceRow, type PlayerRow } from "./rows";
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { dailyVersions } from "@/data/export-history";
+import { dailyVersions } from "@optizzz/game/export-versions";
 import { loadAlliancesExport, loadAlliancesVersions, type AlliancesExport } from "@/data/exports";
 import { loadAllianceHistory, type AllianceSnapshot } from "./api";
 

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#5b3a1e"/>
+  <g stroke="#f6efd9" stroke-width="6" stroke-linecap="round" fill="none">
+    <!-- antennae -->
+    <path d="M58 30 Q50 16 40 14"/>
+    <path d="M70 30 Q78 16 88 14"/>
+    <!-- legs -->
+    <path d="M56 60 L34 50 L24 58"/>
+    <path d="M56 66 L30 70 L22 82"/>
+    <path d="M58 72 L38 90 L36 104"/>
+    <path d="M72 60 L94 50 L104 58"/>
+    <path d="M72 66 L98 70 L106 82"/>
+    <path d="M70 72 L90 90 L92 104"/>
+  </g>
+  <g fill="#f6efd9">
+    <ellipse cx="64" cy="38" rx="12" ry="11"/>
+    <ellipse cx="64" cy="64" rx="10" ry="14"/>
+    <ellipse cx="64" cy="96" rx="16" ry="21"/>
+  </g>
+</svg>

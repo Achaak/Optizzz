@@ -1,3 +1,8 @@
 packages:
   - apps/*
   - packages/*
+# Install scripts allowed to run (pnpm refuses the others).
+allowBuilds:
+  "@prisma/engines": true
+  esbuild: true
+  prisma: true

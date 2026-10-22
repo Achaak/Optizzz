@@ -1,5 +1,6 @@
 // @ts-check
 import js from "@eslint/js";
+import nextPlugin from "@next/eslint-plugin-next";
 import prettier from "eslint-config-prettier";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig, globalIgnores } from "eslint/config";
@@ -7,7 +8,19 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  globalIgnores(["**/.output/", "**/.wxt/", "**/node_modules/", ".claude/", "coverage/", ".turbo/", "**/.turbo/"]),
+  globalIgnores([
+    "**/.output/",
+    "**/.wxt/",
+    "**/.next/",
+    "**/node_modules/",
+    ".claude/",
+    "coverage/",
+    "**/.turbo/",
+    "**/next-env.d.ts",
+    // Generated: the Prisma client, and the shadcn/ui components its CLI writes and updates.
+    "apps/web/src/generated/",
+    "apps/web/src/components/ui/",
+  ]),
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,
@@ -37,6 +50,16 @@ export default defineConfig(
         { selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']", message: "Render React elements instead." },
       ],
     },
+  },
+  {
+    files: ["apps/web/**/*.{ts,tsx,js}"],
+    extends: [nextPlugin.configs["core-web-vitals"]],
+    settings: { next: { rootDir: "apps/web" } },
+  },
+  {
+    // Node, not the browser: config files and the site's cron script.
+    files: ["*.{js,ts}", "apps/*/*.{js,ts}", "apps/web/scripts/**", "apps/web/src/env.js"],
+    languageOptions: { globals: globals.node },
   },
   {
     // Tests are not shipped: building fixtures with innerHTML is fine there.

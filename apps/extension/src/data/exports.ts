@@ -1,9 +1,15 @@
 // Client for the public exports API — see docs/research/fourmizzz-api-exports.md.
 import { storage } from "wxt/utils/storage";
 import { z } from "zod";
-import { allianceSchema, playerSchema, type Alliance, type Player } from "@optizzz/game/exports";
-
-const versionsSchema = z.object({ players: z.array(z.string()), alliances: z.array(z.string()) });
+import {
+  allianceSchema,
+  exportUrl,
+  playerSchema,
+  versionsSchema,
+  type Alliance,
+  type ExportKind,
+  type Player,
+} from "@optizzz/game/exports";
 
 export interface PlayersExport {
   /** UTC date of the export, AAAAMMJJHHmm. */
@@ -17,9 +23,8 @@ export interface AlliancesExport {
   alliances: Alliance[];
 }
 
-type Kind = "players" | "alliances";
-
-const cacheKey = (origin: string, kind: Kind) => `local:allianceMap:${new URL(origin).host}:${kind}Export` as const;
+const cacheKey = (origin: string, kind: ExportKind) =>
+  `local:allianceMap:${new URL(origin).host}:${kind}Export` as const;
 
 export async function getJson(url: string): Promise<unknown> {
   const response = await fetch(url);
@@ -35,7 +40,7 @@ const versionsRequests = new Map<string, Promise<Versions>>();
 function loadVersions(origin: string): Promise<Versions> {
   let request = versionsRequests.get(origin);
   if (!request) {
-    request = getJson(`${origin}/api/exports/`)
+    request = getJson(exportUrl(origin))
       .then((json) => versionsSchema.parse(json))
       .finally(() => versionsRequests.delete(origin));
     versionsRequests.set(origin, request);
@@ -47,7 +52,7 @@ function loadVersions(origin: string): Promise<Versions> {
  * Latest export of one kind, cached as `{ version, [kind]: items }`.
  * A published version never changes: it is downloaded only once.
  */
-async function loadExport<K extends Kind, T>(
+async function loadExport<K extends ExportKind, T>(
   origin: string,
   kind: K,
   schema: z.ZodType<T>,
@@ -66,7 +71,7 @@ async function loadExport<K extends Kind, T>(
   if (!latest) throw new Error(`Fourmizzz API: no ${kind} export available`);
   if (cached?.version === latest) return cached;
 
-  const items = z.array(schema).parse(await getJson(`${origin}/api/exports/${kind}/?version=${latest}`));
+  const items = z.array(schema).parse(await getJson(exportUrl(origin, kind, latest)));
   const fresh = { version: latest, [kind]: items } as Export;
   try {
     await storage.setItem(key, fresh);

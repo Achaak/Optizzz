@@ -92,6 +92,7 @@ pnpm dev            # Chrome, rechargement à chaud
 pnpm dev:firefox    # Firefox
 pnpm test           # tests (vitest)
 pnpm lint && pnpm typecheck
+pnpm dev:web        # le site optizzz.fr en local : voir CLAUDE.md pour sa base
 ```
 
 Le code est en TypeScript, empaqueté par [WXT](https://wxt.dev) (Vite), avec React et Apache ECharts pour les vues les plus riches. Pour s'y retrouver :

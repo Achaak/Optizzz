@@ -7,7 +7,7 @@ Extension navigateur (Chrome + Firefox, MV3) d'aide au jeu [Fourmizzz.fr](http:/
 
 ## Commandes
 
-Monorepo pnpm + Turborepo (ADR 0006) : `apps/extension` (l'extension WXT), `packages/game` (règles du jeu et lecteurs de pages, partagés avec le futur site `apps/web`). Tout se lance à la racine ; `pnpm --filter @optizzz/extension <script>` pour un script d'un seul paquet.
+Monorepo pnpm + Turborepo (ADR 0006) : `apps/extension` (l'extension WXT), `apps/web` (le Site Optizzz, `docs/features/site-public.md`), `packages/game` (règles du jeu, lecteurs de pages, formats, Changements : partagés par les deux). Tout se lance à la racine ; `pnpm --filter <paquet> <script>` pour un script d'un seul paquet.
 
 ```bash
 pnpm dev            # dev Chrome (recharge à chaud)
@@ -22,6 +22,16 @@ pnpm format         # Prettier (format:check en lecture seule)
 pnpm knip           # fichiers et dépendances morts (exports inutilisés : simple avertissement)
 pnpm lint:firefox   # web-ext lint sur apps/extension/.output/firefox-mv3 (après build:firefox) : ce qu'AMO refuserait
 pnpm analyze        # build Chrome + stats.html : ce que pèse chaque content script
+pnpm dev:web        # le site sur http://localhost:3000 (après la base locale ci-dessous)
+```
+
+Site, base locale (Postgres dans Docker, port 5433) :
+
+```bash
+cd apps/web && cp .env.example .env && docker compose up -d
+pnpm --filter @optizzz/web db:migrate          # applique les migrations (et en crée une après un changement du schéma)
+pnpm --filter @optizzz/web ingest -- --server s5  # le cron, sur un serveur : relit l'export public
+bash scripts/setup-site.sh                     # mise en ligne : Neon, secrets GitHub, Vercel, domaine
 ```
 
 ## Architecture
@@ -39,8 +49,9 @@ pnpm analyze        # build Chrome + stats.html : ce que pèse chaque content sc
 - **Daltoniens** (`docs/adr/0003-daltonisme.md`) : une information ne tient jamais à la seule couleur (aussi un texte, une forme ou une légende) ; jamais rouge contre vert pour opposer deux choses ; toute nouvelle couleur vue avec d'autres se vérifie en simulant protanopie et deutéranopie, pas à l'œil.
 - L'habillage du jeu (`src/features/game-look/`, `docs/features/game-look.md`) est toujours actif, hors catalogue : une feuille sous `html.optizzz-game-look`, posée à `document_start`. Les outils suivent par les variables de `src/theme/theme.css`.
 - La feature `collect` (toujours active, hors catalogue) mémorise ce que montre la page courante, sans requête, pour toutes les features allumées qui en ont besoin : couper une feature n'ôte que son affichage et ses relectures.
+- Site (`apps/web`, ADR 0006) : Next.js (App Router), tRPC, Prisma 7 (adaptateur `pg`) sur PostgreSQL, shadcn/ui (`src/components/ui/` : écrits par le CLI shadcn, ni lintés ni retouchés à la main), courbes Recharts. Pages en composants serveur qui lisent `src/server/queries.ts`, reconstruites par le cron (`api/revalidate`). Seul le cron (`scripts/ingest.ts`, `.github/workflows/ingest.yml`) écrit en base ; le site lit avec un rôle en lecture seule.
 - Briques partagées à réutiliser plutôt que recopier : dans `@optizzz/game/format/`, `formatNumber` / `formatDecimal` (nombres comme le jeu), `parseGameInteger`, `time-format` ; dans `src/utils/`, `NumberField` (champ numérique React qui garde la saisie), `useStoredSettings` (réglages d'une vue React), `fetchGamePage` (relire une page du jeu en arrière-plan, partagé entre features), `alliance-menu` / `alliance-views`, `map-chart/` (carte x/y à axes de même échelle et son zoom), `page-dialog` (page de l'extension dans une fenêtre par-dessus le jeu).
-- Seul hôte autorisé : `*://*.fourmizzz.fr/*`. Aucune donnée n'est envoyée ailleurs (`data_collection_permissions: none` côté Firefox) ; si ça change, mettre à jour le manifest.
+- Extension : seul hôte autorisé `*://*.fourmizzz.fr/*`. Aucune donnée n'est envoyée ailleurs (`data_collection_permissions: none` côté Firefox) ; si ça change, mettre à jour le manifest.
 
 ## Documentation
 

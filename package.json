@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "pnpm --filter @optizzz/extension dev",
     "dev:firefox": "pnpm --filter @optizzz/extension dev:firefox",
+    "dev:web": "pnpm --filter @optizzz/web dev",
     "build": "turbo run build",
     "build:firefox": "turbo run build:firefox",
     "analyze": "pnpm --filter @optizzz/extension analyze",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^16.4.2",
     "@vitest/coverage-v8": "5.0.3",
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",

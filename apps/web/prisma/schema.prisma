@@ -1,0 +1,115 @@
+// What the site keeps of the public exports — see docs/features/site-public.md. Only the cron writes.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// The latest version read of each export, per server: the cron downloads only a newer one.
+model ExportRead {
+  server  String
+  /// « players » or « alliances ».
+  kind    String
+  version String
+  readAt  DateTime @updatedAt
+
+  @@id([server, kind])
+}
+
+/// A player as the latest export shows it. A player gone from the export is deleted: the Journal says so.
+model Player {
+  server          String
+  id              Int
+  pseudo          String
+  alliance        String?
+  masterId        Int?
+  x               Int
+  y               Int
+  /// Hunting field (TDC), cm²: beyond what a 32-bit integer holds on the biggest servers.
+  field           Float
+  grade           String?
+  buildingScore   Int
+  technologyScore Int
+  trophyScore     Int
+  onHoliday       Boolean
+  isBanned        Boolean
+
+  @@id([server, id])
+  @@index([server, alliance])
+  @@index([server, pseudo])
+  @@index([server, field])
+}
+
+/// An alliance as the latest export shows it.
+model Alliance {
+  server               String
+  /// As the export writes it; looked up without regard to case.
+  tag                  String
+  name                 String
+  playersCount         Int
+  totalField           Float
+  totalBuildingScore   Int
+  totalTechnologyScore Int
+  totalTrophyScore     Int
+  /// `{ pacts: { tag, name, description }[], wars: string[] }`, as the export writes it.
+  diplomacy            Json
+
+  @@id([server, tag])
+  @@index([server, totalField])
+}
+
+/// A player's scores on one Paris day, read from that day's first export (the nightly one): the curves.
+model PlayerDay {
+  server          String
+  playerId        Int
+  day             DateTime @db.Date
+  alliance        String?
+  field           Float
+  buildingScore   Int
+  technologyScore Int
+  trophyScore     Int
+
+  @@id([server, playerId, day])
+  @@index([server, day])
+}
+
+/// An alliance's totals on one Paris day.
+model AllianceDay {
+  server               String
+  tag                  String
+  day                  DateTime @db.Date
+  playersCount         Int
+  totalField           Float
+  totalBuildingScore   Int
+  totalTechnologyScore Int
+  totalTrophyScore     Int
+
+  @@id([server, tag, day])
+  @@index([server, day])
+}
+
+/// One Change of the Journal: it happened after the export `since` and by the export `until`.
+model JournalEntry {
+  id       Int      @id @default(autoincrement())
+  server   String
+  /// The player's id, or null for an alliance's Change.
+  playerId Int?
+  /// The alliance's tag, or null for a player's Change.
+  tag      String?
+  /// The player's pseudo or the alliance's tag at `until`, to name it once gone.
+  name     String
+  since    String
+  until    String
+  /// The date of `until`.
+  at       DateTime
+  /// A `Change` of @optizzz/game/changes.
+  change   Json
+
+  @@index([server, at])
+  @@index([server, playerId, at])
+  @@index([server, tag, at])
+}

@@ -1,42 +1,10 @@
 // The watched entries' changes in the player's words, and the notification summing up one reading.
-import { versionDate } from "@/data/export-history";
+import { versionDate } from "@optizzz/game/export-versions";
 import type { WatchKey } from "@/data/watchlist";
 import { formatDecimal } from "@optizzz/game/format/number-format";
 import { formatPastTime } from "@optizzz/game/format/time-format";
-import type { Change, JournalEntry } from "./changes";
-
-/** « de Rival », « d'Arrivant »: French elides « de » before a vowel or a mute h. */
-const of = (name: string) => (/^[aeiouyhàâäéèêëîïôöùûü]/i.test(name) ? `d'${name}` : `de ${name}`);
-
-/** « a quitté ABC pour XYZ », « XYZ lui a déclaré la guerre »: what follows the entry's name. */
-export function describeChange(change: Change): string {
-  switch (change.kind) {
-    case "alliance":
-      if (change.from === null) return `a rejoint ${change.to ?? ""}`;
-      if (change.to === null) return `a quitté ${change.from}`;
-      return `a quitté ${change.from} pour ${change.to}`;
-    case "holiday":
-      return change.on ? "en vacances" : "de retour de vacances";
-    case "banned":
-      return "compte banni";
-    case "gone":
-      return "n'existe plus";
-    case "joined":
-      return `arrivée ${of(change.pseudo)}`;
-    case "left":
-      return `départ ${of(change.pseudo)}`;
-    case "war":
-      return change.declaredBy === "it"
-        ? `a déclaré la guerre à ${change.tag}`
-        : `${change.tag} lui a déclaré la guerre`;
-    case "war-ended":
-      return `plus en guerre avec ${change.tag}`;
-    case "pact":
-      return `nouveau pacte (${change.name}) avec ${change.tag}`;
-    case "pact-ended":
-      return `pacte (${change.name}) rompu avec ${change.tag}`;
-  }
-}
+import { describeChange, type Change } from "@optizzz/game/changes";
+import type { JournalEntry } from "./changes";
 
 /** Readings an hour apart: the change is dated by the second one. Further apart, the browser was closed. */
 const NEXT_READING_MS = 70 * 60_000;
@@ -57,10 +25,12 @@ export function describeWhen({ since, until }: Pick<JournalEntry, "since" | "unt
 
 /** Each kind of notification the watch list can send; all off by default. */
 export type WatchNotificationKind =
-  "watch-field" | "watch-alliance" | "watch-holiday" | "watch-war" | "watch-pact" | "watch-members";
+  "watch-field" | "watch-alliance" | "watch-colony" | "watch-holiday" | "watch-war" | "watch-pact" | "watch-members";
 
 const NOTIFIED: Partial<Record<Change["kind"], WatchNotificationKind>> = {
   alliance: "watch-alliance",
+  colonized: "watch-colony",
+  freed: "watch-colony",
   holiday: "watch-holiday",
   war: "watch-war",
   "pact-ended": "watch-pact",

@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "4178", "--bind", "127.0.0.1"],
       "port": 4178
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@optizzz/web", "dev"],
+      "port": 3000
     }
   ]
 }

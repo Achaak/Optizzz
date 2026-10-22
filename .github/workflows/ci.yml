@@ -12,6 +12,19 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # The site's build reads its pages from a database: an empty one is enough.
+    services:
+      postgres:
+        image: postgres:18.0-alpine
+        env:
+          POSTGRES_USER: optizzz
+          POSTGRES_PASSWORD: optizzz
+          POSTGRES_DB: optizzz
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://optizzz:optizzz@localhost:5432/optizzz
+      REVALIDATE_SECRET: ci-secret-not-used-anywhere
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -25,6 +38,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm knip
       - run: pnpm vitest run
+      - run: pnpm --filter @optizzz/web exec prisma migrate deploy
       - run: pnpm build
       - run: pnpm build:firefox
       # Errors AMO would reject; warnings (innerHTML, new Function) come from bundled React, ECharts and zod.

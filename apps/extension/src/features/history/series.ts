@@ -1,7 +1,7 @@
 // Curves drawn from the history: one player, one score.
 import type { Scores } from "@optizzz/game/pages/scores";
 import type { Snapshot } from "./api";
-import { versionDate } from "@/data/export-history";
+import { versionDate } from "@optizzz/game/export-versions";
 import type { Point } from "@/utils/history-chart/chart-option";
 
 export type Metric = keyof Scores;

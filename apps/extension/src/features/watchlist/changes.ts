@@ -1,31 +1,17 @@
 // What changed for the watched players and alliances between two readings of the exports — see docs/features/suivis.md.
-import { versionDate } from "@/data/export-history";
+import { versionDate } from "@optizzz/game/export-versions";
 import type { Alliance, Player } from "@optizzz/game/exports";
 import type { WatchEntry, WatchKey } from "@/data/watchlist";
 import { watchKey } from "@/data/watchlist";
-import { sameTag } from "@optizzz/game/diplomacy";
-
-interface PlayerState {
-  pseudo: string;
-  alliance: string | null;
-  field: number;
-  onHoliday: boolean;
-  isBanned: boolean;
-  x: number;
-  y: number;
-}
-
-interface AllianceState {
-  tag: string;
-  /** Members' pseudos, by id. */
-  members: Record<number, string>;
-  /** Total field (TDC). */
-  field: number;
-  /** Tags it declared war on, and those that declared war on it. */
-  wars: string[];
-  warsOn: string[];
-  pacts: { tag: string; name: string }[];
-}
+import {
+  allianceChanges,
+  allianceState,
+  playerChanges,
+  playerState,
+  type AllianceState,
+  type Change,
+  type PlayerState,
+} from "@optizzz/game/changes";
 
 /** One reading of the exports, the watched entries only: a few hundred bytes. */
 export interface WatchState {
@@ -34,18 +20,6 @@ export interface WatchState {
   players: Partial<Record<WatchKey, PlayerState>>;
   alliances: Partial<Record<WatchKey, AllianceState>>;
 }
-
-export type Change =
-  | { kind: "alliance"; from: string | null; to: string | null }
-  | { kind: "holiday"; on: boolean }
-  | { kind: "banned" }
-  | { kind: "gone" }
-  | { kind: "joined"; pseudo: string }
-  | { kind: "left"; pseudo: string }
-  | { kind: "war"; tag: string; declaredBy: "it" | "them" }
-  | { kind: "war-ended"; tag: string }
-  | { kind: "pact"; tag: string; name: string }
-  | { kind: "pact-ended"; tag: string; name: string };
 
 /** A change, noticed between two readings: it happened after `since` and before `until` (export versions). */
 export interface JournalEntry {
@@ -67,68 +41,13 @@ export function readState(
   for (const entry of entries) {
     if (entry.kind === "player") {
       const player = byId.get(entry.id);
-      if (player)
-        state.players[watchKey(entry)] = {
-          pseudo: player.pseudo,
-          alliance: player.alliance,
-          field: player.field,
-          onHoliday: player.onHoliday,
-          isBanned: player.isBanned,
-          x: player.x,
-          y: player.y,
-        };
+      if (player) state.players[watchKey(entry)] = playerState(player, byId);
       continue;
     }
-    const alliance = alliances?.find((candidate) => sameTag(candidate.tag, entry.tag));
-    const members = players.filter((player) => player.alliance !== null && sameTag(player.alliance, entry.tag));
-    if (!alliance && members.length === 0) continue;
-    state.alliances[watchKey(entry)] = {
-      tag: alliance?.tag ?? entry.tag,
-      members: Object.fromEntries(members.map((player) => [player.id, player.pseudo])),
-      field: alliance?.totalField ?? members.reduce((total, player) => total + player.field, 0),
-      wars: alliance?.diplomacy.wars.filter((tag) => !sameTag(tag, entry.tag)) ?? [],
-      warsOn: (alliances ?? [])
-        .filter(
-          (other) => !sameTag(other.tag, entry.tag) && other.diplomacy.wars.some((tag) => sameTag(tag, entry.tag)),
-        )
-        .map((other) => other.tag),
-      pacts: alliance?.diplomacy.pacts.map(({ tag, name }) => ({ tag, name: name.trim() })) ?? [],
-    };
+    const alliance = allianceState(entry.tag, players, alliances);
+    if (alliance) state.alliances[watchKey(entry)] = alliance;
   }
   return state;
-}
-
-const sameAlliance = (a: string | null, b: string | null) => (a === null || b === null ? a === b : sameTag(a, b));
-const hasTag = (tags: readonly string[], tag: string) => tags.some((other) => sameTag(other, tag));
-
-function playerChanges(before: PlayerState, after: PlayerState): Change[] {
-  const changes: Change[] = [];
-  if (!sameAlliance(before.alliance, after.alliance))
-    changes.push({ kind: "alliance", from: before.alliance, to: after.alliance });
-  if (before.onHoliday !== after.onHoliday) changes.push({ kind: "holiday", on: after.onHoliday });
-  if (!before.isBanned && after.isBanned) changes.push({ kind: "banned" });
-  return changes;
-}
-
-function allianceChanges(before: AllianceState, after: AllianceState): Change[] {
-  const changes: Change[] = [];
-  for (const [id, pseudo] of Object.entries(after.members))
-    if (!(id in before.members)) changes.push({ kind: "joined", pseudo });
-  for (const [id, pseudo] of Object.entries(before.members))
-    if (!(id in after.members)) changes.push({ kind: "left", pseudo });
-  const warsBefore = [...before.wars, ...before.warsOn];
-  const warsAfter = [...after.wars, ...after.warsOn];
-  for (const tag of after.wars) if (!hasTag(warsBefore, tag)) changes.push({ kind: "war", tag, declaredBy: "it" });
-  for (const tag of after.warsOn)
-    if (!hasTag(warsBefore, tag) && !hasTag(after.wars, tag)) changes.push({ kind: "war", tag, declaredBy: "them" });
-  for (const tag of warsBefore)
-    if (!hasTag(warsAfter, tag) && !changes.some((c) => c.kind === "war-ended" && sameTag(c.tag, tag)))
-      changes.push({ kind: "war-ended", tag });
-  for (const pact of after.pacts)
-    if (!before.pacts.some((other) => sameTag(other.tag, pact.tag))) changes.push({ kind: "pact", ...pact });
-  for (const pact of before.pacts)
-    if (!after.pacts.some((other) => sameTag(other.tag, pact.tag))) changes.push({ kind: "pact-ended", ...pact });
-  return changes;
 }
 
 /**

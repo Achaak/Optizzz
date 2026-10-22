@@ -38,3 +38,14 @@ export const allianceSchema = z.object({
 });
 
 export type Alliance = z.infer<typeof allianceSchema>;
+
+/** `GET /api/exports/`: the published versions, latest first. */
+export const versionsSchema = z.object({ players: z.array(z.string()), alliances: z.array(z.string()) });
+
+export type ExportKind = "players" | "alliances";
+
+/** Address of an export of `origin` (e.g. "https://s5.fourmizzz.fr"); the list of versions without `kind`. */
+export function exportUrl(origin: string, kind?: ExportKind, version?: string): string {
+  if (!kind) return `${origin}/api/exports/`;
+  return `${origin}/api/exports/${kind}/${version ? `?version=${version}` : ""}`;
+}

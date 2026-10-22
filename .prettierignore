@@ -5,3 +5,5 @@ pnpm-lock.yaml
 .claude/skills
 # Game markup kept as the game writes it (a <form> misnested in a table): Prettier cannot parse it.
 apps/extension/src/data/__fixtures__/armee-move.html
+**/.next
+apps/web/src/generated

@@ -1,5 +1,5 @@
 // When a player joined or left an alliance, from the alliance each export gives them — see docs/features/historique.md.
-import { versionDate } from "@/data/export-history";
+import { versionDate } from "@optizzz/game/export-versions";
 import { sameTag } from "@optizzz/game/diplomacy";
 import { dayMonth } from "@optizzz/game/format/time-format";
 import type { Snapshot } from "./api";

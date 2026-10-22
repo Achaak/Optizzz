@@ -1,0 +1,16 @@
+# Local database, on port 5433 (5432 is often taken by another Postgres): `docker compose up -d`, then `pnpm db:migrate` and `pnpm ingest -- --server s5`.
+name: optizzz
+services:
+  postgres:
+    image: postgres:18.0-alpine
+    environment:
+      POSTGRES_USER: optizzz
+      POSTGRES_PASSWORD: optizzz
+      POSTGRES_DB: optizzz
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres:/var/lib/postgresql
+
+volumes:
+  postgres:
