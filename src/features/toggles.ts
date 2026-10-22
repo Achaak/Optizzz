@@ -3,7 +3,7 @@ import { featureCatalog, type CatalogEntry, type FeatureId } from "./catalog";
 
 /**
  * Switches of « Fonctionnalités », keyed by feature id or `featureId.optionId`. Only a change from the default is
- * kept: a missing key means on, or off for a feature or an option marked `offByDefault`. Global (not per server) and synced: it is
+ * kept: a missing key means on, or off for a feature marked `offByDefault`. Global (not per server) and synced: it is
  * the player's choice.
  */
 export type Toggles = Partial<Record<string, boolean>>;
@@ -14,8 +14,7 @@ const toggleKey = (feature: FeatureId, option?: string) => (option ? `${feature}
 
 const isOnByDefault = (feature: FeatureId, option?: string) => {
   const entry: CatalogEntry | undefined = featureCatalog.find((candidate) => candidate.id === feature);
-  if (option === undefined) return !entry?.offByDefault;
-  return !entry?.options.some((candidate) => candidate.id === option && candidate.offByDefault);
+  return option !== undefined || !entry?.offByDefault;
 };
 
 /** An option is on only when its feature is on too. */

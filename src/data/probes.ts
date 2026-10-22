@@ -4,27 +4,50 @@ import { storage } from "wxt/utils/storage";
 import type { Place } from "@/game/army/battle";
 import { armyFromKeys, UNITS } from "@/game/army/units";
 import { PLACES, placesWithoutProbe, probeMoves, storeMoves, type ProbeMove, type ProbePlan } from "@/game/probes";
+import type { Toggles } from "@/features/toggles";
 import { readGarrison } from "./garrison";
 
 /** What the player wants on each place, by unit key; stored per server. */
 export type ProbeTargets = Record<Place, Record<string, number>>;
 
-export const DEFAULT_PROBE_TARGETS: ProbeTargets = { field: { JSN: 1 }, nest: { JSN: 1 }, lodge: { JSN: 1 } };
+/** One JSN on the Dôme and the Loge; nothing on the Terrain de chasse until the player asks for it. */
+export const DEFAULT_PROBE_TARGETS: ProbeTargets = { field: {}, nest: { JSN: 1 }, lodge: { JSN: 1 } };
 
-const targetsKey = (host: string) => `local:probes:${host}:targets` as const;
+const targetsKey = (host: string) => `local:probes:${host}:keep` as const;
 
-export async function loadProbeTargets(host: string): Promise<ProbeTargets> {
-  return { ...DEFAULT_PROBE_TARGETS, ...(await storage.getItem<Partial<ProbeTargets>>(targetsKey(host))) };
+/**
+ * Until 2026-10-22, the watched places were options of « Fonctionnalités » (`probes.field`, off by default,
+ * `probes.nest`, `probes.lodge`) and the numbers, one JSN on each place by default, were stored apart. A place that
+ * option left out now keeps nothing.
+ */
+const legacyTargetsKey = (host: string) => `local:probes:${host}:targets` as const;
+const LEGACY_DEFAULT: ProbeTargets = { field: { JSN: 1 }, nest: { JSN: 1 }, lodge: { JSN: 1 } };
+const legacyWatched = (toggles: Toggles, place: Place) =>
+  place === "field" ? toggles["probes.field"] === true : toggles[`probes.${place}`] !== false;
+
+/** What each place keeps on this server; `toggles` only for the settings of before 2026-10-22. */
+export async function loadProbeTargets(host: string, toggles: Toggles): Promise<ProbeTargets> {
+  const stored = await storage.getItem<Partial<ProbeTargets>>(targetsKey(host));
+  if (stored) return { ...DEFAULT_PROBE_TARGETS, ...stored };
+  const old = { ...LEGACY_DEFAULT, ...(await storage.getItem<Partial<ProbeTargets>>(legacyTargetsKey(host))) };
+  return {
+    field: legacyWatched(toggles, "field") ? old.field : {},
+    nest: legacyWatched(toggles, "nest") ? old.nest : {},
+    lodge: legacyWatched(toggles, "lodge") ? old.lodge : {},
+  };
 }
 
 export async function saveProbeTargets(host: string, targets: ProbeTargets): Promise<void> {
   await storage.setItem(targetsKey(host), targets);
 }
 
-/** The targets of the watched places. */
-export const probePlan = (targets: ProbeTargets, watched: readonly Place[]): ProbePlan =>
+/** The places that keep at least one ant, with what they keep. */
+export const probePlan = (targets: ProbeTargets): ProbePlan =>
   Object.fromEntries(
-    PLACES.filter((place) => watched.includes(place)).map((place) => [place, armyFromKeys(targets[place])]),
+    PLACES.filter((place) => Object.values(targets[place]).some((count) => count > 0)).map((place) => [
+      place,
+      armyFromKeys(targets[place]),
+    ]),
   );
 
 const LIEU: Record<Place, string> = { field: "1", nest: "2", lodge: "3" };

@@ -36,7 +36,7 @@ Chasse et combat
 • Production sur les profils : ce que le TDC d'un joueur récolte par jour au plus, taxe de colonie déduite s'il est soumis.
 • Plan de flood : sur le formulaire d'attaque, les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
 • Attaques et convois en cours : une liste lisible avec décompte, heure d'arrivée, lieu et troupes (Compte+), et un bouton pour copier chacun en une ligne.
-• Anti-sondes : une fourmi gardée sur le Dôme et la Loge (et le Terrain au choix), pour que le rapport d'une attaque montre l'armée de l'attaquant ; un avertissement et un bouton sur Armée, et le Lanceur de chasse comme le Plan de flood les laissent à la maison.
+• Anti-sondes : des fourmis gardées sur le Dôme et la Loge (et le Terrain au choix), réglées sur la page Armée, pour que le rapport d'une attaque montre l'armée de l'attaquant ; un avertissement et un bouton sur Armée, et le Lanceur de chasse comme le Plan de flood les laissent à la maison.
 
 Alliance
 • Carte de l'alliance : les membres sur la carte, reliés à leurs plus proches voisins, avec les temps de trajet dans les deux sens et, au choix, leur rôle dans la chaîne de TDC.

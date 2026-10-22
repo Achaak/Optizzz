@@ -1,3 +1,4 @@
+import { storage } from "wxt/utils/storage";
 import { beforeEach, describe, expect, it } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import { armyFromKeys } from "@/game/army/units";
@@ -164,20 +165,36 @@ describe("storeArmy", () => {
 describe("probe targets", () => {
   beforeEach(() => fakeBrowser.reset());
 
-  it("keeps one JSN on each place until the player sets them, per server", async () => {
-    expect(await loadProbeTargets("s5.fourmizzz.fr")).toEqual(DEFAULT_PROBE_TARGETS);
-    const targets = { field: {}, nest: { JSN: 10 }, lodge: { JSN: 5, SN: 2 } };
+  it("keeps one JSN on the Dôme and the Loge until the player sets them, per server", async () => {
+    expect(await loadProbeTargets("s5.fourmizzz.fr", {})).toEqual(DEFAULT_PROBE_TARGETS);
+    const targets = { field: { JSN: 1 }, nest: { JSN: 10 }, lodge: {} };
     await saveProbeTargets("s5.fourmizzz.fr", targets);
-    expect(await loadProbeTargets("s5.fourmizzz.fr")).toEqual(targets);
-    expect(await loadProbeTargets("s2.fourmizzz.fr")).toEqual(DEFAULT_PROBE_TARGETS);
+    expect(await loadProbeTargets("s5.fourmizzz.fr", { "probes.lodge": false })).toEqual(targets);
+    expect(await loadProbeTargets("s2.fourmizzz.fr", {})).toEqual(DEFAULT_PROBE_TARGETS);
   });
 
-  it("plans the watched places only", () => {
-    const targets = { field: { JSN: 100 }, nest: { JSN: 10 }, lodge: { JSN: 5, SN: 2 } };
-    expect(probePlan(targets, ["nest", "lodge"])).toEqual({
-      nest: armyFromKeys({ JSN: 10 }),
-      lodge: armyFromKeys({ JSN: 5, SN: 2 }),
+  it("takes over the places chosen in « Fonctionnalités » and the numbers set before 2026-10-22", async () => {
+    await storage.setItem("local:probes:s5.fourmizzz.fr:targets", { field: { JSN: 1 }, nest: {}, lodge: { SN: 2 } });
+    expect(await loadProbeTargets("s5.fourmizzz.fr", { "probes.lodge": false })).toEqual({
+      field: {},
+      nest: {},
+      lodge: {},
     });
+    expect(await loadProbeTargets("s5.fourmizzz.fr", { "probes.field": true })).toEqual({
+      field: { JSN: 1 },
+      nest: {},
+      lodge: { SN: 2 },
+    });
+    expect(await loadProbeTargets("s2.fourmizzz.fr", { "probes.field": true, "probes.nest": false })).toEqual({
+      field: { JSN: 1 },
+      nest: {},
+      lodge: { JSN: 1 },
+    });
+  });
+
+  it("plans the places that keep at least one ant", () => {
+    const targets = { field: {}, nest: { JSN: 0 }, lodge: { JSN: 5, SN: 2 } };
+    expect(probePlan(targets)).toEqual({ lodge: armyFromKeys({ JSN: 5, SN: 2 }) });
   });
 });
 

@@ -49,9 +49,6 @@ describe("buildFeaturesSection", () => {
       "research-advice.aphids",
       "attacks-on-way",
       "probes",
-      "probes.field",
-      "probes.nest",
-      "probes.lodge",
       "hunt-reports",
       "combat-reports",
       "combat-simulator",
@@ -79,10 +76,7 @@ describe("buildFeaturesSection", () => {
       "compact-numbers.game",
       "compact-numbers.extension",
     ]);
-    expect(boxes.filter((box) => !box.checked).map((box) => box.dataset.toggle)).toEqual([
-      "probes.field",
-      "compact-numbers",
-    ]);
+    expect(boxes.filter((box) => !box.checked).map((box) => box.dataset.toggle)).toEqual(["compact-numbers"]);
     // The options of a feature off by default wait for it, ready to be on with it.
     expect(boxes.filter((box) => box.disabled).map((box) => box.dataset.toggle)).toEqual([
       "compact-numbers.game",

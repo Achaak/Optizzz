@@ -1,11 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { watchedPlaces } from "./index";
+import { beforeEach, describe, expect, it } from "vitest";
+import { fakeBrowser } from "wxt/testing/fake-browser";
+import { armyFromKeys } from "@/game/army/units";
+import { loadProbePlan } from "./index";
 
-describe("watchedPlaces", () => {
-  it("watches the dome and lodge by default, the hunting field once switched on", () => {
-    expect(watchedPlaces({})).toEqual(["nest", "lodge"]);
-    expect(watchedPlaces({ "probes.field": true })).toEqual(["field", "nest", "lodge"]);
-    expect(watchedPlaces({ "probes.nest": false })).toEqual(["lodge"]);
-    expect(watchedPlaces({ probes: false })).toEqual([]);
+describe("loadProbePlan", () => {
+  beforeEach(() => fakeBrowser.reset());
+
+  it("keeps one JSN on the Dôme and the Loge by default, nothing while the feature is off", async () => {
+    expect(await loadProbePlan({})).toEqual({ nest: armyFromKeys({ JSN: 1 }), lodge: armyFromKeys({ JSN: 1 }) });
+    expect(await loadProbePlan({ probes: false })).toEqual({});
   });
 });

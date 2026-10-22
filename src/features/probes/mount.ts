@@ -42,7 +42,6 @@ const moveText = (move: ProbeMove) =>
 
 export interface ProbesPanel {
   armies: Record<Place, Army>;
-  watched: readonly Place[];
   targets: ProbeTargets;
   place: () => Promise<ProbesResult>;
   /** « Replacer l'armée »: everything in the Loge but the probes of the other places. */
@@ -52,25 +51,28 @@ export interface ProbesPanel {
 }
 
 /**
- * Above the garrison on Armee.php: the probes of each watched place, a button that moves the missing ones there, and
- * a form to choose how many of each unit each place keeps.
+ * Above the garrison on Armee.php: the probes of each place, a button that moves the missing ones there, and a form
+ * to choose how many of each unit each place keeps, open while no place keeps any.
  */
 export function renderProbes(doc: Document, panel: ProbesPanel): void {
-  const { armies, watched, targets } = panel;
+  const { armies, targets } = panel;
   const table = [...doc.querySelectorAll("table.simulateur")].find((candidate) =>
     candidate.textContent.includes("Troupes en Garnison"),
   );
-  if (watched.length === 0 || !table || doc.querySelector(`.${BOX_CLASS}`)) return;
+  if (!table || doc.querySelector(`.${BOX_CLASS}`)) return;
 
-  const plan = probePlan(targets, watched);
+  const plan = probePlan(targets);
+  const watched = PLACES.filter((place) => plan[place]);
   const short = placesWithoutProbe(armies, plan);
   const box = doc.createElement("div");
   box.className = `${BOX_CLASS} ${short.length > 0 ? "optizzz-callout optizzz-callout--warning" : "optizzz-panel"}`;
   const status = doc.createElement("p");
   status.textContent =
-    short.length > 0
-      ? `⚠ Il manque des anti-sondes sur ${placeList(short)}.`
-      : `✓ Anti-sondes en place : ${watched.map((place) => `${placeTitle(place)} ${armyText(plan[place] ?? [])}`).join(" · ")}.`;
+    watched.length === 0
+      ? "Aucune anti-sonde : choisissez ci-dessous combien de fourmis garder sur chaque lieu."
+      : short.length > 0
+        ? `⚠ Il manque des anti-sondes sur ${placeList(short)}.`
+        : `✓ Anti-sondes en place : ${watched.map((place) => `${placeTitle(place)} ${armyText(plan[place] ?? [])}`).join(" · ")}.`;
   box.append(status);
 
   const { moves, missing } = probeMoves(armies, plan);
@@ -85,7 +87,7 @@ export function renderProbes(doc: Document, panel: ProbesPanel): void {
     line.textContent = `Pas assez de fourmis à la maison pour les anti-sondes ${placeList(missing, PLACE_FROM)}, sans prendre celles d'un autre lieu.`;
     box.append(line);
   }
-  box.append(settingsForm(doc, panel));
+  box.append(settingsForm(doc, panel, watched.length === 0));
   table.before(box);
 }
 
@@ -128,10 +130,14 @@ function actionLine(
   return fragment;
 }
 
-/** How many of each unit each watched place keeps: the units the player has, and those already asked for. */
-function settingsForm(doc: Document, panel: ProbesPanel): HTMLDetailsElement {
-  const { armies, watched, targets } = panel;
+/**
+ * How many of each unit each place keeps (0 everywhere: the place keeps nothing): the units the player has, and those
+ * already asked for.
+ */
+function settingsForm(doc: Document, panel: ProbesPanel, open: boolean): HTMLDetailsElement {
+  const { armies, targets } = panel;
   const details = doc.createElement("details");
+  details.open = open;
   const summary = doc.createElement("summary");
   summary.textContent = "Régler les anti-sondes";
   details.append(summary);
@@ -140,7 +146,7 @@ function settingsForm(doc: Document, panel: ProbesPanel): HTMLDetailsElement {
   const grid = doc.createElement("table");
   grid.className = "optizzz-table optizzz-table--dense";
   const head = grid.createTHead().insertRow();
-  for (const title of ["Unité", ...watched.map(placeTitle)]) {
+  for (const title of ["Unité", ...PLACES.map(placeTitle)]) {
     const th = doc.createElement("th");
     th.scope = "col";
     th.textContent = title;
@@ -148,10 +154,8 @@ function settingsForm(doc: Document, panel: ProbesPanel): HTMLDetailsElement {
   }
   const body = grid.createTBody();
   const inputs: { place: Place; key: string; input: HTMLInputElement }[] = [];
-  const shown = UNITS.filter(
-    (unit, i) =>
-      PLACES.some((place) => (armies[place][i] ?? 0) > 0) ||
-      watched.some((place) => (targets[place][unit.key] ?? 0) > 0),
+  const shown = UNITS.filter((unit, i) =>
+    PLACES.some((place) => (armies[place][i] ?? 0) > 0 || (targets[place][unit.key] ?? 0) > 0),
   );
   for (const unit of shown) {
     const row = body.insertRow();
@@ -160,7 +164,7 @@ function settingsForm(doc: Document, panel: ProbesPanel): HTMLDetailsElement {
     name.className = "optizzz-name";
     name.textContent = unit.name;
     row.append(name);
-    for (const place of watched) {
+    for (const place of PLACES) {
       const input = doc.createElement("input");
       input.type = "text";
       input.inputMode = "numeric";
@@ -174,7 +178,7 @@ function settingsForm(doc: Document, panel: ProbesPanel): HTMLDetailsElement {
   const note = doc.createElement("p");
   note.className = "optizzz-note";
   note.textContent =
-    "Fourmis gardées sur chaque lieu ; 0 pour aucune. Le Lanceur de chasse et le Plan de flood les laissent à la maison, et elles sont remises en place après l'envoi.";
+    "Fourmis gardées sur chaque lieu ; 0 partout pour ne rien garder sur un lieu. Le Lanceur de chasse et le Plan de flood les laissent à la maison, et elles sont remises en place après l'envoi.";
   const save = doc.createElement("button");
   save.type = "submit";
   save.className = "optizzz-button-primary";

@@ -3,8 +3,6 @@ export interface FeatureOption {
   /** Stable: part of the storage key. */
   id: string;
   label: string;
-  /** Off until the player switches it on. */
-  offByDefault?: true;
 }
 
 /** A feature the player can switch off in « Fonctionnalités ». */
@@ -135,12 +133,8 @@ export const featureCatalog = [
     id: "probes",
     label: "Anti-sondes",
     description:
-      "Des fourmis gardées sur chaque lieu, pour qu'une attaque y livre combat et que le rapport montre l'armée de l'attaquant. Sur Armée : combien de chaque unité sur chaque lieu (une JSN par défaut), et un bouton pour les placer ; le Lanceur de chasse et le Plan de flood les laissent à la maison, et elles sont replacées après l'envoi.",
-    options: [
-      { id: "field", label: "Terrain de chasse", offByDefault: true },
-      { id: "nest", label: "Dôme" },
-      { id: "lodge", label: "Loge" },
-    ],
+      "Des fourmis gardées sur le Terrain de chasse, le Dôme ou la Loge, pour qu'une attaque y livre combat et que le rapport montre l'armée de l'attaquant. Sur Armée : combien de chaque unité sur chaque lieu (une JSN sur le Dôme et la Loge par défaut), et un bouton pour les placer ; le Lanceur de chasse et le Plan de flood les laissent à la maison, et elles sont replacées après l'envoi.",
+    options: [],
   },
   {
     id: "hunt-reports",
