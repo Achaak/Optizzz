@@ -4,7 +4,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-23 (ticket 04). 
 
 ## Adresse
 
-`/tools/costs`. État dans `#p=` : élément, niveau de départ, niveau d'arrivée, niveau du bonus.
+`/tools/costs`. État dans `#p=` : élément, niveau de départ, niveau d'arrivée, niveaux des deux bonus (Architecture et Salle d'analyse : voir « Code »).
 
 ## Saisie
 
@@ -27,3 +27,22 @@ Prérequis (« Requis : Laboratoire N »), temps de ponte des ouvrières d'une r
 
 - Tester les bonus avec vitest (durée d'un niveau relevé dans le jeu, bonus compris : voir `couts-des-niveaux.md`).
 - Marcher en clair, en sombre et sur téléphone (le détail défile horizontalement s'il le faut).
+
+## Code
+
+Fait le 2026-10-23 (ticket 08).
+
+| Fichier                                                       | Rôle                                                                                                                                                                                                                            |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/app/tools/costs/page.tsx`                       | La page `/tools/costs` (gabarit `ToolPage`)                                                                                                                                                                                     |
+| `apps/web/src/components/tools/costs/costs-tool.tsx`          | Saisie, total et détail par niveau ; « Copier le lien », « Reprendre mes niveaux »                                                                                                                                              |
+| `apps/web/src/components/tools/costs/development.ts` (+ test) | `levelSeconds` (durée d'un niveau avec bonus, arrondie à la seconde), `developmentPlan` (niveaux, cumuls, total), `bonusKeyOf`, `costedResources` ; croissances de `level-costs.ts`, bonus de `speed-up.ts` (`SPEED_UP_FACTOR`) |
+| `apps/web/src/components/tools/costs/costs-state.ts` (+ test) | Format de l'adresse (`defineLinkFormat`, version 1)                                                                                                                                                                             |
+
+Décisions prises en codant :
+
+- L'état garde **les deux** bonus (`a` : Architecture, `s` : Salle d'analyse), pas un seul : passer d'un bâtiment à une recherche garde chacun, et « Mes niveaux » pré-remplit et retient les deux comme les autres outils. Seul celui de l'élément choisi s'affiche et compte. Adresse : `{ e, f, t, a, s }` (élément, niveau actuel, niveau visé, bonus).
+- Ouvert sans lien ni état gardé : Champignonnière, du niveau 0 au niveau 10. Niveaux de 0 à 60 (au-delà des 50 de Toolzzz). Un champ de bonus vide compte pour 0.
+- Durées écrites comme le jeu les montre sur ses chantiers (`formatGameDuration` : « 21H 26m 24s », « 7J 10H 21m 43s »), à la seconde : `formatDuration` arrondit à la minute et s'arrête à 30 jours, trop court pour les hauts niveaux.
+- La note sur × 1,2 et × 1,12 ne s'affiche que si le niveau visé atteint le premier de ces paliers pour l'élément.
+- Le choix de l'élément est une liste native (`<select>` avec `<optgroup>` « Bâtiments » / « Recherches »), comme le champ Serveur du socle : pas de composant shadcn ajouté.
