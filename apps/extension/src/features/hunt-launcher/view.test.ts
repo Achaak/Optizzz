@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Plan } from "./engine/planner";
+import type { Plan } from "@optizzz/game/hunt/planner";
 import {
   formatChance,
   formatShare,

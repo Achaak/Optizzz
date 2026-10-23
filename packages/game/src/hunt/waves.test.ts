@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evaluateHunt } from "./evaluate";
 import { equalDrafts, type PlanInput } from "./planner";
 import { dispatchWaves } from "./waves";
-import { armyFromKeys, UNITS } from "@optizzz/game/army/units";
+import { armyFromKeys, UNITS } from "../army/units";
 
 const levels = { weapons: 4, shield: 4, huntSpeed: 3, cochineal: 0 };
 const input: PlanInput = {

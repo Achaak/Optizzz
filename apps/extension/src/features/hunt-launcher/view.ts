@@ -1,7 +1,7 @@
 // Texts of the hunt launcher, kept out of the components to be tested.
-import { nextDifficultyStep } from "./engine/difficulty";
-import type { RatioChoice } from "./engine/extras";
-import type { Plan } from "./engine/planner";
+import { nextDifficultyStep } from "@optizzz/game/hunt/difficulty";
+import type { RatioChoice } from "@optizzz/game/hunt/extras";
+import type { Plan } from "@optizzz/game/hunt/planner";
 import { unitLabel, UNITS } from "@optizzz/game/army/units";
 import { formatAmount, formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import { fromParisParts, parisParts } from "@optizzz/game/format/time-format";

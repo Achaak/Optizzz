@@ -1,4 +1,4 @@
-import type { Plan } from "./engine/planner";
+import type { Plan } from "@optizzz/game/hunt/planner";
 import type { Settings } from "./settings";
 import { formatChance, presetOf, PRESETS, promotionCounts, splitText } from "./view";
 import { formatDecimal } from "@optizzz/game/format/number-format";

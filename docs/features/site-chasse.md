@@ -8,7 +8,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-23 (ticket 04). 
 
 ## Partage avec l'extension
 
-- Le moteur (`apps/extension/src/features/hunt-launcher/engine/` : difficulté, tirage, évaluation, Calystene, planificateur, extras, requêtes) et son worker passent dans **`packages/game/src/hunt/`**. Le worker s'écrit comme un module (`new Worker(new URL("./engine.worker.ts", import.meta.url), { type: "module" })`), compris par Vite (WXT) et Next ; repli en ligne si le worker est refusé, comme aujourd'hui.
+- Le moteur (`apps/extension/src/features/hunt-launcher/engine/` : difficulté, tirage, évaluation, Calystene, planificateur, extras, requêtes) et son worker passent dans **`packages/game/src/hunt/`**. Le worker s'écrit comme un module (`new Worker(new URL("./engine.worker.ts", import.meta.url), { type: "module" })`), compris par Vite (WXT) et Next ; repli en ligne si le worker est refusé, comme aujourd'hui. Fait le 2026-10-23 : chaque app donne à `createEngine` la façon de lancer le worker. Le site prend le worker module (`hunt/module-worker.ts`) ; le Lanceur garde le même fichier inliné (`?worker&inline`), car dans un content script l'adresse du worker module pointe sur le domaine du jeu (vérifié au build : `new URL("/assets/engine.worker-….js", self.location.href)`), le worker n'y chargerait pas et tout tournerait en ligne, page figée.
 - Le Lanceur de chasse s'en sert ; ses tests passent inchangés.
 - La vue React est propre à chaque app.
 

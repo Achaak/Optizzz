@@ -1,6 +1,6 @@
-import type { FieldRow } from "./engine/extras";
-import type { Plan } from "./engine/planner";
-import type { Extras } from "./engine/requests";
+import type { FieldRow } from "@optizzz/game/hunt/extras";
+import type { Plan } from "@optizzz/game/hunt/planner";
+import type { Extras } from "@optizzz/game/hunt/requests";
 import { LossCurve } from "./LossCurve";
 import { formatChance } from "./view";
 import { unitLabel, UNITS } from "@optizzz/game/army/units";

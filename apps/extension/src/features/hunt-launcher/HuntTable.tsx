@@ -1,4 +1,4 @@
-import type { Plan } from "./engine/planner";
+import type { Plan } from "@optizzz/game/hunt/planner";
 import { unitLabel, UNITS } from "@optizzz/game/army/units";
 import type { LaunchStatus } from "./launch";
 import type { ColumnKey } from "./settings";

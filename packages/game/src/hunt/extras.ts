@@ -3,7 +3,7 @@
 import { REFERENCE_RATIOS } from "./calystene";
 import type { Spread } from "./evaluate";
 import { equalDrafts, describeHunt, planHunts, type Plan, type PlanInput } from "./planner";
-import { UNITS, type Army } from "@optizzz/game/army/units";
+import { UNITS, type Army } from "../army/units";
 
 export interface CurvePoint {
   amount: number;

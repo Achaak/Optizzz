@@ -5,7 +5,7 @@
 import { difficulty } from "./difficulty";
 import { evaluateHunt } from "./evaluate";
 import type { Draft, PlanInput } from "./planner";
-import { UNITS } from "@optizzz/game/army/units";
+import { UNITS } from "../army/units";
 
 /** Units that can still be promoted, the first ones filling a wave first. */
 const XP_ORDER = ["Tu", "Tk", "A", "C", "S", "JS", "SN"];
