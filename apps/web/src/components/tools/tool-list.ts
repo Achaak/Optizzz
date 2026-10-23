@@ -17,14 +17,14 @@ export const TOOLS: readonly ToolEntry[] = [
     id: "travel",
     title: "Temps de trajet",
     description: "Le trajet d'une attaque ou d'un convoi entre deux joueurs ou deux positions, et l'heure d'arrivée.",
-    ready: false,
+    ready: true,
   },
   {
     id: "costs",
     title: "Coûts et temps de développement",
     description:
       "Ce que coûte un bâtiment ou une recherche d'un niveau à un autre, et sa durée avec Architecture ou la Salle d'analyse.",
-    ready: false,
+    ready: true,
   },
   {
     id: "combat",
