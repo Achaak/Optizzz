@@ -5,6 +5,7 @@ import { PLACES, type Place } from "@optizzz/game/army/battle";
 import { armyToCounts, type Counts } from "@optizzz/game/army/army-text";
 import { emptyForm, type SimulatorForm } from "@optizzz/game/army/battle-form";
 import { armyFromKeys } from "@optizzz/game/army/units";
+import { combatLinkFormat } from "@optizzz/game/site-links/combat";
 import type { StoredLevels } from "@/data/levels";
 import type { Garrison } from "@/data/garrison";
 import type { SimulatorSide } from "./open";
@@ -113,3 +114,10 @@ export function withOpponent(form: SimulatorForm, opponent: Opponent): Simulator
     target: opponent.place,
   };
 }
+
+/**
+ * The state of optizzz.fr's combat tool for « Ouvrir sur optizzz.fr » and « Copier le lien »: both sides as typed,
+ * « Mes niveaux » on the player's side. The site runs the same engine on it (docs/features/site-combat.md).
+ */
+export const siteState = (form: SimulatorForm, side: SimulatorSide): string =>
+  combatLinkFormat.encode({ form, mine: side });

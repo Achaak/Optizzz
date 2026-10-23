@@ -54,6 +54,8 @@ export function buildPageDialog(doc: Document, input: PageDialogInput): HTMLElem
   frame.className = "page-frame";
   frame.title = input.title;
   frame.src = input.src;
+  // The framed page may copy a link or a text (« Copier le lien »).
+  frame.allow = "clipboard-write";
 
   dialog.append(header, frame);
   return dialog;

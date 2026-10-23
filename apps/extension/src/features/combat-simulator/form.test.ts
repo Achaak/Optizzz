@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { armyFromKeys } from "@optizzz/game/army/units";
-import { emptyForm, toBattle } from "@optizzz/game/army/battle-form";
-import { decodeOpponent, encodeOpponent, leaveSide, prefill, withOpponent } from "./form";
+import { emptyForm, simulate, toBattle } from "@optizzz/game/army/battle-form";
+import { combatLinkFormat } from "@optizzz/game/site-links/combat";
+import { decodeOpponent, encodeOpponent, leaveSide, prefill, siteState, withOpponent } from "./form";
 import type { Garrison } from "@/data/garrison";
 
 const garrison: Garrison = {
@@ -110,5 +111,19 @@ describe("opponent", () => {
     expect(decodeOpponent("{")).toBeNull();
     expect(decodeOpponent('{"place":"moon","army":{},"weapons":1}')).toBeNull();
     expect(decodeOpponent('{"place":"field","army":{"JSN":-3},"weapons":1}')).toBeNull();
+  });
+});
+
+describe("siteState", () => {
+  it("gives optizzz.fr the same engine input, hence the same fight, with « Mes niveaux » on the player's side", () => {
+    const form = withOpponent(prefill(emptyForm(), "attack", garrison, levels), {
+      place: "nest",
+      army: { TuE: 300, JS: 12 },
+      weapons: 9,
+    });
+    const read = combatLinkFormat.decode(siteState({ ...form, defender: { ...form.defender, food: 5000 } }, "attack"));
+    expect(read?.mine).toBe("attack");
+    expect(read && toBattle(read.form)).toEqual(toBattle(form));
+    expect(read && simulate(read.form)).toEqual(simulate({ ...form, defender: { ...form.defender, food: 5000 } }));
   });
 });

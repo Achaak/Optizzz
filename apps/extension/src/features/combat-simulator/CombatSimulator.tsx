@@ -7,7 +7,9 @@ import { inRange } from "@optizzz/game/attack";
 import { formatAmount } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { loadStoredLevels } from "@/data/levels";
-import { leaveSide, prefill, withOpponent, type Opponent } from "./form";
+import { leaveSide, prefill, siteState, withOpponent, type Opponent } from "./form";
+import { loadToggles } from "@/features/toggles";
+import { openSiteTool, siteLinksEnabled, siteToolLink } from "@/utils/site-tool";
 import { isEmptyGarrison, loadGarrison } from "@/data/garrison";
 import type { SimulatorSide } from "./open";
 import { formatPastTime } from "@optizzz/game/format/time-format";
@@ -160,6 +162,51 @@ function StageResult({ stage, form }: { stage: Stage; form: SimulatorForm }) {
   );
 }
 
+/** « Ouvrir sur optizzz.fr » and « Copier le lien »: both sides as typed, in the fragment (never sent to the site). */
+function SiteLinks({ form, side }: { form: SimulatorForm; side: SimulatorSide }) {
+  const [enabled, setEnabled] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  useEffect(() => {
+    void loadToggles().then((toggles) => {
+      setEnabled(siteLinksEnabled(toggles));
+    });
+  }, []);
+  if (!enabled) return null;
+  return (
+    <span className="site-links">
+      <button
+        type="button"
+        onClick={() => {
+          void openSiteTool("combat", siteState(form, side));
+        }}
+      >
+        Ouvrir sur optizzz.fr
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          const link = siteToolLink("combat", siteState(form, side));
+          navigator.clipboard.writeText(link).then(
+            () => {
+              setCopied("Lien copié.");
+            },
+            () => {
+              setCopied(`Le presse-papiers a refusé : ${link}`);
+            },
+          );
+        }}
+      >
+        Copier le lien
+      </button>
+      {copied && (
+        <span role="status" className="optizzz-note">
+          {copied}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function CombatSimulator({ server, side: initialSide, embedded = false, opponent = null }: Props) {
   const [side, setSide] = useState<SimulatorSide>(initialSide);
   const [form, setForm] = useState<SimulatorForm>(() => (opponent ? withOpponent(emptyForm(), opponent) : emptyForm()));
@@ -272,6 +319,7 @@ export function CombatSimulator({ server, side: initialSide, embedded = false, o
             {side === "attack" ? "Je défends" : "J'attaque"} avec mon armée
           </button>
         )}
+        <SiteLinks form={form} side={side} />
       </div>
 
       <div className="sides">
