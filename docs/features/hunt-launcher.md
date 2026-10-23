@@ -42,6 +42,7 @@ Dire au joueur **combien chasser, avec quoi, et lancer en un clic** : le plus de
 - **Lancement**, au clic seulement, jamais planifié :
   - « Lancer N chasses de X cm² » : une chasse après l'autre (GET du jeton, POST du formulaire), 1 s entre deux, arrêt au premier échec, état par ligne ; bouton désactivé pendant le lancement. Toutes parties : rechargement de la page. Une partie seulement : le plan est figé (plus de recalcul, l'armée lue au chargement n'est plus la bonne), les échecs peuvent être relancés, et un lien propose de recharger la page ;
   - « Lancer » par ligne, dans l'ordre.
+- **« Ouvrir sur optizzz.fr »** et **« Copier le lien »** (si l'option « Liens vers optizzz.fr » est cochée, `site-outils.md`), ajoutés le 2026-10-23 : le simulateur de chasse du site avec l'armée envoyée (réserve et anti-sondes déjà retirées), les niveaux, les deux TdC, le nombre de chasses en cours, les réglages, les chasses changées à la main et l'affichage (`site-link.ts`, `SiteLinks.tsx`). Le site demande au moteur la même requête (`planInput` de `packages/game/src/hunt/hunt-form.ts`), donc le même plan ; la vitesse de ponte n'y passe pas (le Lanceur ne connaît pas les trois niveaux).
 
 ## Hors v1
 

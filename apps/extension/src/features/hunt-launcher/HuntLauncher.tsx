@@ -18,6 +18,7 @@ import { launchHunts, type LaunchStatus } from "./launch";
 import { hasNoArmyToSend, readHuntForm, type HuntForm, type OngoingHunt } from "./pages";
 import { PlayerData } from "./PlayerData";
 import { SimpleView } from "./SimpleView";
+import { SiteLinks } from "./SiteLinks";
 import { DEFAULT_SETTINGS, huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
 import { huntsText, unitsText } from "@optizzz/game/hunt/texts";
 import { formatAmount, formatNumber } from "@optizzz/game/format/number-format";
@@ -401,6 +402,22 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   );
 
   const setAdvanced = (advanced: boolean) => updateSettings((s) => ({ ...s, advanced }));
+  // What the site's hunt simulator needs to give the same plan.
+  const siteLinks = (
+    <SiteLinks
+      entries={{
+        army: input.army,
+        levels,
+        launchField,
+        arrivalField,
+        ongoing: ongoing.length,
+        settings,
+        huntCount,
+        huntAmount,
+        override,
+      }}
+    />
+  );
 
   if (!settings.advanced) {
     // What the advanced view changes and the simple one does not show.
@@ -448,6 +465,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
             Réglages avancés : niveaux, armée envoyée, TdC, ratio précis, nombre et surface des chasses…
           </button>
         </p>
+        <p className="mode">{siteLinks}</p>
       </div>
     );
   }
@@ -458,7 +476,8 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
       <p className="mode">
         <button type="button" className="optizzz-button-link" onClick={() => setAdvanced(false)}>
           Revenir à l'affichage simple
-        </button>
+        </button>{" "}
+        {siteLinks}
       </p>
 
       {section(

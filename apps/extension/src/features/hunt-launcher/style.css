@@ -301,3 +301,12 @@ table.hunts {
   margin: var(--optizzz-space-3) 0 0;
   text-align: right;
 }
+
+/* « Ouvrir sur optizzz.fr » and « Copier le lien » */
+.site-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--optizzz-space-2);
+}
