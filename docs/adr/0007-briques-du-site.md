@@ -14,5 +14,5 @@ Le chiffrement de bout en bout (ADR 0005) et la connexion par lien magique deman
 
 ## Conséquences
 
-- Nouvelle permission d'hôte `*://optizzz.fr/*` : `PRIVACY.md`, `docs/store/fiche.md` et `data_collection_permissions` à mettre à jour avant de publier.
+- Nouvelle permission d'hôte `*://optizzz.fr/*`, **facultative** (`optional_host_permissions`), demandée au clic sur « Connecter mon Compte Optizzz » (précisé le 2026-10-23, `docs/features/site-comptes-espaces.md`) : obligatoire, elle aurait désactivé l'extension de tous les joueurs à la mise à jour, compte ou pas. `PRIVACY.md`, `docs/store/fiche.md` et `data_collection_permissions` à mettre à jour avant de publier.
 - Changer d'algorithme impose une version dans chaque donnée chiffrée, pour relire les anciennes : on la met dès le premier format.
