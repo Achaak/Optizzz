@@ -3,7 +3,7 @@ import { loadAlliancesExport, loadPlayersExport } from "@/data/exports";
 import { readLoggedInPseudo } from "@optizzz/game/pages/alliance";
 import type { Feature } from "../feature";
 import { loadGarrison } from "@/data/garrison";
-import { FLOOD_MARGIN } from "../flood";
+import { FLOOD_MARGIN } from "@optizzz/game/flood";
 import { checkLaunches } from "@/data/on-way";
 import { isUnderBeginnerProtection } from "../flood/page";
 import { loadCountLodge, loadDefenses } from "@/data/launches";

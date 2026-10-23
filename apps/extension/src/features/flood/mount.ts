@@ -1,7 +1,7 @@
 import type { Place } from "@optizzz/game/army/battle";
 import { armyFromKeys, unitLabel, UNITS, type Army } from "@optizzz/game/army/units";
-import { inRange, maxTake } from "@optizzz/game/attack";
-import { planAttacks, type PlannedAttack } from "@optizzz/game/flood";
+import { maxTake } from "@optizzz/game/attack";
+import { floodBlockText, floodPlan, type FloodPlanInput, type PlannedAttack } from "@optizzz/game/flood";
 import { keepProbes, PLACES, probeArmy, type ProbePlan } from "@optizzz/game/probes";
 import { formatAmount, formatNumber, showExactAmount } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTimeShort } from "@optizzz/game/format/time-format";
@@ -9,6 +9,8 @@ import { readArmyText } from "@optizzz/game/army/army-text";
 import { fillAttackForm, onAttackSent } from "./page";
 import { afterOnWay, type OnWay } from "@/data/on-way";
 import type { Launch } from "@/data/launches";
+import { openSiteTool, siteToolLink } from "@/utils/site-tool";
+import { floodSiteState, type FloodLinkInput } from "./site-link";
 
 const C = "optizzz-flood";
 
@@ -31,6 +33,7 @@ export const FLOOD_STYLE = `
 .${C}-defense { margin-top: var(--optizzz-space-2); padding-top: var(--optizzz-space-1); border-top: 1px solid var(--optizzz-border-soft); }
 .${C}-defense-state { display: flex; flex-wrap: wrap; align-items: center; gap: var(--optizzz-space-4); }
 .${C}-defense textarea { display: block; width: 100%; margin: var(--optizzz-space-2) 0; }
+.${C}-site-link { width: 100%; }
 .${C}-rules { margin-top: var(--optizzz-space-4); font-size: var(--optizzz-font-size-small); color: var(--optizzz-text-muted); }
 .${C}-rules p { margin: var(--optizzz-space-2) 0 0; }`;
 
@@ -52,6 +55,8 @@ export interface FloodContext {
   protectedMe?: boolean;
   /** Kept above the 50 % limit. */
   margin: number;
+  /** « Liens vers optizzz.fr » is on: « Ouvrir sur optizzz.fr » and « Copier le lien » are shown. */
+  siteLinks?: boolean;
   onCountLodgeChange: (count: boolean) => void;
   onDefenseChange: (army: Army | null) => void;
   onSend: (launch: Launch) => void;
@@ -172,6 +177,43 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     defenseNote,
   );
 
+  // « Ouvrir sur optizzz.fr » and « Copier le lien »: what this plan used, in the fragment (never sent to the site).
+  let linkInput: FloodLinkInput | null = null;
+  const site = element(doc, "div", `${C}-site optizzz-toolbar`);
+  site.hidden = !context.siteLinks;
+  const openSite = element(doc, "button", `${C}-site-open`, "Ouvrir sur optizzz.fr");
+  openSite.type = "button";
+  openSite.title = "Le simulateur de flood du site, avec ces TDC, l'armée du plan, vos niveaux et sa défense.";
+  const copyLink = element(doc, "button", `${C}-site-copy`, "Copier le lien");
+  copyLink.type = "button";
+  const copied = element(doc, "span", `${C}-site-status optizzz-note`);
+  copied.setAttribute("role", "status");
+  const linkField = element(doc, "input", `${C}-site-link`);
+  linkField.readOnly = true;
+  linkField.hidden = true;
+  linkField.setAttribute("aria-label", "Lien vers le simulateur de flood d'optizzz.fr");
+  site.append(openSite, copyLink, copied, linkField);
+  openSite.addEventListener("click", () => {
+    if (linkInput) void openSiteTool("flood", floodSiteState(linkInput));
+  });
+  copyLink.addEventListener("click", () => {
+    if (!linkInput) return;
+    const link = siteToolLink("flood", floodSiteState(linkInput));
+    // Refused (or no clipboard at all): the link is shown, selected, to copy by hand.
+    const showLink = () => {
+      copied.textContent = "Le presse-papiers a refusé : copiez ce lien.";
+      linkField.value = link;
+      linkField.hidden = false;
+      linkField.select();
+    };
+    Promise.resolve()
+      .then(() => navigator.clipboard.writeText(link))
+      .then(() => {
+        copied.textContent = "Lien copié.";
+        linkField.hidden = true;
+      }, showLink);
+  });
+
   const rules = element(doc, "details", `${C}-rules optizzz-disclosure`);
   rules.append(
     element(doc, "summary", "", "Règles utilisées (non vérifiées sur un vrai flood)"),
@@ -234,41 +276,31 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
       : "Inconnue, comptée comme nulle.";
     clear.hidden = !defense;
 
-    const plan = planAttacks({
+    const planInput: FloodPlanInput = {
       attackerField: myField,
       targetField: targetLeft,
       slots,
       margin: context.margin,
       available,
-      defender: defense
-        ? {
-            armies: { field: defense.army, nest: [], lodge: [] },
-            // The target's levels are unknown: taken as mine.
-            weapons: context.me.weapons,
-            shield: context.me.shield,
-            dome: 0,
-            lodge: 0,
-          }
-        : null,
+      defense: defense?.army ?? null,
       levels: { weapons: context.me.weapons, shield: context.me.shield },
-    });
+    };
+    const plan = floodPlan(planInput);
+    linkInput = {
+      plan: planInput,
+      attackSpeed: context.attackSpeed,
+      underWay: context.onWay.launches.length + unknownOnWay,
+    };
     planned = plan.attacks;
     if (filled && !planned.some((attack) => filled && sameArmy(attack.army, filled.army))) filled = null;
 
     const lodgeOnly = total(available) === 0 && total(context.available.lodge) > 0;
-    message.textContent = !inRange(myField, targetLeft)
-      ? `${context.target.pseudo} est hors de portée (50 % à 300 % de votre TDC).`
-      : !inRange(myField, targetLeft, context.margin)
-        ? `${context.target.pseudo} est à moins de ${String(context.margin * 100)} % de la limite des 50 % : trop juste, un autre mouvement peut la faire sortir de portée avant l'arrivée.`
-        : slots === 0
-          ? "Aucune attaque possible de plus pour l'instant."
-          : plan.blocked
-            ? "Votre armée ne suffit pas à écraser sa défense (riposte à 10 %)."
-            : lodgeOnly
-              ? "Votre armée est en Loge : cochez « Compter les troupes de la Loge » pour l'envoyer."
-              : planned.length === 0
-                ? "Aucune fourmi à envoyer."
-                : "";
+    message.textContent =
+      plan.block === "nothing-to-send" && lodgeOnly
+        ? "Votre armée est en Loge : cochez « Compter les troupes de la Loge » pour l'envoyer."
+        : plan.block
+          ? floodBlockText(plan.block, context.target.pseudo, context.margin)
+          : "";
     message.hidden = message.textContent === "";
 
     // Losses only matter against a defense: a column then, nothing otherwise.
@@ -363,7 +395,7 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
     });
   });
 
-  box.append(protectedMe, facts, note, lodgeLabel, message, scroll, defenseBox, rules);
+  box.append(protectedMe, facts, note, lodgeLabel, message, scroll, site, defenseBox, rules);
   form.after(box);
   render();
 }

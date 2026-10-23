@@ -31,6 +31,7 @@ Ces règles vivent dans `packages/game/src/attack.ts` (prise, portée avec marge
   - un tableau N° | Armée | (Pertes) | Prise | Son TDC après | Mon TDC après | « Remplir », avec une ligne Total (prise cumulée, TDC finaux, nombre d'attaques). La colonne Pertes n'apparaît que contre une défense ;
   - « Remplir » met les unités dans les champs du jeu, **les autres à 0** (le jeu pré-remplit toute l'armée), et vise le TDC. Le joueur valide lui-même. La ligne remplie est marquée en gras, d'un trait et du bouton « ✓ Rempli » (pas par la seule couleur) ;
   - « Sa défense sur le TDC » : la défense connue avec sa date et « Effacer » (absent quand elle est inconnue), puis la zone pour en coller une, mémorisée pour cette cible ; « Utiliser cette défense » reste grisé tant que la zone est vide, et un texte où aucune unité n'est reconnue ne remplace pas la défense connue (« Aucune unité reconnue dans ce texte ») ;
+  - « Ouvrir sur optizzz.fr » et « Copier le lien » (option « Liens vers optizzz.fr ») : le simulateur de flood du site avec les mêmes entrées (`site-flood.md`) ;
   - « Règles utilisées (non vérifiées sur un vrai flood) », replié.
 - **Sans plan** : niveaux illisibles ou TDC de la cible illisible, l'encart le dit au lieu de disparaître. L'export public injoignable n'empêche pas le plan (trajet « inconnu »).
 - **Suivi** : à l'envoi du formulaire par le joueur, l'attaque (cible, fourmis, prise prévue, arrivée) est notée. Prise prévue : celle de la ligne « Remplir » si l'armée envoyée est la même (après une défense, ses survivants seulement), sinon `min(fourmis, 20 %)`, quel que soit le lieu visé (attaquer la Fourmilière ou la Loge, c'est d'abord attaquer le TDC, d'après l'aide du jeu). Elle est notée tout de suite dans le `sessionStorage` de l'onglet (le jeu change de page aussitôt), puis versée au chargement suivant dans le stockage de l'extension. Sur le formulaire d'attaque (lecture d'`Armee.php` en arrière-plan) et à chaque passage sur `Armee.php`, ces attaques sont rapprochées de la liste « Attaque(s) en cours » du jeu, cible par cible, à l'arrivée la plus proche :
@@ -47,17 +48,18 @@ Floods furtifs (tailles arrondies), antisonde, floods entre membres d'une chaîn
 
 ## Code
 
-| Fichier                                                 | Rôle                                                                              |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `packages/game/src/attack.ts` (+ test)                  | Prise de 20 %, portée avec marge, prise à la limite, créneaux d'attaque           |
-| `packages/game/src/flood.ts` (+ test)                   | Plan des prises, première vague contre une défense, unités envoyées               |
-| `apps/extension/src/features/flood/page.ts` (+ test)    | Lecture et remplissage du formulaire d'attaque, envoi, TDC du profil              |
-| `apps/extension/src/data/launches.ts` (+ test)          | Attaques en route, défenses collées, case Loge, file de session                   |
-| `apps/extension/src/features/flood/attacks.ts` (+ test) | Rapprochement avec la liste « Attaque(s) en cours » d'`Armee.php`                 |
-| `apps/extension/src/data/on-way.ts` (+ test)            | Attaques en route vérifiées, TDC et créneaux une fois arrivées (+ Cibles)         |
-| `apps/extension/src/features/flood/mount.ts` (+ test)   | L'encart sous le formulaire                                                       |
-| `apps/extension/src/features/flood/index.ts`            | La feature (interrupteur `flood`), mémorise l'armée sur `Armee.php`               |
-| `apps/extension/src/features/targets/mount.ts` (+ test) | Colonne « Flood max »                                                             |
-| `apps/extension/src/features/flood/__fixtures__/*.html` | Formulaire d'attaque, profil et `Armee.php` relevés, effectifs et pseudos fictifs |
+| Fichier                                                   | Rôle                                                                                                                               |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/game/src/attack.ts` (+ test)                    | Prise de 20 %, portée avec marge, prise à la limite, créneaux d'attaque                                                            |
+| `packages/game/src/flood.ts` (+ test)                     | Plan des prises, première vague contre une défense, unités envoyées ; `floodPlan` (plan et ce qui l'empêche, partagé avec le site) |
+| `apps/extension/src/features/flood/page.ts` (+ test)      | Lecture et remplissage du formulaire d'attaque, envoi, TDC du profil                                                               |
+| `apps/extension/src/data/launches.ts` (+ test)            | Attaques en route, défenses collées, case Loge, file de session                                                                    |
+| `apps/extension/src/features/flood/attacks.ts` (+ test)   | Rapprochement avec la liste « Attaque(s) en cours » d'`Armee.php`                                                                  |
+| `apps/extension/src/data/on-way.ts` (+ test)              | Attaques en route vérifiées, TDC et créneaux une fois arrivées (+ Cibles)                                                          |
+| `apps/extension/src/features/flood/mount.ts` (+ test)     | L'encart sous le formulaire                                                                                                        |
+| `apps/extension/src/features/flood/site-link.ts` (+ test) | « Ouvrir sur optizzz.fr » et « Copier le lien » (`site-flood.md`)                                                                  |
+| `apps/extension/src/features/flood/index.ts`              | La feature (interrupteur `flood`), mémorise l'armée sur `Armee.php`                                                                |
+| `apps/extension/src/features/targets/mount.ts` (+ test)   | Colonne « Flood max »                                                                                                              |
+| `apps/extension/src/features/flood/__fixtures__/*.html`   | Formulaire d'attaque, profil et `Armee.php` relevés, effectifs et pseudos fictifs                                                  |
 
 Réutilise aussi `apps/extension/src/data/garrison.ts` (armée par lieu), `combat-simulator/form.ts` (défense collée) et `packages/game/src/pages/resources.ts` (TDC de l'en-tête).
