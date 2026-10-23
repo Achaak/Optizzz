@@ -114,3 +114,11 @@ fieldset {
 .reply {
   color: var(--optizzz-text-muted);
 }
+
+/* « Ouvrir sur optizzz.fr » and « Copier le lien » */
+.site-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--optizzz-space-2);
+}

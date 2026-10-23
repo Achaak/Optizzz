@@ -5,7 +5,7 @@ import { planAttacks, type PlannedAttack } from "@optizzz/game/flood";
 import { keepProbes, PLACES, probeArmy, type ProbePlan } from "@optizzz/game/probes";
 import { formatAmount, formatNumber, showExactAmount } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTimeShort } from "@optizzz/game/format/time-format";
-import { readArmyText } from "../combat-simulator/form";
+import { readArmyText } from "@optizzz/game/army/army-text";
 import { fillAttackForm, onAttackSent } from "./page";
 import { afterOnWay, type OnWay } from "@/data/on-way";
 import type { Launch } from "@/data/launches";

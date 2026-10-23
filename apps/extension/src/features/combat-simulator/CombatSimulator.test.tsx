@@ -7,6 +7,7 @@ import { storeLevels } from "@/data/levels";
 import { CombatSimulator } from "./CombatSimulator";
 import type { Opponent } from "./form";
 import { storeGarrison } from "@/data/garrison";
+import { setToggle } from "@/features/toggles";
 
 // Smoke test of the page: it fills itself from what was remembered and shows a result. The look is checked by hand.
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -77,5 +78,18 @@ describe("CombatSimulator", () => {
     );
     expect(container.textContent).toContain("l'armée vue lors de l'attaque du 19/10/26 10h36 contre Cible_1");
     expect(container.textContent).toContain("avec les Armes 31 que montre son bonus");
+  });
+
+  it("offers optizzz.fr's tool while « Liens vers optizzz.fr » is on, and nothing once it is off", async () => {
+    const buttons = () => [...container.querySelectorAll("button")].map((button) => button.textContent);
+    const root = await render("attack");
+    expect(buttons()).toContain("Ouvrir sur optizzz.fr");
+    expect(buttons()).toContain("Copier le lien");
+    act(() => {
+      root.unmount();
+    });
+    await setToggle("site-links", undefined, false);
+    await render("attack");
+    expect(buttons()).not.toContain("Ouvrir sur optizzz.fr");
   });
 });

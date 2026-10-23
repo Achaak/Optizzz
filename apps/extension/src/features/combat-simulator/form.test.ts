@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { armyFromKeys } from "@optizzz/game/army/units";
-import {
-  decodeOpponent,
-  emptyForm,
-  encodeOpponent,
-  leaveSide,
-  prefill,
-  readArmyText,
-  toBattle,
-  withOpponent,
-} from "./form";
+import { emptyForm, simulate, toBattle } from "@optizzz/game/army/battle-form";
+import { combatLinkFormat } from "@optizzz/game/site-links/combat";
+import { decodeOpponent, encodeOpponent, leaveSide, prefill, siteState, withOpponent } from "./form";
 import type { Garrison } from "@/data/garrison";
 
 const garrison: Garrison = {
@@ -77,24 +70,6 @@ describe("leaveSide", () => {
   });
 });
 
-describe("readArmyText", () => {
-  const report = `Troupes en attaque : 1 921 Jeunes Soldates Naines, 119 Soldates Naines.
-    Troupes en défense : 300 Jeunes Soldates, 2 Tanks d’élite.
-    Vous infligez 6 358 (+ 2 544) dégâts`;
-
-  it("takes the defending troops of a pasted report", () => {
-    expect(readArmyText(report, "defense")).toEqual({ army: { JS: 300, TkE: 2 }, unknown: [] });
-  });
-
-  it("takes the attacking troops, or a plain list, and tells which names it does not know", () => {
-    expect(readArmyText(report, "attack").army).toEqual({ JSN: 1921, SN: 119 });
-    expect(readArmyText("50 Tueuses, 3 Fourmis volantes", "defense")).toEqual({
-      army: { Tu: 50 },
-      unknown: ["Fourmis volantes"],
-    });
-  });
-});
-
 describe("toBattle", () => {
   it("turns the form into the engine's input", () => {
     const form = prefill(emptyForm(), "defend", garrison, levels);
@@ -136,5 +111,19 @@ describe("opponent", () => {
     expect(decodeOpponent("{")).toBeNull();
     expect(decodeOpponent('{"place":"moon","army":{},"weapons":1}')).toBeNull();
     expect(decodeOpponent('{"place":"field","army":{"JSN":-3},"weapons":1}')).toBeNull();
+  });
+});
+
+describe("siteState", () => {
+  it("gives optizzz.fr the same engine input, hence the same fight, with « Mes niveaux » on the player's side", () => {
+    const form = withOpponent(prefill(emptyForm(), "attack", garrison, levels), {
+      place: "nest",
+      army: { TuE: 300, JS: 12 },
+      weapons: 9,
+    });
+    const read = combatLinkFormat.decode(siteState({ ...form, defender: { ...form.defender, food: 5000 } }, "attack"));
+    expect(read?.mine).toBe("attack");
+    expect(read && toBattle(read.form)).toEqual(toBattle(form));
+    expect(read && simulate(read.form)).toEqual(simulate({ ...form, defender: { ...form.defender, food: 5000 } }));
   });
 });
