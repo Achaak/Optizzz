@@ -18,7 +18,6 @@ import { aphidsAdvice, APHIDS_STYLE, COMMUNICATION, mountAphids, STABLE } from "
 import { LAYING_BOOSTS, rankLayingBoosts } from "@optizzz/game/laying-boost";
 import { INCOME_MAX_AGE, loadCapacities, loadIncome } from "@/data/income";
 import type { ColonyState } from "@optizzz/game/forecast";
-import { LEVEL_TIME_GROWTH } from "@optizzz/game/speed-up";
 import { readCapacities, readCosts, readStock } from "@optizzz/game/pages/resources";
 import { readWorkQueue } from "@optizzz/game/pages/work-queue";
 import { sameName } from "@optizzz/game/levels";
@@ -124,8 +123,8 @@ async function loadColonyState(origin: string, now: Date): Promise<ColonyState |
 
 /** Each page and what speeds it up, read on the other page. */
 const PAGES = {
-  "/construction.php": { speedUp: "Architecture", other: "laboratoire.php", growth: LEVEL_TIME_GROWTH.research },
-  "/laboratoire.php": { speedUp: "Salle d'analyse", other: "construction.php", growth: LEVEL_TIME_GROWTH.construction },
+  "/construction.php": { speedUp: "Architecture", other: "laboratoire.php" },
+  "/laboratoire.php": { speedUp: "Salle d'analyse", other: "construction.php" },
 } as const;
 
 /**
@@ -151,7 +150,7 @@ export const speedUpAdvice: Feature = {
       fetchGamePage(`${location.origin}/${page.other}`).catch(() => null),
       loadColonyState(location.origin, now),
     ]);
-    const speedUp = other ? readSpeedUp(other, page.speedUp, page.growth, state, now) : null;
+    const speedUp = other ? readSpeedUp(other, page.speedUp, state, now) : null;
     if (!speedUp) return;
     const style = document.createElement("style");
     style.textContent = SPEED_UP_STYLE;

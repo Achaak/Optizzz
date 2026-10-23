@@ -26,7 +26,7 @@ describe("readTimedRows", () => {
 
 describe("readSpeedUp", () => {
   it("waits for the levels already queued, or adds more after them, each 1.7 × longer", () => {
-    const speedUp = readSpeedUp(parse(laboratoryQueueHtml), "Architecture", 1.7, null, now);
+    const speedUp = readSpeedUp(parse(laboratoryQueueHtml), "Architecture", null, now);
     expect(speedUp).toMatchObject({ name: "Architecture", level: 0, queued: 1 });
     const queuedEnd = now.getTime() + 189_000;
     // The row shows the level after the one queued: 5 min 40 s, then 1.7 × longer each.
@@ -41,14 +41,14 @@ describe("readSpeedUp", () => {
   it("starts the next level once its queue is free", () => {
     const doc = parse(laboratoryHtml);
     expect(queueEnd(doc, now)).toEqual(now);
-    expect(readSpeedUp(doc, "Génétique", 1.7, null, now)?.plans[0]).toEqual({
+    expect(readSpeedUp(doc, "Génétique", null, now)?.plans[0]).toEqual({
       levels: 1,
       ready: new Date(now.getTime() + 180_000),
     });
   });
 
   it("is null when locked or absent", () => {
-    expect(readSpeedUp(parse(laboratoryHtml), "Architecture", 1.7, null, now)).toBeNull();
+    expect(readSpeedUp(parse(laboratoryHtml), "Architecture", null, now)).toBeNull();
   });
 });
 

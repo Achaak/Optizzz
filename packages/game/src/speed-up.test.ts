@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { bestSpeedUp, costGrowthOf, levelsAhead, SPEED_UP_FACTOR, speedUpFirst, speedUpLevels } from "./speed-up";
+import { levelCost, type LevelKey } from "./level-costs";
+import type { Cost } from "./pages/resources";
+import { bestSpeedUp, SPEED_UP_FACTOR, speedUpFirst, speedUpLevels } from "./speed-up";
 
 const now = new Date("2026-10-16T12:00:00Z");
 const at = (minutes: number) => new Date(now.getTime() + minutes * 60_000);
@@ -39,10 +41,18 @@ describe("speedUpFirst", () => {
   });
 });
 
+/** Level `level` of `key` as the game shows it: the table's cost, a time of an hour. */
+const shownAt = (key: LevelKey, level: number) => ({
+  key,
+  level,
+  shown: { cost: levelCost(key, level).cost, duration: HOUR },
+});
+
 describe("speedUpLevels", () => {
   it("chains the levels, each 1.7 × longer for a research, paid one after the other", () => {
-    const paidAt = (share: number) => (share <= 3 ? now : null);
-    const plans = speedUpLevels({ start: at(10), queued: null, duration: HOUR, growth: 1.7, paidAt, max: 5 });
+    const first = levelCost("architecture", 5).cost.materials;
+    const paidAt = (cost: Cost) => (cost.materials <= 3 * first ? now : null);
+    const plans = speedUpLevels({ start: at(10), queued: null, ...shownAt("architecture", 5), paidAt, max: 5 });
     // 1 and 1 + 2 times the first level's cost are paid now, 1 + 2 + 4 never.
     expect(plans).toEqual([
       { levels: 1, ready: at(70) },
@@ -50,12 +60,25 @@ describe("speedUpLevels", () => {
     ]);
   });
 
+  it("slows down at the table's × 1.3 (Architecture 20), however long the shown time", () => {
+    const plans = speedUpLevels({
+      start: now,
+      queued: null,
+      ...shownAt("architecture", 19),
+      paidAt: () => now,
+      max: 2,
+    });
+    expect(plans).toEqual([
+      { levels: 1, ready: at(60) },
+      { levels: 2, ready: at(60 + 78) },
+    ]);
+  });
+
   it("starts with the levels already queued, then adds more after them", () => {
     const plans = speedUpLevels({
       start: at(30),
       queued: { levels: 1, ready: at(20) },
-      duration: HOUR,
-      growth: 1.6,
+      ...shownAt("analysisRoom", 4),
       paidAt: () => now,
       max: 1,
     });
@@ -69,8 +92,7 @@ describe("speedUpLevels", () => {
     const plans = speedUpLevels({
       start: now,
       queued: null,
-      duration: HOUR,
-      growth: 1.6,
+      ...shownAt("analysisRoom", 4),
       paidAt: () => at(120),
       max: 1,
     });
@@ -83,7 +105,13 @@ describe("bestSpeedUp", () => {
 
   it("takes as many levels as make the row end soonest", () => {
     // Levels of 1 h, 1 h 42, 2 h 53: three levels end the 40 h building 4 h 34 sooner than two.
-    const plans = speedUpLevels({ start: now, queued: null, duration: HOUR, growth: 1.7, paidAt: () => now, max: 10 });
+    const plans = speedUpLevels({
+      start: now,
+      queued: null,
+      ...shownAt("architecture", 5),
+      paidAt: () => now,
+      max: 10,
+    });
     const best = bestSpeedUp(row, plans);
     expect(best?.plan.levels).toBeGreaterThan(1);
     for (const plan of plans) {
@@ -110,31 +138,5 @@ describe("bestSpeedUp", () => {
         [plans[0], { levels: 2, ready: at(270) }].flatMap((plan) => plan ?? []),
       )?.plan.levels,
     ).toBe(2);
-  });
-});
-
-describe("levelsAhead", () => {
-  it("adds up the cost (× 2 a level) and the time (× growth a level) of the next levels", () => {
-    const cost = { food: 100, materials: 1000, workers: 10 };
-    expect(levelsAhead({ cost, duration: 60_000, growth: 1.5, count: 3 })).toEqual([
-      { levels: 1, cost, duration: 60_000 },
-      { levels: 2, cost: { food: 300, materials: 3000, workers: 30 }, duration: 150_000 },
-      { levels: 3, cost: { food: 700, materials: 7000, workers: 70 }, duration: 285_000 },
-    ]);
-  });
-
-  it("rounds each level of a cost that does not double, as the game does (Champignonnière: × 1.85)", () => {
-    const cost = { food: 0, materials: 90, workers: 0 };
-    const levels = levelsAhead({ cost, duration: 120_000, growth: 1.6, costGrowth: 1.85, count: 4 });
-    // Its levels cost 90, 167, 308 and 570 materials.
-    expect(levels.map((level) => level.cost.materials)).toEqual([90, 257, 565, 1135]);
-  });
-});
-
-describe("costGrowthOf", () => {
-  it("doubles every cost but the Champignonnière's, × 1.85", () => {
-    expect(costGrowthOf("Champignonnière")).toBe(1.85);
-    expect(costGrowthOf("champignonniere")).toBe(1.85);
-    expect(costGrowthOf("Entrepôt de Nourriture")).toBe(2);
   });
 });

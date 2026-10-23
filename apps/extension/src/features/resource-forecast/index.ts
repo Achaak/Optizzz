@@ -76,7 +76,7 @@ export const resourceForecast: Feature = {
       if (queue) renderCostForecasts(document, state, queue, readAt, now);
     };
     render(readAt);
-    if (showLevels) renderLevelsAhead(document, state, onConstruction ? "construction" : "research", readAt);
+    if (showLevels) renderLevelsAhead(document, state, readAt);
     ctx.setInterval(() => {
       render(new Date());
     }, REFRESH_MS);

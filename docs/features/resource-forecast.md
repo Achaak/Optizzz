@@ -53,9 +53,8 @@ Retravaillée le 2026-10-19 : le formulaire du jeu et son résumé en prose (« 
 Ajouté le 2026-10-17 : savoir combien coûtent et durent plusieurs niveaux d'un coup (« combien pour arriver au niveau 15 ? »).
 
 - Sous chaque bâtiment ou recherche qui peut être lancé (pas les lignes « Requis »), un dépliable fermé « Coût des 5 niveaux suivants » : un tableau dense, une ligne par niveau, « Jusqu'au niveau » (N), une colonne par ressource que coûte le premier niveau (Nourriture, Matériaux, Ouvrières : un bâtiment n'a que Matériaux), « Durée » et « Tout payable » (maintenant, l'heure où le stock couvrira le total, « manque N ouvrières », « entrepôt trop petit » ou « jamais au rythme actuel »). Tous des cumuls ; chiffres alignés à droite, sans retour à la ligne.
-- Le premier niveau est celui que le jeu affiche, après ceux déjà en file. Les suivants s'en déduisent (`docs/research/fourmizzz-pages.md`, « Temps des chantiers ») : le coût double à chaque niveau, le temps est multiplié par 1,6 (bâtiment) ou 1,7 (recherche), au bonus actuel d'Architecture ou de la Salle d'analyse. Une note sous le tableau le dit (« Cumuls estimés : coût × 2 et durée × 1,6 à chaque niveau… »).
-- **Champignonnière** : son coût est multiplié par 1,85 à chaque niveau (arrondi comme le jeu), pas par 2 ; la note le dit (« coût × 1,85 »). Ajoutée le 2026-10-17.
-- Les durées comptent × 1,6 / × 1,7 à chaque niveau : au-delà d'un niveau de 30 jours, le jeu passe à × 1,3 (voir la recherche), les durées très longues sont donc surestimées.
+- Le premier niveau est celui que le jeu affiche, après ceux déjà en file. Les suivants s'en déduisent par la table des niveaux (`packages/game/src/level-costs.ts`, `levelsAhead` ; `docs/research/couts-des-niveaux.md`) : le coût et la durée affichés grandissent comme d'un niveau à l'autre dans la table (coût × 2, × 1,85 tronqué pour la Champignonnière ; durée × 1,6 ou × 1,7, puis × 1,3, × 1,2 et × 1,12 passé les paliers), au bonus actuel d'Architecture ou de la Salle d'analyse. Une note sous le tableau le dit (« Cumuls estimés d'après les coûts et durées de chaque niveau du jeu, au bonus actuel… »). Depuis le 2026-10-23 ; avant, × 1,6 / × 1,7 partout surestimait les durées au-delà de 30 jours, et le coût de la Champignonnière était arrondi au lieu d'être tronqué.
+- Une ligne dont le nom n'est pas dans la table n'a pas de tableau.
 - « Tout payé » ne compte ni la file d'attente ni les niveaux payés un par un : c'est le moment où le stock couvre le total.
 - Calculé une fois au chargement, à partir du même état que les délais.
 - Option « Coût des niveaux suivants sur Construction et Laboratoire », allumée par défaut.
@@ -70,17 +69,17 @@ Achats planifiés (stock réservé), délai des ouvrières via la ponte, optimis
 
 ## Code
 
-| Fichier                                                                                | Rôle                                                                        |
-| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `packages/game/src/pages/resources.ts`                                                 | Lecture : `#data`, Ressources, coûts, capacités des entrepôts               |
-| `packages/game/src/forecast.ts`                                                        | Moteur : payable quand, famine, entrepôts pleins, équilibre, file           |
-| `apps/extension/src/data/income.ts`                                                    | Revenus et capacités lus en arrière-plan, cache par serveur                 |
-| `apps/extension/src/features/resource-forecast/mount-costs.ts`                         | Ligne de délai dans les tableaux de coûts                                   |
-| `apps/extension/src/features/resource-forecast/mount-outlook.ts`                       | Famine et entrepôt plein sous les jauges de l'en-tête                       |
-| `apps/extension/src/features/resource-forecast/mount-simulator.ts`                     | Simulateur de répartition sur Ressources                                    |
-| `apps/extension/src/features/resource-forecast/mount-levels.ts`                        | Dépliable « Niveaux suivants » ; cumul dans `packages/game/src/speed-up.ts` |
-| `apps/extension/src/features/resource-forecast/index.ts`                               | Feature du registre (script léger), style, rafraîchissement à la minute     |
-| `packages/game/src/format/number-format.ts`, `packages/game/src/format/time-format.ts` | Nombres « 12 348 », durées et heures                                        |
+| Fichier                                                                                | Rôle                                                                           |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `packages/game/src/pages/resources.ts`                                                 | Lecture : `#data`, Ressources, coûts, capacités des entrepôts                  |
+| `packages/game/src/forecast.ts`                                                        | Moteur : payable quand, famine, entrepôts pleins, équilibre, file              |
+| `apps/extension/src/data/income.ts`                                                    | Revenus et capacités lus en arrière-plan, cache par serveur                    |
+| `apps/extension/src/features/resource-forecast/mount-costs.ts`                         | Ligne de délai dans les tableaux de coûts                                      |
+| `apps/extension/src/features/resource-forecast/mount-outlook.ts`                       | Famine et entrepôt plein sous les jauges de l'en-tête                          |
+| `apps/extension/src/features/resource-forecast/mount-simulator.ts`                     | Simulateur de répartition sur Ressources                                       |
+| `apps/extension/src/features/resource-forecast/mount-levels.ts`                        | Dépliable « Niveaux suivants » ; cumul dans `packages/game/src/level-costs.ts` |
+| `apps/extension/src/features/resource-forecast/index.ts`                               | Feature du registre (script léger), style, rafraîchissement à la minute        |
+| `packages/game/src/format/number-format.ts`, `packages/game/src/format/time-format.ts` | Nombres « 12 348 », durées et heures                                           |
 
 Les prévisions partent de l'instant où la page a été chargée (le stock de `#data` ne bouge pas ensuite) ; le rafraîchissement ne fait qu'avancer les décomptes. La page Ressources avec Compte+ n'a pas de `var champi` (la page colonisée en a une) : la production de la champignonnière se lit alors dans le résumé.
 

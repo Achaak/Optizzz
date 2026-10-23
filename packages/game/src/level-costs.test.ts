@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LEVEL_BASES, levelCost, levelsCost } from "./level-costs";
+import { LEVEL_BASES, levelCost, levelKeyOf, levelsAhead, levelsCost, levelsFrom, levelTimeRatio } from "./level-costs";
 import { BUILDINGS, RESEARCH } from "./levels";
 import { SPEED_UP_FACTOR } from "./speed-up";
 
@@ -114,5 +114,62 @@ describe("levelsCost", () => {
 
   it("refuses a negative level", () => {
     expect(() => levelsCost("dome", -1, 2)).toThrow(RangeError);
+  });
+});
+
+describe("levelKeyOf", () => {
+  it("finds a building or research by the name the game gives, accents and apostrophes aside", () => {
+    expect(levelKeyOf("Salle d'analyse")).toBe("analysisRoom");
+    expect(levelKeyOf("Etable a pucerons")).toBe("aphids");
+    expect(levelKeyOf("Technique de ponte")).toBe("laying");
+    expect(levelKeyOf("Inconnu")).toBeNull();
+  });
+});
+
+describe("levelTimeRatio", () => {
+  it("is × 1.6 a level for a building below its slowdowns, then the table's", () => {
+    expect(levelTimeRatio("dome", 5, 7)).toBeCloseTo(1.6 ** 2);
+    expect(levelTimeRatio("solarium", 18, 19)).toBeCloseTo(1.3);
+    expect(levelTimeRatio("solarium", 17, 20)).toBeCloseTo(1.6 * 1.3 * 1.3);
+  });
+});
+
+describe("levelsFrom", () => {
+  it("grows the shown time as the table does, past the × 1.3 (Solarium 19)", () => {
+    const shown = { cost: levelCost("solarium", 18).cost, duration: 3_600_000 };
+    expect(levelsFrom("solarium", 18, shown, 3).map(({ duration }) => duration)).toEqual([
+      3_600_000, 4_680_000, 6_084_000,
+    ]);
+  });
+
+  it("gives the table's costs when the shown cost is theirs, the Champignonnière's floored", () => {
+    const shown = { cost: levelCost("mushroom", 9).cost, duration: 0 };
+    expect(levelsFrom("mushroom", 9, shown, 3).map(({ cost }) => cost.materials)).toEqual([12_348, 22_844, 42_262]);
+  });
+
+  it("scales a shown cost the table does not know", () => {
+    const shown = { cost: { food: 0, materials: 1_000, workers: 0 }, duration: 0 };
+    expect(levelsFrom("dome", 5, shown, 2).map(({ cost }) => cost.materials)).toEqual([1_000, 2_000]);
+  });
+});
+
+describe("levelsAhead", () => {
+  it("adds up the cost (× 2 a level) and the time (× 1.7 a level for a research) of the next levels", () => {
+    const cost = { food: 100, materials: 1000, workers: 10 };
+    expect(levelsAhead("shield", 3, { cost, duration: 60_000 }, 3)).toEqual([
+      { levels: 1, cost, duration: 60_000 },
+      { levels: 2, cost: { food: 300, materials: 3000, workers: 30 }, duration: 162_000 },
+      { levels: 3, cost: { food: 700, materials: 7000, workers: 70 }, duration: 335_400 },
+    ]);
+  });
+
+  it("adds up the Champignonnière's floored levels (90, 166, 308 and 569 materials)", () => {
+    const levels = levelsAhead("mushroom", 1, { cost: levelCost("mushroom", 1).cost, duration: 120_000 }, 4);
+    expect(levels.map((level) => level.cost.materials)).toEqual([90, 256, 564, 1133]);
+  });
+
+  it("slows down past the × 1.3 (Architecture 20)", () => {
+    const levels = levelsAhead("architecture", 19, { cost: levelCost("architecture", 19).cost, duration: 1_000 }, 3);
+    expect(levels.map((level) => level.duration)).toEqual([1_000, 2_300, 3_990]);
   });
 });

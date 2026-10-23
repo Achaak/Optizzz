@@ -1,9 +1,9 @@
 // What the next level of a row of construction.php or laboratoire.php costs, the missing levels of its requirements
-// (« Requis : Laboratoire niveau 10 ») included. Each level costs double the one before (× 1.85 for the
-// Champignonnière). See docs/features/conseils-recherche.md.
+// (« Requis : Laboratoire niveau 10 ») included, each grown from the one shown as the level-costs table says. See
+// docs/features/conseils-recherche.md.
+import { levelKeyOf, levelsAhead } from "./level-costs";
 import { sameName } from "./levels";
 import type { Cost } from "./pages/resources";
-import { costGrowthOf, levelsAhead } from "./speed-up";
 
 export interface Requirement {
   name: string;
@@ -54,16 +54,11 @@ function requirementsCost(
   const requirements: Requirement[] = [];
   for (const requirement of row.requirements) {
     const source = rows.find((candidate) => sameName(candidate.name, requirement.name));
+    const key = source && levelKeyOf(source.name);
     const missing = source ? requirement.level - source.level : 0;
-    if (!source) complete = false;
-    if (!source || missing <= 0) continue;
-    const levels = levelsAhead({
-      cost: source.cost,
-      duration: 0,
-      growth: 1,
-      costGrowth: costGrowthOf(source.name),
-      count: missing,
-    }).at(-1);
+    if (!source || !key) complete = false;
+    if (!source || !key || missing <= 0) continue;
+    const levels = levelsAhead(key, source.level + 1, { cost: source.cost, duration: 0 }, missing).at(-1);
     if (levels) cost = add(cost, levels.cost);
     requirements.push(requirement);
     if (source.requirements.length === 0) continue;
