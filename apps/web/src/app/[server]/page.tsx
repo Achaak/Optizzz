@@ -59,7 +59,7 @@ export default async function ServerPage({ params }: Props) {
                 {summary.topPlayers.map((player) => (
                   <TableRow key={player.id}>
                     <TableCell>
-                      <Link href={`/${server.id}/joueurs/${String(player.id)}`} className="hover:underline">
+                      <Link href={`/${server.id}/players/${String(player.id)}`} className="hover:underline">
                         {player.pseudo}
                       </Link>
                     </TableCell>

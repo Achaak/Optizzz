@@ -57,7 +57,7 @@ export default async function AlliancePage({ params }: Props) {
           {alliance.tag} <span className="font-normal text-muted-foreground">{alliance.name.trim()}</span>
         </h1>
         <Link
-          href={`/${server.id}/carte?alliance=${encodeURIComponent(alliance.tag)}`}
+          href={`/${server.id}/map?alliance=${encodeURIComponent(alliance.tag)}`}
           className="text-sm underline-offset-2 hover:underline"
         >
           Voir sur la carte
@@ -134,7 +134,7 @@ export default async function AlliancePage({ params }: Props) {
                 {members.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell>
-                      <Link href={`/${server.id}/joueurs/${String(member.id)}`} className="hover:underline">
+                      <Link href={`/${server.id}/players/${String(member.id)}`} className="hover:underline">
                         {member.pseudo}
                       </Link>
                     </TableCell>

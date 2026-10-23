@@ -1,4 +1,4 @@
-// What a server map needs, in columns: the site serves it (`/api/[server]/carte`), the site's map and the extension's
+// What a server map needs, in columns: the site serves it (`/api/[server]/map`), the site's map and the extension's
 // read it — see docs/features/site-carte.md. About 1 MB compressed for S4's 216 000 players, against 44 MB of export.
 import { allianceSchema, type Alliance, type Player } from "@optizzz/game/exports";
 import { z } from "zod";

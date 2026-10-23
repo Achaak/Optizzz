@@ -17,7 +17,7 @@ Uniquement sur les pages du jeu, depuis votre navigateur :
 
 Ces requêtes partent de votre navigateur vers Fourmizzz, comme si vous ouvriez ces pages vous-même.
 
-Une exception : la Carte du serveur lit les positions des joueurs sur le site d'Optizzz (`https://optizzz.fr/api/<serveur>/carte`), bien plus léger que l'export de Fourmizzz. Ce sont les mêmes données publiques, tirées de cet export ; la requête ne contient ni compte, ni cookie, ni rien de vous, mais comme toute visite d'un site, elle fait connaître votre adresse IP à son hébergeur (Vercel), qui garde un temps les journaux techniques. Pour ne contacter que Fourmizzz, décochez « Lire les positions sur optizzz.fr » dans les options de la Carte du serveur (« Fonctionnalités ») : la carte lit alors l'export, comme avant.
+Une exception : la Carte du serveur lit les positions des joueurs sur le site d'Optizzz (`https://optizzz.fr/api/<serveur>/map`), bien plus léger que l'export de Fourmizzz. Ce sont les mêmes données publiques, tirées de cet export ; la requête ne contient ni compte, ni cookie, ni rien de vous, mais comme toute visite d'un site, elle fait connaître votre adresse IP à son hébergeur (Vercel), qui garde un temps les journaux techniques. Pour ne contacter que Fourmizzz, décochez « Lire les positions sur optizzz.fr » dans les options de la Carte du serveur (« Fonctionnalités ») : la carte lit alors l'export, comme avant.
 
 ## Ce que l'extension envoie au jeu
 

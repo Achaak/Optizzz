@@ -32,7 +32,7 @@ describe("loadSiteMap", () => {
       alliances: { version: "202610221400", alliances: [] },
     });
     expect(fetch).toHaveBeenCalledWith(
-      "https://optizzz.fr/api/s5/carte",
+      "https://optizzz.fr/api/s5/map",
       expect.objectContaining({ credentials: "omit" }),
     );
   });

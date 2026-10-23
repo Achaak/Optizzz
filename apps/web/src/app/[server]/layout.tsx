@@ -18,9 +18,9 @@ export default async function ServerLayout({
   if (!server) notFound();
   const links = [
     { href: `/${server.id}`, label: "Vue d'ensemble" },
-    { href: `/${server.id}/joueurs`, label: "Joueurs" },
+    { href: `/${server.id}/players`, label: "Joueurs" },
     { href: `/${server.id}/alliances`, label: "Alliances" },
-    { href: `/${server.id}/carte`, label: "Carte" },
+    { href: `/${server.id}/map`, label: "Carte" },
   ];
   return (
     <div className="space-y-6">

@@ -87,7 +87,7 @@ export function PlayerTable(props: {
                   {player.pseudo}
                 </button>{" "}
                 <Link
-                  href={`/${server}/joueurs/${String(player.id)}`}
+                  href={`/${server}/players/${String(player.id)}`}
                   className="text-muted-foreground"
                   title="Voir sa fiche"
                 >

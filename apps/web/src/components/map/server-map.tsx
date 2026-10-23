@@ -6,30 +6,20 @@ import { formatNumber } from "@optizzz/game/format/number-format";
 import { formatDateTime } from "@optizzz/game/format/time-format";
 import { fittedBounds } from "@optizzz/map/axes";
 import { decodeMapData, mapDataSchema } from "@optizzz/map/map-data";
-import { addChip, highlightedPlayers, initialChips, type Chip, type ChipTarget } from "@optizzz/map/selection";
+import { addChip, highlightedPlayers, initialChips, type Chip } from "@optizzz/map/selection";
 import { frameRequest, tableRows, zoomAround, type ZoomRequest } from "@optizzz/map/view";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NumberField } from "~/components/number-field";
 import { ChipBar } from "./chip-bar";
 import { MapChart, type MapDisplay } from "./map-chart";
-import { decodeMapState, EMPTY_STATE, encodeMapState, type MapState } from "./map-state";
+import { decodeMapState, EMPTY_STATE, encodeMapState, requestedMap, type MapState } from "./map-state";
 import { useMapPalette } from "./palette";
 import { PlayerTable } from "./player-table";
 
 type MapData = ReturnType<typeof decodeMapData>;
 
 const storageKey = (server: string) => `optizzz:map:${server}`;
-
-/** What the address asks for: a shared state (`p`), or a target (« Voir sur la carte »: `joueur`, `alliance`). */
-function requested(search: URLSearchParams): { state: MapState | null; target: ChipTarget | null } {
-  const shared = search.get("p");
-  if (shared) return { state: decodeMapState(shared), target: null };
-  const player = Number(search.get("joueur"));
-  if (Number.isInteger(player) && player > 0) return { state: null, target: { kind: "player", id: player } };
-  const tag = search.get("alliance");
-  return { state: null, target: tag ? { kind: "alliance", tag } : null };
-}
 
 function readStored(server: string): MapState | null {
   try {
@@ -49,10 +39,12 @@ export function ServerMap({ server }: { server: { id: string; name: string } }) 
   const [display, setDisplay] = useState<MapDisplay>({ others: true, allNames: false });
   const [focusedId, setFocusedId] = useState<number | null>(null);
   const [zoom, setZoom] = useState<ZoomRequest | null>(null);
+  /** The address held a shared map that could not be read (cut, hand-edited, unknown version). */
+  const [invalidLink, setInvalidLink] = useState(false);
 
   useEffect(() => {
     let current = true;
-    fetch(`/api/${server.id}/carte`)
+    fetch(`/api/${server.id}/map`)
       .then(async (response) => {
         // 404: the cron has not read this server yet, an expected state rather than a failure.
         if (response.status === 404) return null;
@@ -86,30 +78,53 @@ export function ServerMap({ server }: { server: { id: string; name: string } }) 
     [players, axes],
   );
 
-  // The state at opening, once the players are known: the address, else the last one in this browser.
+  /** Opens what the address asks for: a shared map, a target, else the last map of this browser. */
+  const open = useCallback(() => {
+    const request = requestedMap(new URL(window.location.href));
+    const initial =
+      request.kind === "state"
+        ? request.state
+        : request.kind === "target"
+          ? { ...EMPTY_STATE, chips: initialChips(null, null, request.target, palette.chips) }
+          : request.kind === "none"
+            ? (readStored(server.id) ?? { ...EMPTY_STATE })
+            : { ...EMPTY_STATE };
+    setInvalidLink(request.kind === "invalid");
+    setState(initial);
+    frame(initial.chips);
+  }, [server.id, palette.chips, frame]);
+
+  // The state at opening, once the players are known.
   const opened = useRef(false);
   useEffect(() => {
     if (!data || opened.current) return;
     opened.current = true;
-    const { state: shared, target } = requested(new URLSearchParams(window.location.search));
-    const initial = shared ??
-      (target && { ...EMPTY_STATE, chips: initialChips(null, null, target, palette.chips) }) ??
-      readStored(server.id) ?? { ...EMPTY_STATE };
-    setState(initial);
-    frame(initial.chips);
-  }, [data, server.id, palette.chips, frame]);
+    open();
+  }, [data, open]);
 
-  // Each change goes to the address (to share it) and to the browser (to come back to it).
+  // A link pasted in this tab only changes the fragment: the page does not reload.
+  useEffect(() => {
+    if (!data) return;
+    window.addEventListener("hashchange", open);
+    return () => {
+      window.removeEventListener("hashchange", open);
+    };
+  }, [data, open]);
+
+  // Each change goes to the fragment of the address (to share it, never sent to the site) and to the browser (to come
+  // back to it). replaceState: no history entry for each change.
   useEffect(() => {
     if (!state) return;
     const encoded = encodeMapState(state);
-    router.replace(`/${server.id}/carte?p=${encoded}`, { scroll: false });
+    window.history.replaceState(null, "", `/${server.id}/map#p=${encoded}`);
+    // A link that could not be read keeps this browser's last map until the visitor changes something.
+    if (invalidLink) return;
     try {
       localStorage.setItem(storageKey(server.id), encoded);
     } catch {
       // Private browsing or storage refused: the address still holds the state.
     }
-  }, [state, server.id, router]);
+  }, [state, server.id, invalidLink]);
 
   const chips = useMemo(() => state?.chips ?? [], [state]);
   const highlighted = useMemo(() => highlightedPlayers(chips, players), [chips, players]);
@@ -130,6 +145,7 @@ export function ServerMap({ server }: { server: { id: string; name: string } }) 
   if (!data || !state) return <p className="text-sm text-muted-foreground">Chargement des positions…</p>;
 
   const change = (next: Partial<MapState>, { reframe = false } = {}) => {
+    setInvalidLink(false);
     setState({ ...state, ...next });
     if (reframe && next.chips) frame(next.chips);
   };
@@ -141,6 +157,11 @@ export function ServerMap({ server }: { server: { id: string; name: string } }) 
         {/* « 6 h 00 » stays on one line on a phone. */}
         <span className="whitespace-nowrap">{formatDateTime(versionDate(data.version))}</span>
       </p>
+      {invalidLink && (
+        <p role="status" className="rounded-md border px-3 py-2 text-sm">
+          Ce lien n&apos;est pas valide : la carte s&apos;ouvre vide.
+        </p>
+      )}
       <ChipBar
         players={players}
         alliances={data.alliances}
@@ -164,7 +185,7 @@ export function ServerMap({ server }: { server: { id: string; name: string } }) 
         onFrame={() => frame(chips)}
         onZoom={setZoom}
         onReference={(player) => change({ reference: player.id })}
-        onOpen={(player) => router.push(`/${server.id}/joueurs/${String(player.id)}`)}
+        onOpen={(player) => router.push(`/${server.id}/players/${String(player.id)}`)}
       />
       {reference ? (
         <section className="space-y-2" aria-label="Distances">

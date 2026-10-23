@@ -19,7 +19,7 @@ export async function loadSiteMap(
   const server = serverById(new URL(origin).hostname.split(".")[0] ?? "");
   if (!server) return null;
   try {
-    const response = await fetch(`${SITE_URL}/api/${server.id}/carte`, {
+    const response = await fetch(`${SITE_URL}/api/${server.id}/map`, {
       credentials: "omit",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
