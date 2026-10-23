@@ -43,7 +43,7 @@ function subscribeMinutes(onMinute: () => void) {
   wait();
   return () => clearTimeout(timer);
 }
-const useNow = () => useSyncExternalStore(subscribeMinutes, readNow, () => null);
+export const useNow = () => useSyncExternalStore(subscribeMinutes, readNow, () => null);
 
 /** « 2026-10-23T20:15 », Paris time: the value of the departure field. */
 function parisInputValue(date: Date): string {

@@ -1,7 +1,7 @@
 import type { Place } from "@optizzz/game/army/battle";
 import { armyFromKeys, unitLabel, UNITS, type Army } from "@optizzz/game/army/units";
-import { inRange, maxTake } from "@optizzz/game/attack";
-import { planAttacks, type PlannedAttack } from "@optizzz/game/flood";
+import { maxTake } from "@optizzz/game/attack";
+import { floodBlockText, floodPlan, type PlannedAttack } from "@optizzz/game/flood";
 import { keepProbes, PLACES, probeArmy, type ProbePlan } from "@optizzz/game/probes";
 import { formatAmount, formatNumber, showExactAmount } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTimeShort } from "@optizzz/game/format/time-format";
@@ -234,41 +234,25 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
       : "Inconnue, comptée comme nulle.";
     clear.hidden = !defense;
 
-    const plan = planAttacks({
+    const plan = floodPlan({
       attackerField: myField,
       targetField: targetLeft,
       slots,
       margin: context.margin,
       available,
-      defender: defense
-        ? {
-            armies: { field: defense.army, nest: [], lodge: [] },
-            // The target's levels are unknown: taken as mine.
-            weapons: context.me.weapons,
-            shield: context.me.shield,
-            dome: 0,
-            lodge: 0,
-          }
-        : null,
+      defense: defense?.army ?? null,
       levels: { weapons: context.me.weapons, shield: context.me.shield },
     });
     planned = plan.attacks;
     if (filled && !planned.some((attack) => filled && sameArmy(attack.army, filled.army))) filled = null;
 
     const lodgeOnly = total(available) === 0 && total(context.available.lodge) > 0;
-    message.textContent = !inRange(myField, targetLeft)
-      ? `${context.target.pseudo} est hors de portée (50 % à 300 % de votre TDC).`
-      : !inRange(myField, targetLeft, context.margin)
-        ? `${context.target.pseudo} est à moins de ${String(context.margin * 100)} % de la limite des 50 % : trop juste, un autre mouvement peut la faire sortir de portée avant l'arrivée.`
-        : slots === 0
-          ? "Aucune attaque possible de plus pour l'instant."
-          : plan.blocked
-            ? "Votre armée ne suffit pas à écraser sa défense (riposte à 10 %)."
-            : lodgeOnly
-              ? "Votre armée est en Loge : cochez « Compter les troupes de la Loge » pour l'envoyer."
-              : planned.length === 0
-                ? "Aucune fourmi à envoyer."
-                : "";
+    message.textContent =
+      plan.block === "nothing-to-send" && lodgeOnly
+        ? "Votre armée est en Loge : cochez « Compter les troupes de la Loge » pour l'envoyer."
+        : plan.block
+          ? floodBlockText(plan.block, context.target.pseudo, context.margin)
+          : "";
     message.hidden = message.textContent === "";
 
     // Losses only matter against a defense: a column then, nothing otherwise.

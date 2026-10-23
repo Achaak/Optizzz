@@ -24,7 +24,7 @@ const AMOUNT: NumberFieldRules = {
 };
 
 /** A whole number at least 0, shown empty at 0. */
-function CountField({
+export function CountField({
   value,
   onChange,
   rules,
@@ -82,7 +82,7 @@ function Levels<Key extends string>({
 }
 
 /** A pasted report (« Troupes en défense : … ») or a « 300 Jeunes Soldates, 2 Tanks » list fills an army. */
-function Paste({
+export function Paste({
   role,
   onArmy,
   extra,

@@ -6,6 +6,9 @@ import { inRange, maxTake, takeAtLimit } from "./attack";
 // Rules (tutorial « Attaque », Toolzzz): a won attack takes min(ants, floor(20 % of the target's field)); the
 // 50 %–300 % range is checked again at each arrival, both fields having moved. See docs/research/combat.md.
 
+/** Kept above the 50 % limit: other attacks and hunts may move the fields before arrival. */
+export const FLOOD_MARGIN = 0.01;
+
 export interface FloodInput {
   /** My hunting field, cm². */
   attackerField: number;
@@ -186,4 +189,60 @@ export function planAttacks(input: AttacksInput): { attacks: PlannedAttack[]; bl
   });
   for (const wave of waves) attacks.push({ ...wave, army: takeCheapest(pool, wave.ants), lost: null });
   return { attacks, blocked: false };
+}
+
+/** What stops a flood plan, in the order the player can act on it. */
+export type FloodBlock = "out-of-range" | "too-close" | "no-slot" | "too-weak" | "nothing-to-send";
+
+export interface FloodPlanInput extends Omit<AttacksInput, "defender"> {
+  /** The target's army on its hunting field, when pasted; null: unknown, nobody assumed. */
+  defense: Army | null;
+}
+
+/**
+ * The flood plan of the extension's « Plan de flood » and of the site's simulator: the attacks, and what stops them.
+ * The target's levels are unknown: its defense fights with mine.
+ */
+export function floodPlan(input: FloodPlanInput): { attacks: PlannedAttack[]; block: FloodBlock | null } {
+  const { defense, ...rest } = input;
+  const plan = planAttacks({
+    ...rest,
+    defender: defense
+      ? {
+          armies: { field: defense, nest: [], lodge: [] },
+          weapons: input.levels.weapons,
+          shield: input.levels.shield,
+          dome: 0,
+          lodge: 0,
+        }
+      : null,
+  });
+  const block: FloodBlock | null = !inRange(input.attackerField, input.targetField)
+    ? "out-of-range"
+    : !inRange(input.attackerField, input.targetField, input.margin)
+      ? "too-close"
+      : input.slots === 0
+        ? "no-slot"
+        : plan.blocked
+          ? "too-weak"
+          : plan.attacks.length === 0
+            ? "nothing-to-send"
+            : null;
+  return { attacks: plan.attacks, block };
+}
+
+/** What stops the plan, said to the player; `target` names the target (« Cible_1 », « La cible »). */
+export function floodBlockText(block: FloodBlock, target: string, margin: number): string {
+  switch (block) {
+    case "out-of-range":
+      return `${target} est hors de portée (50 % à 300 % de votre TDC).`;
+    case "too-close":
+      return `${target} est à moins de ${String(margin * 100)} % de la limite des 50 % : trop juste, un autre mouvement peut la faire sortir de portée avant l'arrivée.`;
+    case "no-slot":
+      return "Aucune attaque possible de plus pour l'instant.";
+    case "too-weak":
+      return "Votre armée ne suffit pas à écraser sa défense (riposte à 10 %).";
+    case "nothing-to-send":
+      return "Aucune fourmi à envoyer.";
+  }
 }

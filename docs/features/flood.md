@@ -47,17 +47,17 @@ Floods furtifs (tailles arrondies), antisonde, floods entre membres d'une chaîn
 
 ## Code
 
-| Fichier                                                 | Rôle                                                                              |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `packages/game/src/attack.ts` (+ test)                  | Prise de 20 %, portée avec marge, prise à la limite, créneaux d'attaque           |
-| `packages/game/src/flood.ts` (+ test)                   | Plan des prises, première vague contre une défense, unités envoyées               |
-| `apps/extension/src/features/flood/page.ts` (+ test)    | Lecture et remplissage du formulaire d'attaque, envoi, TDC du profil              |
-| `apps/extension/src/data/launches.ts` (+ test)          | Attaques en route, défenses collées, case Loge, file de session                   |
-| `apps/extension/src/features/flood/attacks.ts` (+ test) | Rapprochement avec la liste « Attaque(s) en cours » d'`Armee.php`                 |
-| `apps/extension/src/data/on-way.ts` (+ test)            | Attaques en route vérifiées, TDC et créneaux une fois arrivées (+ Cibles)         |
-| `apps/extension/src/features/flood/mount.ts` (+ test)   | L'encart sous le formulaire                                                       |
-| `apps/extension/src/features/flood/index.ts`            | La feature (interrupteur `flood`), mémorise l'armée sur `Armee.php`               |
-| `apps/extension/src/features/targets/mount.ts` (+ test) | Colonne « Flood max »                                                             |
-| `apps/extension/src/features/flood/__fixtures__/*.html` | Formulaire d'attaque, profil et `Armee.php` relevés, effectifs et pseudos fictifs |
+| Fichier                                                 | Rôle                                                                                                                               |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/game/src/attack.ts` (+ test)                  | Prise de 20 %, portée avec marge, prise à la limite, créneaux d'attaque                                                            |
+| `packages/game/src/flood.ts` (+ test)                   | Plan des prises, première vague contre une défense, unités envoyées ; `floodPlan` (plan et ce qui l'empêche, partagé avec le site) |
+| `apps/extension/src/features/flood/page.ts` (+ test)    | Lecture et remplissage du formulaire d'attaque, envoi, TDC du profil                                                               |
+| `apps/extension/src/data/launches.ts` (+ test)          | Attaques en route, défenses collées, case Loge, file de session                                                                    |
+| `apps/extension/src/features/flood/attacks.ts` (+ test) | Rapprochement avec la liste « Attaque(s) en cours » d'`Armee.php`                                                                  |
+| `apps/extension/src/data/on-way.ts` (+ test)            | Attaques en route vérifiées, TDC et créneaux une fois arrivées (+ Cibles)                                                          |
+| `apps/extension/src/features/flood/mount.ts` (+ test)   | L'encart sous le formulaire                                                                                                        |
+| `apps/extension/src/features/flood/index.ts`            | La feature (interrupteur `flood`), mémorise l'armée sur `Armee.php`                                                                |
+| `apps/extension/src/features/targets/mount.ts` (+ test) | Colonne « Flood max »                                                                                                              |
+| `apps/extension/src/features/flood/__fixtures__/*.html` | Formulaire d'attaque, profil et `Armee.php` relevés, effectifs et pseudos fictifs                                                  |
 
 Réutilise aussi `apps/extension/src/data/garrison.ts` (armée par lieu), `combat-simulator/form.ts` (défense collée) et `packages/game/src/pages/resources.ts` (TDC de l'en-tête).

@@ -18,10 +18,8 @@ import {
   saveDefense,
 } from "@/data/launches";
 import { fetchGamePage } from "@/utils/game-page";
+import { FLOOD_MARGIN } from "@optizzz/game/flood";
 import { loadProbePlan } from "../probes";
-
-/** Kept above the 50 % limit: other attacks and hunts may move the fields before arrival. */
-export const FLOOD_MARGIN = 0.01;
 
 async function liveField(pseudo: string): Promise<number | null> {
   try {

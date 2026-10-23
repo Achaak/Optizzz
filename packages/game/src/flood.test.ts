@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { armyFromKeys, armyToKeys, emptyArmy } from "./army/units";
-import { firstWave, planAttacks, planFlood } from "./flood";
+import { firstWave, floodBlockText, floodPlan, planAttacks, planFlood } from "./flood";
 
 const takes = (input: Parameters<typeof planFlood>[0]) => planFlood(input).map((wave) => wave.take);
 
@@ -114,5 +114,47 @@ describe("planAttacks", () => {
     };
     const plan = planAttacks({ ...base, available: armyFromKeys({ JSN: 500 }), defender });
     expect(plan).toEqual({ attacks: [], blocked: true });
+  });
+});
+
+describe("floodPlan", () => {
+  const base = { attackerField: 1000, targetField: 2000, slots: 3, margin: 0, levels: { weapons: 0, shield: 0 } };
+
+  it("plans like planAttacks, the pasted defense on the hunting field with my levels", () => {
+    const available = armyFromKeys({ JSN: 2000 });
+    const defense = armyFromKeys({ JSN: 100 });
+    const plan = floodPlan({ ...base, available, defense });
+    const defender = {
+      armies: { field: defense, nest: [], lodge: [] },
+      weapons: 0,
+      shield: 0,
+      dome: 0,
+      lodge: 0,
+    };
+    expect(plan).toEqual({ attacks: planAttacks({ ...base, available, defender }).attacks, block: null });
+  });
+
+  it("says what stops the plan, in the order the player can act on it", () => {
+    const available = armyFromKeys({ JSN: 500 });
+    expect(floodPlan({ ...base, targetField: 400, available, defense: null }).block).toBe("out-of-range");
+    expect(floodPlan({ ...base, targetField: 502, margin: 0.01, available, defense: null }).block).toBe("too-close");
+    expect(floodPlan({ ...base, slots: 0, available, defense: null }).block).toBe("no-slot");
+    expect(floodPlan({ ...base, available, defense: armyFromKeys({ JSN: 100 }) })).toEqual({
+      attacks: [],
+      block: "too-weak",
+    });
+    expect(floodPlan({ ...base, available: emptyArmy(), defense: null }).block).toBe("nothing-to-send");
+  });
+
+  it("writes it for the player, with the target's name", () => {
+    expect(floodBlockText("out-of-range", "Cible_1", 0.01)).toBe(
+      "Cible_1 est hors de portée (50 % à 300 % de votre TDC).",
+    );
+    expect(floodBlockText("too-close", "La cible", 0.01)).toBe(
+      "La cible est à moins de 1 % de la limite des 50 % : trop juste, un autre mouvement peut la faire sortir de portée avant l'arrivée.",
+    );
+    expect(floodBlockText("too-weak", "Cible_1", 0.01)).toBe(
+      "Votre armée ne suffit pas à écraser sa défense (riposte à 10 %).",
+    );
   });
 });
