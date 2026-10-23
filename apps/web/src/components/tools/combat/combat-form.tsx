@@ -49,7 +49,7 @@ function CountField({
   );
 }
 
-export interface LevelInput<Key extends string> {
+interface LevelInput<Key extends string> {
   key: Key;
   label: string;
   amount?: boolean;
@@ -149,8 +149,8 @@ const DEFENDER_LEVELS = [
   { key: "materials", label: "Matériaux", amount: true },
 ] as const satisfies readonly LevelInput<keyof DefenderForm>[];
 
-export type AttackerNumber = (typeof ATTACKER_LEVELS)[number]["key"];
-export type DefenderNumber = (typeof DEFENDER_LEVELS)[number]["key"];
+type AttackerNumber = (typeof ATTACKER_LEVELS)[number]["key"];
+type DefenderNumber = (typeof DEFENDER_LEVELS)[number]["key"];
 
 const COUNT_CLASS = "w-24 min-w-24 text-right tabular-nums";
 
