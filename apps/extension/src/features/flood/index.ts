@@ -18,6 +18,7 @@ import {
   saveDefense,
 } from "@/data/launches";
 import { fetchGamePage } from "@/utils/game-page";
+import { siteLinksEnabled } from "@/utils/site-tool";
 import { FLOOD_MARGIN } from "@optizzz/game/flood";
 import { loadProbePlan } from "../probes";
 
@@ -98,6 +99,7 @@ export const floodPlanner: Feature = {
         probes: await loadProbePlan(toggles),
         protectedMe: isUnderBeginnerProtection(document),
         margin: FLOOD_MARGIN,
+        siteLinks: siteLinksEnabled(toggles),
         onCountLodgeChange: (count) => void saveCountLodge(origin, count),
         onDefenseChange: (army) =>
           void (army ? saveDefense(origin, form.targetId, army, new Date()) : clearDefense(origin, form.targetId)),
