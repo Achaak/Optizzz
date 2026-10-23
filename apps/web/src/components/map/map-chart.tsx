@@ -2,12 +2,12 @@
 
 import type { Player } from "@optizzz/game/exports";
 import type { Level } from "@optizzz/game/travel";
-import { fittedGrid, fittedHeight, type AxisRange, type MapWindow } from "@optizzz/map/axes";
+import { fittedHeight, zoomedWindow, type MapWindow } from "@optizzz/map/axes";
 import { buildServerMapOption, playerAt } from "@optizzz/map/chart-option";
 import type { MapPalette } from "@optizzz/map/palette";
 import type { Chip } from "@optizzz/map/selection";
 import { useMapChart } from "@optizzz/map/use-map-chart";
-import { showPseudos, type ZoomRequest } from "@optizzz/map/view";
+import { shownWindow, showPseudos, type ZoomedByHand, type ZoomRequest } from "@optizzz/map/view";
 import { ScatterChart } from "echarts/charts";
 import { DataZoomComponent, GridComponent, TooltipComponent } from "echarts/components";
 import * as echarts from "echarts/core";
@@ -58,8 +58,8 @@ export function MapChart(props: Props) {
     fittedHeight(boxWidth, maxHeight(), axes),
   );
   /** Zoomed or moved by hand, after the last request. */
-  const [userView, setUserView] = useState<{ x: AxisRange; y: AxisRange; at: number } | null>(null);
-  const view = userView && (!zoom || userView.at > zoom.at) ? userView : zoom && !zoom.full ? zoom : axes;
+  const [userView, setUserView] = useState<ZoomedByHand | null>(null);
+  const view = shownWindow(userView, zoom, axes);
   const chosen = useMemo(() => [...highlighted.keys()], [highlighted]);
   const pseudos = showPseudos(view, chosen);
 
@@ -103,21 +103,11 @@ export function MapChart(props: Props) {
       const player = playerAt({ players, highlighted, me: null }, event);
       if (player) props.onOpen(player);
     },
-    // Zoomed or moved by hand: pseudos or tags, from the corners of the plot area once the zoom is applied.
-    datazoom: () => {
+    // Zoomed or moved by hand, or a request applied: pseudos or tags. A request zooms x then y, two events in a row:
+    // each builds on the window the previous one left.
+    datazoom: (event: Parameters<typeof zoomedWindow>[0]) => {
       const at = Date.now();
-      setTimeout(() => {
-        const chart = chartRef.current?.getEchartsInstance();
-        if (!chart) return;
-        const grid = fittedGrid(width, height, axes);
-        const toMap = (pixel: number[]) =>
-          chart.convertFromPixel({ gridIndex: 0 }, pixel) as [number, number] | undefined;
-        const corner = toMap([grid.left, height - grid.bottom]);
-        const opposite = toMap([width - grid.right, grid.top]);
-        // While ECharts rebuilds its grid (a new option), there is nothing to read yet.
-        if (!corner || !opposite) return;
-        setUserView({ x: [corner[0], opposite[0]], y: [corner[1], opposite[1]], at });
-      }, 0);
+      setUserView((last) => ({ ...zoomedWindow(event, shownWindow(last, zoom, axes), axes), at }));
     },
   };
 

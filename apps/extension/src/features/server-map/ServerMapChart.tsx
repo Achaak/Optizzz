@@ -8,13 +8,13 @@ import ReactECharts from "echarts-for-react/esm/core";
 import { useEffect, useMemo, useState } from "react";
 import type { Player } from "@optizzz/game/exports";
 import type { Level } from "@optizzz/game/travel";
-import { fittedGrid, fittedHeight, type AxisRange, type MapWindow } from "@optizzz/map/axes";
+import { fittedHeight, zoomedWindow, type MapWindow } from "@optizzz/map/axes";
 import { CHART_COLORS } from "@/theme";
 import { useMapChart } from "@optizzz/map/use-map-chart";
 import { buildServerMapOption, playerAt } from "@optizzz/map/chart-option";
 import type { Chip } from "@optizzz/map/selection";
 import type { MapDisplay } from "./settings";
-import { showPseudos, type ZoomRequest } from "@optizzz/map/view";
+import { shownWindow, showPseudos, type ZoomedByHand, type ZoomRequest } from "@optizzz/map/view";
 
 echarts.use([ScatterChart, GridComponent, TooltipComponent, DataZoomComponent, LabelLayout, CanvasRenderer]);
 
@@ -51,11 +51,6 @@ const ABOVE_MAP = 230;
 /** The map fits the window (the in-game dialog or a tab): its bottom is seen without scrolling. */
 const maxHeight = () => Math.max(320, Math.min(MAX_HEIGHT, window.innerHeight - ABOVE_MAP));
 
-interface View {
-  x: AxisRange;
-  y: AxisRange;
-}
-
 export function ServerMapChart(props: Props) {
   const {
     players,
@@ -80,8 +75,8 @@ export function ServerMapChart(props: Props) {
     fittedHeight(width, maxHeight(), axes),
   );
   /** Zoomed or moved by hand, after the last request. */
-  const [userView, setUserView] = useState<(View & { at: number }) | null>(null);
-  const view: View = userView && (!zoom || userView.at > zoom.at) ? userView : zoom && !zoom.full ? zoom : axes;
+  const [userView, setUserView] = useState<ZoomedByHand | null>(null);
+  const view = shownWindow(userView, zoom, axes);
 
   const chosen = useMemo(() => [...highlighted.keys()], [highlighted]);
   const pseudos = showPseudos(view, chosen);
@@ -139,18 +134,11 @@ export function ServerMapChart(props: Props) {
       const player = playerAt({ players, highlighted, me: marked }, event);
       if (player) onOpenProfile(player);
     },
-    // Zoomed or moved by hand: pseudos or tags, from the corners of the plot area once the zoom is applied.
-    datazoom: () => {
+    // Zoomed or moved by hand, or a request applied: pseudos or tags. A request zooms x then y, two events in a row:
+    // each builds on the window the previous one left.
+    datazoom: (event: Parameters<typeof zoomedWindow>[0]) => {
       const at = Date.now();
-      setTimeout(() => {
-        const chart = chartRef.current?.getEchartsInstance();
-        if (!chart) return;
-        const grid = fittedGrid(width, height, axes);
-        const toMap = (pixel: number[]) => chart.convertFromPixel({ gridIndex: 0 }, pixel) as [number, number];
-        const [left, bottom] = toMap([grid.left, height - grid.bottom]);
-        const [right, top] = toMap([width - grid.right, grid.top]);
-        setUserView({ x: [left, right], y: [bottom, top], at });
-      }, 0);
+      setUserView((last) => ({ ...zoomedWindow(event, shownWindow(last, zoom, axes), axes), at }));
     },
   };
 

@@ -14,7 +14,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-22. Reprend la C
 - **Adapté** : « + Pactes / Guerres de [alliance] » pour une alliance choisie (au lieu de « mes ») ; filtre « à portée de la référence » (au lieu de « à ma portée »).
 - **Retiré** : « ma position » et tout ce qui suppose un joueur connecté.
 - **Trajet** : champ « Vitesse d'attaque » au-dessus du tableau (niveau 0 par défaut, gardé dans l'adresse), trajet depuis la référence ; sans référence, pas de colonne Trajet.
-- **Forme** : même échelle sur les deux axes. Un serveur tout en hauteur (S4 : 50 × 2 058 cases) ne s'ouvre pas sur une aiguille : l'ouverture cadre une bande aussi haute que la largeur le permet, sur la sélection ou au milieu des joueurs ; « Voir tout le serveur » montre tout.
+- **Forme** : même échelle sur les deux axes. Un serveur tout en hauteur (S4 : 50 × 2 058 cases, S1 : 48 × 2 679) ne s'ouvre pas sur une aiguille : l'ouverture cadre une bande aussi haute que la largeur le permet, sur la sélection ou au milieu des joueurs ; une sélection plus haute que la bande (une alliance éparpillée sur tout S4) est cadrée sur l'endroit qui en réunit le plus, pas sur son milieu, souvent vide. « Voir tout le serveur » montre tout, sans garder la même échelle.
 - **Données** : une route `/api/[server]/carte` en colonnes compactes (x, y, alliance, pseudo, TDC, scores), mise en cache et reconstruite par le cron comme les pages. S4 : 216 654 joueurs, 6,2 Mo bruts, environ 1 Mo compressé (relevé le 2026-10-22).
 - **Liens** : « Voir sur la carte » sur les fiches joueur et alliance du site, qui ouvre la carte avec cette puce.
 
@@ -40,3 +40,16 @@ Révision de l'ADR 0005 du 2026-10-22 : sans compte, l'extension peut lire ce qu
 | `apps/extension/src/data/site-map.ts` (+ test)                      | L'extension lit la carte du site, repli sur l'export                                                                                        |
 
 Vérifié en local le 2026-10-22 : S5 (puces, pactes, filtre, tableau depuis une référence avec vitesse), S4 (216 452 joueurs, ouverture sur une bande). Palettes vérifiées en simulant protanopie et deutéranopie : au moins 10 d'écart OKLab entre voisines.
+
+Vérifié en production le 2026-10-23 (après le premier passage du cron, export de 6 h 00) :
+
+- `/api/sX/carte` pour S1 à S5 : 200, `Content-Encoding: gzip`, `Access-Control-Allow-Origin: *`, `Cache-Control: public, max-age=600` (Vercel retire `s-maxage` et `stale-while-revalidate` de la réponse, et les garde pour son cache : `x-vercel-cache: HIT` à la deuxième lecture) ; JSON valide pour `mapDataSchema`. S4 : 1,8 Mo transférés, 216 456 joueurs.
+- `/sX/carte` pour S1 à S5 : carte affichée sans message dans la console, en clair et en sombre, sur ordinateur et à 375 px ; S4 et S1 s'ouvrent sur une bande ; un lien `?p=…` rouvre puces, filtre, référence et vitesse ; « Voir sur la carte » des fiches joueur et alliance mène à `?joueur=…` et `?alliance=…` (tag encodé : `L%2FN` sur S1).
+
+Corrigé ensuite (vérifié en local, en production après la mise en ligne) :
+
+- « Voir sur la carte » d'une alliance éparpillée sur S4 (Lcqs : y de 106 à 1 246) ouvrait une bande vide au milieu ; elle s'ouvre sur la bande qui réunit le plus de ses membres (`fittedWindow`).
+- La zone zoomée se lisait sur la grille (`convertFromPixel`) : quand l'événement arrivait pendant qu'ECharts reconstruisait la grille, ECharts avertissait en développement (les avertissements sont retirés du build de production, d'où une console vide en ligne), et la Carte du serveur de l'extension plantait sur le résultat vide. Elle se lit maintenant dans l'événement `datazoom` (`zoomedWindow`).
+- Sur téléphone, l'heure de l'export ne se coupe plus au milieu (« 6 h / 00 »).
+
+Reste : sur ordinateur, la carte (720 px au plus) dépasse le bas de la fenêtre sous l'en-tête et les puces ; on fait défiler la page.

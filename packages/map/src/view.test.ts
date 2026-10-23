@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Player } from "@optizzz/game/exports";
 import type { Chip } from "./selection";
-import { allianceCenters, showPseudos, sortRows, tableRows } from "./view";
+import { allianceCenters, shownWindow, showPseudos, sortRows, tableRows } from "./view";
 
 let nextId = 1;
 const player = (pseudo: string, x: number, y: number, fields: Partial<Player> = {}): Player => ({
@@ -76,5 +76,22 @@ describe("table rows", () => {
     expect(sortRows(rows, "field", true).map((row) => row.player.pseudo)).toEqual(["Loin", "Proche"]);
     expect(sortRows(rows, "pseudo", false).map((row) => row.player.pseudo)).toEqual(["Loin", "Proche"]);
     expect(sortRows(rows, "distance", true).map((row) => row.player.pseudo)).toEqual(["Loin", "Proche"]);
+  });
+});
+
+describe("the window shown", () => {
+  const axes = { x: [0, 100], y: [0, 74] } as const;
+  const asked = { full: false, x: [10, 20], y: [10, 17.4], at: 1000 } as const;
+  const byHand = { x: [30, 40], y: [5, 12.4], at: 2000 } as const;
+
+  it("is the latest of the request and the zoom by hand", () => {
+    expect(shownWindow(null, null, axes)).toBe(axes);
+    expect(shownWindow(null, asked, axes)).toBe(asked);
+    expect(shownWindow(byHand, asked, axes)).toBe(byHand);
+    expect(shownWindow(byHand, { ...asked, at: 3000 }, axes)).toEqual({ ...asked, at: 3000 });
+  });
+
+  it("is the whole server once asked", () => {
+    expect(shownWindow(null, { full: true, at: 3000 }, axes)).toBe(axes);
   });
 });

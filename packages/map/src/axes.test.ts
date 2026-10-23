@@ -8,6 +8,7 @@ import {
   fittedWindow,
   plotShape,
   squareGrid,
+  zoomedWindow,
   type MapWindow,
 } from "./axes";
 
@@ -130,6 +131,56 @@ describe("a very tall server (S4: 50 × 2 058 squares)", () => {
     expect(window.y[1] - window.y[0]).toBeCloseTo(66);
     expect(window.y[0]).toBeLessThan(1000);
     expect(window.y[1]).toBeGreaterThan(1010);
+  });
+
+  it("frames the band holding most of a selection too tall for one (an alliance spread over the server)", () => {
+    const row = (y: number, count: number) => Array.from({ length: count }, (_, i) => ({ x: 3 + i, y }));
+    const window = fittedWindow([...row(106, 30), ...row(250, 10), { x: 5, y: 1127 }, { x: 6, y: 1246 }], full);
+    expect(window.x).toEqual(full.x);
+    expect(window.y[1] - window.y[0]).toBeCloseTo(81);
+    expect(window.y[0]).toBeLessThan(106);
+    expect(window.y[1]).toBeGreaterThan(106);
+  });
+
+  it("keeps the whole of a dense stretch rather than its first player", () => {
+    const window = fittedWindow(
+      [{ x: 1, y: 0 }, ...[700, 720, 740, 760].map((y) => ({ x: 10, y })), { x: 1, y: 2000 }],
+      full,
+    );
+    expect(window.y[0]).toBeLessThan(700);
+    expect(window.y[1]).toBeGreaterThan(760);
+  });
+});
+
+describe("the window a zoom leaves", () => {
+  const full: MapWindow = { x: [-4, 50], y: [-2, 2060] };
+  const current: MapWindow = { x: [-4, 50], y: [600, 681] };
+
+  it("reads the values a request asked for", () => {
+    expect(zoomedWindow({ dataZoomIndex: 1, startValue: 100, endValue: 181 }, current, full)).toEqual({
+      x: [-4, 50],
+      y: [100, 181],
+    });
+  });
+
+  it("reads a zoom by hand, in percent of each axis", () => {
+    const event = {
+      batch: [
+        { dataZoomId: "x", start: 25, end: 75 },
+        { dataZoomId: "y", start: 0, end: 50 },
+      ],
+    };
+    expect(zoomedWindow(event, current, full)).toEqual({ x: [9.5, 36.5], y: [-2, 1029] });
+  });
+
+  it("reads a reset to the whole server", () => {
+    expect(zoomedWindow({ dataZoomIndex: 0, start: 0, end: 100 }, current, full)).toEqual(current);
+    expect(zoomedWindow({ dataZoomIndex: 1, start: 0, end: 100 }, current, full)).toEqual(full);
+  });
+
+  it("keeps the current window for what it cannot read", () => {
+    expect(zoomedWindow({ dataZoomId: "other", start: 10, end: 20 }, current, full)).toEqual(current);
+    expect(zoomedWindow({}, current, full)).toEqual(current);
   });
 });
 
