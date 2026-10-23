@@ -1,6 +1,6 @@
 import type { Spread } from "@optizzz/game/hunt/evaluate";
 import type { Plan } from "@optizzz/game/hunt/planner";
-import { formatChance, formatShare, splitText, stepNotice } from "./view";
+import { formatChance, formatShare, splitText, stepNotice } from "@optizzz/game/hunt/texts";
 import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";

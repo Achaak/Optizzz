@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { Plan } from "@optizzz/game/hunt/planner";
+import type { Plan } from "./planner";
 import {
   formatChance,
+  formatLosses,
   formatShare,
+  huntsText,
   parisClockTime,
   presetOf,
   promotionCounts,
@@ -10,7 +12,7 @@ import {
   splitText,
   stepNotice,
   unitsText,
-} from "./view";
+} from "./texts";
 
 describe("formatChance", () => {
   it("never shows 100 % or 0 % unless it is certain", () => {
@@ -19,6 +21,25 @@ describe("formatChance", () => {
     expect(formatChance(0.934)).toBe("93 %");
     expect(formatChance(0.003)).toBe("< 1 %");
     expect(formatChance(0)).toBe("0 %");
+  });
+});
+
+describe("huntsText and formatLosses", () => {
+  const plan = (amounts: number[]) =>
+    ({
+      hunts: amounts.map((amount) => ({ amount })),
+      totalAmount: amounts.reduce((sum, amount) => sum + amount, 0),
+    }) as unknown as Plan;
+
+  it("says how many hunts and how big", () => {
+    expect(huntsText(plan([115, 115]))).toBe("2 chasses de 115 cm²");
+    expect(huntsText(plan([120, 113]))).toBe("2 chasses de 233 cm² en tout");
+    expect(huntsText(plan([]))).toBe("aucune chasse");
+  });
+
+  it("keeps a decimal for small losses only", () => {
+    expect(formatLosses(7.44)).toBe("7,4");
+    expect(formatLosses(1234.4)).toBe("1 234");
   });
 });
 

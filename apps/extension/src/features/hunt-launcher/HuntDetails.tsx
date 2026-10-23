@@ -2,9 +2,9 @@ import type { FieldRow } from "@optizzz/game/hunt/extras";
 import type { Plan } from "@optizzz/game/hunt/planner";
 import type { Extras } from "@optizzz/game/hunt/requests";
 import { LossCurve } from "./LossCurve";
-import { formatChance } from "./view";
+import { formatChance, huntsText } from "@optizzz/game/hunt/texts";
 import { unitLabel, UNITS } from "@optizzz/game/army/units";
-import { formatAmount, formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
+import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { formatDuration } from "@optizzz/game/format/time-format";
 
@@ -144,11 +144,3 @@ export function HuntDetails({ plan, advised, extras, custom, frozen, waitSeconds
 }
 
 const signed = (value: number) => `${value >= 0 ? "+" : "−"}${formatAmount(Math.abs(value))}`;
-
-export function huntsText(plan: Plan): string {
-  if (plan.hunts.length === 0) return "aucune chasse";
-  const amounts = [...new Set(plan.hunts.map((hunt) => hunt.amount))];
-  const size =
-    amounts.length === 1 ? `${formatNumber(amounts[0] ?? 0)} cm²` : `${formatNumber(plan.totalAmount)} cm² en tout`;
-  return `${String(plan.hunts.length)} chasse${plan.hunts.length > 1 ? "s" : ""} de ${size}`;
-}

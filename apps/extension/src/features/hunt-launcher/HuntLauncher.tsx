@@ -10,7 +10,7 @@ import type { RatioChoice } from "@optizzz/game/hunt/extras";
 import { summarize, type Objective, type Plan, type PlanInput } from "@optizzz/game/hunt/planner";
 import type { Extras } from "@optizzz/game/hunt/requests";
 import { armyFromKeys, armyToKeys, UNITS } from "@optizzz/game/army/units";
-import { FieldTable, HuntDetails, huntsText } from "./HuntDetails";
+import { FieldTable, HuntDetails } from "./HuntDetails";
 import { HuntParameters } from "./HuntParameters";
 import { HuntResult } from "./HuntResult";
 import { HuntTable } from "./HuntTable";
@@ -19,7 +19,7 @@ import { hasNoArmyToSend, readHuntForm, type HuntForm, type OngoingHunt } from "
 import { PlayerData } from "./PlayerData";
 import { SimpleView } from "./SimpleView";
 import { DEFAULT_SETTINGS, huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
-import { unitsText } from "./view";
+import { huntsText, unitsText } from "@optizzz/game/hunt/texts";
 import { formatAmount, formatNumber } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { useStoredSettings } from "@/utils/useStoredSettings";
