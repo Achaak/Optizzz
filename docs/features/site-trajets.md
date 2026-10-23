@@ -24,3 +24,16 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-23 (ticket 04). 
 
 - Donner le même résultat que l'extension pour les mêmes entrées (`travel.ts` partagé, aucune formule recopiée).
 - Marcher en clair, en sombre et sur téléphone.
+
+## Code
+
+Fait le 2026-10-23 (ticket 06). Pas de bouton dans l'extension pour cet outil.
+
+| Fichier                                                          | Rôle                                                                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/app/tools/travel/page.tsx`                         | La page, dans le gabarit du socle (`ToolPage`)                                                                                                                                                                                                                                                |
+| `apps/web/src/components/tools/travel/travel-state.ts` (+ test)  | L'état (`travelFormat`, version 1) : `s` serveur, `a` et `b` les bouts (un id de joueur ou `[x, y]`), `v` Vitesse d'attaque, `d` départ (« 2026-10-23T20:15 », heure de Paris ; null : maintenant) ; `swapEnds` (« Inverser ») ; changer de serveur oublie les joueurs et garde les positions |
+| `apps/web/src/components/tools/travel/travel-result.ts` (+ test) | Distance, temps et arrivée avec `distance` et `travelTime` de `packages/game/src/travel.ts`, comme l'extension ; le départ à une heure de Paris (`fromParisParts`)                                                                                                                            |
+| `apps/web/src/components/tools/travel/travel-tool.tsx`           | Le formulaire (`ServerSelect`, deux `PlayerPicker`, « Mes niveaux » pour la Vitesse d'attaque) et le résultat ; l'arrivée depuis « maintenant » suit l'horloge à chaque minute                                                                                                                |
+
+Le schéma reste dans le site : l'outil ne s'ouvre pas depuis l'extension. Le temps s'écrit comme le jeu sur un profil (`formatGameDuration` : « 10H 1m 2s »), à la seconde : des écritures de `time-format`, c'est celle qui garde l'arrondi en dessous (`formatDuration` arrondit à la minute au-dessus).
