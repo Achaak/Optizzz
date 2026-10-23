@@ -235,6 +235,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "site-links",
+    label: "Liens vers optizzz.fr",
+    description:
+      "Sur le simulateur de combat, le Lanceur de chasse et le Plan de flood : « Ouvrir sur optizzz.fr » et « Copier le lien », pour retrouver ou partager l'outil du site avec vos entrées. Rien ne part sans un clic, et vos armées et niveaux restent dans l'adresse de la page, sans être envoyés au site.",
+    options: [],
+  },
+  {
     id: "compact-numbers",
     label: "Nombres arrondis",
     description:

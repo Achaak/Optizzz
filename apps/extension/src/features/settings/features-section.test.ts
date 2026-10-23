@@ -73,6 +73,7 @@ describe("buildFeaturesSection", () => {
       "alliance-sharing",
       "hunt-launcher",
       "safe-reload",
+      "site-links",
       "compact-numbers",
       "compact-numbers.game",
       "compact-numbers.extension",

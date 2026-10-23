@@ -1,19 +1,36 @@
-import { SERVERS } from "@optizzz/game/servers";
+import { SERVERS, serverById } from "@optizzz/game/servers";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 /** Servers in the order of the menu, for the results. */
 const ORDER = new Map(SERVERS.map((server, index) => [server.id, index]));
 
+const serverId = z.string().refine((id) => serverById(id)?.id === id, "Unknown server");
+
+/** What a search and the tools' player picker show and use: position and hunting field (TDC) included. */
+const PICKED = { server: true, id: true, pseudo: true, alliance: true, x: true, y: true, field: true } as const;
+
 export const playersRouter = createTRPCRouter({
-  /** The header's search: players whose pseudo starts with `q`, on every server. */
-  search: publicProcedure.input(z.object({ q: z.string().trim().min(2).max(40) })).query(async ({ ctx, input }) => {
-    const players = await ctx.db.player.findMany({
-      where: { pseudo: { startsWith: input.q, mode: "insensitive" } },
-      select: { server: true, id: true, pseudo: true, alliance: true },
-      orderBy: { field: "desc" },
-      take: 10,
-    });
-    return players.sort((a, b) => (ORDER.get(a.server) ?? 0) - (ORDER.get(b.server) ?? 0));
-  }),
+  /**
+   * Players whose pseudo starts with `q`: on every server for the header's search, on `server` alone for the tools'
+   * player picker.
+   */
+  search: publicProcedure
+    .input(z.object({ q: z.string().trim().min(2).max(40), server: serverId.optional() }))
+    .query(async ({ ctx, input }) => {
+      const players = await ctx.db.player.findMany({
+        where: { pseudo: { startsWith: input.q, mode: "insensitive" }, ...(input.server && { server: input.server }) },
+        select: PICKED,
+        orderBy: { field: "desc" },
+        take: 10,
+      });
+      return players.sort((a, b) => (ORDER.get(a.server) ?? 0) - (ORDER.get(b.server) ?? 0));
+    }),
+
+  /** A player chosen earlier (a tool's link keeps the id), as the latest export shows them; null once gone. */
+  byId: publicProcedure
+    .input(z.object({ server: serverId, id: z.number().int().positive() }))
+    .query(({ ctx, input }) =>
+      ctx.db.player.findUnique({ where: { server_id: { server: input.server, id: input.id } }, select: PICKED }),
+    ),
 });

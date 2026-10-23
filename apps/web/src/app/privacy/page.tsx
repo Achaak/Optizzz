@@ -14,9 +14,11 @@ export default function PrivacyPage() {
           fonctionner le service.
         </p>
         <p>
-          Ce que vous choisissez sur la carte d&apos;un serveur reste dans votre navigateur : un lien partagé le garde
-          après le <code>#</code> de l&apos;adresse (<code>/s5/map#p=…</code>), une partie que le navigateur
-          n&apos;envoie jamais au site.
+          Ce que vous choisissez sur la carte d&apos;un serveur ou saisissez dans un outil (armées, niveaux…) reste dans
+          votre navigateur : un lien partagé le garde après le <code>#</code> de l&apos;adresse (
+          <code>/s5/map#p=…</code>, <code>/tools/combat#p=…</code>), une partie que le navigateur n&apos;envoie jamais
+          au site. Votre dernière carte, le dernier état de chaque outil et vos niveaux (« Mes niveaux ») sont gardés
+          dans le stockage local de votre navigateur, pour les retrouver ; le site ne les lit pas.
         </p>
       </section>
       <section className="space-y-2">

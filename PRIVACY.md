@@ -1,6 +1,6 @@
 # Politique de confidentialité — Optizzz
 
-_Dernière mise à jour : 22 octobre 2026_
+_Dernière mise à jour : 23 octobre 2026_
 
 Optizzz est une extension pour le jeu [Fourmizzz](http://www.fourmizzz.fr). Elle ne fonctionne que sur les pages `*.fourmizzz.fr`.
 
@@ -18,6 +18,10 @@ Uniquement sur les pages du jeu, depuis votre navigateur :
 Ces requêtes partent de votre navigateur vers Fourmizzz, comme si vous ouvriez ces pages vous-même.
 
 Une exception : la Carte du serveur lit les positions des joueurs sur le site d'Optizzz (`https://optizzz.fr/api/<serveur>/map`), bien plus léger que l'export de Fourmizzz. Ce sont les mêmes données publiques, tirées de cet export ; la requête ne contient ni compte, ni cookie, ni rien de vous, mais comme toute visite d'un site, elle fait connaître votre adresse IP à son hébergeur (Vercel), qui garde un temps les journaux techniques. Pour ne contacter que Fourmizzz, décochez « Lire les positions sur optizzz.fr » dans les options de la Carte du serveur (« Fonctionnalités ») : la carte lit alors l'export, comme avant.
+
+## Ouvrir un outil de optizzz.fr
+
+Le simulateur de combat, le Lanceur de chasse et le Plan de flood ont un bouton « Ouvrir sur optizzz.fr », qui ouvre l'outil correspondant du site d'Optizzz dans un nouvel onglet, avec ce que vous avez saisi (armées, niveaux, TDC), et un bouton « Copier le lien ». Rien ne part sans votre clic. Vos entrées sont écrites dans le fragment de l'adresse (la partie après `#`), que le navigateur n'envoie jamais au site : ni le site ni son hébergeur ne les reçoivent. Comme toute visite d'un site, ouvrir l'outil fait connaître votre adresse IP à son hébergeur (Vercel). Pour ne plus voir ces boutons, décochez « Liens vers optizzz.fr » dans « Fonctionnalités ».
 
 ## Ce que l'extension envoie au jeu
 

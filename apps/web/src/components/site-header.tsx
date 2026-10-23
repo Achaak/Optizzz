@@ -11,7 +11,11 @@ export function SiteHeader() {
           <Image src="/logo.svg" alt="" width={28} height={28} />
           Optizzz
         </Link>
-        <nav aria-label="Serveurs" className="flex gap-1 text-sm">
+        <nav aria-label="Site" className="flex flex-wrap items-center gap-1 text-sm">
+          <Link href="/tools" className="rounded-md px-2 py-1 font-medium hover:bg-muted">
+            Outils
+          </Link>
+          <span aria-hidden className="mx-1 h-4 border-l" />
           {SERVERS.map((server) => (
             <Link key={server.id} href={`/${server.id}`} className="rounded-md px-2 py-1 hover:bg-muted">
               {server.name}

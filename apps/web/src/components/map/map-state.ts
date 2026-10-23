@@ -1,6 +1,7 @@
-// What a map shows, kept in the fragment of its address (`#p=1.…`) to be shared, and in the browser to come back to
+// What a map shows, kept in the fragment of its address (`#p=1.…`, @optizzz/game/site-links) to be shared, and in the browser to come back to
 // it. The fragment never reaches the site's server. See docs/features/site-carte.md and site-outils.md.
 import type { Chip, ChipTarget } from "@optizzz/map/selection";
+import { defineLinkFormat, readLinkState } from "@optizzz/game/site-links/link-state";
 import { z } from "zod";
 
 export interface MapState {
@@ -33,61 +34,47 @@ const stateSchema = z.object({
   v: z.number().int().min(0).max(100),
 });
 
-const toBase64Url = (text: string) =>
-  btoa(String.fromCharCode(...new TextEncoder().encode(text)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+type Wire = z.infer<typeof stateSchema>;
 
-const fromBase64Url = (text: string) =>
-  new TextDecoder().decode(
-    Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0)),
-  );
-
-/** The format of the state: a new one gets `2.` and still reads `1.`. */
-const VERSION = "1.";
+/** Short keys in the address: a chip is `p` (player), `a` (alliance) or `u` (unaffiliated), with its colour `k`. */
+const mapFormat = defineLinkFormat({
+  version: 1,
+  schema: stateSchema,
+  toWire: (state: MapState): Wire => ({
+    c: state.chips.map((chip) =>
+      chip.kind === "player"
+        ? { p: chip.id, k: chip.color }
+        : chip.kind === "alliance"
+          ? { a: chip.tag, k: chip.color, ...(chip.filter && { f: chip.filter }) }
+          : { u: 1 as const, k: chip.color, ...(chip.filter && { f: chip.filter }) },
+    ),
+    r: state.reference,
+    v: state.level,
+  }),
+  fromWire: (wire): MapState => ({
+    chips: wire.c.map((chip): Chip => {
+      if ("p" in chip) return { kind: "player", id: chip.p, color: chip.k };
+      if ("a" in chip) return { kind: "alliance", tag: chip.a, color: chip.k, ...(chip.f && { filter: chip.f }) };
+      return { kind: "unaffiliated", color: chip.k, ...(chip.f && { filter: chip.f }) };
+    }),
+    reference: wire.r,
+    level: wire.v,
+  }),
+});
 
 /** The state as the `p` of the fragment: the version, then short keys in base64url. */
-export function encodeMapState(state: MapState): string {
-  const c = state.chips.map((chip) =>
-    chip.kind === "player"
-      ? { p: chip.id, k: chip.color }
-      : chip.kind === "alliance"
-        ? { a: chip.tag, k: chip.color, ...(chip.filter && { f: chip.filter }) }
-        : { u: 1 as const, k: chip.color, ...(chip.filter && { f: chip.filter }) },
-  );
-  return VERSION + toBase64Url(JSON.stringify({ c, r: state.reference, v: state.level }));
-}
+export const encodeMapState = mapFormat.encode;
 
 /** The state back from `p`; null when it is not one (a cut, hand-edited or unknown version of address). */
-export function decodeMapState(text: string): MapState | null {
-  if (!text.startsWith(VERSION)) return null;
-  let json: unknown;
-  try {
-    json = JSON.parse(fromBase64Url(text.slice(VERSION.length)));
-  } catch {
-    return null;
-  }
-  const parsed = stateSchema.safeParse(json);
-  if (!parsed.success) return null;
-  const chips = parsed.data.c.map((chip): Chip => {
-    if ("p" in chip) return { kind: "player", id: chip.p, color: chip.k };
-    if ("a" in chip) return { kind: "alliance", tag: chip.a, color: chip.k, ...(chip.f && { filter: chip.f }) };
-    return { kind: "unaffiliated", color: chip.k, ...(chip.f && { filter: chip.f }) };
-  });
-  return { chips, reference: parsed.data.r, level: parsed.data.v };
-}
+export const decodeMapState = mapFormat.decode;
 
 /** What the address asks for: a shared state (`#p=`), a target (« Voir sur la carte » : `?player=`, `?alliance=`). */
 export type MapRequest =
   { kind: "state"; state: MapState } | { kind: "invalid" } | { kind: "target"; target: ChipTarget } | { kind: "none" };
 
 export function requestedMap(address: URL): MapRequest {
-  const shared = new URLSearchParams(address.hash.slice(1)).get("p");
-  if (shared) {
-    const state = decodeMapState(shared);
-    return state ? { kind: "state", state } : { kind: "invalid" };
-  }
+  const shared = readLinkState(address, mapFormat);
+  if (shared.kind !== "none") return shared;
   const player = Number(address.searchParams.get("player"));
   if (Number.isInteger(player) && player > 0) return { kind: "target", target: { kind: "player", id: player } };
   const tag = address.searchParams.get("alliance");

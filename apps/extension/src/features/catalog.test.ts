@@ -17,6 +17,11 @@ const HEAVY_SCRIPTS: Record<string, string> = {
   "laying-templates": "../entrypoints/laying-templates.content/index.tsx",
 };
 
+/** Switches read by a shared helper, for the buttons of several features. */
+const SHARED_READERS: Record<string, string> = {
+  "site-links": "../utils/site-tool.ts",
+};
+
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 describe("feature catalog", () => {
@@ -25,7 +30,9 @@ describe("feature catalog", () => {
     for (const { id } of featureCatalog) {
       const heavy = HEAVY_SCRIPTS[id];
       const readByHeavy = heavy !== undefined && source(heavy).includes(`"${id}"`);
-      expect(toggled.has(id) || readByHeavy, `nothing reads the switch « ${id} »`).toBe(true);
+      const shared = SHARED_READERS[id];
+      const readByShared = shared !== undefined && source(shared).includes(`isEnabled(toggles, "${id}")`);
+      expect(toggled.has(id) || readByHeavy || readByShared, `nothing reads the switch « ${id} »`).toBe(true);
     }
   });
 

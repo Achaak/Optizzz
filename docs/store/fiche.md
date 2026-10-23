@@ -47,7 +47,7 @@ Alliance
 
 Optizzz ne joue jamais à votre place : une chasse n'est lancée, une répartition appliquée et un formulaire d'attaque rempli que lorsque vous cliquez ; les anti-sondes ne sont déplacées qu'à votre clic ou juste après une chasse ou une attaque que vous avez envoyée.
 
-Respect de votre vie privée : aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur ; le partage d'alliance passe uniquement par votre copier-coller. Code source ouvert (licence MIT) : https://github.com/Achaak/Optizzz
+Respect de votre vie privée : aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur ; le partage d'alliance passe uniquement par votre copier-coller. « Ouvrir sur optizzz.fr » (simulateur de combat, Lanceur de chasse, Plan de flood) ouvre, sur votre clic, l'outil du site avec vos entrées dans l'adresse de la page, sans les envoyer au site. Code source ouvert (licence MIT) : https://github.com/Achaak/Optizzz
 
 Optizzz est un projet de joueur, non affilié à Fourmizzz.
 
@@ -196,6 +196,9 @@ Demandée seulement quand le joueur active une notification dans les paramètres
 **Justification — autorisation d'accès à l'hôte `*://*.fourmizzz.fr/*`**
 L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les pages du jeu, lit les pages du jeu et l'API publique des exports du serveur, et envoie les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) uniquement quand le joueur clique.
 
+**Ouvrir un outil de optizzz.fr (sans permission)**
+Sur clic du joueur seulement, « Ouvrir sur optizzz.fr » ouvre l'outil correspondant de notre site dans un nouvel onglet (`tabs.create`), ses entrées (armées, niveaux, TDC) dans le fragment de l'adresse (`#p=…`), que le navigateur n'envoie pas au site. Comme toute visite d'un site, l'hébergeur (Vercel) voit l'adresse IP, pas les entrées. Désactivable : « Liens vers optizzz.fr » dans « Fonctionnalités ».
+
 **Code distant** : Non, je n'utilise pas de code distant.
 
 **Utilisation des données** : ne rien cocher (aucune donnée utilisateur collectée), puis cocher les trois attestations (pas de vente à des tiers, pas d'usage sans rapport avec l'objectif unique, pas d'usage pour la solvabilité ou le prêt).
@@ -208,7 +211,7 @@ L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les p
 
   > Sources jointes (optizzz-X.Y.Z-sources.zip, un monorepo pnpm). Build à la racine : `pnpm install --frozen-lockfile && pnpm build:firefox` (Node 24, pnpm 12), résultat dans `apps/extension/.output/firefox-mv3/`.
   >
-  > Aucune donnée de l'utilisateur n'est transmise à un tiers : les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) ne sont envoyés que sur clic du joueur. Seule exception, la Carte du serveur lit les positions publiques des joueurs sur `https://optizzz.fr/api/<serveur>/map` (notre site, même export public, sans cookie ni identifiant, option désactivable) ; la réponse est validée avec zod et n'est que des données, jamais du code.
+  > Aucune donnée de l'utilisateur n'est transmise à un tiers : les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) ne sont envoyés que sur clic du joueur. Seule exception, la Carte du serveur lit les positions publiques des joueurs sur `https://optizzz.fr/api/<serveur>/map` (notre site, même export public, sans cookie ni identifiant, option désactivable) ; la réponse est validée avec zod et n'est que des données, jamais du code. Sur clic seulement, « Ouvrir sur optizzz.fr » (simulateur de combat, Lanceur de chasse, Plan de flood) ouvre un onglet sur l'outil de notre site (`tabs.create`, sans permission) : les entrées du joueur (armées, niveaux, TDC) sont dans le fragment de l'adresse (`#p=…`), que le navigateur n'envoie jamais au site ; option « Liens vers optizzz.fr » désactivable.
   >
   > Les avertissements restants viennent de bibliothèques, pas de notre code (qui interdit innerHTML via ESLint) : React DOM (prise en charge de `dangerouslySetInnerHTML`, non utilisé), Apache ECharts (contenu HTML des infobulles et export SVG, alimentés par du texte échappé) et zod (test `Function("")` de disponibilité d'eval, désactivé par `z.config({ jitless: true })`).
 
