@@ -5,7 +5,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-22. Étape 2 de 
 ## Découpage
 
 - **2a, fondation** : `apps/web`, la base, le déploiement, le cron des exports et les pages de données des serveurs.
-- **2b, outils**, un à la fois et chacun avec son cadrage court, dans cet ordre : carte du serveur, trajets, coûts et temps de développement, simulateur de combat, simulateur de chasse (moteur et worker), simulateur de flood. Chaque outil sort d'abord sa logique de l'extension vers `packages/game`. Les coûts et durées de tous les niveaux, hors bonus, sont prêts pour l'outil des coûts : `packages/game/src/level-costs.ts` (`docs/research/couts-des-niveaux.md`).
+- **2b, outils** : carte du serveur (`site-carte.md`), puis, cadrés ensemble le 2026-10-23 (`site-outils.md`), trajets, coûts et temps de développement, simulateur de combat, simulateur de chasse (moteur et worker), simulateur de flood, qui avancent en parallèle sur un socle commun. Chaque outil sort d'abord sa logique de l'extension vers `packages/game`. Les coûts et durées de tous les niveaux, hors bonus, sont prêts pour l'outil des coûts : `packages/game/src/level-costs.ts` (`docs/research/couts-des-niveaux.md`).
 
 ## 2a
 
@@ -72,4 +72,6 @@ Vérifié en local le 2026-10-22 : S5 (1 857 joueurs) et S2 (20 559 joueurs, 29 
 
 ## 2b
 
-Chaque outil garde son état dans l'adresse (`?a=…`) pour se partager en lien, sans compte. Plus tard, l'extension pourra ouvrir le site pré-rempli (rapport de combat, armée).
+Cadrage : `site-outils.md` (socle) et une page par outil. Chaque outil garde son état dans le fragment de l'adresse (`#p=…`, jamais envoyé au serveur) pour se partager en lien, sans compte ; le simulateur de combat, le Lanceur de chasse et le Plan de flood de l'extension ouvrent l'outil du site pré-rempli, au clic.
+
+Les adresses du site passent en anglais (`/tools`, `/s5/players`, `/s5/map`, `/privacy`…), sans redirection depuis les anciennes ; ce que lit le visiteur reste en français (décidé le 2026-10-23, `site-outils.md`).
