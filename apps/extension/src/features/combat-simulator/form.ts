@@ -1,60 +1,13 @@
-// The simulator's form, apart from React: what fills it and what the engine gets from it.
+// What fills the simulator's form in the extension: the player's remembered army and levels, an army seen in a report.
+// The form itself and the engine's input are shared with the site (@optizzz/game/army/battle-form).
 import { z } from "zod";
-import { PLACES, type Attacker, type Defender, type Place } from "@optizzz/game/army/battle";
-import { armyFromKeys, armyToKeys, parseCounts, unitKeyOf, type Army } from "@optizzz/game/army/units";
+import { PLACES, type Place } from "@optizzz/game/army/battle";
+import { armyToCounts, type Counts } from "@optizzz/game/army/army-text";
+import { emptyForm, type SimulatorForm } from "@optizzz/game/army/battle-form";
+import { armyFromKeys } from "@optizzz/game/army/units";
 import type { StoredLevels } from "@/data/levels";
 import type { Garrison } from "@/data/garrison";
 import type { SimulatorSide } from "./open";
-
-/** Unit counts by unit key; units at 0 are left out. */
-export type Counts = Partial<Record<string, number>>;
-
-export interface AttackerForm {
-  army: Counts;
-  weapons: number;
-  shield: number;
-  /** Hunting field, cm²: attacks only reach 50 % to 300 % of it. */
-  field: number;
-  /** Étable à pucerons: the loot. */
-  aphids: number;
-}
-
-export interface DefenderForm {
-  armies: Record<Place, Counts>;
-  weapons: number;
-  shield: number;
-  dome: number;
-  lodge: number;
-  field: number;
-  food: number;
-  materials: number;
-}
-
-export interface SimulatorForm {
-  attacker: AttackerForm;
-  defender: DefenderForm;
-  target: Place;
-}
-
-export function emptyForm(): SimulatorForm {
-  return {
-    attacker: { army: {}, weapons: 0, shield: 0, field: 0, aphids: 0 },
-    defender: {
-      armies: { field: {}, nest: {}, lodge: {} },
-      weapons: 0,
-      shield: 0,
-      dome: 0,
-      lodge: 0,
-      field: 0,
-      food: 0,
-      materials: 0,
-    },
-    target: "field",
-  };
-}
-
-const countsOf = (army: Army): Counts =>
-  Object.fromEntries(Object.entries(armyToKeys(army)).filter(([, count]) => count > 0));
 
 /** The player's remembered army and levels on their side; the other side is left as it is. */
 export function prefill(
@@ -75,7 +28,7 @@ export function prefill(
     return {
       ...form,
       attacker: {
-        army: whole ? countsOf(whole) : form.attacker.army,
+        army: whole ? armyToCounts(whole) : form.attacker.army,
         weapons,
         shield,
         field: garrison?.field ?? form.attacker.field,
@@ -89,9 +42,9 @@ export function prefill(
       ...form.defender,
       armies: garrison
         ? {
-            field: countsOf(garrison.armies.field),
-            nest: countsOf(garrison.armies.nest),
-            lodge: countsOf(garrison.armies.lodge),
+            field: armyToCounts(garrison.armies.field),
+            nest: armyToCounts(garrison.armies.nest),
+            lodge: armyToCounts(garrison.armies.lodge),
           }
         : form.defender.armies,
       weapons,
@@ -116,46 +69,6 @@ export function leaveSide(form: SimulatorForm, side: SimulatorSide, filled: Simu
     return filled && untouched(form.attacker, filled.attacker) ? { ...form, attacker: empty.attacker } : form;
   }
   return filled && untouched(form.defender, filled.defender) ? { ...form, defender: empty.defender } : form;
-}
-
-const TROOPS: Record<"attack" | "defense", RegExp> = {
-  attack: /Troupes en attaque\s*:\s*([^.]+)/,
-  defense: /Troupes en défense\s*:\s*([^.]+)/,
-};
-
-/** Troops of a pasted report (« Troupes en défense : … »), or a plain « 300 Jeunes Soldates, 2 Tanks » list. */
-export function readArmyText(text: string, role: "attack" | "defense"): { army: Counts; unknown: string[] } {
-  const flat = text.replace(/\s+/g, " ");
-  const list = TROOPS[role].exec(flat)?.[1] ?? flat;
-  const army: Counts = {};
-  const unknown: string[] = [];
-  for (const [name, count] of parseCounts(list)) {
-    const key = unitKeyOf(name);
-    if (key) army[key] = (army[key] ?? 0) + count;
-    else unknown.push(name);
-  }
-  return { army, unknown };
-}
-
-const toArmy = (counts: Counts) =>
-  armyFromKeys(Object.fromEntries(Object.entries(counts).map(([key, count]) => [key, count ?? 0])));
-
-export function toBattle(form: SimulatorForm): { attacker: Attacker; defender: Defender } {
-  const { attacker, defender } = form;
-  return {
-    attacker: { army: toArmy(attacker.army), weapons: attacker.weapons, shield: attacker.shield },
-    defender: {
-      armies: {
-        field: toArmy(defender.armies.field),
-        nest: toArmy(defender.armies.nest),
-        lodge: toArmy(defender.armies.lodge),
-      },
-      weapons: defender.weapons,
-      shield: defender.shield,
-      dome: defender.dome,
-      lodge: defender.lodge,
-    },
-  };
 }
 
 /** The army an attack report showed at the place attacked (packages/game/src/pages/combat-reports.ts), to fight it again. */

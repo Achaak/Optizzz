@@ -25,17 +25,19 @@ Savoir avant d'attaquer (ou en se préparant à défendre) qui gagne, ce que cha
 
 ## Code
 
-| Fichier                                                                                                      | Rôle                                                                 |
-| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| `packages/game/src/army/rounds.ts`                                                                           | Échange tour par tour, partagé avec la chasse                        |
-| `packages/game/src/army/battle.ts` (+ test)                                                                  | Combat entre joueurs, lieux, attaque nécessaire, gains               |
-| `packages/game/src/army/units.ts` (+ test)                                                                   | Défense des unités, lecture des effectifs écrits                     |
-| `packages/game/src/attack.ts` (+ test)                                                                       | Portée, prise de 20 %, créneaux d'attaque                            |
-| `apps/extension/src/data/garrison.ts` (+ test)                                                               | Armée par lieu sur `Armee.php`, mémoire par serveur                  |
-| `apps/extension/src/features/combat-simulator/form.ts` (+ test)                                              | Pré-remplissage, rapport collé, armée d'un rapport, entrée du moteur |
-| `apps/extension/src/features/combat-simulator/CombatSimulator.tsx` (+ test)                                  | La page (test de montage seulement)                                  |
-| `apps/extension/src/features/combat-simulator/index.ts`, `open.ts`                                           | Bouton de la barre du haut, adresse de la page                       |
-| `apps/extension/src/features/combat-simulator/dialog.ts`, `apps/extension/src/utils/page-dialog.ts` (+ test) | Fenêtre par-dessus le jeu (iframe)                                   |
-| `apps/extension/src/utils/menu-bar.ts` (+ test)                                                              | Boutons d'Optizzz dans la barre du haut                              |
-| `apps/extension/src/entrypoints/combat-simulator/`, `background.ts`                                          | Page de l'extension, script d'arrière-plan                           |
-| `apps/extension/src/features/settings/tools-section.ts`                                                      | Onglet « Outils »                                                    |
+| Fichier                                                                                                      | Rôle                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `packages/game/src/army/rounds.ts`                                                                           | Échange tour par tour, partagé avec la chasse                                                                |
+| `packages/game/src/army/battle.ts` (+ test)                                                                  | Combat entre joueurs, lieux, attaque nécessaire, gains                                                       |
+| `packages/game/src/army/units.ts` (+ test)                                                                   | Défense des unités, lecture des effectifs écrits                                                             |
+| `packages/game/src/attack.ts` (+ test)                                                                       | Portée, prise de 20 %, créneaux d'attaque                                                                    |
+| `apps/extension/src/data/garrison.ts` (+ test)                                                               | Armée par lieu sur `Armee.php`, mémoire par serveur                                                          |
+| `packages/game/src/army/battle-form.ts` (+ test)                                                             | Le formulaire, partagé avec le site : entrée du moteur, combat et gains (`simulate`), « Échanger les côtés » |
+| `packages/game/src/army/army-text.ts` (+ test)                                                               | Armée collée (rapport ou liste), partagée avec le flood, la chasse et le site                                |
+| `apps/extension/src/features/combat-simulator/form.ts` (+ test)                                              | Pré-remplissage depuis la mémoire de l'extension, armée d'un rapport                                         |
+| `apps/extension/src/features/combat-simulator/CombatSimulator.tsx` (+ test)                                  | La page (test de montage seulement)                                                                          |
+| `apps/extension/src/features/combat-simulator/index.ts`, `open.ts`                                           | Bouton de la barre du haut, adresse de la page                                                               |
+| `apps/extension/src/features/combat-simulator/dialog.ts`, `apps/extension/src/utils/page-dialog.ts` (+ test) | Fenêtre par-dessus le jeu (iframe)                                                                           |
+| `apps/extension/src/utils/menu-bar.ts` (+ test)                                                              | Boutons d'Optizzz dans la barre du haut                                                                      |
+| `apps/extension/src/entrypoints/combat-simulator/`, `background.ts`                                          | Page de l'extension, script d'arrière-plan                                                                   |
+| `apps/extension/src/features/settings/tools-section.ts`                                                      | Onglet « Outils »                                                                                            |

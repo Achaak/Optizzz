@@ -1,29 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  battle,
-  PLACES,
-  placeHpBonus,
-  requiredAttack,
-  spoils,
-  type Place,
-  type Stage,
-} from "@optizzz/game/army/battle";
+import { PLACES, placeHpBonus, requiredAttack, type Place, type Stage } from "@optizzz/game/army/battle";
+import { readArmyText, type Counts } from "@optizzz/game/army/army-text";
+import { emptyForm, simulate, type SimulatorForm } from "@optizzz/game/army/battle-form";
 import { armyAttack, UNITS } from "@optizzz/game/army/units";
 import { inRange } from "@optizzz/game/attack";
 import { formatAmount } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { loadStoredLevels } from "@/data/levels";
-import {
-  emptyForm,
-  leaveSide,
-  prefill,
-  readArmyText,
-  toBattle,
-  withOpponent,
-  type Counts,
-  type Opponent,
-  type SimulatorForm,
-} from "./form";
+import { leaveSide, prefill, withOpponent, type Opponent } from "./form";
 import { isEmptyGarrison, loadGarrison } from "@/data/garrison";
 import type { SimulatorSide } from "./open";
 import { formatPastTime } from "@optizzz/game/format/time-format";
@@ -209,20 +193,7 @@ export function CombatSimulator({ server, side: initialSide, embedded = false, o
     });
   }, [origin, side]);
 
-  const result = useMemo(() => {
-    const { attacker, defender } = toBattle(form);
-    const fought = battle(attacker, defender, form.target);
-    return {
-      fought,
-      loot: spoils(fought, form.target, {
-        weapons: form.attacker.weapons,
-        aphids: form.attacker.aphids,
-        field: form.defender.field,
-        food: form.defender.food,
-        materials: form.defender.materials,
-      }),
-    };
-  }, [form]);
+  const result = useMemo(() => simulate(form), [form]);
 
   const setAttacker = (patch: Partial<SimulatorForm["attacker"]>) => {
     setForm((current) => ({ ...current, attacker: { ...current.attacker, ...patch } }));

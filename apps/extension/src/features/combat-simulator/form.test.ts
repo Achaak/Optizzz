@@ -1,15 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { armyFromKeys } from "@optizzz/game/army/units";
-import {
-  decodeOpponent,
-  emptyForm,
-  encodeOpponent,
-  leaveSide,
-  prefill,
-  readArmyText,
-  toBattle,
-  withOpponent,
-} from "./form";
+import { emptyForm, toBattle } from "@optizzz/game/army/battle-form";
+import { decodeOpponent, encodeOpponent, leaveSide, prefill, withOpponent } from "./form";
 import type { Garrison } from "@/data/garrison";
 
 const garrison: Garrison = {
@@ -74,24 +66,6 @@ describe("leaveSide", () => {
       defender: { ...filled.defender, armies: { ...filled.defender.armies, field: { SN: 30 } } },
     };
     expect(leaveSide(withDefense, "attack", filled).defender.armies.field).toEqual({ SN: 30 });
-  });
-});
-
-describe("readArmyText", () => {
-  const report = `Troupes en attaque : 1 921 Jeunes Soldates Naines, 119 Soldates Naines.
-    Troupes en défense : 300 Jeunes Soldates, 2 Tanks d’élite.
-    Vous infligez 6 358 (+ 2 544) dégâts`;
-
-  it("takes the defending troops of a pasted report", () => {
-    expect(readArmyText(report, "defense")).toEqual({ army: { JS: 300, TkE: 2 }, unknown: [] });
-  });
-
-  it("takes the attacking troops, or a plain list, and tells which names it does not know", () => {
-    expect(readArmyText(report, "attack").army).toEqual({ JSN: 1921, SN: 119 });
-    expect(readArmyText("50 Tueuses, 3 Fourmis volantes", "defense")).toEqual({
-      army: { Tu: 50 },
-      unknown: ["Fourmis volantes"],
-    });
   });
 });
 
