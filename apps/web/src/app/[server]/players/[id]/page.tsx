@@ -26,7 +26,7 @@ const idOf = (text: string) => (/^\d+$/.test(text) ? Number(text) : null);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { server: segment, id } = await params;
-  const server = serverOfPath(segment, `/joueurs/${id}`);
+  const server = serverOfPath(segment, `/players/${id}`);
   const playerId = idOf(id);
   const { player } = playerId === null ? { player: null } : await playerPage(server.id, playerId);
   // Public in the export, but a player's own page stays out of the search engines.
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PlayerPage({ params }: Props) {
   const { server: segment, id } = await params;
-  const server = serverOfPath(segment, `/joueurs/${id}`);
+  const server = serverOfPath(segment, `/players/${id}`);
   const playerId = idOf(id);
   if (playerId === null) notFound();
   const { player, master, colonies, days, journal } = await playerPage(server.id, playerId);
@@ -59,15 +59,12 @@ export default async function PlayerPage({ params }: Props) {
             <span className="text-muted-foreground">
               · Position {player.x} : {player.y}
             </span>
-            <Link
-              href={`/${server.id}/carte?joueur=${String(player.id)}`}
-              className="underline-offset-2 hover:underline"
-            >
+            <Link href={`/${server.id}/map?player=${String(player.id)}`} className="underline-offset-2 hover:underline">
               Voir sur la carte
             </Link>
             {master && (
               <Badge variant="secondary">
-                <Link href={`/${server.id}/joueurs/${String(master.id)}`}>Colonisé par {master.pseudo}</Link>
+                <Link href={`/${server.id}/players/${String(master.id)}`}>Colonisé par {master.pseudo}</Link>
               </Badge>
             )}
             {player.onHoliday && <Badge variant="outline">En vacances</Badge>}
@@ -93,7 +90,7 @@ export default async function PlayerPage({ params }: Props) {
           {colonies.map((colony, index) => (
             <span key={colony.id}>
               {index > 0 && ", "}
-              <Link href={`/${server.id}/joueurs/${String(colony.id)}`} className="hover:underline">
+              <Link href={`/${server.id}/players/${String(colony.id)}`} className="hover:underline">
                 {colony.pseudo}
               </Link>
             </span>

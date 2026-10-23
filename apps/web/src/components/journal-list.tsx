@@ -18,7 +18,7 @@ export function JournalList({ server, lines, named }: { server: string; lines: J
                   href={
                     line.playerId === null
                       ? `/${server}/alliances/${encodeURIComponent(line.tag ?? "")}`
-                      : `/${server}/joueurs/${String(line.playerId)}`
+                      : `/${server}/players/${String(line.playerId)}`
                   }
                   className="font-medium hover:underline"
                 >

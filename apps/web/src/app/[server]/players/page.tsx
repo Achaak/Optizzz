@@ -24,19 +24,19 @@ const SORT_LABELS: Record<PlayerSort, string> = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const server = serverOfPath((await params).server, "/joueurs");
+  const server = serverOfPath((await params).server, "/players");
   return { title: `Joueurs de ${server.name}` };
 }
 
 export default async function PlayersPage({ params, searchParams }: Props) {
-  const server = serverOfPath((await params).server, "/joueurs");
+  const server = serverOfPath((await params).server, "/players");
   const query = await searchParams;
   const q = textOf(query.q);
   const alliance = textOf(query.alliance);
   const sort = choiceOf(query.tri, SORTS);
   const page = pageOf(query.page);
   const { total, players } = await listPlayers(server.id, { q, alliance, sort, page });
-  const path = `/${server.id}/joueurs`;
+  const path = `/${server.id}/players`;
   const kept = { q, alliance, tri: sort === "field" ? "" : sort };
 
   return (
@@ -90,7 +90,7 @@ export default async function PlayersPage({ params, searchParams }: Props) {
                   {(page - 1) * PAGE_SIZE + index + 1}
                 </TableCell>
                 <TableCell>
-                  <Link href={`/${server.id}/joueurs/${String(player.id)}`} className="hover:underline">
+                  <Link href={`/${server.id}/players/${String(player.id)}`} className="hover:underline">
                     {player.pseudo}
                   </Link>
                 </TableCell>

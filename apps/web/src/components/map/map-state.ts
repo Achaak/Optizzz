@@ -1,6 +1,6 @@
-// What a map shows, kept in its address (`?p=…`) to be shared, and in the browser to come back to it.
-// See docs/features/site-carte.md.
-import type { Chip } from "@optizzz/map/selection";
+// What a map shows, kept in the fragment of its address (`#p=1.…`) to be shared, and in the browser to come back to
+// it. The fragment never reaches the site's server. See docs/features/site-carte.md and site-outils.md.
+import type { Chip, ChipTarget } from "@optizzz/map/selection";
 import { z } from "zod";
 
 export interface MapState {
@@ -44,7 +44,10 @@ const fromBase64Url = (text: string) =>
     Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0)),
   );
 
-/** The state as the `p` of the address: short keys, base64url. */
+/** The format of the state: a new one gets `2.` and still reads `1.`. */
+const VERSION = "1.";
+
+/** The state as the `p` of the fragment: the version, then short keys in base64url. */
 export function encodeMapState(state: MapState): string {
   const c = state.chips.map((chip) =>
     chip.kind === "player"
@@ -53,14 +56,15 @@ export function encodeMapState(state: MapState): string {
         ? { a: chip.tag, k: chip.color, ...(chip.filter && { f: chip.filter }) }
         : { u: 1 as const, k: chip.color, ...(chip.filter && { f: chip.filter }) },
   );
-  return toBase64Url(JSON.stringify({ c, r: state.reference, v: state.level }));
+  return VERSION + toBase64Url(JSON.stringify({ c, r: state.reference, v: state.level }));
 }
 
-/** The state back from `p`; null when it is not one (an old or hand-edited address). */
+/** The state back from `p`; null when it is not one (a cut, hand-edited or unknown version of address). */
 export function decodeMapState(text: string): MapState | null {
+  if (!text.startsWith(VERSION)) return null;
   let json: unknown;
   try {
-    json = JSON.parse(fromBase64Url(text));
+    json = JSON.parse(fromBase64Url(text.slice(VERSION.length)));
   } catch {
     return null;
   }
@@ -72,4 +76,20 @@ export function decodeMapState(text: string): MapState | null {
     return { kind: "unaffiliated", color: chip.k, ...(chip.f && { filter: chip.f }) };
   });
   return { chips, reference: parsed.data.r, level: parsed.data.v };
+}
+
+/** What the address asks for: a shared state (`#p=`), a target (« Voir sur la carte » : `?player=`, `?alliance=`). */
+export type MapRequest =
+  { kind: "state"; state: MapState } | { kind: "invalid" } | { kind: "target"; target: ChipTarget } | { kind: "none" };
+
+export function requestedMap(address: URL): MapRequest {
+  const shared = new URLSearchParams(address.hash.slice(1)).get("p");
+  if (shared) {
+    const state = decodeMapState(shared);
+    return state ? { kind: "state", state } : { kind: "invalid" };
+  }
+  const player = Number(address.searchParams.get("player"));
+  if (Number.isInteger(player) && player > 0) return { kind: "target", target: { kind: "player", id: player } };
+  const tag = address.searchParams.get("alliance");
+  return tag ? { kind: "target", target: { kind: "alliance", tag } } : { kind: "none" };
 }

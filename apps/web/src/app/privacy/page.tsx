@@ -13,6 +13,11 @@ export default function PrivacyPage() {
           l&apos;hébergeur (Vercel) garde un temps les journaux techniques des requêtes, adresse IP comprise, pour faire
           fonctionner le service.
         </p>
+        <p>
+          Ce que vous choisissez sur la carte d&apos;un serveur reste dans votre navigateur : un lien partagé le garde
+          après le <code>#</code> de l&apos;adresse (<code>/s5/map#p=…</code>), une partie que le navigateur
+          n&apos;envoie jamais au site.
+        </p>
       </section>
       <section className="space-y-2">
         <h2 className="text-base font-semibold">Les joueurs affichés</h2>

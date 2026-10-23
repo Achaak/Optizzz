@@ -31,10 +31,10 @@ export function SiteFooter() {
     <footer className="mt-16 border-t">
       <div className="mx-auto flex max-w-6xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-muted-foreground">
         <span>Données : export public de Fourmizzz, relu chaque heure.</span>
-        <Link href="/mentions-legales" className="hover:text-foreground">
+        <Link href="/legal" className="hover:text-foreground">
           Mentions légales
         </Link>
-        <Link href="/confidentialite" className="hover:text-foreground">
+        <Link href="/privacy" className="hover:text-foreground">
           Confidentialité
         </Link>
         <a href="https://github.com/Achaak/Optizzz" className="hover:text-foreground">

@@ -35,7 +35,7 @@ export function SearchBox() {
           {results.map((player) => (
             <li key={`${player.server}:${String(player.id)}`}>
               <Link
-                href={`/${player.server}/joueurs/${String(player.id)}`}
+                href={`/${player.server}/players/${String(player.id)}`}
                 className="flex justify-between gap-3 px-3 py-2 hover:bg-muted"
                 onClick={() => setText("")}
               >

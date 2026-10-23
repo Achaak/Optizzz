@@ -7,15 +7,15 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const server = serverOfPath((await params).server, "/carte");
+  const server = serverOfPath((await params).server, "/map");
   return {
     title: `Carte de ${server.name}`,
     description: `Situer les joueurs et les alliances du serveur ${server.name} de Fourmizzz, avec distances et trajets.`,
   };
 }
 
-// The map loads its players itself (/api/[server]/carte): the page holds no data.
+// The map loads its players itself (/api/[server]/map): the page holds no data.
 export default async function MapPage({ params }: Props) {
-  const server = serverOfPath((await params).server, "/carte");
+  const server = serverOfPath((await params).server, "/map");
   return <ServerMap server={{ id: server.id, name: server.name }} />;
 }

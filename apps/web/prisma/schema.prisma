@@ -115,7 +115,7 @@ model JournalEntry {
 }
 
 /// A server's map, ready to serve: the columns of @optizzz/map/map-data, as gzipped JSON. Written by the cron with the
-/// current state, served as is by `/api/[server]/carte` (a function answers at most 4.5 MB: S4 is about 1 MB gzipped).
+/// current state, served as is by `/api/[server]/map` (a function answers at most 4.5 MB: S4 is about 1 MB gzipped).
 model MapFile {
   server    String   @id
   version   String
