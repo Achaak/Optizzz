@@ -30,7 +30,7 @@ export const TOOLS: readonly ToolEntry[] = [
     id: "combat",
     title: "Simulateur de combat",
     description: "Le résultat d'une attaque, lieu par lieu : victoire ou défaite, pertes des deux côtés, gains.",
-    ready: false,
+    ready: true,
   },
   {
     id: "hunt",
