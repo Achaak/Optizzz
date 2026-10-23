@@ -36,13 +36,13 @@ export const TOOLS: readonly ToolEntry[] = [
     id: "hunt",
     title: "Simulateur de chasse",
     description: "Combien chasser et avec quelle armée, selon les pertes que vous acceptez.",
-    ready: false,
+    ready: true,
   },
   {
     id: "flood",
     title: "Simulateur de flood",
     description: "La suite d'attaques qui prend le plus de TDC à une cible, avec votre armée.",
-    ready: false,
+    ready: true,
   },
 ];
 
