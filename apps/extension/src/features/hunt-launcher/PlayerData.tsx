@@ -3,7 +3,7 @@ import type { HuntLevels } from "@/data/levels";
 import { armyToKeys, UNITS } from "@optizzz/game/army/units";
 import { probeArmy, type ProbePlan } from "@optizzz/game/probes";
 import { NumberField } from "@/utils/NumberField";
-import { unitsText } from "./view";
+import { unitsText } from "@optizzz/game/hunt/texts";
 
 interface Props {
   /** Levels read on the game's pages. */

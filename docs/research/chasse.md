@@ -1,6 +1,6 @@
 # Chasse : mécaniques et validation
 
-Ce qu'on sait du déroulement d'une chasse, d'où on le tient, et ce que les rapports réels confirment. Le moteur (`packages/game/src/army/` pour les unités, proies et combat ; `apps/extension/src/features/hunt-launcher/engine/` pour le reste) suit ce document.
+Ce qu'on sait du déroulement d'une chasse, d'où on le tient, et ce que les rapports réels confirment. Le moteur (`packages/game/src/army/` pour les unités, proies et combat ; `packages/game/src/hunt/` pour le reste) suit ce document.
 
 Sources :
 
@@ -86,7 +86,7 @@ Poids : JSN 85, SN 125, NE 170, JS 227, S 312, C 434, CE 592, A 295, AE 349, SE 
 | ----------------- | --- | --- | --- | --- | --- | ---- | ---- | ---- | ---- | ---- | ---- | --- | ---- |
 | Réplique 10 % (%) | 0   | 0   | 0   | 1,6 | 9,3 | 34,5 | 57,8 | 75,3 | 83,7 | 87,4 | 93,7 | 96  | 98,9 |
 
-Coefficients min / moyen / max : `apps/extension/src/features/hunt-launcher/engine/calystene.ts`. Les tables ignorent la composition de l'armée et la règle de la demi-vie ; on les affiche en petit pour voir si les deux modèles divergent.
+Coefficients min / moyen / max : `packages/game/src/hunt/calystene.ts`. Les tables ignorent la composition de l'armée et la règle de la demi-vie ; on les affiche en petit pour voir si les deux modèles divergent.
 
 ## Ce que ça change pour le joueur
 

@@ -1,10 +1,11 @@
-// Texts of the hunt launcher, kept out of the components to be tested.
-import { nextDifficultyStep } from "./engine/difficulty";
-import type { RatioChoice } from "./engine/extras";
-import type { Plan } from "./engine/planner";
-import { unitLabel, UNITS } from "@optizzz/game/army/units";
-import { formatAmount, formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
-import { fromParisParts, parisParts } from "@optizzz/game/format/time-format";
+// Texts of the hunt simulator, shared by the extension's launcher and the site's tool, kept out of the components to
+// be tested.
+import { nextDifficultyStep } from "./difficulty";
+import type { RatioChoice } from "./extras";
+import type { Plan } from "./planner";
+import { unitLabel, UNITS } from "../army/units";
+import { formatAmount, formatDecimal, formatNumber } from "../format/number-format";
+import { fromParisParts, parisParts } from "../format/time-format";
 
 /** A chance as a player reads it: 100 % and 0 % only when certain. */
 export function formatChance(chance: number): string {
@@ -94,3 +95,15 @@ export function promotionCounts(plan: Plan): { troops: number; youngDwarves: num
   }
   return { troops, youngDwarves };
 }
+
+/** « 2 chasses de 115 cm² », « 2 chasses de 233 cm² en tout ». */
+export function huntsText(plan: Plan): string {
+  if (plan.hunts.length === 0) return "aucune chasse";
+  const amounts = [...new Set(plan.hunts.map((hunt) => hunt.amount))];
+  const size =
+    amounts.length === 1 ? `${formatNumber(amounts[0] ?? 0)} cm²` : `${formatNumber(plan.totalAmount)} cm² en tout`;
+  return `${String(plan.hunts.length)} chasse${plan.hunts.length > 1 ? "s" : ""} de ${size}`;
+}
+
+/** Losses with one decimal under 10 (« 7,4 »), whole above. */
+export const formatLosses = (value: number) => (value < 10 ? formatDecimal(value) : formatAmount(value));

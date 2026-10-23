@@ -109,11 +109,11 @@ La formule de `promotions` et la section « Promotions » de `chasse.md` sont ju
 
 ## Faut-il chercher à optimiser l'XP ? (mesures du 2026-10-18)
 
-Simulations d'Optizzz (moteur de `apps/extension/src/features/hunt-launcher/engine/`, formule ci-dessus, Étable extrapolée au-delà de 0) sur 408 situations : armées de 1 000 à 5 millions de fourmis (JSN seules, début, milieu, tanks, tueuses), TdC de 1 000 à 5 millions de cm², niveaux bas (A2 B2 É0) à hauts (A20 B20 É15), et Étable 20.
+Simulations d'Optizzz (moteur de `packages/game/src/hunt/`, formule ci-dessus, Étable extrapolée au-delà de 0) sur 408 situations : armées de 1 000 à 5 millions de fourmis (JSN seules, début, milieu, tanks, tueuses), TdC de 1 000 à 5 millions de cm², niveaux bas (A2 B2 É0) à hauts (A20 B20 É15), et Étable 20.
 
 - **Baisser le ratio** : en nourriture, les promotions en plus ne couvrent jamais les pertes en plus (médiane 16 % en niveaux bas, 49 % avec Étable 20, en passant de 8 à 7 ; moins encore plus bas). En temps de ponte, seul le passage de 8 à 7 s'équilibre, avec Étable 15–20 et une armée de JSN.
 - **Une chasse au lieu de plusieurs** : +70 % de promotions vers 1 000 fourmis (l'arrondi par chasse), rien au-delà de 100 000 ; moins de cm² par heure.
-- **Répartition par vagues de Calystene** (486 situations à 2 chasses ou plus) : promotions totales ×1,01 en médiane, +8 à +11 % pour les armées de milieu de jeu et de tueuses, pertes en JSN inchangées. Au ratio 5, son tampon (2 × pertes max de ses tables) laisse abîmer tanks et tueuses sous la règle de la demi-vie dans ~ 50 % des cas ; le lanceur cherche donc le tampon par simulation (`engine/waves.ts`).
+- **Répartition par vagues de Calystene** (486 situations à 2 chasses ou plus) : promotions totales ×1,01 en médiane, +8 à +11 % pour les armées de milieu de jeu et de tueuses, pertes en JSN inchangées. Au ratio 5, son tampon (2 × pertes max de ses tables) laisse abîmer tanks et tueuses sous la règle de la demi-vie dans ~ 50 % des cas ; le lanceur cherche donc le tampon par simulation (`packages/game/src/hunt/waves.ts`).
 - **Séparer tanks et JSN** : 4 à 5 fois moins de promotions et 40 % de pertes en plus, faute de JSN devant les tanks.
 
 ## Ce qui reste inconnu, et quoi relever

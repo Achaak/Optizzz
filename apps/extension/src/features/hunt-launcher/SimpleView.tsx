@@ -1,6 +1,6 @@
-import type { Plan } from "./engine/planner";
+import type { Plan } from "@optizzz/game/hunt/planner";
 import type { Settings } from "./settings";
-import { formatChance, presetOf, PRESETS, promotionCounts, splitText } from "./view";
+import { formatChance, presetOf, PRESETS, promotionCounts, splitText } from "@optizzz/game/hunt/texts";
 import { formatDecimal } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";

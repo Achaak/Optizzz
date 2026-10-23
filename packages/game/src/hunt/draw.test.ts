@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { foodTarget } from "./difficulty";
 import { drawPack, seededRandom } from "./draw";
-import { PREYS, type Pack } from "@optizzz/game/army/prey";
+import { PREYS, type Pack } from "../army/prey";
 
 const packFood = (pack: Pack) => pack.reduce((sum, count, i) => sum + count * (PREYS[i]?.food ?? 0), 0);
 

@@ -1,6 +1,6 @@
 // Drawing the prey of a hunt. Rule reconstructed by « Chasse à zéro perte »: docs/research/chasse.md.
 import { foodTarget } from "./difficulty";
-import { PREYS } from "@optizzz/game/army/prey";
+import { PREYS } from "../army/prey";
 
 export type Random = () => number;
 

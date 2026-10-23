@@ -3,12 +3,14 @@ import { loadLaying } from "@/data/laying";
 import { loadLevels, unknownLevelsHint, type HuntLevels } from "@/data/levels";
 import { placeProbes } from "@/data/probes";
 import { keepProbes, type ProbePlan } from "@optizzz/game/probes";
-import { createEngine } from "./engine/client";
-import type { RatioChoice } from "./engine/extras";
-import { summarize, type Objective, type Plan, type PlanInput } from "./engine/planner";
-import type { Extras } from "./engine/requests";
+import { createEngine } from "@optizzz/game/hunt/client";
+// Inlined (a blob): in a content script, a worker file would be looked for on the game's origin.
+import EngineWorker from "@optizzz/game/hunt/engine.worker?worker&inline";
+import type { RatioChoice } from "@optizzz/game/hunt/extras";
+import { summarize, type Objective, type Plan, type PlanInput } from "@optizzz/game/hunt/planner";
+import type { Extras } from "@optizzz/game/hunt/requests";
 import { armyFromKeys, armyToKeys, UNITS } from "@optizzz/game/army/units";
-import { FieldTable, HuntDetails, huntsText } from "./HuntDetails";
+import { FieldTable, HuntDetails } from "./HuntDetails";
 import { HuntParameters } from "./HuntParameters";
 import { HuntResult } from "./HuntResult";
 import { HuntTable } from "./HuntTable";
@@ -16,8 +18,9 @@ import { launchHunts, type LaunchStatus } from "./launch";
 import { hasNoArmyToSend, readHuntForm, type HuntForm, type OngoingHunt } from "./pages";
 import { PlayerData } from "./PlayerData";
 import { SimpleView } from "./SimpleView";
+import { SiteLinks } from "./SiteLinks";
 import { DEFAULT_SETTINGS, huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
-import { unitsText } from "./view";
+import { huntsText, unitsText } from "@optizzz/game/hunt/texts";
 import { formatAmount, formatNumber } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { useStoredSettings } from "@/utils/useStoredSettings";
@@ -47,7 +50,7 @@ async function fetchHuntForm(origin: string): Promise<HuntForm | "none" | "error
 
 export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: Props) {
   const host = new URL(origin).host;
-  const engine = useMemo(() => createEngine(), []);
+  const engine = useMemo(() => createEngine(() => new EngineWorker()), []);
   const [settings, updateSettings] = useStoredSettings(host, readSettings, writeSettings);
   const [readLevels, setReadLevels] = useState<HuntLevels | null>(null);
   const [levelEdits, setLevelEdits] = useState<Partial<HuntLevels>>({});
@@ -399,6 +402,22 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   );
 
   const setAdvanced = (advanced: boolean) => updateSettings((s) => ({ ...s, advanced }));
+  // What the site's hunt simulator needs to give the same plan.
+  const siteLinks = (
+    <SiteLinks
+      entries={{
+        army: input.army,
+        levels,
+        launchField,
+        arrivalField,
+        ongoing: ongoing.length,
+        settings,
+        huntCount,
+        huntAmount,
+        override,
+      }}
+    />
+  );
 
   if (!settings.advanced) {
     // What the advanced view changes and the simple one does not show.
@@ -446,6 +465,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
             Réglages avancés : niveaux, armée envoyée, TdC, ratio précis, nombre et surface des chasses…
           </button>
         </p>
+        <p className="mode">{siteLinks}</p>
       </div>
     );
   }
@@ -456,7 +476,8 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
       <p className="mode">
         <button type="button" className="optizzz-button-link" onClick={() => setAdvanced(false)}>
           Revenir à l'affichage simple
-        </button>
+        </button>{" "}
+        {siteLinks}
       </p>
 
       {section(

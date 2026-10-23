@@ -1,5 +1,6 @@
 // Runs engine requests off the page's main thread; falls back to running them inline if the page refuses workers.
-import EngineWorker from "./engine.worker?worker&inline";
+// Each app says how its worker starts: a module worker on the site (./module-worker.ts); inlined in the extension's
+// content script, where a worker file would be looked for on the game's origin.
 import { answer, type EngineAnswer, type EngineRequest } from "./requests";
 
 export interface Engine {
@@ -17,12 +18,13 @@ interface Pending {
 const inline = (request: EngineRequest) =>
   new Promise<unknown>((resolve) => setTimeout(() => resolve(answer(request)), 0));
 
-export function createEngine(): Engine {
+/** `spawn` starts a worker running ./engine.worker.ts; when it throws, the requests run inline. */
+export function createEngine(spawn: () => Worker): Engine {
   let worker: Worker | null = null;
   const pending = new Map<number, Pending>();
   let nextId = 0;
   try {
-    worker = new EngineWorker();
+    worker = spawn();
     worker.addEventListener("message", (event: MessageEvent<{ id: number; answer: unknown }>) => {
       pending.get(event.data.id)?.resolve(event.data.answer);
       pending.delete(event.data.id);

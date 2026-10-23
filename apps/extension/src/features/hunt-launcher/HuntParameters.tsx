@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { REFERENCE_RATIOS } from "./engine/calystene";
-import { amountForDuration, huntDurationSeconds } from "./engine/difficulty";
-import type { RatioChoice } from "./engine/extras";
+import { REFERENCE_RATIOS } from "@optizzz/game/hunt/calystene";
+import { amountForDuration, huntDurationSeconds } from "@optizzz/game/hunt/difficulty";
+import type { RatioChoice } from "@optizzz/game/hunt/extras";
 import type { Dispatch, ObjectiveKind, Settings } from "./settings";
-import { parisClockTime, ratioOptionText } from "./view";
+import { parisClockTime, ratioOptionText } from "@optizzz/game/hunt/texts";
 import { formatNumber } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";

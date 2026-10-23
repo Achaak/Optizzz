@@ -1,8 +1,8 @@
 // What a hunt is likely to cost, over many prey draws.
-import { fight } from "@optizzz/game/army/combat";
+import { fight } from "../army/combat";
 import { foodTarget } from "./difficulty";
 import { drawPack, seededRandom } from "./draw";
-import { UNITS, type Army, type Levels } from "@optizzz/game/army/units";
+import { UNITS, type Army, type Levels } from "../army/units";
 
 export interface HuntInput {
   army: Army;

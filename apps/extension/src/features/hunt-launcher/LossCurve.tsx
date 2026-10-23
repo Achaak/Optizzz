@@ -6,7 +6,7 @@ import { CanvasRenderer } from "echarts/renderers";
 // The ESM build: the CommonJS one (lib/core) resolves to the module object instead of the component.
 import ReactECharts from "echarts-for-react/esm/core";
 import { useMemo, useState } from "react";
-import type { CurvePoint } from "./engine/extras";
+import type { CurvePoint } from "@optizzz/game/hunt/extras";
 import { CHART_COLORS } from "@/theme";
 
 echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, MarkLineComponent, CanvasRenderer]);
