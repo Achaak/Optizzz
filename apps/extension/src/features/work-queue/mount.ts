@@ -48,7 +48,7 @@ function render(table: HTMLTableElement, queue: WorkQueue, now: Date) {
     ...queue.items.map((item, index) => {
       const previousEnd = queue.items[index - 1]?.endsAt ?? null;
       const sameLater = queue.items.slice(index + 1).filter((other) => other.name === item.name).length;
-      const progress = progressOf(item, previousEnd, queue.kind, now, sameLater);
+      const progress = progressOf(item, previousEnd, now, sameLater);
       // The page is not reloaded by the game: the queue moves on by itself.
       const state = item.endsAt <= now ? "terminé" : !previousEnd || previousEnd <= now ? "en cours" : "en attente";
       const percent = progress ? `${String(Math.round(progress.progress * 100))} %` : "";

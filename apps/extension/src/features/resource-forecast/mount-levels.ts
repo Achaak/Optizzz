@@ -4,8 +4,8 @@ import { timeToAfford, type Affordability, type ColonyState } from "@optizzz/gam
 import { sameName } from "@optizzz/game/levels";
 import { readTimedRows, type Cost } from "@optizzz/game/pages/resources";
 import { readWorkQueue } from "@optizzz/game/pages/work-queue";
-import { costGrowthOf, levelsAhead, LEVEL_TIME_GROWTH } from "@optizzz/game/speed-up";
-import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
+import { levelKeyOf, levelsAhead } from "@optizzz/game/level-costs";
+import { formatAmount } from "@optizzz/game/format/number-format";
 import { placeInRow } from "@/utils/row-extras";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
 
@@ -49,15 +49,11 @@ const cell = (doc: Document, tag: "th" | "td", text: string, numeric = false) =>
 };
 
 /** Adds the « Niveaux suivants » block to every row that can be raised. Built once: it only depends on the stock. */
-export function renderLevelsAhead(
-  doc: Document,
-  state: ColonyState,
-  kind: keyof typeof LEVEL_TIME_GROWTH,
-  now: Date,
-): void {
+export function renderLevelsAhead(doc: Document, state: ColonyState, now: Date): void {
   const queued = readWorkQueue(doc, now).items;
   for (const row of readTimedRows(doc)) {
-    if (row.locked) continue;
+    const key = levelKeyOf(row.name);
+    if (row.locked || !key) continue;
     // The row shows the cost of the level after those already queued.
     const done = Math.max(
       row.level,
@@ -65,8 +61,6 @@ export function renderLevelsAhead(
     );
 
     const resources = RESOURCES.filter(([resource]) => row.cost[resource] > 0);
-    const growth = LEVEL_TIME_GROWTH[kind];
-    const costGrowth = costGrowthOf(row.name);
 
     const details = doc.createElement("details");
     details.className = "optizzz-disclosure";
@@ -82,7 +76,7 @@ export function renderLevelsAhead(
       cell(doc, "th", "Tout payable"),
     );
     const body = doc.createElement("tbody");
-    for (const ahead of levelsAhead({ cost: row.cost, duration: row.duration, growth, costGrowth, count: LEVELS })) {
+    for (const ahead of levelsAhead(key, done + 1, row, LEVELS)) {
       const line = doc.createElement("tr");
       line.append(
         cell(doc, "td", String(done + ahead.levels), true),
@@ -97,7 +91,8 @@ export function renderLevelsAhead(
     table.append(thead, body);
     const note = doc.createElement("p");
     note.className = "optizzz-note";
-    note.textContent = `Cumuls estimés : coût × ${formatDecimal(costGrowth, 2)} et durée × ${formatDecimal(growth)} à chaque niveau, au bonus actuel. « Tout payable » ne compte pas la file d'attente.`;
+    note.textContent =
+      "Cumuls estimés d'après les coûts et durées de chaque niveau du jeu, au bonus actuel. « Tout payable » ne compte pas la file d'attente.";
     details.append(summary, table, note);
     placeInRow(row.description, KIND, details);
   }

@@ -1,10 +1,10 @@
 // What any level of a building or a research costs and how long it takes, bonuses aside (no Architecture, no Salle
 // d'analyse), and the levels from one to another added up. First levels read on 2026-10-23 from toolzzz.fr/couts.php
-// and checked on s5 and s2: docs/research/couts-des-niveaux.md.
+// and checked on s5 and s2: docs/research/couts-des-niveaux.md. The one place that knows how a level grows from the
+// one before: the features scale what the game shows with it.
 
-import { BUILDINGS, RESEARCH, type BuildingKey, type ResearchKey } from "./levels";
+import { BUILDINGS, RESEARCH, sameName, type BuildingKey, type ResearchKey } from "./levels";
 import type { Cost } from "./pages/resources";
-import { costGrowthOf, LEVEL_TIME_GROWTH } from "./speed-up";
 
 export type LevelKey = BuildingKey | ResearchKey;
 
@@ -13,6 +13,17 @@ export interface LevelCost {
   /** Seconds, unrounded: the game applies its bonus, then rounds to the second. */
   seconds: number;
 }
+
+/**
+ * Each level takes longer than the one before, bonuses aside: × 1.6 for a building, × 1.7 for a research (Toolzzz's
+ * per-level times, checked against s5: Architecture 8 in 8 207 s, Salle d'analyse 4 in 1 229 s before bonuses), until
+ * the slowdowns below.
+ */
+const TIME_GROWTH = { building: 1.6, research: 1.7 } as const;
+/** Costs double from one level to the next (Toolzzz's cost table)… */
+const COST_GROWTH = 2;
+/** …but the Champignonnière's: × 1.85 a level, floored (90, 166, 308, 569… materials). */
+const MUSHROOM_COST_GROWTH = 1.85;
 
 /** From level `from` on, each level takes `growth` × the one before instead of × 1.6 or × 1.7. */
 interface TimeSlowdown {
@@ -64,7 +75,9 @@ export const LEVEL_BASES: Readonly<Record<LevelKey, LevelBase>> = {
 
 const isBuilding = (key: LevelKey): key is BuildingKey => BUILDINGS.some((building) => building.key === key);
 
-const nameOf = (key: LevelKey) => [...BUILDINGS, ...RESEARCH].find((candidate) => candidate.key === key)?.name ?? key;
+/** The building or research the game names `name` (accents and apostrophes aside); null when unknown. */
+export const levelKeyOf = (name: string): LevelKey | null =>
+  [...BUILDINGS, ...RESEARCH].find((candidate) => sameName(candidate.name, name))?.key ?? null;
 
 function checkLevel(level: number, min: number) {
   if (!Number.isInteger(level) || level < min) throw new RangeError(`Niveau invalide : ${String(level)}`);
@@ -75,7 +88,7 @@ export function levelCost(key: LevelKey, level: number): LevelCost {
   checkLevel(level, 1);
   const base = LEVEL_BASES[key];
   // The game floors each level's cost: × 2 stays whole, the Champignonnière's × 1.85 does not.
-  const factor = costGrowthOf(nameOf(key)) ** (level - 1);
+  const factor = (key === "mushroom" ? MUSHROOM_COST_GROWTH : COST_GROWTH) ** (level - 1);
   const cost: Cost = {
     food: Math.floor(base.cost.food * factor),
     materials: Math.floor(base.cost.materials * factor),
@@ -84,7 +97,7 @@ export function levelCost(key: LevelKey, level: number): LevelCost {
   let seconds = base.seconds;
   for (let next = 2; next <= level; next++) {
     const slowdown = base.slowdowns.findLast(({ from }) => from <= next);
-    seconds *= slowdown?.growth ?? (isBuilding(key) ? LEVEL_TIME_GROWTH.construction : LEVEL_TIME_GROWTH.research);
+    seconds *= slowdown?.growth ?? (isBuilding(key) ? TIME_GROWTH.building : TIME_GROWTH.research);
   }
   return { cost, seconds };
 }
@@ -101,4 +114,60 @@ export function levelsCost(key: LevelKey, from: number, to: number): LevelCost {
     total.seconds += seconds;
   }
   return total;
+}
+
+/**
+ * How many times longer level `to` takes than level `from`. Architecture and Salle d'analyse take the same share off
+ * every level: the ratio holds for the times the game shows, bonus included.
+ */
+export const levelTimeRatio = (key: LevelKey, from: number, to: number): number =>
+  levelCost(key, to).seconds / levelCost(key, from).seconds;
+
+/** A level as construction.php or laboratoire.php shows it. */
+export interface ShownLevel {
+  cost: Cost;
+  /** Milliseconds, the player's bonus included. */
+  duration: number;
+}
+
+/**
+ * Level `level` and the `count` − 1 after it, from what the game shows for `level`: each grows from the shown one as
+ * the table does, so the player's bonus carries over (and the table's own costs come out when the shown cost is
+ * theirs, the Champignonnière's floored ones included). Costs to the unit, times to the millisecond.
+ */
+export function levelsFrom(key: LevelKey, level: number, shown: ShownLevel, count: number): ShownLevel[] {
+  const first = levelCost(key, level);
+  const scale = (amount: number, base: number, next: number) => (base > 0 ? Math.round((amount * next) / base) : 0);
+  return Array.from({ length: Math.max(0, count) }, (_, index) => {
+    const next = levelCost(key, level + index);
+    return {
+      cost: {
+        food: scale(shown.cost.food, first.cost.food, next.cost.food),
+        materials: scale(shown.cost.materials, first.cost.materials, next.cost.materials),
+        workers: scale(shown.cost.workers, first.cost.workers, next.cost.workers),
+      },
+      duration: Math.round((shown.duration * next.seconds) / first.seconds),
+    };
+  });
+}
+
+export interface LevelsAhead extends ShownLevel {
+  /** Levels gained. */
+  levels: number;
+}
+
+/**
+ * The next one, two… `count` levels from `level` (the one the game shows), all together: costs added up, times one
+ * after the other at the current bonus.
+ */
+export function levelsAhead(key: LevelKey, level: number, shown: ShownLevel, count: number): LevelsAhead[] {
+  const total: LevelsAhead = { levels: 0, cost: { food: 0, materials: 0, workers: 0 }, duration: 0 };
+  return levelsFrom(key, level, shown, count).map(({ cost, duration }) => {
+    total.levels += 1;
+    total.cost.food += cost.food;
+    total.cost.materials += cost.materials;
+    total.cost.workers += cost.workers;
+    total.duration += duration;
+    return { ...total, cost: { ...total.cost } };
+  });
 }

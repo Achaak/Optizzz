@@ -45,7 +45,7 @@ function levels(doc: Document) {
 describe("renderLevelsAhead", () => {
   it("adds up the next five levels of each research, and when the stock covers them", () => {
     const doc = parse(laboratoryCostsHtml);
-    renderLevelsAhead(doc, state, "research", now);
+    renderLevelsAhead(doc, state, now);
     expect(doc.querySelector(".optizzz-levels summary")?.textContent).toBe("Coût des 5 niveaux suivants");
     expect(levels(doc)["Génétique"]).toEqual([
       ["1", "3 000", "10 000", "1 000", "3 min", "maintenant"],
@@ -56,11 +56,32 @@ describe("renderLevelsAhead", () => {
     ]);
   });
 
-  it("leaves out the locked rows (Dôme), and grows the Champignonnière's cost by 1.85 a level", () => {
+  it("slows the times down past the table's × 1.3 (Génétique 21)", () => {
+    const doc = parse(laboratoryCostsHtml);
+    const genetics = [...doc.querySelectorAll(".ligneAmelioration")].find(
+      (row) => row.querySelector("h2")?.textContent.trim() === "Génétique",
+    );
+    const level = genetics?.querySelector(".niveau_amelioration");
+    if (!level) throw new Error("fixture");
+    level.textContent = "niveau 20";
+    renderLevelsAhead(doc, state, now);
+    // 3 min, then × 1.3 each instead of × 1.7: 3 min 54 s, 5 min 4 s… (17 min after three levels at × 1.7).
+    expect(
+      levels(doc)
+        ["Génétique"]?.slice(0, 3)
+        .map(([shown, , , , duration]) => [shown, duration]),
+    ).toEqual([
+      ["21", "3 min"],
+      ["22", "7 min"],
+      ["23", "12 min"],
+    ]);
+  });
+
+  it("leaves out the locked rows (Dôme), and grows the Champignonnière's cost by 1.85 a level, floored", () => {
     const doc = parse(constructionCostsHtml);
-    renderLevelsAhead(doc, state, "construction", now);
+    renderLevelsAhead(doc, state, now);
     expect(Object.keys(levels(doc))).toEqual(["Champignonnière", "Entrepôt de Nourriture", "Entrepôt de Matériaux"]);
-    // Level 9 costs 12 348 materials: then 22 844, 42 261…
+    // Level 9 costs 12 348 materials: then 22 844, 42 262…
     expect(
       levels(doc)
         ["Champignonnière"]?.slice(0, 3)
@@ -68,9 +89,11 @@ describe("renderLevelsAhead", () => {
     ).toEqual([
       ["9", "12 348"],
       ["10", "35 192"],
-      ["11", "77 453"],
+      ["11", "77 454"],
     ]);
-    expect(doc.querySelector(".optizzz-levels .optizzz-note")?.textContent).toContain("coût × 1,85");
+    expect(doc.querySelector(".optizzz-levels .optizzz-note")?.textContent).toContain(
+      "d'après les coûts et durées de chaque niveau du jeu",
+    );
     // A building only costs materials: one resource column.
     expect(levels(doc)["Entrepôt de Nourriture"]?.[0]).toEqual(["6", "19 200", "32 min", "maintenant"]);
   });
@@ -80,7 +103,7 @@ describe("renderLevelsAhead", () => {
     const queued = doc.createElement("strong");
     queued.innerHTML = `- Génétique 2 se termine dans : <span id="recherche_1"></span><script>reste(600, "recherche_1");</script>`;
     doc.body.prepend(queued);
-    renderLevelsAhead(doc, state, "research", now);
+    renderLevelsAhead(doc, state, now);
     expect(levels(doc)["Génétique"]?.map(([level]) => level)).toEqual(["3", "4", "5", "6", "7"]);
   });
 });

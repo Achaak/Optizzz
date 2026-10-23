@@ -46,7 +46,7 @@ Tutoriel attaque et défense : chaque jour, une unité consomme une part de son 
 
 ## Durées des niveaux
 
-Chaque niveau dure ×1,6 (construction) ou ×1,7 (recherche) de plus que le précédent ; Architecture et Salle d'analyse divisent par 0,9 par niveau. Les durées affichées incluent déjà ces bonus. **À vérifier** sur des valeurs réelles.
+Chaque niveau dure × 1,6 (construction) ou × 1,7 (recherche) de plus que le précédent, puis × 1,3, × 1,2 et × 1,12 passé certains niveaux ; Architecture et Salle d'analyse multiplient par 0,9 par niveau. Les durées affichées incluent déjà ces bonus. Vérifié dans le jeu : voir `couts-des-niveaux.md` (table `packages/game/src/level-costs.ts`).
 
 ## À vérifier
 

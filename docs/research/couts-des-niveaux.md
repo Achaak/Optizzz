@@ -1,6 +1,6 @@
 # Coûts et durées des niveaux
 
-Ce que coûte et dure chaque niveau d'un bâtiment ou d'une recherche, **hors bonus** (Architecture et Salle d'analyse à 0). Table du code : `packages/game/src/level-costs.ts` (`LEVEL_BASES`, `levelCost`, `levelsCost`).
+Ce que coûte et dure chaque niveau d'un bâtiment ou d'une recherche, **hors bonus** (Architecture et Salle d'analyse à 0). Table du code : `packages/game/src/level-costs.ts` (`LEVEL_BASES`, `levelCost`, `levelsCost`), seule source des croissances d'un niveau à l'autre : les features partent de la ligne affichée (bonus compris) et lui appliquent le rapport de la table (`levelsFrom`, `levelsAhead`, `levelTimeRatio`).
 
 ## Sources
 
