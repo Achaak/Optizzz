@@ -24,6 +24,15 @@ export function showPseudos(
 /** A part of the map to show, asked at `at` (ms): the whole server, or a window. */
 export type ZoomRequest = ({ full: true } | { full: false; x: AxisRange; y: AxisRange }) & { at: number };
 
+/** A window zoomed or moved by hand at `at` (ms). */
+export type ZoomedByHand = MapWindow & { at: number };
+
+/** The window shown: the zoom by hand or the request, whichever came last; the whole server by default. */
+export function shownWindow(byHand: ZoomedByHand | null, request: ZoomRequest | null, axes: MapWindow): MapWindow {
+  if (byHand && (!request || byHand.at > request.at)) return byHand;
+  return request && !request.full ? request : axes;
+}
+
 /** Squares shown around a player zoomed on. */
 const ZOOM_RADIUS = 8;
 

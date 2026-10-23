@@ -37,7 +37,7 @@ Vue distincte de la Carte de l'alliance (`alliance-map.md`), pensée pour l'orga
 - **Interrupteur** « Carte du serveur », options cochées par défaut : « Bouton dans la barre du haut », « Lien « Voir sur la carte » sur les profils », « Lien « Voir sur la carte » sur les pages d'alliance », « Lire les positions sur optizzz.fr (plus léger) ». Coupée : ni bouton ni lien ; la page affiche « Carte du serveur désactivée ».
 - **Petits écrans** : sous 600 px, le panneau prend toute la largeur, la carte aussi (pas de marge réservée aux noms, graduations espacées d'environ 70 px), le tableau masque Coordonnées et État et coupe les pseudos longs. Sur écran tactile, l'aide parle de pincer et de toucher.
 - **Mémorisé par serveur** (`browser.storage.local`) : sélection, couleurs et cases « Afficher : » ; le pseudo connecté et le serveur du dernier onglet (pour la popup), notés par le script léger.
-- Zoom : ouverture, ajout de puces, loupe et boutons font une « demande » de cadrage ; la zone affichée est la dernière demande ou le dernier zoom à la main (lu sur la grille par `convertFromPixel`), le plus récent des deux. Elle décide pseudos ou tags (40 joueurs choisis en vue au plus).
+- Zoom : ouverture, ajout de puces, loupe et boutons font une « demande » de cadrage ; la zone affichée est la dernière demande ou le dernier zoom à la main (lu dans l'événement `datazoom` par `zoomedWindow`, pas sur la grille : pendant qu'ECharts la reconstruit, il n'y en a pas), le plus récent des deux. Elle décide pseudos ou tags (40 joueurs choisis en vue au plus).
 
 ## Hors v1
 

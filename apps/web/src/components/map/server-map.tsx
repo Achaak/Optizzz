@@ -138,7 +138,8 @@ export function ServerMap({ server }: { server: { id: string; name: string } }) 
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         {formatNumber(players.length)} joueurs · positions de l&apos;export du{" "}
-        {formatDateTime(versionDate(data.version))}
+        {/* « 6 h 00 » stays on one line on a phone. */}
+        <span className="whitespace-nowrap">{formatDateTime(versionDate(data.version))}</span>
       </p>
       <ChipBar
         players={players}

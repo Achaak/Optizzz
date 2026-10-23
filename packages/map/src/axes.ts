@@ -136,15 +136,35 @@ export function fittedWindow(points: readonly { x: number; y: number }[], full: 
   const [yMin, yMax] = extent(ys);
   const span = { x: xMax - xMin + 2 * MARGIN, y: yMax - yMin + 2 * MARGIN };
   const width = Math.min(Math.max(span.x, span.y / aspect, MIN_WINDOW), full.x[1] - full.x[0]);
-  if (width * aspect >= full.y[1] - full.y[0]) return { x: full.x, y: full.y };
+  const height = width * aspect;
+  if (height >= full.y[1] - full.y[0]) return { x: full.x, y: full.y };
+  // Taller than a band (an alliance spread over S4): the stretch holding the most of them, not the empty middle.
+  const [yLow, yHigh] = span.y > height ? densestStretch(ys, height - 2 * MARGIN) : [yMin, yMax];
   const place = (center: number, size: number, range: AxisRange) => {
     const from = Math.min(Math.max(center - size / 2, range[0]), range[1] - size);
     return [from, from + size] as const;
   };
   return {
     x: place((xMax + xMin) / 2, width, full.x),
-    y: place((yMax + yMin) / 2, width * aspect, full.y),
+    y: place((yHigh + yLow) / 2, height, full.y),
   };
+}
+
+/** The first and last of the most `values` within `size` of each other. */
+function densestStretch(values: readonly number[], size: number): [number, number] {
+  const sorted = Float64Array.from(values).sort();
+  let best: [number, number] = [sorted[0] ?? 0, sorted[0] ?? 0];
+  let bestCount = 0;
+  let first = 0;
+  for (let last = 0; last < sorted.length; last++) {
+    const high = sorted[last] ?? 0;
+    while ((sorted[first] ?? 0) < high - size) first++;
+    if (last - first + 1 > bestCount) {
+      bestCount = last - first + 1;
+      best = [sorted[first] ?? 0, high];
+    }
+  }
+  return best;
 }
 
 /** Whole, non-negative coordinates only: no « 69.5 » after a zoom, no « −5 ». */
@@ -172,11 +192,53 @@ export function mapAxis(range: AxisRange, step?: number, splitNumber = 8) {
 // The wheel alone scrolls the page; Ctrl (or a trackpad pinch) + wheel zooms.
 const ZOOM = { type: "inside", filterMode: "none", zoomOnMouseWheel: "ctrl", moveOnMouseWheel: false };
 
+/** The zoom of each axis, by index (0 is x, 1 is y) and by id, as ECharts reports a zoom by hand. */
+const ZOOM_AXES = ["x", "y"] as const;
+
 /** Zoom on both axes: index 0 is x, 1 is y. */
 export const MAP_ZOOM = [
-  { ...ZOOM, xAxisIndex: 0 },
-  { ...ZOOM, yAxisIndex: 0 },
+  { ...ZOOM, id: ZOOM_AXES[0], xAxisIndex: 0 },
+  { ...ZOOM, id: ZOOM_AXES[1], yAxisIndex: 0 },
 ];
+
+/** One zoom as ECharts reports it (`datazoom` event): values when asked by the page, percent when made by hand. */
+interface ZoomPart {
+  dataZoomId?: string;
+  dataZoomIndex?: number;
+  start?: number;
+  end?: number;
+  startValue?: number;
+  endValue?: number;
+}
+
+/**
+ * The window shown once a `datazoom` event applies to `current`, both axes of `full` (the axes' range) being zoomed
+ * by `MAP_ZOOM`. Read from the event rather than the grid: while ECharts rebuilds its grid, there is none to read.
+ */
+export function zoomedWindow(
+  event: ZoomPart & { batch?: readonly ZoomPart[] | null },
+  current: MapWindow,
+  full: MapWindow,
+): MapWindow {
+  let window = current;
+  for (const part of event.batch ?? [event]) {
+    const axis =
+      part.dataZoomId === undefined
+        ? ZOOM_AXES[part.dataZoomIndex ?? -1]
+        : ZOOM_AXES.find((id) => id === part.dataZoomId);
+    if (!axis) continue;
+    const [min, max] = full[axis];
+    const at = (percent: number) => min + ((max - min) * percent) / 100;
+    const range: AxisRange | null =
+      part.startValue !== undefined && part.endValue !== undefined
+        ? [part.startValue, part.endValue]
+        : part.start !== undefined && part.end !== undefined
+          ? [at(part.start), at(part.end)]
+          : null;
+    if (range) window = { ...window, [axis]: range };
+  }
+  return window;
+}
 
 /** About one tick every 70 pixels: a narrow map (a phone) gets fewer, readable ones. */
 export const ticksFor = (pixels: number) => Math.max(3, Math.min(8, Math.round(pixels / 70)));
