@@ -45,7 +45,7 @@ export function speedUpFirst({ now, duration, startsAt, speedUpReady, levels }: 
 export const LEVEL_TIME_GROWTH = { construction: 1.6, research: 1.7 } as const;
 /** Costs double from one level to the next (Toolzzz's cost table). */
 export const LEVEL_COST_GROWTH = 2;
-/** But the Champignonnière's: × 1.85 a level, rounded (90, 167, 308, 570… materials). */
+/** But the Champignonnière's: × 1.85 a level, floored (90, 166, 308, 569… materials). */
 const MUSHROOM_COST_GROWTH = 1.85;
 
 /** How a row's cost grows from one level to the next. */

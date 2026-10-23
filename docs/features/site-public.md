@@ -5,7 +5,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-22. Étape 2 de 
 ## Découpage
 
 - **2a, fondation** : `apps/web`, la base, le déploiement, le cron des exports et les pages de données des serveurs.
-- **2b, outils**, un à la fois et chacun avec son cadrage court, dans cet ordre : carte du serveur, trajets, coûts et temps de développement, simulateur de combat, simulateur de chasse (moteur et worker), simulateur de flood. Chaque outil sort d'abord sa logique de l'extension vers `packages/game`.
+- **2b, outils**, un à la fois et chacun avec son cadrage court, dans cet ordre : carte du serveur, trajets, coûts et temps de développement, simulateur de combat, simulateur de chasse (moteur et worker), simulateur de flood. Chaque outil sort d'abord sa logique de l'extension vers `packages/game`. Les coûts et durées de tous les niveaux, hors bonus, sont prêts pour l'outil des coûts : `packages/game/src/level-costs.ts` (`docs/research/couts-des-niveaux.md`).
 
 ## 2a
 
