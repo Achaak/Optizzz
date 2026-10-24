@@ -1,4 +1,7 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import membersHtml from "@optizzz/game/pages/__fixtures__/members.html?raw";
+import { loadAllianceMembers } from "@/data/alliance-members";
+import { loadCurrentPlayer, loadLastGameServer } from "@/data/optizzz-account";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
 import reineHtml from "../end-times/__fixtures__/reine-laying.html?raw";
@@ -44,6 +47,29 @@ describe("collect", () => {
     const kept = await loadConvoys(ORIGIN);
     expect(kept?.convoys.map((convoy) => convoy.recipient)).toEqual(["Messor", "Tetramorium"]);
     expect(kept?.workers).toBe(4_995);
+  });
+
+  it("keeps the alliance's members and the header's pseudo for the Optizzz account, without a request", async () => {
+    history.replaceState(null, "", "/alliance.php?Membres");
+    document.documentElement.innerHTML = new DOMParser().parseFromString(
+      membersHtml,
+      "text/html",
+    ).documentElement.innerHTML;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    await collect.run(ctx, { "optizzz-account": false });
+    expect(await loadAllianceMembers(ORIGIN)).toBeNull();
+    expect(await loadCurrentPlayer(ORIGIN)).toBeNull();
+
+    await collect.run(ctx, {});
+    expect(await loadAllianceMembers(ORIGIN)).toEqual({
+      tag: null,
+      pseudos: ["Alpha", "Me", "Gros"],
+      readAt: expect.any(Date) as Date,
+    });
+    expect(await loadCurrentPlayer(ORIGIN)).toBe("Me");
+    expect(await loadLastGameServer()).toBe(ORIGIN);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 
   it("keeps the convoys delivered and received listed by the inbox, only when that option is on", async () => {

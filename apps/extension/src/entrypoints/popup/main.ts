@@ -5,6 +5,7 @@ import { loadLastServer } from "@/features/server-map/settings";
 import { loadNotificationSettings, setNotification } from "@/features/alerts/notification-settings";
 import { NOTIFICATIONS_PERMISSION, openGrantPage } from "@/features/alerts/permission";
 import { applyCompactNumbers } from "@/features/compact-numbers";
+import { askAccount } from "@/features/optizzz-account/messages";
 import { isEnabled, loadToggles, setToggle } from "@/features/toggles";
 import { buildWatchSummary, loadWatchSummaries, WATCH_SUMMARY_STYLE } from "@/features/watchlist/popup";
 import { watchlistPageUrl } from "@/features/watchlist/settings";
@@ -36,6 +37,8 @@ const tabs = settingsTabs(
         console.error("[Optizzz] saving a feature toggle failed", error);
       });
     },
+    // No game page here: the background takes the server of the last game tab.
+    account: { origin: null, ask: askAccount, afterConnect: () => window.close() },
   },
   {
     openSimulator: () => {

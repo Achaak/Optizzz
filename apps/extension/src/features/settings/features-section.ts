@@ -1,4 +1,5 @@
 import { featureCatalog, type FeatureId } from "../catalog";
+import { accountEnabled, buildAccountSection, type AccountSectionInput } from "../optizzz-account/section";
 import { isEnabled, type Toggles } from "../toggles";
 
 export type ToggleChange = (feature: FeatureId, option: string | undefined, enabled: boolean) => void;
@@ -47,9 +48,11 @@ export function buildFeaturesSection(
   toggles: Toggles,
   onChange: ToggleChange,
   reload?: () => void,
+  account?: AccountSectionInput,
 ): HTMLElement {
   const section = doc.createElement("div");
   section.className = "features-section";
+  if (account && accountEnabled(toggles)) section.append(buildAccountSection(doc, account));
   const list = doc.createElement("ul");
   list.className = "features";
 

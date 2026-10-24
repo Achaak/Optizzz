@@ -24,9 +24,12 @@ export default defineConfig({
     // unlimitedStorage: the cached exports of a big server (S2: 4 MB of players) fill the 10 MB of storage.local.
     // alarms: the toolbar badge counts down to famine or a full warehouse (Alertes).
     permissions: ["storage", "unlimitedStorage", "alarms"],
-    // Asked only when the player switches a notification on (Alertes).
-    optional_permissions: ["notifications"],
+    // notifications: asked only when the player switches a notification on (Alertes).
+    // scripting and optizzz.fr: asked only on « Connecter mon Compte Optizzz » (ADR 0007), to put the link script on
+    // the site's page « Connecter l'extension ». Optional: an update must disable nobody's extension.
+    optional_permissions: ["notifications", "scripting"],
     host_permissions: ["*://*.fourmizzz.fr/*"],
+    optional_host_permissions: ["https://optizzz.fr/*"],
     // The combat simulator and the server map are framed over the game (src/utils/page-dialog.ts). Side effect: the
     // game's pages can tell the extension is installed by loading these pages.
     web_accessible_resources: [
@@ -39,7 +42,9 @@ export default defineConfig({
           id: "optizzz@achaak.github.io",
           // 142: first version honouring data_collection_permissions on Firefox for Android.
           strict_min_version: "142.0",
-          data_collection_permissions: { required: ["none"] },
+          // Nothing without an Optizzz account. Linked, on a click: the account's token and the game's pseudo and
+          // server (src/features/optizzz-account/permission.ts), consented to on « Connecter mon Compte Optizzz ».
+          data_collection_permissions: { required: ["none"], optional: ["authenticationInfo", "websiteContent"] },
         },
         gecko_android: { strict_min_version: "142.0" },
       },

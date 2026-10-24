@@ -12,6 +12,15 @@ const click = (input: HTMLInputElement | null) => {
 };
 
 describe("buildFeaturesSection", () => {
+  it("puts the « Compte Optizzz » block on top, unless that feature is off", () => {
+    const account = { origin: null, ask: vi.fn(() => new Promise<null>(() => undefined)) };
+    const on = buildFeaturesSection(document, {}, vi.fn(), undefined, account);
+    expect(on.firstElementChild?.textContent).toContain("Compte Optizzz");
+    const off = buildFeaturesSection(document, { "optizzz-account": false }, vi.fn(), undefined, account);
+    expect(off.querySelector(".account")).toBeNull();
+    expect(account.ask).toHaveBeenCalledTimes(1);
+  });
+
   it("lists every feature and option, all on by default but those marked offByDefault", () => {
     const section = buildFeaturesSection(document, {}, vi.fn());
     expect(section.textContent).toContain("Chantiers en cours");
@@ -74,6 +83,7 @@ describe("buildFeaturesSection", () => {
       "hunt-launcher",
       "safe-reload",
       "site-links",
+      "optizzz-account",
       "compact-numbers",
       "compact-numbers.game",
       "compact-numbers.extension",
