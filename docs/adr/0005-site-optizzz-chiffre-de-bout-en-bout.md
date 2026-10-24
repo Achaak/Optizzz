@@ -19,6 +19,54 @@ Jusqu'ici, rien ne sortait de Fourmizzz par l'extension (`docs/features/partage-
 - **Règlement du jeu** (`docs/research/reglement.md`) : un Envoi ne contient que ce que la personne a affiché ou ce qu'une action de sa part a lu ; l'extension ne lit jamais le jeu sur minuterie pour alimenter le site ; le Site Optizzz ne se connecte jamais au jeu, ne garde aucun mot de passe Fourmizzz et ne lit que l'export public.
 - **Discord** : l'URL d'un webhook est un secret de l'alliance, chiffrée. Le détail part du client du membre qui agit ; le Site Optizzz ne poste que des rappels sans contenu (« nouveau plan de flood, à voir sur Optizzz »).
 
+## Format chiffré
+
+Ajouté le 2026-10-24 (ticket 15) : la description des octets, sans changer les décisions ci-dessus. Code : `packages/crypto` (`@optizzz/crypto`), libsodium (ADR 0007).
+
+- **Encodage** : chaque clé publique et chaque chiffré voyage en base64url sans remplissage (RFC 4648 §5). Les entiers sont des `u32` gros-boutistes (4 octets).
+- **Version de format** : le premier octet de chaque chiffré. Un octet plus grand que ce que le code connaît donne « Cette donnée vient d'une version plus récente d'Optizzz » ; 0 ou un format jamais écrit, « illisible ». Changer d'algorithme ou de disposition ajoute un format ; on garde le code qui lit les anciens.
+- **Paire de clés personnelle** : X25519 (`crypto_box_keypair`). La clé publique fait 32 octets ; la clé privée ne quitte jamais le navigateur en clair.
+
+### Clé privée verrouillée par la Phrase de chiffrement (format 1, 97 octets)
+
+| Octets | Contenu                                                          |
+| ------ | ---------------------------------------------------------------- |
+| 0      | format `1`                                                       |
+| 1–4    | `opslimit` d'Argon2id (`u32`)                                    |
+| 5–8    | `memlimit` d'Argon2id, en octets (`u32`)                         |
+| 9–24   | sel (16 octets aléatoires)                                       |
+| 25–48  | nonce (24 octets aléatoires)                                     |
+| 49–96  | XChaCha20-Poly1305 de la clé privée (32 octets) + étiquette (16) |
+
+- Clé de chiffrement : Argon2id v1.3 (`crypto_pwhash`, `ALG_ARGON2ID13`, parallélisme 1), 32 octets, sur la phrase normalisée : Unicode NFC, espaces de début et de fin ôtés, suites d'espaces réduites à une. La casse compte.
+- Données associées : les octets 0–24 (format, paramètres, sel) : on ne peut pas les modifier sans faire échouer l'ouverture.
+- **Paramètres écrits aujourd'hui** : `opslimit = 3`, `memlimit = 64 Mio` (le second choix de la RFC 9106, avec p = 1). Mesuré dans Node (WebAssembly de libsodium, Mac récent) : environ 0,2 s ; un téléphone milieu de gamme, 3 à 5 fois plus lent, reste autour d'une seconde, une fois par session. 64 Mio tiennent dans la mémoire d'un onglet de téléphone, et coûtent cher à qui teste des phrases en masse sur la base volée. Les paramètres étant écrits dans chaque chiffré, on peut les relever plus tard : les anciennes clés s'ouvrent toujours, et se réécrivent au prochain changement de phrase.
+- **Bornes à la lecture** : `1 ≤ opslimit ≤ 10` et `8 Mio ≤ memlimit ≤ 256 Mio`, sinon « illisible » : un chiffré trafiqué ne peut pas figer le navigateur.
+- Changer de phrase rouvre la clé privée et la reverrouille (nouveau sel, paramètres du jour) : la paire ne change pas.
+
+### Clé d'alliance scellée pour un membre (format 1, 86 octets)
+
+| Octets | Contenu                                                                                         |
+| ------ | ----------------------------------------------------------------------------------------------- |
+| 0      | format `1`                                                                                      |
+| 1–85   | `crypto_box_seal` pour la clé publique du membre de : version de la clé (`u32`) + clé (32 oct.) |
+
+- La Clé d'alliance : 32 octets aléatoires (`crypto_aead_xchacha20poly1305_ietf_keygen`), versionnée à partir de 1 ; chaque changement ajoute la version la plus haute plus un, et garde les anciennes.
+- La version est dans la boîte : le site ne peut pas faire passer une clé pour une autre version. Le site range aussi la version en clair à côté (une ligne par membre et par version).
+- Un membre approuvé reçoit toutes les versions, scellées une à une.
+
+### Donnée d'alliance chiffrée (format 1, 45 octets + texte)
+
+| Octets | Contenu                                                                  |
+| ------ | ------------------------------------------------------------------------ |
+| 0      | format `1`                                                               |
+| 1–4    | version de la Clé d'alliance (`u32`)                                     |
+| 5–28   | nonce (24 octets aléatoires)                                             |
+| 29–…   | XChaCha20-Poly1305 du texte UTF-8 (du JSON en pratique) + étiquette (16) |
+
+- Données associées : les octets 0–4 : changer le format ou la version fait échouer l'ouverture.
+- On chiffre toujours avec la version la plus haute ; on déchiffre avec celle que nomme la donnée. Sans elle : « Il vous manque la version N de la Clé d'alliance ».
+
 ## Options écartées
 
 - **Chiffrement au repos avec une clé du site** : protège d'une fuite de sauvegarde, pas de l'hébergeur.
