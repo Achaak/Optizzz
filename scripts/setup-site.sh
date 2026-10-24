@@ -184,11 +184,11 @@ finish() {
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
 # ──────────────────────────────────────────────────────────────────────────
 
-# Puts the Optizzz site online (docs/features/site-public.md): Neon, the GitHub secrets of the hourly cron
-# (.github/workflows/ingest.yml), Vercel and the optizzz.fr domain. Run from the repository root.
+# Puts the Optizzz site online (docs/features/site-public.md): Neon and its roles (docs/adr/0008), the GitHub
+# secrets of the hourly cron (.github/workflows/ingest.yml), Vercel and the optizzz.fr domain. Run from the repository root.
 # Values are kept in apps/web/.env.neon (git-ignored) so a re-run offers them back.
 
-TOTAL_STAGES=8
+TOTAL_STAGES=9
 ENV_FILE="apps/web/.env.neon"
 
 banner "Optizzz : mettre le site en ligne"
@@ -202,8 +202,9 @@ step "Copiez la chaîne de connexion (postgresql://neondb_owner:…@…-pooler�
 ask_secret DATABASE_URL "Collez la chaîne du rôle propriétaire (il écrit : cron et migrations) :"
 write_env DATABASE_URL "$DATABASE_URL"
 
-stage "Neon : un rôle en lecture seule pour le site"
-say "Le site ne fait que lire : il se connecte avec un rôle qui ne peut rien écrire."
+stage "Neon : un rôle en lecture seule pour les aperçus"
+say "Les aperçus Vercel ne font que lire : ils se connectent avec un rôle qui ne peut rien écrire."
+note "Il ne voit pas le schéma accounts (les comptes) : aucun droit n'y est donné."
 open_url "https://console.neon.tech/app/projects"
 step "Dans le projet : Roles → New Role → nom « optizzz_read » → Create, et notez son mot de passe."
 step "Puis SQL Editor (base neondb), collez et lancez :"
@@ -214,16 +215,20 @@ step "Enfin Connect → rôle optizzz_read, « Connection pooling » activé →
 ask_secret READ_DATABASE_URL "Collez la chaîne du rôle optizzz_read :"
 write_env READ_DATABASE_URL "$READ_DATABASE_URL"
 
-stage "Secret de reconstruction des pages"
-say "Le cron appelle le site avec ce secret pour qu'il reconstruise ses pages."
-REVALIDATE_SECRET=$(_existing REVALIDATE_SECRET || true)
-if [[ -z "$REVALIDATE_SECRET" ]]; then
-  REVALIDATE_SECRET=$(openssl rand -hex 32)
-  say "Un secret aléatoire vient d'être généré."
-else
-  say "Le secret déjà généré est gardé."
-fi
-write_env REVALIDATE_SECRET "$REVALIDATE_SECRET"
+stage "Secrets du site"
+say "REVALIDATE_SECRET : le cron appelle le site avec ce secret pour qu'il reconstruise ses pages."
+say "BETTER_AUTH_SECRET : signe les cookies de session des Comptes Optizzz."
+for name in REVALIDATE_SECRET BETTER_AUTH_SECRET; do
+  value=$(_existing "$name" || true)
+  if [[ -z "$value" ]]; then
+    value=$(openssl rand -hex 32)
+    say "$name : un secret aléatoire vient d'être généré."
+  else
+    say "$name : le secret déjà généré est gardé."
+  fi
+  write_env "$name" "$value"
+  printf -v "$name" '%s' "$value"
+done
 pause
 
 stage "GitHub : secrets du cron horaire"
@@ -243,17 +248,41 @@ else
 fi
 pause
 
+stage "Neon : un rôle pour le site de production"
+say "Le site écrit les Comptes Optizzz dans le schéma accounts, et seulement là (docs/adr/0008-comptes-schema-accounts.md)."
+note "Après les migrations : le schéma accounts doit déjà exister."
+open_url "https://console.neon.tech/app/projects"
+step "Dans le projet : Roles → New Role → nom « optizzz_app » → Create, et notez son mot de passe."
+step "Puis SQL Editor (base neondb), collez et lancez :"
+note "  GRANT USAGE ON SCHEMA public TO optizzz_app;"
+note "  GRANT SELECT ON ALL TABLES IN SCHEMA public TO optizzz_app;"
+note "  ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public GRANT SELECT ON TABLES TO optizzz_app;"
+note "  GRANT USAGE ON SCHEMA accounts TO optizzz_app;"
+note "  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA accounts TO optizzz_app;"
+note "  ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA accounts GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO optizzz_app;"
+step "Enfin Connect → rôle optizzz_app, « Connection pooling » activé → copiez la chaîne."
+ask_secret APP_DATABASE_URL "Collez la chaîne du rôle optizzz_app :"
+write_env APP_DATABASE_URL "$APP_DATABASE_URL"
+
 stage "Vercel : le projet"
 say "Le site, déployé par Vercel à chaque push sur main (aperçu pour les autres branches)."
 open_url "https://vercel.com/new"
 step "Importez le dépôt Achaak/Optizzz."
 step "Root Directory : apps/web (Framework Preset : Next.js, le reste par défaut)."
-step "Environment Variables, pour Production et Preview :"
-note "  DATABASE_URL      = la chaîne du rôle optizzz_read (affichée ci-dessous)"
-note "  REVALIDATE_SECRET = le secret de l'étape 3 (affiché ci-dessous)"
-if confirm "Afficher ces deux valeurs pour les copier ?"; then
-  note "  DATABASE_URL      = $READ_DATABASE_URL"
-  note "  REVALIDATE_SECRET = $REVALIDATE_SECRET"
+step "Environment Variables (affichées ci-dessous), pour Production seulement :"
+note "  DATABASE_URL       = la chaîne du rôle optizzz_app"
+note "  BETTER_AUTH_URL    = https://optizzz.fr"
+step "Pour Preview seulement (les aperçus lisent, la connexion y échoue proprement) :"
+note "  DATABASE_URL       = la chaîne du rôle optizzz_read"
+step "Pour Production et Preview :"
+note "  REVALIDATE_SECRET  = le secret de l'étape « Secrets du site »"
+note "  BETTER_AUTH_SECRET = le secret de l'étape « Secrets du site »"
+note "L'envoi des e-mails (Brevo, BREVO_API_KEY et EMAIL_FROM) se branche à part : apps/web/.env.example."
+if confirm "Afficher ces valeurs pour les copier ?"; then
+  note "  DATABASE_URL (Production) = $APP_DATABASE_URL"
+  note "  DATABASE_URL (Preview)    = $READ_DATABASE_URL"
+  note "  REVALIDATE_SECRET         = $REVALIDATE_SECRET"
+  note "  BETTER_AUTH_SECRET        = $BETTER_AUTH_SECRET"
 fi
 step "Deploy, et attendez la fin du premier déploiement."
 pause "Déployé ? Entrée pour continuer"

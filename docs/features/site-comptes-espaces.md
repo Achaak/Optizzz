@@ -1,6 +1,6 @@
 # Comptes Optizzz et Espaces d'alliance (étape 3)
 
-Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-23 (ticket 12). Étape 3 de `site-optizzz.md`. Vocabulaire : `GLOSSARY.md`. Décisions de fond : ADR 0005 (facultatif, chiffré de bout en bout) et 0007 (libsodium, Better Auth, liaison de l'extension). Les Envois viennent à l'étape 4 (cadrage 19).
+Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-23 (ticket 12). Étape 3 de `site-optizzz.md`. Vocabulaire : `GLOSSARY.md`. Décisions de fond : ADR 0005 (facultatif, chiffré de bout en bout) 0007 (libsodium, Better Auth, liaison de l'extension) et 0008 (le site écrit les comptes dans le schéma `accounts`, avec le rôle `optizzz_app`). Les Envois viennent à l'étape 4 (cadrage 19).
 
 ## Adresses
 
@@ -61,4 +61,4 @@ En-tête : « Se connecter », ou « Mon compte » une fois connecté. Les pages
 
 ## Ce que garde le site
 
-E-mail, sessions, hachages des jetons d'extension, Joueurs (serveur, id, pseudo, date de déclaration), clé publique et clé privée chiffrée (avec les paramètres d'Argon2id), espaces (serveur, tag, nom), appartenances (Joueur, rôle, date), Clés d'alliance scellées (une par membre et par version), demandes à rejoindre. Jamais la Phrase de chiffrement, jamais une clé en clair.
+Tout ce qui suit vit dans le schéma Postgres `accounts`, que le site de production écrit avec le rôle `optizzz_app` et que le rôle en lecture seule `optizzz_read` ne voit pas (ADR 0008). E-mail, sessions, hachages des jetons d'extension, Joueurs (serveur, id, pseudo, date de déclaration), clé publique et clé privée chiffrée (avec les paramètres d'Argon2id), espaces (serveur, tag, nom), appartenances (Joueur, rôle, date), Clés d'alliance scellées (une par membre et par version), demandes à rejoindre. Jamais la Phrase de chiffrement, jamais une clé en clair.
