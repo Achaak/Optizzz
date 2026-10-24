@@ -73,8 +73,23 @@ describe("link", () => {
     const options = { userId: "user-1", siteOrigin: SITE, store: fake.store };
     expect((await link(linkRequest({ origin: "https://evil.example" }), options)).status).toBe(403);
     expect((await link(linkRequest({ "sec-fetch-site": "cross-site" }), options)).status).toBe(403);
+    const withoutOrigin = (fetchSite: string | null) => {
+      const request = linkRequest();
+      request.headers.delete("origin");
+      if (fetchSite === null) request.headers.delete("sec-fetch-site");
+      else request.headers.set("sec-fetch-site", fetchSite);
+      return request;
+    };
+    expect((await link(withoutOrigin(null), options)).status).toBe(403);
+    expect((await link(withoutOrigin("same-site"), options)).status).toBe(403);
     expect((await link(linkRequest({ "content-type": "text/plain" }), options)).status).toBe(415);
     expect(fake.tokens.size).toBe(0);
+  });
+
+  it("takes Sec-Fetch-Site for proof when the browser leaves Origin out of a same-origin request", async () => {
+    const request = linkRequest();
+    request.headers.delete("origin");
+    expect((await link(request, { userId: "user-1", siteOrigin: SITE, store: fake.store })).status).toBe(201);
   });
 
   it("asks to sign in first without a session", async () => {

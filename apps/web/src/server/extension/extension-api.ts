@@ -42,15 +42,19 @@ const unauthorized = () =>
 
 /**
  * POST /api/extension/link, from the extension's script on /connect-extension: a new token for the signed-in account.
- * Same-origin only (the browser's Origin and Sec-Fetch-Site), JSON only: another site cannot have one made.
+ * Same-origin only, JSON only: another site cannot have one made. The browser says where a request comes from by its
+ * Origin, or, should it leave Origin out, by Sec-Fetch-Site, which a page cannot forge; with neither, it is refused.
  */
 export async function link(
   request: Request,
   { userId, siteOrigin, store }: { userId: string | null; siteOrigin: string; store: ExtensionStore },
 ): Promise<Response> {
+  const origin = request.headers.get("origin");
   const fetchSite = request.headers.get("sec-fetch-site");
-  if (request.headers.get("origin") !== siteOrigin || (fetchSite !== null && fetchSite !== "same-origin"))
-    return problem(403, "forbidden", "Demande refusée.");
+  const sameOrigin =
+    (origin === siteOrigin && (fetchSite === null || fetchSite === "same-origin")) ||
+    (origin === null && fetchSite === "same-origin");
+  if (!sameOrigin) return problem(403, "forbidden", "Demande refusée.");
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     return problem(415, "json", "Demande refusée.");
   if (!userId) return problem(401, "signed-out", "Connectez-vous à votre Compte Optizzz, puis revenez sur cette page.");
