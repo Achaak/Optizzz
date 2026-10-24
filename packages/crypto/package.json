@@ -1,0 +1,22 @@
+{
+  "name": "@optizzz/crypto",
+  "private": true,
+  "description": "Chiffrement de bout en bout des données d'alliance (libsodium), partagé par l'extension et le site.",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "libsodium-wrappers-sumo": "0.8.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "license": "MIT"
+}

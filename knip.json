@@ -17,6 +17,9 @@
     },
     "packages/map": {
       "project": ["src/**/*.ts"]
+    },
+    "packages/crypto": {
+      "project": ["src/**/*.ts"]
     }
   },
   "rules": {
