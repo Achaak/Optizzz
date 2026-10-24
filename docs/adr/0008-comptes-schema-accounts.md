@@ -23,4 +23,5 @@ Jusqu'à l'étape 2 (`docs/features/site-public.md`), seul le cron écrivait en 
 ## Conséquences
 
 - Mise en production : la migration (par le workflow « Ingest »), puis la création de `optizzz_app` et ses droits, puis `DATABASE_URL` de Production sur Vercel passe à `optizzz_app` (`scripts/setup-site.sh`).
+- `optizzz_app` et `optizzz_read` se créent par SQL (`CREATE ROLE … LOGIN PASSWORD …`), jamais par « New Role » de la console Neon : ces rôles-là reçoivent `neon_superuser`, qui lit et écrit toutes les tables (`pg_read_all_data`, `pg_write_all_data`) et annulerait la séparation.
 - Un nouveau modèle Prisma de compte porte `@@schema("accounts")` ; un modèle des serveurs, `@@schema("public")`.
