@@ -3,16 +3,21 @@ import { CryptoError } from "./errors";
 import { normalizePassphrase, passphraseProblem } from "./passphrase";
 import { loadSodium, type Sodium } from "./sodium";
 
-/** A person's X25519 key pair (one per Compte Optizzz). The public key travels as base64url. */
+/**
+ * A person's identity (one per Compte Optizzz): an Ed25519 pair that signs, and from which the X25519 pair of the
+ * sealed boxes is derived, so that one public key and one passphrase do both. The public key travels as base64url;
+ * the private key is libsodium's 64-byte Ed25519 secret key (seed, then public key).
+ */
 export interface KeyPair {
   publicKey: string;
   privateKey: Uint8Array;
 }
 
-// Locked private key, format 1 (ADR 0005, « Format chiffré ») :
-// [format 1][opslimit u32][memlimit u32][salt 16][nonce 24][XChaCha20-Poly1305(private key 32) + tag 16]
+// Locked private key, format 2 (ADR 0005, « Format chiffré ») :
+// [format 2][opslimit u32][memlimit u32][salt 16][nonce 24][XChaCha20-Poly1305(Ed25519 seed 32) + tag 16]
 // The first 25 bytes (format, Argon2id parameters, salt) are the AEAD's additional data.
-const FORMAT = 1;
+// Format 1 locked an X25519 private key; it was never stored, and is no longer read.
+const FORMAT = 2;
 const SALT_OFFSET = 9;
 const HEADER_LENGTH = SALT_OFFSET + 16;
 const NONCE_LENGTH = 24;
@@ -29,8 +34,28 @@ const MAX_MEMLIMIT = 256 * 1024 * 1024;
 
 export async function generateKeyPair(): Promise<KeyPair> {
   const sodium = await loadSodium();
-  const { publicKey, privateKey } = sodium.crypto_box_keypair();
+  const { publicKey, privateKey } = sodium.crypto_sign_keypair();
   return { publicKey: toBase64Url(publicKey), privateKey };
+}
+
+/** The X25519 pair of the sealed boxes, derived from the Ed25519 identity. */
+export function boxKeyPair(sodium: Sodium, pair: KeyPair): { publicKey: Uint8Array; privateKey: Uint8Array } {
+  if (pair.privateKey.length !== 64) throw CryptoError.of("malformed");
+  return {
+    publicKey: boxPublicKey(sodium, pair.publicKey),
+    privateKey: sodium.crypto_sign_ed25519_sk_to_curve25519(pair.privateKey),
+  };
+}
+
+/** The X25519 public key a box is sealed for, from an Ed25519 public key (base64url); refuses an invalid point. */
+export function boxPublicKey(sodium: Sodium, publicKey: string): Uint8Array {
+  const bytes = fromBase64Url(publicKey);
+  if (bytes.length !== 32) throw CryptoError.of("malformed");
+  try {
+    return sodium.crypto_sign_ed25519_pk_to_curve25519(bytes);
+  } catch {
+    throw CryptoError.of("malformed");
+  }
 }
 
 /** Encrypts the private key with a key derived from the passphrase. Returns the base64url blob the site keeps. */
@@ -45,7 +70,9 @@ export async function lockPrivateKey(pair: KeyPair, passphrase: string): Promise
   );
   const key = deriveKey(sodium, passphrase, header);
   const nonce = sodium.randombytes_buf(NONCE_LENGTH);
-  const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(pair.privateKey, header, null, nonce, key);
+  const seed = sodium.crypto_sign_ed25519_sk_to_seed(pair.privateKey);
+  const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(seed, header, null, nonce, key);
+  sodium.memzero(seed);
   sodium.memzero(key);
   return toBase64Url(concat(header, nonce, ciphertext));
 }
@@ -64,20 +91,23 @@ export async function unlockPrivateKey(locked: string, passphrase: string): Prom
   const sodium = await loadSodium();
   const header = bytes.subarray(0, HEADER_LENGTH);
   const key = deriveKey(sodium, passphrase, header);
+  let seed: Uint8Array;
   try {
-    const privateKey = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+    seed = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
       null,
       bytes.subarray(HEADER_LENGTH + NONCE_LENGTH),
       header,
       bytes.subarray(HEADER_LENGTH, HEADER_LENGTH + NONCE_LENGTH),
       key,
     );
-    return { publicKey: toBase64Url(sodium.crypto_scalarmult_base(privateKey)), privateKey };
   } catch {
     throw CryptoError.of("wrong-passphrase");
   } finally {
     sodium.memzero(key);
   }
+  const { publicKey, privateKey } = sodium.crypto_sign_seed_keypair(seed);
+  sodium.memzero(seed);
+  return { publicKey: toBase64Url(publicKey), privateKey };
 }
 
 /** Re-locks the private key under a new passphrase (new salt, current parameters); the key pair stays the same. */

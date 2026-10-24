@@ -1,6 +1,6 @@
 import { checkFormat, concat, fromBase64Url, isKeyVersion, readUint32, toBase64Url, uint32 } from "./encoding";
 import { CryptoError } from "./errors";
-import type { KeyPair } from "./personal-key";
+import { boxKeyPair, boxPublicKey, type KeyPair } from "./personal-key";
 import { loadSodium } from "./sodium";
 
 /** One version of a Clé d'alliance: 32 random bytes for XChaCha20-Poly1305. */
@@ -24,7 +24,6 @@ export interface SealedAllianceKey {
 const FORMAT = 1;
 const PLAINTEXT_LENGTH = 4 + 32;
 const SEALED_LENGTH = 1 + 48 + PLAINTEXT_LENGTH;
-const PUBLIC_KEY_LENGTH = 32;
 
 /** A new space's first Clé d'alliance (version 1), drawn in the creator's browser. */
 export async function createAllianceKeyring(): Promise<AllianceKeyring> {
@@ -41,11 +40,9 @@ export async function rotateAllianceKey(keyring: AllianceKeyring): Promise<Allia
 
 /** Seals one version for a member's public key (base64url): only their private key opens it. */
 export async function sealAllianceKey(key: AllianceKey, publicKey: string): Promise<string> {
-  const recipient = fromBase64Url(publicKey);
-  if (recipient.length !== PUBLIC_KEY_LENGTH || !isKeyVersion(key.version) || key.key.length !== 32) {
-    throw CryptoError.of("malformed");
-  }
+  if (!isKeyVersion(key.version) || key.key.length !== 32) throw CryptoError.of("malformed");
   const sodium = await loadSodium();
+  const recipient = boxPublicKey(sodium, publicKey);
   const sealed = sodium.crypto_box_seal(concat(uint32(key.version), key.key), recipient);
   return toBase64Url(concat(new Uint8Array([FORMAT]), sealed));
 }
@@ -64,7 +61,8 @@ export async function openAllianceKey(sealed: string, pair: KeyPair): Promise<Al
   const sodium = await loadSodium();
   let plaintext: Uint8Array;
   try {
-    plaintext = sodium.crypto_box_seal_open(bytes.subarray(1), fromBase64Url(pair.publicKey), pair.privateKey);
+    const box = boxKeyPair(sodium, pair);
+    plaintext = sodium.crypto_box_seal_open(bytes.subarray(1), box.publicKey, box.privateKey);
   } catch {
     throw CryptoError.of("not-for-this-key");
   }

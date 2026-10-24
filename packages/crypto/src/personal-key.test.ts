@@ -15,10 +15,12 @@ async function expectCryptoError(promise: Promise<unknown>, code: CryptoError["c
 }
 
 describe("personal key pair", () => {
-  it("generates a 32-byte X25519 pair with its public key in base64url", async () => {
+  it("generates an Ed25519 identity with its 32-byte public key in base64url", async () => {
     const pair = await generateKeyPair();
-    expect(pair.privateKey).toHaveLength(32);
+    // libsodium's Ed25519 secret key: the 32-byte seed followed by the public key.
+    expect(pair.privateKey).toHaveLength(64);
     expect(fromBase64Url(pair.publicKey)).toHaveLength(32);
+    expect(pair.privateKey.slice(32)).toEqual(fromBase64Url(pair.publicKey));
     expect(pair.publicKey).toMatch(/^[A-Za-z0-9_-]+$/);
     expect((await generateKeyPair()).publicKey).not.toBe(pair.publicKey);
   });
@@ -49,11 +51,11 @@ describe("personal key pair", () => {
     await expectCryptoError(lockPrivateKey(pair, "trop courte"), "passphrase-too-short");
   });
 
-  it("keeps the Argon2id parameters with the ciphertext (format 1)", async () => {
+  it("keeps the Argon2id parameters with the ciphertext and locks only the 32-byte seed (format 2)", async () => {
     const pair = await generateKeyPair();
     const bytes = fromBase64Url(await lockPrivateKey(pair, PHRASE));
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    expect(bytes[0]).toBe(1);
+    expect(bytes[0]).toBe(2);
     expect(view.getUint32(1)).toBe(3); // opslimit
     expect(view.getUint32(5)).toBe(64 * 1024 * 1024); // memlimit
     expect(bytes).toHaveLength(1 + 4 + 4 + 16 + 24 + 32 + 16);
@@ -75,8 +77,13 @@ describe("personal key pair", () => {
     await expectCryptoError(unlockPrivateKey(toBase64Url(huge), PHRASE), "malformed");
 
     const future = bytes.slice();
-    future[0] = 2;
+    future[0] = 3;
     await expectCryptoError(unlockPrivateKey(toBase64Url(future), PHRASE), "unsupported-format");
+
+    // Format 1 held an X25519 private key (never stored anywhere): read as a seed, it would be another identity.
+    const old = bytes.slice();
+    old[0] = 1;
+    await expectCryptoError(unlockPrivateKey(toBase64Url(old), PHRASE), "malformed");
 
     await expectCryptoError(unlockPrivateKey(toBase64Url(bytes.slice(0, 40)), PHRASE), "malformed");
     await expectCryptoError(unlockPrivateKey("pas du base64 !", PHRASE), "malformed");
