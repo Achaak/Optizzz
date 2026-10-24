@@ -9,7 +9,7 @@ export default function PrivacyPage() {
       <section className="space-y-2">
         <h2 className="text-base font-semibold">Ce que le site sait de vous</h2>
         <p>
-          Rien : pas de compte, pas de cookie, pas de mesure d&apos;audience ni de publicité. Comme tout site,
+          Sans Compte Optizzz, rien : pas de cookie, pas de mesure d&apos;audience ni de publicité. Comme tout site,
           l&apos;hébergeur (Vercel) garde un temps les journaux techniques des requêtes, adresse IP comprise, pour faire
           fonctionner le service.
         </p>
@@ -19,6 +19,25 @@ export default function PrivacyPage() {
           <code>/s5/map#p=…</code>, <code>/tools/combat#p=…</code>), une partie que le navigateur n&apos;envoie jamais
           au site. Votre dernière carte, le dernier état de chaque outil et vos niveaux (« Mes niveaux ») sont gardés
           dans le stockage local de votre navigateur, pour les retrouver ; le site ne les lit pas.
+        </p>
+      </section>
+      <section className="space-y-2">
+        <h2 className="text-base font-semibold">Avec un Compte Optizzz</h2>
+        <p>
+          Le compte est facultatif : les outils et les données des serveurs restent ouverts sans lui. Il ne tient
+          qu&apos;à votre adresse e-mail, sans mot de passe. Le site garde cette adresse, la date de création du compte
+          et vos connexions (une par navigateur, 30 jours prolongés à chaque visite) ; ni votre adresse IP ni votre
+          navigateur n&apos;y sont notés. Un lien de connexion ne vaut que 15 minutes et ne sert qu&apos;une fois ; le
+          site n&apos;en garde qu&apos;une empreinte.
+        </p>
+        <p>
+          Un seul cookie, celui de la connexion, posé quand vous vous connectez et effacé quand vous vous déconnectez.
+          Les liens de connexion partent par un service d&apos;envoi d&apos;e-mails (Brevo, société française, données
+          dans l&apos;Union européenne), qui ne reçoit que votre adresse et le message.
+        </p>
+        <p>
+          Depuis « Mon compte », vous pouvez vous déconnecter de ce navigateur ou partout, et supprimer votre compte :
+          tout ce qui lui appartient est effacé tout de suite.
         </p>
       </section>
       <section className="space-y-2">

@@ -1,0 +1,5 @@
+// Better Auth's endpoints: magic link, session, sign-out, account deletion (src/server/auth.ts).
+import { toNextJsHandler } from "better-auth/next-js";
+import { auth } from "~/server/auth";
+
+export const { GET, POST } = toNextJsHandler(auth);

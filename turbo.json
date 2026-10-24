@@ -3,7 +3,17 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["DATABASE_URL", "REVALIDATE_SECRET", "SKIP_ENV_VALIDATION"],
+      "env": [
+        "DATABASE_URL",
+        "REVALIDATE_SECRET",
+        "SKIP_ENV_VALIDATION",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "BREVO_API_KEY",
+        "EMAIL_FROM",
+        "VERCEL_ENV",
+        "VERCEL_URL"
+      ],
       "outputs": [".output/chrome-mv3/**", ".next/**", "!.next/cache/**"]
     },
     "build:firefox": {

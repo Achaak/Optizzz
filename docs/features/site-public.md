@@ -21,7 +21,7 @@ S1 à S5, les seuls qui publient leur export (S1 à S4 en HTTP seulement, S5 en 
 
 ### Cron
 
-Un script de `apps/web/scripts/`, lancé chaque heure par GitHub Actions, lit les exports publics et écrit dans Neon avec Prisma ; il ne télécharge une version que si elle a changé. À la fin, il appelle une route de revalidation du site protégée par un secret : les pages sont reconstruites une fois par heure, sans requête vers la base à chaque visite. Seul le cron écrit ; le site (production et aperçus Vercel) lit avec un rôle Postgres en lecture seule.
+Un script de `apps/web/scripts/`, lancé chaque heure par GitHub Actions, lit les exports publics et écrit dans Neon avec Prisma ; il ne télécharge une version que si elle a changé. À la fin, il appelle une route de revalidation du site protégée par un secret : les pages sont reconstruites une fois par heure, sans requête vers la base à chaque visite. Seul le cron écrit les données des serveurs ; le site les lit. Depuis les Comptes Optizzz (ADR 0008), le site de production écrit dans le seul schéma `accounts`, avec le rôle `optizzz_app` ; les aperçus Vercel gardent le rôle en lecture seule `optizzz_read`.
 
 ### Changements partagés avec l'extension
 
@@ -35,7 +35,7 @@ Toutes en français, à des adresses en anglais depuis le 2026-10-23 (`site-outi
 - `/s5/players` : tableau triable, recherche par pseudo, filtre par alliance, pagination côté serveur.
 - `/s5/players/[id]` : fiche (alliance, position, colonisateur, scores), courbes, Journal du joueur.
 - `/s5/alliances` et `/s5/alliances/[tag]` : membres, totaux, pactes et guerres, courbes, Journal. Le tag se lit sans tenir compte de la casse (comme `sameTag`) et redirige vers celle de l'export.
-- Mentions légales (`/legal` ; éditeur : Axel Lavoie ; hébergeur : Vercel) et Confidentialité (`/privacy` ; ni cookie ni mesure d'audience).
+- Mentions légales (`/legal` ; éditeur : Axel Lavoie ; hébergeur : Vercel) et Confidentialité (`/privacy` ; ni mesure d'audience, ni cookie hors du cookie de session posé à la connexion d'un Compte Optizzz).
 
 Les outils et les pages de serveur sont indexés par les moteurs de recherche ; les pages joueur et alliance sont en `noindex`.
 
