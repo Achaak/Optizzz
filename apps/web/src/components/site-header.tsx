@@ -1,6 +1,7 @@
 import { SERVERS } from "@optizzz/game/servers";
 import Image from "next/image";
 import Link from "next/link";
+import { AccountLink } from "~/components/account-link";
 import { SearchBox } from "~/components/search-box";
 
 export function SiteHeader() {
@@ -22,8 +23,11 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto w-full sm:w-auto">
-          <SearchBox />
+        <div className="ml-auto flex w-full items-center gap-2 sm:w-auto">
+          <div className="min-w-0 flex-1 sm:w-64 sm:flex-none">
+            <SearchBox />
+          </div>
+          <AccountLink />
         </div>
       </div>
     </header>
