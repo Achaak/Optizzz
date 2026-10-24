@@ -20,6 +20,7 @@ const HEAVY_SCRIPTS: Record<string, string> = {
 /** Switches read by a shared helper, for the buttons of several features. */
 const SHARED_READERS: Record<string, string> = {
   "site-links": "../utils/site-tool.ts",
+  "optizzz-account": "./optizzz-account/section.ts",
 };
 
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");

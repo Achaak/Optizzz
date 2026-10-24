@@ -9,14 +9,17 @@ import { db } from "~/server/db";
 import { createEmailSender } from "~/server/email/send-email";
 import { siteOrigin } from "~/server/site-origin";
 
+/** The site's own address, never the request's: the magic links, and the only origin /api/extension/link answers. */
+export const ownOrigin = siteOrigin({
+  nodeEnv: env.NODE_ENV,
+  betterAuthUrl: env.BETTER_AUTH_URL,
+  vercelEnv: env.VERCEL_ENV,
+  vercelUrl: env.VERCEL_URL,
+  port: env.PORT,
+});
+
 export const auth = createAuth({
-  baseURL: siteOrigin({
-    nodeEnv: env.NODE_ENV,
-    betterAuthUrl: env.BETTER_AUTH_URL,
-    vercelEnv: env.VERCEL_ENV,
-    vercelUrl: env.VERCEL_URL,
-    port: env.PORT,
-  }),
+  baseURL: ownOrigin,
   secret: env.BETTER_AUTH_SECRET,
   database: prismaAdapter(db, { provider: "postgresql" }),
   sendEmail: createEmailSender({

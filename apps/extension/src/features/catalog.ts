@@ -242,6 +242,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "optizzz-account",
+    label: "Compte Optizzz",
+    description:
+      "En tête de cet onglet : lier l'extension à votre Compte Optizzz, facultatif, et y rattacher votre Joueur sur un clic. Sans compte lié, rien n'est envoyé. Garde aussi dans votre navigateur la dernière liste de la page Membres de votre alliance.",
+    options: [],
+  },
+  {
     id: "compact-numbers",
     label: "Nombres arrondis",
     description:

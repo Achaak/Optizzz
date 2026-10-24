@@ -10,6 +10,9 @@ import { readLaying, storeLaying } from "@/data/laying";
 import { storeCapacities, storeIncome } from "@/data/income";
 import { readCapacities, readIncome, readStock } from "@optizzz/game/pages/resources";
 import { isEnabled } from "../toggles";
+import { readLoggedInPseudo } from "@optizzz/game/pages/alliance";
+import { readAllianceMembers, storeAllianceMembers } from "@/data/alliance-members";
+import { storeCurrentPlayer } from "@/data/optizzz-account";
 
 /**
  * Keeps what the current page shows (never a request) for the features that need it, whichever of them is on:
@@ -57,6 +60,17 @@ export const collect: Feature = {
       if (garrison) {
         await storeGarrison(origin, garrison, now);
         await storeLevels(origin, { dome: garrison.dome, lodge: garrison.lodge });
+      }
+    }
+
+    // Optizzz account: the header's pseudo, for the offer « Rattacher Pseudo (S5) » (sent only on that click), and the
+    // last list of the alliance's members, kept here for the Alliance Spaces: nothing of either leaves the browser.
+    if (on("optizzz-account")) {
+      const pseudo = readLoggedInPseudo(document);
+      if (pseudo) await storeCurrentPlayer(origin, pseudo);
+      if (path === "/alliance.php" && location.search === "?Membres") {
+        const members = readAllianceMembers(document, now);
+        if (members) await storeAllianceMembers(origin, members);
       }
     }
 

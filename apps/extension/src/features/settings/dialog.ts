@@ -1,3 +1,4 @@
+import { ACCOUNT_STYLE, type AccountSectionInput } from "../optizzz-account/section";
 import { withToggle, type Toggles } from "../toggles";
 import { svgElement } from "@/utils/html";
 import { ABOUT_STYLE, buildAboutSection } from "./about-section";
@@ -17,6 +18,8 @@ export interface FeaturesTabInput {
   onChange: ToggleChange;
   /** Reloads the game page; absent in the toolbar popup. */
   reload?: () => void;
+  /** The « Compte Optizzz » block at the top, while that feature is on. */
+  account?: AccountSectionInput;
 }
 
 /** Tabs of the dialog and the popup, in order. Settings and themes will get their own tabs here. */
@@ -45,7 +48,7 @@ export function settingsTabs(
     {
       id: "features",
       label: "Fonctionnalités",
-      render: (doc) => buildFeaturesSection(doc, toggles, onChange, features.reload),
+      render: (doc) => buildFeaturesSection(doc, toggles, onChange, features.reload, features.account),
     },
     {
       id: "notifications",
@@ -72,6 +75,7 @@ export const TABS_STYLE = `
 .tab[aria-selected="true"] { color: var(--optizzz-text); background: var(--optizzz-surface-raised); border-color: var(--optizzz-border); margin-bottom: -1px; }
 .tab-panel { flex: 1; min-height: 0; overflow: auto; padding: var(--optizzz-space-6); background: var(--optizzz-surface-raised); }
 ${FEATURES_STYLE}
+${ACCOUNT_STYLE}
 ${NOTIFICATIONS_STYLE}
 ${TOOLS_STYLE}
 ${ABOUT_STYLE}`;

@@ -4,10 +4,12 @@ import { isOpenWatchlistMessage, watchlistUrl } from "@/features/watchlist/open"
 import { isOpenSimulatorMessage, simulatorUrl } from "@/features/combat-simulator/open";
 import { isOpenServerMapMessage, serverMapUrl } from "@/features/server-map/open";
 import { loadToggles } from "@/features/toggles";
+import { setUpOptizzzAccount } from "@/features/optizzz-account/background";
 
 export default defineBackground(() => {
   setUpAlerts();
   setUpWatchlist();
+  setUpOptizzzAccount();
 
   // No answer is sent: the content script only asks for the tab.
   browser.runtime.onMessage.addListener((message: unknown) => {

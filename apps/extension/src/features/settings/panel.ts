@@ -3,6 +3,7 @@ import type { ShadowRootContentScriptUi } from "wxt/utils/content-script-ui/shad
 import { loadNotificationSettings, setNotification } from "../alerts/notification-settings";
 import { askGrantPage, askNotificationsPermitted } from "../alerts/permission";
 import { simulatorDialog } from "../combat-simulator/dialog";
+import { askAccount } from "../optizzz-account/messages";
 import { serverMapDialog } from "../server-map";
 import { loadToggles, setToggle } from "../toggles";
 import { watchlistDialog } from "../watchlist";
@@ -43,6 +44,7 @@ export function createSettingsPanel(ctx: ContentScriptContext) {
               });
             },
             reload: () => location.reload(),
+            account: { origin: location.origin, ask: askAccount },
           },
           {
             openSimulator: () => {

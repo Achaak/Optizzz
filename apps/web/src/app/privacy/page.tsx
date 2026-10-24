@@ -17,8 +17,8 @@ export default function PrivacyPage() {
           Ce que vous choisissez sur la carte d&apos;un serveur ou saisissez dans un outil (armées, niveaux…) reste dans
           votre navigateur : un lien partagé le garde après le <code>#</code> de l&apos;adresse (
           <code>/s5/map#p=…</code>, <code>/tools/combat#p=…</code>), une partie que le navigateur n&apos;envoie jamais
-          au site. Votre dernière carte, le dernier état de chaque outil et vos niveaux (« Mes niveaux ») sont gardés
-          dans le stockage local de votre navigateur, pour les retrouver ; le site ne les lit pas.
+          au site. Votre dernière carte, le dernier état de chaque outil et vos niveaux («&nbsp;Mes niveaux&nbsp;») sont
+          gardés dans le stockage local de votre navigateur, pour les retrouver ; le site ne les lit pas.
         </p>
       </section>
       <section className="space-y-2">
@@ -36,8 +36,19 @@ export default function PrivacyPage() {
           dans l&apos;Union européenne), qui ne reçoit que votre adresse et le message.
         </p>
         <p>
-          Depuis « Mon compte », vous pouvez vous déconnecter de ce navigateur ou partout, et supprimer votre compte :
-          tout ce qui lui appartient est effacé tout de suite.
+          L&apos;extension Optizzz peut être liée à votre compte, si vous cliquez «&nbsp;Connecter mon Compte
+          Optizzz&nbsp;» dans ses paramètres : le navigateur lui demande alors l&apos;accès à optizzz.fr, et la page
+          «&nbsp;Connecter l&apos;extension&nbsp;» lui donne un jeton propre à ce navigateur. Le site n&apos;en garde
+          qu&apos;une empreinte, avec le nom du navigateur («&nbsp;Chrome&nbsp;») et la date ; le jeton ne sert
+          qu&apos;à l&apos;extension, jamais à ouvrir une session du site. Liée, l&apos;extension vous propose de
+          rattacher votre Joueur : sur votre clic, elle envoie le pseudo affiché dans le jeu et son serveur, et le site
+          garde ce Joueur (serveur, numéro de l&apos;export public, pseudo, date). Un Joueur n&apos;appartient qu&apos;à
+          un seul compte. Sans extension liée, rien de l&apos;extension n&apos;arrive au site.
+        </p>
+        <p>
+          Depuis «&nbsp;Mon compte&nbsp;», vous pouvez retirer une extension liée, vous déconnecter de ce navigateur ou
+          partout, et supprimer votre compte : tout ce qui lui appartient (connexions, extensions liées, Joueurs) est
+          effacé tout de suite.
         </p>
       </section>
       <section className="space-y-2">

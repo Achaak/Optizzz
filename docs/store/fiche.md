@@ -47,7 +47,9 @@ Alliance
 
 Optizzz ne joue jamais à votre place : une chasse n'est lancée, une répartition appliquée et un formulaire d'attaque rempli que lorsque vous cliquez ; les anti-sondes ne sont déplacées qu'à votre clic ou juste après une chasse ou une attaque que vous avez envoyée.
 
-Respect de votre vie privée : aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur ; le partage d'alliance passe uniquement par votre copier-coller. « Ouvrir sur optizzz.fr » (simulateur de combat, Lanceur de chasse, Plan de flood) ouvre, sur votre clic, l'outil du site avec vos entrées dans l'adresse de la page, sans les envoyer au site. Code source ouvert (licence MIT) : https://github.com/Achaak/Optizzz
+Compte Optizzz (facultatif) : liez l'extension à votre Compte Optizzz sur optizzz.fr pour rejoindre l'Espace de votre alliance. L'accès à optizzz.fr n'est demandé qu'au clic sur « Connecter mon Compte Optizzz » ; liée, l'extension vous propose de rattacher votre Joueur (pseudo et serveur), et ne l'envoie qu'à votre clic.
+
+Respect de votre vie privée : sans Compte Optizzz lié, aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur ; le partage d'alliance passe uniquement par votre copier-coller. « Ouvrir sur optizzz.fr » (simulateur de combat, Lanceur de chasse, Plan de flood) ouvre, sur votre clic, l'outil du site avec vos entrées dans l'adresse de la page, sans les envoyer au site. Code source ouvert (licence MIT) : https://github.com/Achaak/Optizzz
 
 Optizzz est un projet de joueur, non affilié à Fourmizzz.
 
@@ -119,7 +121,9 @@ Alliance
 
 Optizzz never plays for you: a hunt is launched, a worker split applied and an attack form filled only when you click.
 
-Privacy: no data is collected or sent anywhere but Fourmizzz. Your settings stay in your browser; alliance sharing only goes through your own copy and paste. Open source (MIT licence): https://github.com/Achaak/Optizzz
+Optizzz account (optional): link the extension to your Optizzz account on optizzz.fr to join your alliance's space. Access to optizzz.fr is only asked for when you click « Connecter mon Compte Optizzz »; once linked, the extension offers to attach your player (nickname and server) and sends it only when you click.
+
+Privacy: without a linked Optizzz account, no data is collected or sent anywhere but Fourmizzz. Your settings stay in your browser; alliance sharing only goes through your own copy and paste. Open source (MIT licence): https://github.com/Achaak/Optizzz
 
 Optizzz is a player-made project, not affiliated with Fourmizzz.
 
@@ -196,12 +200,18 @@ Demandée seulement quand le joueur active une notification dans les paramètres
 **Justification — autorisation d'accès à l'hôte `*://*.fourmizzz.fr/*`**
 L'extension n'agit que sur le jeu Fourmizzz : elle affiche ses outils dans les pages du jeu, lit les pages du jeu et l'API publique des exports du serveur, et envoie les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) uniquement quand le joueur clique.
 
+**Justification — `scripting` (permission facultative)**
+Demandée seulement quand le joueur clique « Connecter mon Compte Optizzz », avec l'accès à `https://optizzz.fr/*`. Elle sert à enregistrer (`scripting.registerContentScripts`) un petit script de l'extension sur une seule page de notre site, `https://optizzz.fr/connect-extension`, où le joueur est connecté à son Compte Optizzz : ce script demande au site un jeton de liaison et le remet au service worker de l'extension. Il n'est déclaré dans le manifest que de cette façon pour que la permission reste facultative. Aucune autre page n'est touchée.
+
+**Justification — autorisation d'accès à l'hôte `https://optizzz.fr/*` (permission facultative, `optional_host_permissions`)**
+Notre propre site. Demandée seulement au clic sur « Connecter mon Compte Optizzz », après une page qui dit ce qui sera envoyé. Elle permet au script de liaison de tourner sur la page « Connecter l'extension », et à l'extension liée d'appeler l'API de notre site avec son jeton : lire la liste des Joueurs du compte, et, seulement quand le joueur clique « Rattacher », envoyer le pseudo lu dans l'en-tête du jeu et le serveur pour rattacher ce Joueur à son compte. Rien n'est envoyé sans compte lié, ni sur minuterie. « Déconnecter » retire le jeton.
+
 **Ouvrir un outil de optizzz.fr (sans permission)**
 Sur clic du joueur seulement, « Ouvrir sur optizzz.fr » ouvre l'outil correspondant de notre site dans un nouvel onglet (`tabs.create`), ses entrées (armées, niveaux, TDC) dans le fragment de l'adresse (`#p=…`), que le navigateur n'envoie pas au site. Comme toute visite d'un site, l'hébergeur (Vercel) voit l'adresse IP, pas les entrées. Désactivable : « Liens vers optizzz.fr » dans « Fonctionnalités ».
 
 **Code distant** : Non, je n'utilise pas de code distant.
 
-**Utilisation des données** : ne rien cocher (aucune donnée utilisateur collectée), puis cocher les trois attestations (pas de vente à des tiers, pas d'usage sans rapport avec l'objectif unique, pas d'usage pour la solvabilité ou le prêt).
+**Utilisation des données** : depuis la version qui lie l'extension au Compte Optizzz, cocher « Informations d'authentification » (le jeton de liaison, et le pseudo du jeu, qui est aussi l'identifiant de connexion au jeu) et « Contenu du site Web » (le pseudo lu dans la page du jeu) : envoyés à notre site, seulement si le joueur a lié l'extension à son compte et a cliqué « Rattacher ». Puis cocher les trois attestations (pas de vente à des tiers, pas d'usage sans rapport avec l'objectif unique, pas d'usage pour la solvabilité ou le prêt).
 
 ## AMO — informations supplémentaires
 
@@ -212,6 +222,8 @@ Sur clic du joueur seulement, « Ouvrir sur optizzz.fr » ouvre l'outil correspo
   > Sources jointes (optizzz-X.Y.Z-sources.zip, un monorepo pnpm). Build à la racine : `pnpm install --frozen-lockfile && pnpm build:firefox` (Node 24, pnpm 12), résultat dans `apps/extension/.output/firefox-mv3/`.
   >
   > Aucune donnée de l'utilisateur n'est transmise à un tiers : les requêtes vont vers le serveur Fourmizzz de la page (API publique `/api/exports/`, pages du jeu), et les formulaires du jeu (lancer une chasse, appliquer une répartition, déplacer les anti-sondes) ne sont envoyés que sur clic du joueur. Seule exception, la Carte du serveur lit les positions publiques des joueurs sur `https://optizzz.fr/api/<serveur>/map` (notre site, même export public, sans cookie ni identifiant, option désactivable) ; la réponse est validée avec zod et n'est que des données, jamais du code. Sur clic seulement, « Ouvrir sur optizzz.fr » (simulateur de combat, Lanceur de chasse, Plan de flood) ouvre un onglet sur l'outil de notre site (`tabs.create`, sans permission) : les entrées du joueur (armées, niveaux, TDC) sont dans le fragment de l'adresse (`#p=…`), que le navigateur n'envoie jamais au site ; option « Liens vers optizzz.fr » désactivable.
+  >
+  > Compte Optizzz (facultatif) : `https://optizzz.fr/*` (`optional_host_permissions`) et `scripting` (`optional_permissions`) ne sont demandées qu'au clic sur « Connecter mon Compte Optizzz », depuis la page de l'extension `connect-account.html`, avec le consentement `data_collection` `authenticationInfo` et `websiteContent` (déclarés `optional` ; `required` reste `none`). Le script `optizzz-link.js` est enregistré à l'exécution sur la seule page `https://optizzz.fr/connect-extension` : il obtient du site un jeton de liaison (requête de même origine, session du site) et le remet au background. L'extension liée appelle l'API de notre site avec ce jeton (`Authorization: Bearer`, sans cookie) : liste des Joueurs du compte, et, sur clic « Rattacher », le pseudo de l'en-tête du jeu et le serveur. Sans compte lié, rien n'est envoyé.
   >
   > Les avertissements restants viennent de bibliothèques, pas de notre code (qui interdit innerHTML via ESLint) : React DOM (prise en charge de `dangerouslySetInnerHTML`, non utilisé), Apache ECharts (contenu HTML des infobulles et export SVG, alimentés par du texte échappé) et zod (test `Function("")` de disponibilité d'eval, désactivé par `z.config({ jitless: true })`).
 

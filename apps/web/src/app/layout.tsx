@@ -16,7 +16,8 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={geist.variable}>
+    // The extension marks <html> on /connect-extension (data-optizzz-link): not a hydration mismatch.
+    <html lang="fr" className={geist.variable} suppressHydrationWarning>
       <body className="min-h-screen">
         <TRPCReactProvider>
           <SiteHeader />
