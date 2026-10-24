@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
+import { removeExtension } from "./actions";
 
 /** « Se déconnecter » (this browser) and « Se déconnecter partout » (every session of the account). */
 export function SignOutButtons() {
@@ -55,6 +56,25 @@ export function SignOutButtons() {
         </p>
       )}
     </div>
+  );
+}
+
+/** « Retirer » a linked extension: its token stops working at once. */
+export function RemoveExtensionButton({ id, browser }: { id: string; browser: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={busy}
+      aria-label={`Retirer l'extension ${browser}`}
+      onClick={() => {
+        setBusy(true);
+        removeExtension(id).catch(() => setBusy(false));
+      }}
+    >
+      Retirer
+    </Button>
   );
 }
 

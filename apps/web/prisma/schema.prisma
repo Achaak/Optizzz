@@ -153,6 +153,8 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  extensions    ExtensionToken[]
+  players       DeclaredPlayer[]
 
   @@map("user")
   @@schema("accounts")
@@ -208,5 +210,41 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+  @@schema("accounts")
+}
+
+/// A browser's extension linked to the account (/connect-extension): one token per browser, valid until removed from
+/// /account or by « Déconnecter » in the extension. Only the SHA-256 of the token is kept. It opens the extension's API
+/// (/api/extension/*) and nothing else: never a session of the site.
+model ExtensionToken {
+  id        String   @id @default(uuid())
+  /// SHA-256 of the token, hex.
+  tokenHash String   @unique
+  /// « Chrome », « Firefox »… as the extension names its browser, for « Chrome, lié le 24 oct. ».
+  browser   String
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("extension_token")
+  @@schema("accounts")
+}
+
+/// A Player (a pseudo on a Server) declared by the account's extension, on a click. The primary key makes a Player
+/// belong to one account only. Not a proof (ADR 0005): an Admin stays the human check.
+model DeclaredPlayer {
+  server     String
+  /// The player's id in the public export.
+  playerId   Int
+  /// The pseudo when declared.
+  pseudo     String
+  declaredAt DateTime @default(now())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([server, playerId])
+  @@index([userId])
+  @@map("declared_player")
   @@schema("accounts")
 }
