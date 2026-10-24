@@ -7,7 +7,7 @@ Extension navigateur (Chrome + Firefox, MV3) d'aide au jeu [Fourmizzz.fr](http:/
 
 ## Commandes
 
-Monorepo pnpm + Turborepo (ADR 0006) : `apps/extension` (l'extension WXT), `apps/web` (le Site Optizzz, `docs/features/site-public.md`), `packages/game` (règles du jeu, lecteurs de pages, formats, Changements) et `packages/map` (la carte d'un serveur : puces, filtres, noms, axes, option ECharts, format des données du site), partagés par les deux. Tout se lance à la racine ; `pnpm --filter <paquet> <script>` pour un script d'un seul paquet.
+Monorepo pnpm + Turborepo (ADR 0006) : `apps/extension` (l'extension WXT), `apps/web` (le Site Optizzz, `docs/features/site-public.md`), `packages/game` (règles du jeu, lecteurs de pages, formats, Changements), `packages/map` (la carte d'un serveur : puces, filtres, noms, axes, option ECharts, format des données du site) et `packages/crypto` (chiffrement de bout en bout des Espaces d'alliance avec libsodium : clés, Phrase de chiffrement, Clés d'alliance signées, format décrit dans l'ADR 0005 ; jamais importé par le script léger de l'extension, une règle ESLint le garde), partagés par les deux. Tout se lance à la racine ; `pnpm --filter <paquet> <script>` pour un script d'un seul paquet.
 
 ```bash
 pnpm dev            # dev Chrome (recharge à chaud)
