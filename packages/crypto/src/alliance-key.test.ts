@@ -193,6 +193,13 @@ describe("refusing a Clé d'alliance that a trusted Admin did not sign for this 
     );
     expect(await errorCode(openAllianceKey(sealed, { spaceId: SPACE, member, trusted: [] }))).toBe("untrusted-signer");
 
+    // The signature is checked first: the error names the key that really signed, for the interface to show its
+    // fingerprint.
+    const error: unknown = await openAllianceKey(sealed, { spaceId: SPACE, member, trusted: [] }).catch(
+      (e: unknown) => e,
+    );
+    expect((error as CryptoError).signer).toBe(admin.publicKey);
+
     // The site seals its own key and signs it with its own pair: valid, but not from anyone the member trusts.
     const site = await generateKeyPair();
     const planted = await sealAllianceKey(await firstKey(), {

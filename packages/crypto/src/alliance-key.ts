@@ -108,7 +108,8 @@ export async function openAllianceKey(sealed: string, context: OpeningContext): 
   const signer = plaintext.subarray(SIGNER_OFFSET, SIGNATURE_OFFSET);
   const message = signedMessage(context.spaceId, version, fromBase64Url(context.member.publicKey), key);
   if (!verify(sodium, plaintext.subarray(SIGNATURE_OFFSET), message, signer)) throw CryptoError.of("bad-signature");
-  if (!context.trusted.includes(toBase64Url(signer))) throw CryptoError.of("untrusted-signer");
+  const signedBy = toBase64Url(signer);
+  if (!context.trusted.includes(signedBy)) throw CryptoError.untrustedSigner(signedBy);
   return { version, key };
 }
 

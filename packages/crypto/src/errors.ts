@@ -10,7 +10,7 @@ type CryptoErrorCode =
   | "unsupported-format"
   | "malformed";
 
-type FixedCode = Exclude<CryptoErrorCode, "missing-key-version">;
+type FixedCode = Exclude<CryptoErrorCode, "missing-key-version" | "untrusted-signer">;
 
 const MESSAGES: Record<FixedCode, string> = {
   "wrong-passphrase": "Phrase de chiffrement incorrecte.",
@@ -19,8 +19,6 @@ const MESSAGES: Record<FixedCode, string> = {
     "Cette Clé d'alliance n'a pas été chiffrée pour votre clé : demandez à un Admin de vous la renvoyer.",
   "bad-signature":
     "Cette Clé d'alliance ne porte pas de signature valable d'un Admin de cet espace : ne l'utilisez pas, et prévenez un Admin.",
-  "untrusted-signer":
-    "Cette Clé d'alliance est signée par une clé que vous n'avez pas reconnue : comparez son empreinte avec celle de l'Admin avant de l'accepter.",
   undecryptable: "Cette donnée ne se déchiffre pas : elle a été altérée, ou la Clé d'alliance ne correspond pas.",
   "unsupported-format":
     "Cette donnée vient d'une version plus récente d'Optizzz : mettez à jour l'extension ou rechargez la page.",
@@ -33,6 +31,8 @@ export class CryptoError extends Error {
   private constructor(
     readonly code: CryptoErrorCode,
     message: string,
+    /** For `untrusted-signer`: the public key (base64url) that did sign, whose fingerprint the interface can show. */
+    readonly signer?: string,
   ) {
     super(message);
   }
@@ -45,6 +45,14 @@ export class CryptoError extends Error {
     return new CryptoError(
       "missing-key-version",
       `Il vous manque la version ${version} de la Clé d'alliance : demandez à un Admin de vous la renvoyer.`,
+    );
+  }
+
+  static untrustedSigner(signer: string): CryptoError {
+    return new CryptoError(
+      "untrusted-signer",
+      "Cette Clé d'alliance est signée par une clé que vous n'avez pas reconnue : comparez son empreinte avec celle de l'Admin avant de l'accepter.",
+      signer,
     );
   }
 }
