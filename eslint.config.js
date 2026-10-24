@@ -7,6 +7,28 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+/** HTML injection is flagged by store reviewers (AMO). Shared by the overrides that also set no-restricted-syntax. */
+const noHtmlInjection = [
+  {
+    selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
+    message: "Use htmlElement/svgElement (src/utils/html.ts).",
+  },
+  { selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']", message: "Render React elements instead." },
+];
+
+// libsodium (~1 MB of WebAssembly) only loads in the extension's background and pages (ADR 0007), never in the
+// light content script that runs on every game page. Everything it imports (features, utils, data, the game and
+// map packages) may not reach @optizzz/crypto, statically or with import().
+const noCryptoMessage =
+  "libsodium only loads in the extension's background and pages (ADR 0007), never in a content script or shared module.";
+const noCryptoImports = [
+  { group: ["@optizzz/crypto", "@optizzz/crypto/*", "libsodium-wrappers*", "libsodium*"], message: noCryptoMessage },
+];
+const noCryptoDynamicImport = {
+  selector: "ImportExpression[source.value=/^(@optizzz\\/crypto|libsodium)/]",
+  message: noCryptoMessage,
+};
+
 export default defineConfig(
   globalIgnores([
     "**/.output/",
@@ -41,14 +63,16 @@ export default defineConfig(
         { property: "innerHTML", message: "Use htmlElement/svgElement (src/utils/html.ts) or textContent." },
         { property: "outerHTML", message: "Use htmlElement/svgElement (src/utils/html.ts) or textContent." },
       ],
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
-          message: "Use htmlElement/svgElement (src/utils/html.ts).",
-        },
-        { selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']", message: "Render React elements instead." },
-      ],
+      "no-restricted-syntax": ["error", ...noHtmlInjection],
+    },
+  },
+  {
+    files: ["apps/extension/src/**/*.{ts,tsx}", "packages/game/src/**/*.ts", "packages/map/src/**/*.ts"],
+    // Allowed: the background and the extension's pages (entrypoints that are not content scripts).
+    ignores: ["apps/extension/src/entrypoints/background.ts", "apps/extension/src/entrypoints/!(*.content)/**"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: noCryptoImports }],
+      "no-restricted-syntax": ["error", ...noHtmlInjection, noCryptoDynamicImport],
     },
   },
   {
