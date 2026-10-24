@@ -61,18 +61,21 @@ En-tête : « Se connecter », ou « Mon compte » une fois connecté. Les pages
 
 ## Paquet de chiffrement (`@optizzz/crypto`)
 
-Ticket 15. Le format des octets est dans l'ADR 0005 (« Format chiffré ») ; ici, les fichiers et les choix.
+Tickets 15 et 15b. Le format des octets et le modèle de confiance sont dans l'ADR 0005 (« Format chiffré ») ; ici, les fichiers et les choix.
 
-- `packages/crypto/src/personal-key.ts` : `generateKeyPair`, `lockPrivateKey`, `unlockPrivateKey`, `changePassphrase` (même paire, nouveau sel).
+- `packages/crypto/src/personal-key.ts` : `generateKeyPair` (une identité Ed25519 par personne, d'où l'on tire la paire X25519 des boîtes scellées : une seule clé publique, une seule phrase), `lockPrivateKey`, `unlockPrivateKey`, `changePassphrase` (même paire, nouveau sel).
 - `passphrase.ts` : `passphraseProblem` (au moins 16 caractères tels que les voit le joueur, après normalisation), `suggestPassphrase` (« Proposer une phrase »), `normalizePassphrase`.
-- `alliance-key.ts` : `createAllianceKeyring`, `rotateAllianceKey` (une version de plus), `sealAllianceKey`, `sealAllianceKeyring` (toutes les versions pour un nouveau membre), `openAllianceKey`, `openAllianceKeyring`.
+- `alliance-key.ts` : `createAllianceKeyring`, `rotateAllianceKey` (une version de plus), `sealAllianceKey` et `sealAllianceKeyring` (toutes les versions pour un nouveau membre), qui prennent `{ spaceId, recipient, admin }` : l'Admin signe chaque Clé d'alliance qu'il scelle ; `openAllianceKey` et `openAllianceKeyring`, qui prennent `{ spaceId, member, trusted }` et refusent une clé non signée, signée hors de la liste `trusted`, ou dont la signature vient d'un autre espace, d'une autre version ou d'un autre destinataire.
+- `fingerprint.ts` : `fingerprint`, l'empreinte d'une clé publique en 24 chiffres par groupes de quatre, à comparer de vive voix ou sur Discord.
 - `data.ts` : `encryptData` (version la plus haute), `decryptData` (version nommée par la donnée).
-- `errors.ts` : `CryptoError`, avec un `code` et un message en français à montrer au joueur.
+- `errors.ts` : `CryptoError`, avec un `code` et un message en français à montrer au joueur ; pour `untrusted-signer`, `signer` donne la clé qui a signé, pour en montrer l'empreinte.
+- **Liste de confiance** : le paquet ne décide pas qui croire. C'est au ticket 17 de dire qui y entre (recommandé : l'Admin qui vous a approuvé, après comparaison de son empreinte), où elle vit sans que le site puisse y ajouter sa clé, comment on y fait entrer les autres Admins, et si l'Admin doit comparer l'empreinte du nouveau venu avant d'approuver (sans quoi le site peut substituer sa clé à la sienne). Détail dans l'ADR 0005, « Modèle de confiance ».
 - **Liste de mots** (`words-fr.ts`) : les 2 048 mots français de BIP-39, repris de [trezor/python-mnemonic](https://github.com/trezor/python-mnemonic) (`src/mnemonic/wordlist/french.txt`), licence MIT (© 2013-2016 Pavol Rusnak, notice recopiée en tête du fichier), mis en NFC. Mots de 5 à 8 lettres, sans deux mots aux quatre mêmes premières lettres, même sans accents. Cinq mots tirés par `randombytes_uniform` (générateur cryptographique, sans biais) : 5 × 11 = **55 bits**. Avec Argon2id à 64 Mio, essayer la moitié des phrases demande de l'ordre de 2⁵⁴ dérivations, hors de portée de qui volerait la base.
 - **Argon2id** : `opslimit = 3`, `memlimit = 64 Mio`, justifiés dans l'ADR 0005. La dérivation bloque le fil où elle tourne (environ une seconde sur téléphone) : l'interface la lancera dans un Web Worker ou derrière un indicateur d'attente. Non mesuré sur un vrai téléphone.
 - **Saisie** : le champ de la phrase coupe la majuscule automatique (`autocapitalize="off"`, `autocorrect="off"`, `spellcheck="false"`) : la casse compte, les espaces en trop et la forme Unicode des accents non.
 - **Jamais dans le script léger de l'extension** (ADR 0007) : ESLint (`eslint.config.js`) interdit d'importer `@optizzz/crypto` ou libsodium, même par `import()`, partout dans `apps/extension/src` sauf `entrypoints/background.ts` et les pages de l'extension (dossiers d'`entrypoints/` qui ne sont pas des `.content`), ainsi que dans `packages/game` et `packages/map`. `packages/crypto/src/extension-guard.test.ts` vérifie que la règle se déclenche bien là où il faut.
-- **Limite connue** : une boîte scellée est anonyme ; quiconque connaît la clé publique d'un membre peut lui sceller une clé. Un site modifié pourrait donc glisser à un membre une Clé d'alliance qu'il connaît, et lire ce que ce membre chiffre ensuite. À trancher avant les Envois (cadrage 19) : faire signer les scellements par l'Admin qui les envoie serait un nouveau format.
+- **Clés signées** (ticket 15b) : une boîte scellée est anonyme ; sans signature, qui écrit dans la base pourrait glisser à un membre une Clé d'alliance qu'il connaît. Chaque Clé d'alliance scellée porte donc la signature de l'Admin qui l'a scellée (format 2). Les tests jouent les attaques : clé non signée (format 1 ou signature vide), signée par une clé hors de la liste, signature rejouée dans un autre espace, pour une autre version ou pour un autre destinataire, clé remplacée sous une signature valable.
+- **Limite connue** : la signature ne prouve pas qu'une version est la dernière ; le site peut cacher la plus récente à un membre. À trancher au cadrage des Envois (19).
 
 ## Ce que garde le site
 

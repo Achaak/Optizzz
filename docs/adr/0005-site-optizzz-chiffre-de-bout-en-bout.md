@@ -21,22 +21,25 @@ Jusqu'ici, rien ne sortait de Fourmizzz par l'extension (`docs/features/partage-
 
 ## Format chiffré
 
-Ajouté le 2026-10-24 (ticket 15) : la description des octets, sans changer les décisions ci-dessus. Code : `packages/crypto` (`@optizzz/crypto`), libsodium (ADR 0007).
+Ajouté le 2026-10-24 (ticket 15) : la description des octets, sans changer les décisions ci-dessus. Complété le même jour (ticket 15b) : identité Ed25519, Clés d'alliance signées par l'Admin, empreinte, modèle de confiance. Code : `packages/crypto` (`@optizzz/crypto`), libsodium (ADR 0007).
 
 - **Encodage** : chaque clé publique et chaque chiffré voyage en base64url sans remplissage (RFC 4648 §5). Les entiers sont des `u32` gros-boutistes (4 octets).
 - **Version de format** : le premier octet de chaque chiffré. Un octet plus grand que ce que le code connaît donne « Cette donnée vient d'une version plus récente d'Optizzz » ; 0 ou un format jamais écrit, « illisible ». Changer d'algorithme ou de disposition ajoute un format ; on garde le code qui lit les anciens.
-- **Paire de clés personnelle** : X25519 (`crypto_box_keypair`). La clé publique fait 32 octets ; la clé privée ne quitte jamais le navigateur en clair.
+- **Paire de clés personnelle** : une seule identité par personne, une paire de signature Ed25519 (`crypto_sign_keypair`), d'où l'on tire la paire X25519 des boîtes scellées (`crypto_sign_ed25519_pk_to_curve25519`, `crypto_sign_ed25519_sk_to_curve25519`). Une seule clé publique (32 octets) sur le site, une seule Phrase de chiffrement, et une seule empreinte à comparer ; la clé privée ne quitte jamais le navigateur en clair. Une clé publique qui n'est pas un point valable (petit ordre, hors du sous-groupe) est refusée : « illisible ».
+- **Formats en vigueur** : clé privée verrouillée 2, Clé d'alliance scellée 2, donnée d'alliance 1. Les formats 1 de la clé verrouillée et de la Clé d'alliance scellée (ticket 15 : clé privée X25519, boîte sans signature) n'ont jamais été stockés hors des tests : on ne garde pas de code pour les lire. On ne réutilise pas leur numéro pour autant : un numéro désigne une seule disposition, et une boîte format 1 reste reconnaissable pour être refusée comme non signée.
 
-### Clé privée verrouillée par la Phrase de chiffrement (format 1, 97 octets)
+### Clé privée verrouillée par la Phrase de chiffrement (format 2, 97 octets)
 
-| Octets | Contenu                                                          |
-| ------ | ---------------------------------------------------------------- |
-| 0      | format `1`                                                       |
-| 1–4    | `opslimit` d'Argon2id (`u32`)                                    |
-| 5–8    | `memlimit` d'Argon2id, en octets (`u32`)                         |
-| 9–24   | sel (16 octets aléatoires)                                       |
-| 25–48  | nonce (24 octets aléatoires)                                     |
-| 49–96  | XChaCha20-Poly1305 de la clé privée (32 octets) + étiquette (16) |
+| Octets | Contenu                                                              |
+| ------ | -------------------------------------------------------------------- |
+| 0      | format `2`                                                           |
+| 1–4    | `opslimit` d'Argon2id (`u32`)                                        |
+| 5–8    | `memlimit` d'Argon2id, en octets (`u32`)                             |
+| 9–24   | sel (16 octets aléatoires)                                           |
+| 25–48  | nonce (24 octets aléatoires)                                         |
+| 49–96  | XChaCha20-Poly1305 de la graine Ed25519 (32 octets) + étiquette (16) |
+
+- On ne verrouille que la graine (`crypto_sign_ed25519_sk_to_seed`) ; à l'ouverture, `crypto_sign_seed_keypair` refait la paire, clé publique comprise. Une clé format 1 donne « illisible » : lue comme une graine, elle donnerait en silence une autre identité.
 
 - Clé de chiffrement : Argon2id v1.3 (`crypto_pwhash`, `ALG_ARGON2ID13`, parallélisme 1), 32 octets, sur la phrase normalisée : Unicode NFC, espaces de début et de fin ôtés, suites d'espaces réduites à une. La casse compte.
 - Données associées : les octets 0–24 (format, paramètres, sel) : on ne peut pas les modifier sans faire échouer l'ouverture.
@@ -44,16 +47,44 @@ Ajouté le 2026-10-24 (ticket 15) : la description des octets, sans changer les 
 - **Bornes à la lecture** : `1 ≤ opslimit ≤ 10` et `8 Mio ≤ memlimit ≤ 256 Mio`, sinon « illisible » : un chiffré trafiqué ne peut pas figer le navigateur.
 - Changer de phrase rouvre la clé privée et la reverrouille (nouveau sel, paramètres du jour) : la paire ne change pas.
 
-### Clé d'alliance scellée pour un membre (format 1, 86 octets)
+### Clé d'alliance scellée et signée pour un membre (format 2, 181 octets)
 
-| Octets | Contenu                                                                                         |
-| ------ | ----------------------------------------------------------------------------------------------- |
-| 0      | format `1`                                                                                      |
-| 1–85   | `crypto_box_seal` pour la clé publique du membre de : version de la clé (`u32`) + clé (32 oct.) |
+| Octets | Contenu                                                                                             |
+| ------ | --------------------------------------------------------------------------------------------------- |
+| 0      | format `2`                                                                                          |
+| 1–180  | `crypto_box_seal`, pour la clé X25519 tirée de la clé publique du membre, des 132 octets ci-dessous |
 
-- La Clé d'alliance : 32 octets aléatoires (`crypto_aead_xchacha20poly1305_ietf_keygen`), versionnée à partir de 1 ; chaque changement ajoute la version la plus haute plus un, et garde les anciennes.
-- La version est dans la boîte : le site ne peut pas faire passer une clé pour une autre version. Le site range aussi la version en clair à côté (une ligne par membre et par version).
-- Un membre approuvé reçoit toutes les versions, scellées une à une.
+Dans la boîte :
+
+| Octets | Contenu                                               |
+| ------ | ----------------------------------------------------- |
+| 0–3    | version de la Clé d'alliance (`u32`)                  |
+| 4–35   | Clé d'alliance (32 octets)                            |
+| 36–67  | clé publique Ed25519 de l'Admin qui a scellé          |
+| 68–131 | signature Ed25519 de l'Admin (`crypto_sign_detached`) |
+
+- **Ce que signe l'Admin** : `optizzz alliance key 2` (22 octets ASCII) ‖ longueur de l'identifiant de l'espace (`u32`) ‖ identifiant de l'espace sur le site (UTF-8, non vide) ‖ version (`u32`) ‖ clé publique Ed25519 du destinataire (32 octets) ‖ Clé d'alliance (32 octets). L'espace, la version et le destinataire ne sont pas écrits dans la boîte : celui qui ouvre fournit l'espace qu'il ouvre et sa propre clé publique, et la signature ne se vérifie que s'ils sont ceux que l'Admin a signés. Une signature ne se rejoue donc ni dans un autre espace (le même Compte peut être dans un espace sur S2 et un sur S5), ni pour une autre version (un exclu qui ferait passer l'ancienne pour la nouvelle), ni pour un autre membre (une boîte scellée est anonyme : quiconque a ouvert la sienne peut en resceller le contenu pour un autre). Elle couvre aussi la clé elle-même, qu'on ne peut pas remplacer.
+- La signature est dans la boîte, avec la clé secrète qu'elle couvre.
+- La Clé d'alliance : 32 octets aléatoires (`crypto_aead_xchacha20poly1305_ietf_keygen`), versionnée à partir de 1 ; chaque changement ajoute la version la plus haute plus un, et garde les anciennes. Le site range aussi la version en clair à côté (une ligne par membre et par version) ; seule celle de la boîte, signée, compte.
+- Un membre approuvé reçoit toutes les versions, scellées et signées une à une ; elles peuvent l'être par des Admins différents (la version 3 par celui qui a exclu quelqu'un). Une seule version refusée fait refuser le trousseau entier.
+- **À l'ouverture**, dans cet ordre : boîte qui ne s'ouvre pas avec la clé du membre, « pas chiffrée pour votre clé » ; boîte format 1 (sans signature), signature absente, falsifiée ou rejouée : `bad-signature`, « Cette Clé d'alliance ne porte pas de signature valable d'un Admin de cet espace : ne l'utilisez pas, et prévenez un Admin. » ; signature valable d'une clé hors de la liste de confiance : `untrusted-signer`, « … signée par une clé que vous n'avez pas reconnue : comparez son empreinte avec celle de l'Admin avant de l'accepter. ». La signature est vérifiée avant la liste : l'erreur `untrusted-signer` porte la clé qui a vraiment signé, pour que l'interface en montre l'empreinte.
+
+### Empreinte d'une clé publique (empreinte 1)
+
+- BLAKE2b-256 (`crypto_generichash`) de `optizzz fingerprint 1` (21 octets ASCII) ‖ clé publique Ed25519 (32 octets) ; les 16 premiers octets, lus comme un entier gros-boutiste, modulo 10²⁴ ; écrits en 24 chiffres, par groupes de quatre : « 6501 5103 2815 7970 7679 2095 » (clé publique du test 1 de la RFC 8032 §7.1).
+- Environ 80 bits : pour fabriquer une clé de même empreinte qu'un Admin, il faut de l'ordre de 2⁷⁹ essais, hors de portée de qui tient le site. Des chiffres plutôt que des mots : ils se lisent de vive voix et se collent sur Discord sans faute d'accent.
+- Elle ne doit jamais changer : des joueurs l'auront déjà comparée. Un changement de calcul serait une « empreinte 2 », montrée comme telle.
+
+### Modèle de confiance
+
+- **La menace** : qui peut écrire dans la base (l'hébergeur, quelqu'un qui l'a volée) peut sceller pour un membre une Clé d'alliance qu'il connaît, puisqu'une boîte scellée est anonyme ; le membre chiffrerait ensuite ses Envois avec elle. Avec la signature, le membre refuse toute Clé d'alliance qui n'est pas signée, pour lui, dans cet espace et pour cette version, par une clé de sa **liste de confiance**. Un site dont le code déployé est modifié échappe à ce mécanisme comme au reste (décision « Le site déchiffre dans le navigateur » ci-dessus).
+- **Le paquet ne décide pas qui croire** : `openAllianceKey` et `openAllianceKeyring` reçoivent la liste des clés publiques de confiance de l'appelant. Une liste que le site fournirait telle quelle ne protégerait de rien : la confiance vient d'une comparaison d'empreintes hors du site (de vive voix, sur Discord), ou de ce que le membre a déjà vérifié.
+- **Ce que la signature ne règle pas, à décider dans l'interface (ticket 17)** :
+  - **Qui entre dans la liste, et où elle vit.** Recommandation : à l'approbation, le nouveau membre voit l'empreinte de l'Admin qui l'a approuvé et l'invitation à la comparer avec lui ; la clé est alors mémorisée, et tout changement (nouvelle clé d'un Admin après une phrase oubliée, signature d'une clé inconnue) est signalé, jamais accepté en silence. La liste doit être protégée du site : stockée en clair sur le site, il pourrait y ajouter sa clé. Par exemple chiffrée avec une clé tirée de la clé privée du membre, ou gardée dans l'appareil (mais alors à refaire sur chaque appareil). Après une phrase oubliée, nouvelle paire : la liste est à refaire.
+  - **Plusieurs Admins.** Un membre qui ne croit que l'Admin qui l'a approuvé refusera une version scellée par un autre Admin (après une exclusion, par exemple). Soit chaque membre vérifie l'empreinte de chaque Admin, soit un Admin cru signe la clé de l'Admin qu'il nomme (un certificat : un nouveau format, à décrire ici).
+  - **Le sens inverse : la clé du nouveau venu.** L'Admin scelle pour la clé publique que le site lui donne ; le site pourrait y mettre la sienne et recevoir toute l'histoire de l'espace. La page Membres vérifie le pseudo, pas la clé. Seule la comparaison de l'empreinte du nouveau venu par l'Admin, avant d'approuver, ferme cette porte : conseillée ou obligatoire, à trancher au ticket 17.
+  - **La rétention d'une version.** La signature prouve qu'une version vient d'un Admin, pas qu'elle est la dernière : le site peut cacher la version 3 à un membre, qui chiffrerait encore avec la 2, connue de l'exclu. Prévenir quand le site annonce une version plus haute que celles ouvertes ne suffit pas (le site peut aussi la taire) ; il faudrait que les Admins signent aussi « la version courante est N ». À trancher au cadrage des Envois (19), avant qu'ils existent.
+  - **Deux Admins qui changent la clé en même temps** produiraient deux versions de même numéro, toutes deux signées ; le paquet ne les départage pas. Le site doit refuser la seconde (une seule version N par espace, ticket 18).
 
 ### Donnée d'alliance chiffrée (format 1, 45 octets + texte)
 
