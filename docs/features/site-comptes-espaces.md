@@ -62,3 +62,27 @@ En-tête : « Se connecter », ou « Mon compte » une fois connecté. Les pages
 ## Ce que garde le site
 
 Tout ce qui suit vit dans le schéma Postgres `accounts`, que le site de production écrit avec le rôle `optizzz_app` et que le rôle en lecture seule `optizzz_read` ne voit pas (ADR 0008). E-mail, sessions, hachages des jetons d'extension, Joueurs (serveur, id, pseudo, date de déclaration), clé publique et clé privée chiffrée (avec les paramètres d'Argon2id), espaces (serveur, tag, nom), appartenances (Joueur, rôle, date), Clés d'alliance scellées (une par membre et par version), demandes à rejoindre. Jamais la Phrase de chiffrement, jamais une clé en clair.
+
+## Comptes Optizzz : réalisation (ticket 14)
+
+Décisions prises en codant :
+
+- **Le lien de l'e-mail mène à `/login/confirm`**, où un clic sur « Se connecter à Optizzz » consomme le jeton : un antivirus de messagerie qui ouvre les liens ne le brûle pas. Better Auth répond `INVALID_TOKEN` pour un lien inconnu, déjà servi ou passé ses 15 minutes : `/login` dit les deux à la fois.
+- **Le site ne garde qu'une empreinte du jeton** (`storeToken: "hashed"`), ni adresse IP ni navigateur dans les sessions (crochet `databaseHooks.session.create`). Le champ `name` de Better Auth reste vide.
+- **Session** : 30 jours, prolongée au plus une fois par jour, par la question « suis-je connecté ? » que pose l'en-tête depuis le navigateur. Les pages publiques restent statiques, et sans `Set-Cookie` pour qui n'a pas de session.
+- **Supprimer son compte** demande une connexion de moins d'un jour (`freshAge` par défaut de Better Auth) : sinon « Reconnectez-vous par un nouveau lien ». Le blocage du dernier Admin d'un espace se branchera dans `src/server/account-deletion.ts` (`deletionChecks`) au ticket 16 ; tout ce qui appartient au compte part par les cascades de `User`.
+- **E-mails** : `createEmailSender` envoie par l'API transactionnelle de Brevo quand `BREVO_API_KEY` et `EMAIL_FROM` sont posées ; sinon, hors production, l'e-mail s'écrit dans la console du serveur, et en production l'envoi est refusé (un lien dans les journaux ouvrirait le compte). L'appel à Brevo n'est testé qu'avec un `fetch` simulé.
+- **Limite de demandes** : celle de Better Auth (5 par minute sur le lien magique), en mémoire, donc par instance sur Vercel.
+- **Aperçus Vercel** (rôle `optizzz_read`) : « La connexion n'est pas disponible ici. Réessayez plus tard. »
+
+| Fichier                                                              | Rôle                                                              |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `apps/web/prisma/schema.prisma` (schéma `accounts`)                  | Comptes, sessions, liens en attente                               |
+| `apps/web/src/server/auth.ts`, `src/app/api/auth/[...all]/`          | Better Auth : lien magique, sessions, suppression                 |
+| `apps/web/src/server/account-deletion.ts` (+ test)                   | Ce qui peut bloquer une suppression (crochet du ticket 16)        |
+| `apps/web/src/server/email/` (+ tests)                               | L'e-mail du lien et son envoi (Brevo ou console)                  |
+| `apps/web/src/lib/login-links.ts` (+ test), `src/lib/auth-client.ts` | Adresses du lien, messages d'erreur ; Better Auth côté navigateur |
+| `apps/web/src/app/login/`, `src/app/account/`                        | Pages `/login`, `/login/confirm`, `/account`                      |
+| `apps/web/src/components/account-link.tsx`                           | « Se connecter » / « Mon compte » dans l'en-tête                  |
+
+Vérifié en local le 2026-10-24, avec les rôles `optizzz_app` et `optizzz_read` créés dans la base Docker : inscription, lien dans la console, connexion, lien réutilisé et lien expiré refusés, prolongation une fois par jour, « Se déconnecter », « Se déconnecter partout » (toutes les sessions effacées), suppression (compte et sessions effacés ; refusée après un jour de connexion), aucun `Set-Cookie` sur les pages publiques sans session, connexion refusée proprement avec `optizzz_read` ; en clair, sombre et à 375 px.
