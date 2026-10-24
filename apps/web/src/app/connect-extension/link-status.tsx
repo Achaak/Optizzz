@@ -36,7 +36,7 @@ export function LinkStatus({ email }: { email: string }) {
   return (
     <div role="status" className="space-y-3 rounded-xl p-4 text-sm ring-1 ring-foreground/10">
       <p className="text-muted-foreground">
-        Compte : <span className="break-all text-foreground">{email}</span>
+        Compte&nbsp;: <span className="break-all text-foreground">{email}</span>
       </p>
       {state === "waiting" || state === "linking" ? (
         <p>Liaison de l&apos;extension…</p>
@@ -54,13 +54,16 @@ export function LinkStatus({ email }: { email: string }) {
           </p>
         </>
       ) : state === "failed" ? (
-        <p>La liaison n&apos;a pas abouti. Réessayez depuis l&apos;extension (« Connecter mon Compte Optizzz »).</p>
+        <p>
+          La liaison n&apos;a pas abouti. Réessayez depuis l&apos;extension («&nbsp;Connecter mon Compte
+          Optizzz&nbsp;»).
+        </p>
       ) : (
         <>
           <p>L&apos;extension n&apos;a pas demandé à être liée.</p>
           <p className="text-muted-foreground">
-            Dans les paramètres de l&apos;extension Optizzz (« Fonctionnalités »), cliquez « Connecter mon Compte
-            Optizzz » : elle vous demandera l&apos;accès à optizzz.fr, puis reviendra ici.
+            Dans les paramètres de l&apos;extension Optizzz («&nbsp;Fonctionnalités&nbsp;»), cliquez «&nbsp;Connecter
+            mon Compte Optizzz&nbsp;» : elle vous demandera l&apos;accès à optizzz.fr, puis reviendra ici.
           </p>
         </>
       )}

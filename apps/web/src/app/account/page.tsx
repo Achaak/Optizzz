@@ -65,7 +65,7 @@ export default async function AccountPage() {
           <p className="text-sm text-muted-foreground">Aucun Joueur rattaché.</p>
         )}
         <p className="text-sm text-muted-foreground">
-          Un Joueur se rattache depuis l&apos;extension liée, qui vous le propose quand vous jouez : un pseudo par
+          Un Joueur se rattache depuis l&apos;extension liée, qui vous le propose quand vous jouez&nbsp;: un pseudo par
           serveur, et un seul Compte Optizzz par Joueur.
         </p>
       </section>
@@ -87,8 +87,8 @@ export default async function AccountPage() {
           <p className="text-sm text-muted-foreground">Aucune extension liée.</p>
         )}
         <p className="text-sm text-muted-foreground">
-          Pour lier l&apos;extension Optizzz d&apos;un navigateur, cliquez « Connecter mon Compte Optizzz » dans ses
-          paramètres (« Fonctionnalités »). Retirer une extension la déconnecte aussitôt.
+          Pour lier l&apos;extension Optizzz d&apos;un navigateur, cliquez «&nbsp;Connecter mon Compte Optizzz&nbsp;»
+          dans ses paramètres («&nbsp;Fonctionnalités&nbsp;»). Retirer une extension la déconnecte aussitôt.
         </p>
       </section>
 

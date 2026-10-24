@@ -1,5 +1,5 @@
-// What the extension keeps of its link to an Optizzz account (docs/features/optizzz-account.md). All in storage.local,
-// never storage.sync: a token belongs to one browser. Only the background script and the extension's pages read the
+// What the extension keeps of its link to an Optizzz account (docs/features/site-comptes-espaces.md). All in
+// storage.local, never storage.sync: a token belongs to one browser. Only the background script and the extension's pages read the
 // token; content scripts on the game never ask for it.
 import { storage } from "wxt/utils/storage";
 

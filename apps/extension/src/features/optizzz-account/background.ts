@@ -1,6 +1,6 @@
 // The background half of the link to an Optizzz account: it alone keeps the token and talks to optizzz.fr, on a
 // message from the settings (a click, or opening them) or from the link script on « Connecter l'extension ». Never on a
-// timer, and nothing at all while the extension is not linked (ADR 0005). See docs/features/optizzz-account.md.
+// timer, and nothing at all while the extension is not linked (ADR 0005). See docs/features/site-comptes-espaces.md.
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
 import { SITE_URL } from "@optizzz/game/site-links/site";
 import {

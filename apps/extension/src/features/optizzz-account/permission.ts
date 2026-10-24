@@ -8,9 +8,9 @@ import { SITE_URL } from "@optizzz/game/site-links/site";
 export const SITE_ORIGIN_PATTERN = `${SITE_URL}/*`;
 
 /**
- * Firefox's categories for what a linked extension sends (docs/features/optizzz-account.md): `authenticationInfo` for
- * the account's registration (the token, and the game's pseudo, which is also the game's login name),
- * `websiteContent` for the pseudo read in the game's header.
+ * Firefox's categories for what a linked extension sends (docs/features/site-comptes-espaces.md):
+ * `authenticationInfo` for the account's registration (the token, and the game's pseudo, which is also the game's
+ * login name), `websiteContent` for the pseudo read in the game's header.
  */
 export const SITE_DATA_COLLECTION = ["authenticationInfo", "websiteContent"] as const;
 
