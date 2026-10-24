@@ -1,4 +1,5 @@
-// What the site keeps of the public exports — see docs/features/site-public.md. Only the cron writes.
+// What the site keeps. Schema « public »: the public exports (docs/features/site-public.md), written by the cron only.
+// Schema « accounts »: Optizzz accounts (docs/features/site-comptes-espaces.md), the only part the site writes (docs/adr/0008).
 
 generator client {
   provider = "prisma-client"
@@ -7,6 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["public", "accounts"]
 }
 
 /// The latest version read of each export, per server: the cron downloads only a newer one.
@@ -18,6 +20,8 @@ model ExportRead {
   readAt  DateTime @updatedAt
 
   @@id([server, kind])
+
+  @@schema("public")
 }
 
 /// A player as the latest export shows it. A player gone from the export is deleted: the Journal says so.
@@ -42,6 +46,8 @@ model Player {
   @@index([server, alliance])
   @@index([server, pseudo])
   @@index([server, field])
+
+  @@schema("public")
 }
 
 /// An alliance as the latest export shows it.
@@ -60,6 +66,8 @@ model Alliance {
 
   @@id([server, tag])
   @@index([server, totalField])
+
+  @@schema("public")
 }
 
 /// A player's scores on one Paris day, read from that day's first export (the nightly one): the curves.
@@ -75,6 +83,8 @@ model PlayerDay {
 
   @@id([server, playerId, day])
   @@index([server, day])
+
+  @@schema("public")
 }
 
 /// An alliance's totals on one Paris day.
@@ -90,6 +100,8 @@ model AllianceDay {
 
   @@id([server, tag, day])
   @@index([server, day])
+
+  @@schema("public")
 }
 
 /// One Change of the Journal: it happened after the export `since` and by the export `until`.
@@ -112,6 +124,8 @@ model JournalEntry {
   @@index([server, at])
   @@index([server, playerId, at])
   @@index([server, tag, at])
+
+  @@schema("public")
 }
 
 /// A server's map, ready to serve: the columns of @optizzz/map/map-data, as gzipped JSON. Written by the cron with the
@@ -121,4 +135,78 @@ model MapFile {
   version   String
   gzip      Bytes
   updatedAt DateTime @updatedAt
+
+  @@schema("public")
+}
+
+// ── Optizzz accounts (Better Auth, magic link). Deleting a user cascades to everything it owns; later
+// tickets (declared Players, keys, Alliance Spaces) hang their tables off User with onDelete: Cascade too.
+
+/// An Optizzz account: the email alone. `name` stays empty (Better Auth requires the column).
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+  @@schema("accounts")
+}
+
+/// A signed-in browser: 30 days, extended at most once a day. Neither IP address nor user agent is kept.
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+  @@schema("accounts")
+}
+
+/// How a user signs in, as Better Auth records it (unused by the magic link today, required by Better Auth).
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+  @@schema("accounts")
+}
+
+/// A pending magic link: its token hashed, 15 minutes, consumed on first use.
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+  @@schema("accounts")
 }
