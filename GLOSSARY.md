@@ -47,8 +47,12 @@ Membre d'un Espace d'alliance nommé par un Admin pour valider les Demandes.
 _À éviter_ : validateur, officier.
 
 **Phrase de chiffrement** :
-Le secret qu'une personne choisit pour protéger sa clé personnelle, distinct du lien magique de connexion.
+Le secret qu'une personne choisit pour protéger sa clé personnelle, distinct du lien magique de connexion. Les écrans disent « phrase secrète de votre compte », avec ce terme en dessous.
 _À éviter_ : mot de passe.
+
+**Code de sécurité** :
+Les 24 chiffres qu'un Admin et une autre personne s'échangent sur Discord, par copier-coller, pour prouver que chacun a bien la clé de l'autre et pas celle d'un imposteur. Chaque côté a le sien ; le navigateur compare tout seul celui qu'on colle.
+_À éviter_ : empreinte, clé, certificat (dans les écrans).
 
 ## Entraide
 

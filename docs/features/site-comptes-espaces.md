@@ -46,7 +46,7 @@ En-tête : « Se connecter », ou « Mon compte » une fois connecté. Les pages
 - **L'appartenance est celle d'un Joueur** (un pseudo sur un Serveur), avec son rôle : une personne avec des Joueurs sur S2 et S5 peut être dans un espace sur chaque serveur. La paire de clés est celle du Compte.
 - **Créer** : un Joueur crée un espace pour son alliance, sur son Serveur ; le tag vient de l'export, il ne se tape pas. Nom libre, par défaut « [TAG] sur S5 ». Le créateur devient Admin ; la Clé d'alliance est générée dans son navigateur.
 - **Rejoindre** : on choisit parmi les espaces de son alliance sur ce Serveur, présentés avec leur nom, leurs Admins (pseudos), leur nombre de membres et leur date de création. Une demande en attente au plus par espace et par Joueur, annulable, sans message (on se parle sur Discord). Après un refus, on peut redemander ; l'Admin voit « refusée le … ».
-- **Approuver** : « Approuver » demande à l'extension liée de l'Admin sa dernière liste de la page Membres.
+- **Approuver** : le Code de sécurité doit d'abord avoir été échangé avec le nouveau venu (« Confiance et parcours » ci-dessous). « Donner l'accès » demande ensuite à l'extension liée de l'Admin sa dernière liste de la page Membres.
   - Pseudo trouvé dans une liste de moins de 24 heures : l'Admin scelle pour la clé publique du nouveau membre **toutes les versions de la Clé d'alliance** qu'il détient (l'historique de l'espace appartient à l'alliance ; la Priorité a besoin des convois des 30 derniers jours).
   - Sinon : « Ouvrez la page Membres de votre alliance dans le jeu, puis revenez ».
   - Sans extension liée, on ne peut pas approuver. « Refuser » ne demande rien.
@@ -58,6 +58,26 @@ En-tête : « Se connecter », ou « Mon compte » une fois connecté. Les pages
   - Réglages : nom, « Quitter », et pour un Admin « Supprimer l'espace », en tapant son nom (tout est effacé, chiffré compris) ;
   - une note : les Envois arrivent à l'étape suivante.
 - **Départs** (ticket 18) : un membre absent de la page Membres du jeu est signalé chez les Admins et Délégués dès la première lecture où il manque, avec « absent depuis le … » ; l'alerte s'efface s'il revient. Rien n'est retiré tout seul. Exclure est un clic d'Admin : l'accès est coupé, une nouvelle version de la Clé d'alliance est générée et scellée pour les membres restants ; les anciennes versions restent pour relire les anciennes données.
+
+## Confiance et parcours
+
+Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-25, avant le ticket 17. Le pourquoi et les formats : ADR 0005, « Modèle de confiance ». Exigence du propriétaire : facile pour qui ne connaît rien aux clés de chiffrement, et facile pour un Admin de donner l'accès à ses membres. L'Admin ne manipule jamais de clé : sceller, signer et tenir la liste de confiance se fait sans lui.
+
+- **Vocabulaire** : jamais « clé », « chiffrement », « certificat » ni « empreinte » dans les écrans courants. On dit **accès à l'espace** et **Code de sécurité** (`GLOSSARY.md`). Une ligne « Pourquoi ? », repliée, l'explique en deux phrases : « Ce code prouve que vous parlez bien à Pseudo, et pas à quelqu'un qui se ferait passer pour lui. Même Optizzz ne peut pas lire les données de votre alliance. » La Phrase de chiffrement s'affiche « Phrase secrète de votre compte », avec le terme exact en dessous.
+- **Inviter** : « Copier le lien d'invitation » donne un lien vers l'espace, sans aucun secret (jamais de clé dans un lien). Qui l'ouvre est guidé pas à pas, avec une barre d'étapes : se connecter, connecter l'extension, rattacher son pseudo, choisir sa phrase, puis la demande est faite pour cet espace. Une étape déjà faite est passée.
+- **Échanger le Code de sécurité** (obligatoire, sans case « j'ai comparé ») :
+  - le nouveau venu, après sa demande, choisit l'Admin avec qui il parle (sauté s'il n'y en a qu'un) ; il voit « Envoyez ce code à Pseudo sur Discord », un bouton « Copier », et un champ « Collez le code que Pseudo vous a envoyé » ;
+  - l'Admin, sur la demande, voit « Copier mon code » et « Collez le code de Pseudo » ;
+  - chaque côté a son propre code (tirés tous deux des deux clés publiques) : coller le sien ne marche pas. Chaque navigateur calcule le code attendu de l'autre et compare tout seul ; espaces et tirets sont ignorés, les chiffres peuvent aussi se taper (lus de vive voix) ;
+  - codes concordants : « Donner l'accès » s'active chez l'Admin, et le nouveau venu, qui a collé un code concordant, accepte d'office les clés que cet Admin a signées pour lui. Il lit l'espace dès que l'Admin a donné l'accès, sans autre geste ;
+  - codes différents : « Les codes ne correspondent pas. N'allez pas plus loin et prévenez-nous. » Rien n'est retenu ;
+  - l'Admin n'a donc que deux gestes : envoyer le lien, puis coller le code reçu et cliquer « Donner l'accès ».
+- **Phrase secrète** : une phrase de cinq mots est proposée d'office, avec « En choisir une autre » ; le champ est marqué pour que le navigateur ou le gestionnaire de mots de passe propose de l'enregistrer (`autocomplete="new-password"`, l'e-mail comme identifiant) ; case obligatoire « Je l'ai notée ou enregistrée ». Rien d'autre.
+- **Nommer un Admin** : si l'on a déjà échangé le Code de sécurité avec cette personne (on l'a fait entrer), un clic : « Nommer Admin ». Sinon, le même échange s'affiche d'abord. Le certificat d'Admin est signé sans que personne le voie.
+- **Liste de confiance** : les clés qu'on a vérifiées par un code, et ce qu'elles ont signé (certificats de membre et d'Admin, révocations), d'où l'on déduit qui croire. Gardée sur le site, chiffrée et authentifiée avec une clé tirée de la clé privée du membre : le site ne peut ni la lire ni y glisser une clé, et elle suit le membre sur tous ses appareils. Après une phrase oubliée (nouvelle paire), elle est perdue : la réapprobation la refait.
+- **Plusieurs Admins** : à l'approbation, l'Admin signe un certificat de membre (cet espace, cette clé) ; à la nomination, un certificat d'Admin. Un membre croit l'Admin qui l'a fait entrer et les Admins que celui-ci, ou un Admin déjà cru, a certifiés ; un Admin croit de même la clé d'un membre qu'un Admin cru a certifié. C'est ce qui permet, après une exclusion, de sceller la nouvelle version pour tous les membres restants, et à chacun d'accepter une version scellée par un autre Admin. Retirer un Admin ou exclure un membre signe une révocation.
+- **Clé changée** : jamais acceptée en silence. Une signature par une clé inconnue, ou un Admin dont la clé a changé (phrase oubliée), affiche « La clé de Pseudo a changé » et refuse ce qu'elle a signé jusqu'à ce qu'un Admin cru la recertifie, après un nouvel échange du Code de sécurité. Le membre « clé à renvoyer » repasse par l'échange, comme une demande.
+- **Ce qui reste ouvert** : un site qui cacherait la dernière version de la Clé d'alliance ou une révocation (cadrage 19, avant les Envois) ; deux versions de même numéro, refusées par le site (ticket 18).
 
 ## Paquet de chiffrement (`@optizzz/crypto`)
 
