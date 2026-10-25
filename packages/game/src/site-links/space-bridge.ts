@@ -10,6 +10,9 @@ export const SPACES_PATH = "/spaces";
 /** Set on <html> by the extension's script once it listens: the page knows at once that the extension is there. */
 export const SPACE_BRIDGE_ATTRIBUTE = "data-optizzz-space";
 
+/** Where « Se déconnecter » is: the extension's script runs there too, to forget the Clé d'alliance with the site. */
+export const ACCOUNT_PATH = "/account";
+
 export const MEMBERS_REQUEST = "optizzz:members-request";
 export const MEMBERS_REPLY = "optizzz:members-reply";
 
@@ -72,4 +75,67 @@ export function isMembersAnswer(value: unknown): value is MembersAnswer {
 export function isMembersReply(value: unknown): value is MembersReply {
   const m = record(value);
   return m?.type === MEMBERS_REPLY && typeof m.id === "string" && isMembersAnswer(m.answer);
+}
+
+// The Clé d'alliance for the Envois (docs/features/site-envois.md, « La Clé d'alliance dans l'extension »): when the
+// access opens on a space page, the page hands the extension every version it holds (never the private key), for as
+// long as the site keeps its own: the browser's session (`expiresAt` null), or the 30 days of « Se souvenir sur cet
+// appareil ». « Se déconnecter » on the site tells the extension to forget them.
+
+export const ALLIANCE_KEYS = "optizzz:alliance-keys";
+export const FORGET_KEYS = "optizzz:forget-keys";
+
+/** One version of the Clé d'alliance: its number and its 32 bytes in base64url. */
+export interface HandedKey {
+  version: number;
+  key: string;
+}
+
+export interface AllianceKeysMessage {
+  type: typeof ALLIANCE_KEYS;
+  spaceId: string;
+  keys: HandedKey[];
+  /** Milliseconds since 1970 when « Se souvenir sur cet appareil » is ticked; null for the browser's session. */
+  expiresAt: number | null;
+}
+
+export interface ForgetKeysMessage {
+  type: typeof FORGET_KEYS;
+}
+
+const SPACE_ID = /^[0-9a-f-]{36}$/;
+const KEY = /^[A-Za-z0-9_-]{43}$/;
+
+export function isHandedKeys(value: unknown): value is HandedKey[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.length <= 1000 &&
+    value.every((k) => {
+      const m = record(k);
+      return (
+        m !== null &&
+        typeof m.version === "number" &&
+        Number.isInteger(m.version) &&
+        m.version >= 1 &&
+        typeof m.key === "string" &&
+        KEY.test(m.key)
+      );
+    })
+  );
+}
+
+export function isAllianceKeysMessage(value: unknown): value is AllianceKeysMessage {
+  const m = record(value);
+  return (
+    m?.type === ALLIANCE_KEYS &&
+    typeof m.spaceId === "string" &&
+    SPACE_ID.test(m.spaceId) &&
+    isHandedKeys(m.keys) &&
+    (m.expiresAt === null || (typeof m.expiresAt === "number" && Number.isFinite(m.expiresAt)))
+  );
+}
+
+export function isForgetKeysMessage(value: unknown): value is ForgetKeysMessage {
+  return record(value)?.type === FORGET_KEYS;
 }

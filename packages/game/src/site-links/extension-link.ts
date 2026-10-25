@@ -26,4 +26,10 @@ export const EXTENSION_API = {
   players: "/api/extension/players",
   /** DELETE with the token: « Déconnecter ». */
   token: "/api/extension/token",
+  /** GET with the token: the account's Players, their space, its newest key version and what its members send. */
+  spaces: "/api/extension/spaces",
+  /** PUT with the token, `{ server, playerId, categories }`: what a Joueur sends (shown on the space page). */
+  envoiSettings: "/api/extension/envoi-settings",
+  /** POST with the token: an Envoi (encrypted items); GET `?space=…&since=…`: the relève of a space's Envois. */
+  envois: "/api/extension/envois",
 } as const;
