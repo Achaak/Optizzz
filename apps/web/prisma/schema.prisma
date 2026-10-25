@@ -229,16 +229,18 @@ model ExtensionToken {
 /// A Player (a pseudo on a Server) declared by the account's extension, on a click. The primary key makes a Player
 /// belong to one account only. Not a proof (ADR 0005): an Admin stays the human check.
 model DeclaredPlayer {
-  server      String
+  server        String
   /// The player's id in the public export.
-  playerId    Int
+  playerId      Int
   /// The pseudo when declared.
-  pseudo      String
-  declaredAt  DateTime      @default(now())
-  userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  memberships SpaceMember[]
-  requests    JoinRequest[]
+  pseudo        String
+  declaredAt    DateTime       @default(now())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberships   SpaceMember[]
+  requests      JoinRequest[]
+  envoiSettings EnvoiSettings?
+  envois        EnvoiItem[]
 
   @@id([server, playerId])
   @@index([userId])
@@ -279,6 +281,7 @@ model Space {
   certificates  SpaceCertificate[]
   keyVersions   AllianceKeyVersion[]
   absenceAlerts SpaceAbsenceAlerts?
+  envois        EnvoiItem[]
 
   @@index([server, tag])
   @@map("space")
@@ -335,10 +338,13 @@ model SealedAllianceKey {
 /// The versions of a space's Clé d'alliance, by number: one row each, so that two Admins who change the key at once
 /// cannot both write a version N (ADR 0005, « Modèle de confiance ») : the database refuses the second.
 model AllianceKeyVersion {
-  spaceId   String
-  version   Int
-  createdAt DateTime @default(now())
-  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId         String
+  version         Int
+  createdAt       DateTime @default(now())
+  /// The pseudo of the Admin who made it (the creator for version 1), for « Accès changé le … par Pseudo (version N) ».
+  /// Null for the versions made before ticket 20.
+  createdByPseudo String?
+  space           Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
   @@id([spaceId, version])
   @@map("alliance_key_version")
@@ -392,5 +398,48 @@ model SpaceCertificate {
 
   @@id([spaceId, blob])
   @@map("space_certificate")
+  @@schema("accounts")
+}
+
+// ── Envois (docs/features/site-envois.md, ADR 0005). The site keeps what extensions encrypted with the Clé d'alliance:
+// it sees who sent a row, in which space and category, its fingerprint and when it may forget it, never what it says.
+
+/// What a Joueur sends, chosen in their extension (« Fonctionnalités » → « Compte Optizzz »), shown on the space page:
+/// « convoys », « army-count »… (SENT_CATEGORIES of @optizzz/game/site-links/envois).
+model EnvoiSettings {
+  server     String
+  playerId   Int
+  categories String[]
+  updatedAt  DateTime       @updatedAt
+  player     DeclaredPlayer @relation(fields: [server, playerId], references: [server, playerId], onDelete: Cascade)
+
+  @@id([server, playerId])
+  @@map("envoi_settings")
+  @@schema("accounts")
+}
+
+/// One item of a list category (a convoy), encrypted with the Clé d'alliance by the extension of the Joueur who read
+/// it. In clear only: the space, the Joueur, the category, the fingerprint (keyed with the Clé d'alliance, it tells
+/// the same convoy reported by its sender and its recipient apart from others without saying who or how much), the
+/// key version, and when it may be forgotten (90 days after the convoy's arrival). Leaving the space keeps the rows
+/// (the alliance's history); deleting the account or the space erases them.
+model EnvoiItem {
+  id          String         @id @default(uuid())
+  spaceId     String
+  server      String
+  playerId    Int
+  category    String
+  fingerprint String
+  blob        String
+  keyVersion  Int
+  expiresAt   DateTime
+  updatedAt   DateTime       @default(now())
+  space       Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  player      DeclaredPlayer @relation(fields: [server, playerId], references: [server, playerId], onDelete: Cascade)
+
+  @@unique([spaceId, server, playerId, category, fingerprint])
+  @@index([spaceId, updatedAt])
+  @@index([expiresAt])
+  @@map("envoi_item")
   @@schema("accounts")
 }

@@ -121,9 +121,12 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
     async askResend(player) {
       await tx.spaceMember.update({ where: memberKey(spaceId, player), data: { resendNeeded: true } });
     },
-    async addVersion(version) {
+    async addVersion(version, createdByPseudo) {
       // ON CONFLICT DO NOTHING: a version already there is told, without aborting the transaction.
-      const { count } = await tx.allianceKeyVersion.createMany({ data: [{ spaceId, version }], skipDuplicates: true });
+      const { count } = await tx.allianceKeyVersion.createMany({
+        data: [{ spaceId, version, createdByPseudo }],
+        skipDuplicates: true,
+      });
       return count === 1 ? "added" : "taken";
     },
     absenceAlerts: () =>
@@ -231,7 +234,7 @@ export function prismaSpaceStore(db: PrismaClient): SpaceStore {
         await db.space.create({
           data: {
             ...space,
-            keyVersions: { create: { version: 1 } },
+            keyVersions: { create: { version: 1, createdByPseudo: creator.pseudo } },
             members: {
               create: {
                 server: creator.server,

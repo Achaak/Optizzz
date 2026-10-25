@@ -29,15 +29,15 @@ export interface ExtensionStore {
   ): Promise<"declared" | "mine" | "taken">;
 }
 
-const json = (body: unknown, status = 200) =>
+export const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { "content-type": "application/json", "cache-control": "no-store" },
   });
 
-const problem = (status: number, error: string, message: string) => json({ error, message }, status);
+export const problem = (status: number, error: string, message: string) => json({ error, message }, status);
 
-const unauthorized = () =>
+export const unauthorized = () =>
   problem(401, "unlinked", "Cette extension n'est plus liée à un Compte Optizzz. Connectez-la de nouveau.");
 
 /**
@@ -68,7 +68,10 @@ export async function link(
 }
 
 /** The account of the request's token, or null. */
-async function tokenUser(request: Request, store: ExtensionStore): Promise<{ userId: string; hash: string } | null> {
+export async function tokenUser(
+  request: Request,
+  store: Pick<ExtensionStore, "userOfToken">,
+): Promise<{ userId: string; hash: string } | null> {
   const token = bearerToken(request.headers.get("authorization"));
   if (!token) return null;
   const hash = hashToken(token);

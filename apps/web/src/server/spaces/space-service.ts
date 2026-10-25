@@ -253,7 +253,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
       const name = checkName(input.name ?? `${tag} sur ${server.name}`);
       const created = await store.createSpace(
         { id: input.id, server: server.id, tag, name },
-        { server: player.server, playerId: player.playerId, publicKey: key.publicKey },
+        { server: player.server, playerId: player.playerId, publicKey: key.publicKey, pseudo: player.pseudo },
         input.sealed,
       );
       if (created === "taken")
@@ -552,7 +552,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         await checkGrants(input.certificates, input.spaceId, me.sealedFor, remaining);
         if (input.version !== Math.max(0, ...versions) + 1) throw KEY_CHANGED();
         checkResealed(input.sealed, remaining, [...versions, input.version], versions, me);
-        if ((await tx.addVersion(input.version)) === "taken") throw KEY_CHANGED();
+        if ((await tx.addVersion(input.version, me.pseudo)) === "taken") throw KEY_CHANGED();
         await tx.removeMember(target);
         await reseal(tx, input.sealed, remaining);
         await tx.addCertificates([input.exclusion, ...input.certificates]);

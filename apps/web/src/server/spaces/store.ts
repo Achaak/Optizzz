@@ -92,7 +92,7 @@ export interface SpaceTransaction {
   /** Marks the member « à renvoyer », its boxes kept (`MemberRow.resendNeeded`). */
   askResend(player: PlayerRef): Promise<void>;
   /** A new version of the Clé d'alliance: « taken » when the space already has this number. */
-  addVersion(version: number): Promise<"added" | "taken">;
+  addVersion(version: number, createdByPseudo: string): Promise<"added" | "taken">;
 
   absenceAlerts(): Promise<AbsenceAlertsRow | null>;
   /** Writes the alerts if their revision is still `expectedRevision` (0: none yet); the new revision, or null. */
@@ -155,7 +155,7 @@ export interface SpaceStore {
   /** « taken » when the id is already used, or the Player is already in a space. Version 1 is the space's first. */
   createSpace(
     space: Omit<SpaceRow, "createdAt">,
-    creator: PlayerRef & { publicKey: string },
+    creator: PlayerRef & { publicKey: string; pseudo: string },
     sealed: SealedKeyInput[],
   ): Promise<"created" | "taken">;
   spaceSummary(spaceId: string): Promise<SpaceSummary | null>;
