@@ -95,7 +95,7 @@ Ajouté le 2026-10-25 (ticket 15c).
   - **La liste de confiance vit sur le site, chiffrée et authentifiée** avec une clé tirée de la clé privée du membre : le site ne peut pas y ajouter sa clé, et elle suit le membre d'un appareil à l'autre. Perdue avec la paire (phrase oubliée), refaite par la réapprobation.
   - **Certificats et révocations.** Un Admin signe un certificat de membre à l'approbation et un certificat d'Admin à la nomination ; retirer ou exclure signe une révocation. On croit les clés vérifiées par un code et celles que certifient, de proche en proche, des Admins crus et non révoqués. Formats et règles : « Certificat », « Qui croire » et « Liste de confiance verrouillée » ci-dessous (ticket 15c).
   - **Une clé changée n'est jamais acceptée en silence** : refusée et signalée jusqu'à une recertification après un nouvel échange de code.
-  - **Restent ouverts** : la rétention d'une version ou d'une révocation par le site (il faudrait que les Admins signent aussi « la version courante est N »), à trancher au cadrage des Envois (19), avant qu'ils existent ; deux Admins qui changent la clé en même temps produiraient deux versions de même numéro, toutes deux signées, et le paquet ne les départage pas : le site refuse la seconde (une seule version N par espace : table `alliance_key_version`, ticket 18).
+  - **Restent ouverts** : la rétention d'une version ou d'une révocation par le site (décidé au cadrage 19 : « Une version cachée » ci-dessous) ; deux Admins qui changent la clé en même temps produiraient deux versions de même numéro, toutes deux signées, et le paquet ne les départage pas : le site refuse la seconde (une seule version N par espace : table `alliance_key_version`, ticket 18).
 
 ### Certificat et révocation signés par un Admin (format 1, 138 octets)
 
@@ -144,6 +144,13 @@ Ajouté le 2026-10-25 (ticket 15c).
 - **Texte** : `{"spaces":[{"spaceId":"…","verified":[{"publicKey":"…","role":"admin"|"member","verifiedAt":…}],"certificates":["…"]}]}`. `spaceId` non vide ; `publicKey` une clé publique en base64url (32 octets) ; `verifiedAt` un entier de millisecondes depuis 1970 ; `certificates` des certificats format 1 en base64url. Un champ inconnu est ignoré ; un champ manquant ou d'un autre type, « illisible ». Le format 1 désigne ce schéma : un changement de schéma qui ne se lit pas comme lui ajoute un format.
 - À l'ouverture : autre clé privée, ou un seul octet changé, `unreadable-trust-list`, « Votre liste de confiance ne s'ouvre pas : elle a été modifiée hors de votre navigateur, ou n'est pas la vôtre. ».
 - **Limite connue** : le site peut resservir une liste plus ancienne, authentique (un échange de code ou une révocation en moins). Le ticket 17 peut garder la date de la dernière liste écrite sur l'appareil ; le reste relève du cadrage 19.
+
+### Une version cachée, et l'extension (cadrage 19, 2026-10-25)
+
+- **Risque accepté** : le site peut cacher à un membre la dernière version de la Clé d'alliance, une révocation ou un certificat, et resservir une liste de confiance plus ancienne. Une signature des Admins sur « la version courante est N » n'y changerait presque rien : le site peut aussi la taire. Ce qui le réduit : chaque navigateur et l'extension retiennent la plus haute version vue et refusent d'en utiliser une plus basse ; la page de l'espace affiche « Accès changé le … par Pseudo (version N) », pour que les membres le remarquent entre eux.
+- **L'extension tient la Clé d'alliance, jamais la clé privée** : la page de l'espace la lui passe quand l'accès y est ouvert (`docs/features/site-envois.md`). Elle chiffre les Envois et lit ce que relève l'extension ; elle ne peut ni signer, ni sceller, ni ouvrir une version nouvelle sans repasser par le site.
+- **Un Envoi n'est pas signé** : son intérieur nomme le Joueur, le Serveur, la catégorie et l'heure du relevé, et celui qui lit rejette ce qui ne correspond pas à la ligne où le site l'a rangé. Un membre pourrait fabriquer l'Envoi d'un autre ; on l'accepte entre membres.
+- **Réservé aux Admins par le site, pas par le chiffrement** : la composition exacte des armées voyage dans un chiffré à part que le site ne renvoie qu'aux Admins ; tous les membres ayant la même Clé d'alliance, quelqu'un qui tient le site pourrait le passer à un membre. Une seconde clé réservée aux Admins reste possible si le besoin se confirme.
 
 ### Donnée d'alliance chiffrée (format 1, 45 octets + texte)
 

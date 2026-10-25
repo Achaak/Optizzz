@@ -16,12 +16,11 @@ Rien n'est envoyé sans Compte Optizzz. Chaque catégorie est coupée par défau
 - **Production** : TDC, ouvrières, colonisateur et taxe, colonies et ce qu'elles rapportent ;
 - **Convois** : envoyés, reçus, en route ;
 - **Floods** : attaques envoyées en route ;
-- **Attaques reçues** : floods en route vers soi ;
 - **Chasses** : en cours, retour ;
 - **Armée** : Rien, Nombre ou Par unité ;
 - **Niveaux et chantiers**.
 
-Faire une Demande exige d'envoyer Production et Convois. Un Envoi ne contient que ce que la personne a affiché ou ce qu'une action de sa part a lu (`docs/research/reglement.md`).
+« Attaques reçues » est retirée au cadrage 19 : le jeu ne les montre pas. Détail des Envois, des vues et de qui voit quoi : `site-envois.md`. Faire une Demande exige d'envoyer Production et Convois. Un Envoi ne contient que ce que la personne a affiché ou ce qu'une action de sa part a lu (`docs/research/reglement.md`).
 
 ## Ce que l'extension relève
 
@@ -47,7 +46,7 @@ L'URL du webhook est un secret de l'alliance, chiffrée. Le détail part du clie
 ## Conservation
 
 - Convois : 90 jours. Demandes closes : 90 jours.
-- Floods, attaques reçues, chasses : jusqu'à l'arrivée, plus 7 jours.
+- Floods, chasses : jusqu'à l'arrivée, plus 7 jours.
 - États et niveaux : le dernier et le précédent.
 - Exports publics des serveurs : toujours (lus chaque heure par un cron).
 - Supprimer son compte efface tout ce qu'on a envoyé.
@@ -57,6 +56,6 @@ L'URL du webhook est un secret de l'alliance, chiffrée. Le détail part du clie
 1. Migration en monorepo (`git mv` vers `apps/extension`, `packages/game`, `release.yml`, CLAUDE.md), sans changement de fonction.
 2. Site public sans compte (`site-public.md`) : 2a, la fondation (cron des exports, données des serveurs) ; 2b, les outils un à un (carte, trajets, coûts, combat, chasse, flood).
 3. Comptes, Espaces d'alliance, chiffrement (`site-comptes-espaces.md`).
-4. Envois et leurs vues : floods, convois, attaques reçues.
+4. Envois et leurs vues : floods, convois, chasses, armée, niveaux, production (`site-envois.md`).
 5. Demandes et Priorité.
 6. Webhooks Discord.

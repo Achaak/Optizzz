@@ -31,7 +31,7 @@ En-tête : « Se connecter », ou « Mon compte » une fois connecté. Les pages
 - **Changer de phrase** rechiffre la clé privée ; la paire ne change pas.
 - **Sur un appareil** : la clé privée déchiffrée reste ouverte pendant la session du navigateur (`sessionStorage`). Case « Se souvenir sur cet appareil » (décochée par défaut ; note : à éviter sur un appareil partagé) : gardée 30 jours dans le stockage du navigateur. « Se déconnecter » l'efface de l'appareil.
 - **Phrase oubliée** (`/account`, après une confirmation qui dit ce qui va se passer) : nouvelle paire. Les appartenances et les rôles restent, mais chaque espace marque le membre « clé à renvoyer » ; tout Admin la renvoie par le chemin d'une approbation (vérification de la page Membres comprise). D'ici là, le membre ne lit rien. Si la personne était le seul Admin d'un espace, l'avertissement le dit avant de confirmer : personne ne pourra lui renvoyer la clé.
-- **L'extension** n'a besoin d'aucune clé à l'étape 3 ; son déverrouillage se décide au cadrage 19.
+- **L'extension** n'a besoin d'aucune clé à l'étape 3. À l'étape 4, le site lui passe la Clé d'alliance, jamais la clé privée (`site-envois.md`).
 
 ## Joueurs et extension
 
@@ -77,7 +77,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-25, avant le tic
 - **Liste de confiance** : les clés qu'on a vérifiées par un code, et ce qu'elles ont signé (certificats de membre et d'Admin, révocations), d'où l'on déduit qui croire. Gardée sur le site, chiffrée et authentifiée avec une clé tirée de la clé privée du membre : le site ne peut ni la lire ni y glisser une clé, et elle suit le membre sur tous ses appareils. Après une phrase oubliée (nouvelle paire), elle est perdue : la réapprobation la refait.
 - **Plusieurs Admins** : à l'approbation, l'Admin signe un certificat de membre (cet espace, cette clé) ; à la nomination, un certificat d'Admin. Un membre croit l'Admin qui l'a fait entrer et les Admins que celui-ci, ou un Admin déjà cru, a certifiés ; un Admin croit de même la clé d'un membre qu'un Admin cru a certifié. C'est ce qui permet, après une exclusion, de sceller la nouvelle version pour tous les membres restants, et à chacun d'accepter une version scellée par un autre Admin. Retirer un Admin ou exclure un membre signe une révocation.
 - **Clé changée** : jamais acceptée en silence. Une signature par une clé inconnue, ou un Admin dont la clé a changé (phrase oubliée), affiche « La clé de Pseudo a changé » et refuse ce qu'elle a signé jusqu'à ce qu'un Admin cru la recertifie, après un nouvel échange du Code de sécurité. Le membre « clé à renvoyer » repasse par l'échange, comme une demande.
-- **Ce qui reste ouvert** : un site qui cacherait la dernière version de la Clé d'alliance ou une révocation (cadrage 19, avant les Envois). Deux versions de même numéro : refusées par le site depuis le ticket 18 (`alliance_key_version`).
+- **Une version ou une révocation cachée par le site** : risque accepté au cadrage 19 (ADR 0005, « Une version cachée »). Deux versions de même numéro : refusées par le site depuis le ticket 18 (`alliance_key_version`).
 
 ## Paquet de chiffrement (`@optizzz/crypto`)
 
@@ -99,7 +99,7 @@ Tickets 15, 15b et 15c. Le format des octets et le modèle de confiance sont dan
 - **Saisie** : le champ de la phrase coupe la majuscule automatique (`autocapitalize="off"`, `autocorrect="off"`, `spellcheck="false"`) : la casse compte, les espaces en trop et la forme Unicode des accents non.
 - **Jamais dans le script léger de l'extension** (ADR 0007) : ESLint (`eslint.config.js`) interdit d'importer `@optizzz/crypto` ou libsodium, même par `import()`, partout dans `apps/extension/src` sauf `entrypoints/background.ts` et les pages de l'extension (dossiers d'`entrypoints/` qui ne sont pas des `.content`), ainsi que dans `packages/game` et `packages/map`. `packages/crypto/src/extension-guard.test.ts` vérifie que la règle se déclenche bien là où il faut.
 - **Clés signées** (ticket 15b) : une boîte scellée est anonyme ; sans signature, qui écrit dans la base pourrait glisser à un membre une Clé d'alliance qu'il connaît. Chaque Clé d'alliance scellée porte donc la signature de l'Admin qui l'a scellée (format 2). Les tests jouent les attaques : clé non signée (format 1 ou signature vide), signée par une clé hors de la liste, signature rejouée dans un autre espace, pour une autre version ou pour un autre destinataire, clé remplacée sous une signature valable.
-- **Limite connue** : la signature ne prouve pas qu'une version est la dernière ; le site peut cacher la plus récente à un membre. À trancher au cadrage des Envois (19).
+- **Limite connue** : la signature ne prouve pas qu'une version est la dernière ; le site peut cacher la plus récente à un membre. Risque accepté au cadrage 19 (ADR 0005, « Une version cachée »).
 
 ## Ce que garde le site
 
