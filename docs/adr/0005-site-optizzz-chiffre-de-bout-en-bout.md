@@ -26,7 +26,7 @@ Ajouté le 2026-10-24 (ticket 15) : la description des octets, sans changer les 
 - **Encodage** : chaque clé publique et chaque chiffré voyage en base64url sans remplissage (RFC 4648 §5). Les entiers sont des `u32` gros-boutistes (4 octets).
 - **Version de format** : le premier octet de chaque chiffré. Un octet plus grand que ce que le code connaît donne « Cette donnée vient d'une version plus récente d'Optizzz » ; 0 ou un format jamais écrit, « illisible ». Changer d'algorithme ou de disposition ajoute un format ; on garde le code qui lit les anciens.
 - **Paire de clés personnelle** : une seule identité par personne, une paire de signature Ed25519 (`crypto_sign_keypair`), d'où l'on tire la paire X25519 des boîtes scellées (`crypto_sign_ed25519_pk_to_curve25519`, `crypto_sign_ed25519_sk_to_curve25519`). Une seule clé publique (32 octets) sur le site, une seule Phrase de chiffrement, et une seule empreinte à comparer ; la clé privée ne quitte jamais le navigateur en clair. Une clé publique qui n'est pas un point valable (petit ordre, hors du sous-groupe) est refusée : « illisible ».
-- **Formats en vigueur** : clé privée verrouillée 2, Clé d'alliance scellée 2, donnée d'alliance 1, certificat 1, liste de confiance verrouillée 1 ; empreinte 1 et code de paire 1 pour ce qui se compare entre joueurs. Les formats 1 de la clé verrouillée et de la Clé d'alliance scellée (ticket 15 : clé privée X25519, boîte sans signature) n'ont jamais été stockés hors des tests : on ne garde pas de code pour les lire. On ne réutilise pas leur numéro pour autant : un numéro désigne une seule disposition, et une boîte format 1 reste reconnaissable pour être refusée comme non signée.
+- **Formats en vigueur** : clé privée verrouillée 2, Clé d'alliance scellée 2, donnée d'alliance 1, certificat 1, liste de confiance verrouillée 1 ; empreinte 1 et code de paire 1 pour ce qui se compare entre joueurs ; empreinte de donnée 1 pour les doublons des Envois (ticket 20). Les formats 1 de la clé verrouillée et de la Clé d'alliance scellée (ticket 15 : clé privée X25519, boîte sans signature) n'ont jamais été stockés hors des tests : on ne garde pas de code pour les lire. On ne réutilise pas leur numéro pour autant : un numéro désigne une seule disposition, et une boîte format 1 reste reconnaissable pour être refusée comme non signée.
 
 ### Clé privée verrouillée par la Phrase de chiffrement (format 2, 97 octets)
 
@@ -163,6 +163,15 @@ Ajouté le 2026-10-25 (ticket 15c).
 
 - Données associées : les octets 0–4 : changer le format ou la version fait échouer l'ouverture.
 - On chiffre toujours avec la version la plus haute ; on déchiffre avec celle que nomme la donnée. Sans elle : « Il vous manque la version N de la Clé d'alliance ».
+
+### Empreinte d'une donnée d'alliance (empreinte de donnée 1, 16 octets)
+
+Ajouté le 2026-10-25 (ticket 20), pour les doublons des Envois (`docs/features/site-envois.md`, « Ce que garde le site ») ; une fonction de plus, `dataFingerprint` (`packages/crypto/src/data-fingerprint.ts`), sans rien changer aux formats ci-dessus.
+
+- BLAKE2b-128 (`crypto_generichash`, 16 octets) de `optizzz data fingerprint 1` (26 octets ASCII) ‖ texte UTF-8, **avec pour clé** la version la plus haute de la Clé d'alliance (32 octets). Écrite en base64url (22 caractères).
+- Le texte est l'identité d'un élément, la même pour les deux joueurs d'un convoi (`packages/game/src/site-links/envoi-convoys.ts`) : le site reconnaît le même convoi envoyé par son expéditeur et son destinataire sans pouvoir tester une supposition (qui, à qui, combien), faute de clé. Il voit en revanche que deux Joueurs ont rapporté le même élément.
+- Une nouvelle version de la clé change toutes les empreintes : l'extension renvoie alors ses éléments sous les nouvelles et retire les anciennes (sauf les livraisons qu'elle ne garde plus, qui restent sous l'ancienne jusqu'à leur effacement).
+- L'empreinte est aussi écrite dans le chiffré de l'Envoi : celui qui lit refuse un Envoi rangé sous une autre empreinte que la sienne.
 
 ## Options écartées
 

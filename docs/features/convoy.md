@@ -25,6 +25,7 @@ Savoir, en préparant un convoi, quand il arrivera et ce qu'il coûte en ouvriè
 - Vitesse d'attaque et étable à pucerons (`game-levels`) : `laboratoire.php` / `construction.php` relues en arrière-plan si inconnues ou lues il y a plus de 12 h.
 - Convois en route (total de l'en-tête) : mémorisés par `collect` à chaque passage sur `commerce.php`, relus en arrière-plan s'ils ont plus de 15 min (un convoi a pu partir d'un autre appareil).
 - Revenus (`Ressources.php`) : cache des Prévisions de ressources, relu en arrière-plan s'il a plus de 15 min, même si la feature Prévisions est coupée. Sans eux, toutes les ouvrières comptent comme au travail (borne haute de la récolte perdue).
+- Envoi « Convois » (Compte Optizzz, `site-envois.md`) : quand le Joueur l'a coché, `collect` garde aussi, sans requête, les convois en route vers lui (`local:incomingConvoys:<host>`), ses convois envoyés et la messagerie, options du calculateur coupées ou non. La page affiche ensuite l'encart « Convois de l'alliance en route vers vous », tiré de la relève d'optizzz.fr.
 - Convois livrés et reçus : en-têtes de la boîte de réception de `messagerie.php`, gardés par `collect` à chaque passage (option allumée), relus en arrière-plan sur `commerce.php` (un GET, qui n'ouvre aucun message) s'ils ont plus de 15 min. Gardés 30 jours par serveur (`local:convoy-history:<host>`).
 
 ## Code

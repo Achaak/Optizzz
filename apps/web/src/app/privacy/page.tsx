@@ -60,9 +60,22 @@ export default function PrivacyPage() {
           ; «&nbsp;Se déconnecter&nbsp;» l&apos;efface.
         </p>
         <p>
+          Les Envois : dans l&apos;extension, chaque Joueur choisit ce qui part vers son espace, tout décoché au départ
+          (aujourd&apos;hui, ses convois). Quand l&apos;accès à l&apos;espace est ouvert sur une page de l&apos;espace,
+          celle-ci remet la Clé d&apos;alliance à l&apos;extension de ce navigateur (jamais votre clé privée), qui la
+          garde aussi longtemps que votre clé ouverte et l&apos;oublie quand vous vous déconnectez. L&apos;extension
+          chiffre chaque convoi avant de l&apos;envoyer : le site garde, par convoi, quel Joueur l&apos;a envoyé, dans
+          quel espace, une empreinte tirée de la Clé d&apos;alliance (qui reconnaît le même convoi vu par ses deux
+          joueurs sans dire lesquels), la version de la clé et la date où il l&apos;efface, 90 jours après
+          l&apos;arrivée ; ni l&apos;expéditeur, ni le destinataire, ni les quantités en clair. Il garde aussi les
+          catégories que chaque Joueur envoie, montrées aux membres de l&apos;espace. Tous les membres lisent les Envois
+          de l&apos;espace ; un non-membre, rien. Le site note qui a changé l&apos;accès à l&apos;espace et quand
+          («&nbsp;Accès changé le … par Pseudo&nbsp;»).
+        </p>
+        <p>
           Depuis «&nbsp;Mon compte&nbsp;», vous pouvez retirer une extension liée, vous déconnecter de ce navigateur ou
           partout, et supprimer votre compte : tout ce qui lui appartient (connexions, extensions liées, Joueurs, place
-          dans les espaces, clés, vérifications) est effacé tout de suite.
+          dans les espaces, clés, vérifications, Envois) est effacé tout de suite.
         </p>
       </section>
       <section className="space-y-2">
