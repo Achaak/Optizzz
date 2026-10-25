@@ -6,7 +6,7 @@ export interface PlayerRef {
   playerId: number;
 }
 
-export interface SpaceMemberInfo extends PlayerRef {
+interface SpaceMemberInfo extends PlayerRef {
   pseudo: string;
   userId: string;
   /** What this Joueur sends (SENT_CATEGORIES), as their extension last said. */

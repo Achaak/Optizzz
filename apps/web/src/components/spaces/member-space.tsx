@@ -6,8 +6,10 @@
 // same for « Exclure »: one confirmation, and the new access for the others is made without them (ticket 18).
 import { formatDateTime } from "@optizzz/game/format/time-format";
 import { serverById } from "@optizzz/game/servers";
+import { isSentCategory, sendsLabel } from "@optizzz/game/site-links/envois";
 import { useState } from "react";
 import { CopyInvitation } from "~/components/spaces/copy-invitation";
+import { Segmented } from "~/components/tools/hunt/hunt-parts";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -34,6 +36,7 @@ import { withCertificates, withVerified } from "~/lib/spaces/trust-store";
 import { api } from "~/trpc/react";
 import { AdminExchange } from "./admin-exchange";
 import { CodeExchange } from "./code-exchange";
+import { ConvoysPanel } from "./convoys-panel";
 import { errorText } from "./errors";
 import { LeaveSpace } from "./leave-space";
 import { PassphraseUnlock } from "./passphrase-forms";
@@ -41,6 +44,7 @@ import { Callout, Panel } from "./parts";
 import { SpaceSettings } from "./space-settings";
 import { useAbsenceAlerts } from "./use-absence-alerts";
 import { useSpaceAccess, type MemberView, type SpaceAccess } from "./use-space-access";
+import { useKeyHandover, useSpaceEnvois } from "./use-space-envois";
 import { useSpaceKeys } from "./space-keys";
 
 type Member = MemberView["members"][number];
@@ -60,18 +64,26 @@ function keyChanged(member: Member, access: SpaceAccess, view: MemberView): bool
   return view.me.role === "admin" && !access.trusted.members.includes(member.publicKey);
 }
 
+const TABS = [
+  { value: "space", label: "Espace" },
+  { value: "convoys", label: "Convois" },
+] as const;
+
 export function MemberSpace({ view }: { view: MemberView }) {
   const keys = useSpaceKeys();
   const access = useSpaceAccess(keys.pair && keys.trust ? view : undefined);
   const absences = useAbsenceAlerts(view, access.keyring);
+  const envois = useSpaceEnvois(view, access.keyring);
+  const versionHidden = useKeyHandover(view, access.keyring, keys.userId);
+  const [tab, setTab] = useState<(typeof TABS)[number]["value"]>("space");
   const server = serverById(view.space.server);
   const isAdmin = view.me.role === "admin";
   const canAct = isAdmin && view.me.keyStatus === "current" && access.keyring !== null && keys.pair !== null;
   const pseudoOf = (publicKey: string | undefined) =>
     view.members.find((m) => m.publicKey === publicKey && m.keyStatus === "current")?.pseudo ?? null;
 
-  return (
-    <div className="max-w-3xl space-y-6">
+  const header = (
+    <div className="space-y-3">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight break-words">{view.space.name}</h1>
         <p className="text-sm text-muted-foreground">
@@ -79,10 +91,36 @@ export function MemberSpace({ view }: { view: MemberView }) {
           {ROLE_LABEL[view.me.role].toLowerCase()}
         </p>
       </div>
+      <Segmented label="Partie de l'espace" options={TABS} value={tab} onChange={setTab} />
+    </div>
+  );
+
+  if (tab === "convoys")
+    return (
+      <div className="max-w-3xl space-y-6">
+        {header}
+        <ConvoysPanel
+          convoys={envois.convoys}
+          refused={envois.refused}
+          members={view.members}
+          loading={envois.loading || (access.keyring !== null && envois.convoys === null)}
+        />
+      </div>
+    );
+
+  return (
+    <div className="max-w-3xl space-y-6">
+      {header}
 
       {view.leaveProposal && <LeaveProposal view={view} alliance={view.leaveProposal.alliance} />}
 
-      <AccessPanel view={view} access={access} pseudoOf={pseudoOf} />
+      <AccessPanel
+        view={view}
+        access={access}
+        pseudoOf={pseudoOf}
+        version={envois.version}
+        versionHidden={versionHidden}
+      />
 
       {(isAdmin || view.me.role === "delegate") && keys.pair && (
         <AlertsPanel view={view} access={access} isAdmin={isAdmin} pseudoOf={pseudoOf} absences={absences} />
@@ -90,7 +128,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
 
       {isAdmin && <RequestsPanel view={view} access={access} canAct={canAct} />}
 
-      <MembersPanel view={view} access={access} canAct={canAct} absences={absences} />
+      <MembersPanel view={view} access={access} canAct={canAct} absences={absences} sends={envois.sends} />
 
       <Panel title="Inviter">
         <p className="text-muted-foreground">
@@ -103,7 +141,8 @@ export function MemberSpace({ view }: { view: MemberView }) {
       <SpaceSettings view={view} />
 
       <p className="text-sm text-muted-foreground">
-        Les Envois (convois, floods, états de l&apos;armée) arrivent à l&apos;étape suivante d&apos;Optizzz.
+        Les convois envoyés par les membres sont dans l&apos;onglet «&nbsp;Convois&nbsp;». Les floods et les états
+        (armée, niveaux, production) arriveront ensuite.
       </p>
     </div>
   );
@@ -125,14 +164,30 @@ function LeaveProposal({ view, alliance }: { view: MemberView; alliance: string 
   );
 }
 
+type KeyVersion = ReturnType<typeof useSpaceEnvois>["version"];
+
+/**
+ * « Accès changé le 24/10 à 18 h 59 par Lasius (version 2) »: the members can tell each other which version they
+ * see, should the site hide the newest from one of them (ADR 0005, « Une version cachée, et l'extension »).
+ */
+function versionLine(version: NonNullable<KeyVersion>): string {
+  const what = version.version === 1 ? "Accès créé" : "Accès changé";
+  const by = version.createdByPseudo ? ` par ${version.createdByPseudo}` : "";
+  return `${what} le ${formatDateTime(new Date(version.createdAt))}${by} (version ${String(version.version)}).`;
+}
+
 function AccessPanel({
   view,
   access,
   pseudoOf,
+  version,
+  versionHidden,
 }: {
   view: MemberView;
   access: SpaceAccess;
   pseudoOf: (key: string | undefined) => string | null;
+  version: KeyVersion;
+  versionHidden: boolean;
 }) {
   const keys = useSpaceKeys();
   const [resetting, setResetting] = useState(false);
@@ -202,6 +257,13 @@ function AccessPanel({
       ) : (
         <Callout>{describeProblem(access.keyringError)}</Callout>
       )}
+      {versionHidden && (
+        <Callout tone="warning">
+          optizzz.fr vous sert une version de l&apos;accès plus ancienne qu&apos;une version déjà vue sur cet appareil :
+          rien n&apos;est passé à l&apos;extension. Comparez la version avec les autres membres, et prévenez-nous.
+        </Callout>
+      )}
+      {version && <p className="text-muted-foreground">{versionLine(version)}</p>}
     </Panel>
   );
 }
@@ -395,13 +457,18 @@ function MembersPanel({
   access,
   canAct,
   absences,
+  sends,
 }: {
   view: MemberView;
   access: SpaceAccess;
   canAct: boolean;
   absences: Absence[];
+  /** What each member sends, as their extension said (« Envoie : convois »). */
+  sends: readonly { playerId: number; categories: string[] }[];
 }) {
   const now = new Date();
+  const sendsOf = (playerId: number) =>
+    sendsLabel((sends.find((s) => s.playerId === playerId)?.categories ?? []).filter(isSentCategory));
   return (
     <Panel title={`Membres (${String(view.members.length)})`}>
       <ul className="divide-y">
@@ -416,6 +483,7 @@ function MembersPanel({
               </span>
               {member.isMe && <span className="text-muted-foreground">(vous)</span>}
             </div>
+            <p className="text-muted-foreground">{sendsOf(member.playerId)}</p>
             {keyChanged(member, access, view) && <p className="font-medium">⚠ {changedKey(member.pseudo)}</p>}
             {absences
               .filter((a) => a.playerId === member.playerId)

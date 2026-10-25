@@ -72,6 +72,20 @@ export function recallKey(userId: string, publicKey: string, now = Date.now()): 
   return null;
 }
 
+/**
+ * How long the opened key stays on this device: until its date with « Se souvenir sur cet appareil » (milliseconds
+ * since 1970), or null for the browser's session. The extension keeps the Clé d'alliance as long (site-envois.md).
+ */
+export function keyKeptUntil(userId: string): number | null {
+  try {
+    const text = localStorage.getItem(PREFIX + userId);
+    const expiresAt = text ? (JSON.parse(text) as Stored).expiresAt : undefined;
+    return typeof expiresAt === "number" ? expiresAt : null;
+  } catch {
+    return null;
+  }
+}
+
 /** « Se déconnecter », « J'ai oublié ma phrase », account deleted: no opened key stays on this device. */
 export function forgetKeysOnDevice(): void {
   for (const storage of storages()) {

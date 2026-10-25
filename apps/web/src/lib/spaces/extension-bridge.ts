@@ -1,12 +1,55 @@
 // Asks the extension's space script, in this page, for its last list of the game's Members page
 // (@optizzz/game/site-links/space-bridge.ts). Null when no extension answers: not installed, or optizzz.fr not granted.
+import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
+import { toBase64Url } from "@optizzz/crypto/encoding";
 import {
+  ALLIANCE_KEYS,
+  FORGET_KEYS,
   isMembersReply,
   MEMBERS_REQUEST,
   SPACE_BRIDGE_ATTRIBUTE,
+  type AllianceKeysMessage,
+  type ForgetKeysMessage,
   type MembersAnswer,
   type MembersRequest,
 } from "@optizzz/game/site-links/space-bridge";
+
+/**
+ * Hands the extension's script in this page every version of the space's Clé d'alliance this page opened, never the
+ * private key: the extension encrypts the Envois with it, for as long as this device keeps the opened key
+ * (`expiresAt`, or null for the browser's session). Nothing happens without the extension.
+ */
+export function handKeysToExtension(spaceId: string, keyring: AllianceKeyring, expiresAt: number | null): void {
+  const message: AllianceKeysMessage = {
+    type: ALLIANCE_KEYS,
+    spaceId,
+    keys: keyring.map((k) => ({ version: k.version, key: toBase64Url(k.key) })),
+    expiresAt,
+  };
+  whenScriptReady(() => window.postMessage(message, window.location.origin));
+}
+
+/** The extension's script marks <html> once it listens: wait for it a little, since it may come after this page. */
+function whenScriptReady(post: () => void, waitMs = 10_000): void {
+  const root = document.documentElement;
+  if (root.hasAttribute(SPACE_BRIDGE_ATTRIBUTE)) {
+    post();
+    return;
+  }
+  const observer = new MutationObserver(() => {
+    if (!root.hasAttribute(SPACE_BRIDGE_ATTRIBUTE)) return;
+    observer.disconnect();
+    clearTimeout(timer);
+    post();
+  });
+  const timer = setTimeout(() => observer.disconnect(), waitMs);
+  observer.observe(root, { attributes: true, attributeFilter: [SPACE_BRIDGE_ATTRIBUTE] });
+}
+
+/** « Se déconnecter » and the account's deletion: the extension forgets the Clé d'alliance too. */
+export function tellExtensionToForgetKeys(): void {
+  window.postMessage({ type: FORGET_KEYS } satisfies ForgetKeysMessage, window.location.origin);
+}
 
 const TIMEOUT_MS = 4000;
 

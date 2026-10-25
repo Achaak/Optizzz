@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
+import { tellExtensionToForgetKeys } from "~/lib/spaces/extension-bridge";
 import { forgetKeysOnDevice } from "~/lib/spaces/key-session";
 import { removeExtension } from "./actions";
 
@@ -35,8 +36,9 @@ export function SignOutButtons() {
         return;
       }
     }
-    // « Se déconnecter » also forgets the opened key on this device.
+    // « Se déconnecter » also forgets the opened key on this device, and the Clé d'alliance in the extension.
     forgetKeysOnDevice();
+    tellExtensionToForgetKeys();
     await authClient.signOut();
     router.replace("/");
     router.refresh();
@@ -94,6 +96,7 @@ export function DeleteAccount({ email }: { email: string }) {
     setBusy(false);
     if (!error) {
       forgetKeysOnDevice();
+      tellExtensionToForgetKeys();
       router.replace("/login?deleted");
       router.refresh();
       return;

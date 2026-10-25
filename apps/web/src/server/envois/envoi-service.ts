@@ -40,7 +40,7 @@ const record = (value: unknown): Record<string, unknown> =>
 const isPlayerId = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value);
 
 /** The key version an encrypted datum names in clear (bytes 1–4), or null when it is not format 1. */
-export function blobKeyVersion(blob: string): number | null {
+function blobKeyVersion(blob: string): number | null {
   const head = Buffer.from(blob.slice(0, 8), "base64url");
   return head.length >= 5 && head[0] === 1 ? head.readUInt32BE(1) : null;
 }
@@ -194,5 +194,3 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
     },
   };
 }
-
-export type EnvoiSpaces = Awaited<ReturnType<ReturnType<typeof envoiService>["spacesOf"]>>;
