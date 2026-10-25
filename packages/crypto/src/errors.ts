@@ -4,7 +4,9 @@ type CryptoErrorCode =
   | "passphrase-too-short"
   | "not-for-this-key"
   | "bad-signature"
+  | "bad-certificate"
   | "untrusted-signer"
+  | "unreadable-trust-list"
   | "missing-key-version"
   | "undecryptable"
   | "unsupported-format"
@@ -19,6 +21,10 @@ const MESSAGES: Record<FixedCode, string> = {
     "Cette Clé d'alliance n'a pas été chiffrée pour votre clé : demandez à un Admin de vous la renvoyer.",
   "bad-signature":
     "Cette Clé d'alliance ne porte pas de signature valable d'un Admin de cet espace : ne l'utilisez pas, et prévenez un Admin.",
+  "bad-certificate":
+    "Ce certificat ne porte pas de signature valable d'un Admin pour cet espace : il a été altéré ou vient d'ailleurs.",
+  "unreadable-trust-list":
+    "Votre liste de confiance ne s'ouvre pas : elle a été modifiée hors de votre navigateur, ou n'est pas la vôtre.",
   undecryptable: "Cette donnée ne se déchiffre pas : elle a été altérée, ou la Clé d'alliance ne correspond pas.",
   "unsupported-format":
     "Cette donnée vient d'une version plus récente d'Optizzz : mettez à jour l'extension ou rechargez la page.",

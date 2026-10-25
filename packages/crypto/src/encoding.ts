@@ -35,6 +35,26 @@ export function readUint32(bytes: Uint8Array, offset: number): number {
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(offset);
 }
 
+/** Unsigned 64-bit big-endian integer, for a JavaScript integer up to 2^53 − 1 (a date in milliseconds). */
+export function uint64(value: number): Uint8Array {
+  const out = new Uint8Array(8);
+  new DataView(out.buffer).setBigUint64(0, BigInt(value));
+  return out;
+}
+
+/** Reads a `uint64`; one above 2^53 − 1, which `uint64` never writes, gives `undefined`. */
+export function readUint64(bytes: Uint8Array, offset: number): number | undefined {
+  const value = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getBigUint64(offset);
+  return value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : undefined;
+}
+
+/** Space identifiers, prefixed by their length in signed messages so that no two spaces sign the same bytes. */
+export function spaceIdBytes(spaceId: string): Uint8Array {
+  const space = new TextEncoder().encode(spaceId);
+  if (space.length === 0) throw CryptoError.of("malformed");
+  return concat(uint32(space.length), space);
+}
+
 /**
  * Checks a blob's first byte, its format version: a higher one comes from a newer Optizzz,
  * 0 or an older one we never wrote is malformed.

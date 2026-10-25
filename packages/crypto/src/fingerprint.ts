@@ -16,7 +16,11 @@ export async function fingerprint(publicKey: string): Promise<string> {
   const key = fromBase64Url(publicKey);
   if (key.length !== 32) throw CryptoError.of("malformed");
   const sodium = await loadSodium();
-  const hash = sodium.crypto_generichash(32, concat(CONTEXT, key), null);
+  return digitGroups(sodium.crypto_generichash(32, concat(CONTEXT, key), null));
+}
+
+/** The first 16 bytes of a hash as a big-endian integer, modulo 10^24, in six groups of four digits. */
+export function digitGroups(hash: Uint8Array): string {
   let value = 0n;
   for (const byte of hash.subarray(0, 16)) value = (value << 8n) | BigInt(byte);
   const digits = (value % 10n ** BigInt(DIGITS)).toString().padStart(DIGITS, "0");
