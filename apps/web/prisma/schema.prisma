@@ -155,6 +155,7 @@ model User {
   accounts      Account[]
   extensions    ExtensionToken[]
   players       DeclaredPlayer[]
+  personalKey   PersonalKey?
 
   @@map("user")
   @@schema("accounts")
@@ -242,9 +243,129 @@ model DeclaredPlayer {
   declaredAt DateTime @default(now())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberships SpaceMember[]
+  requests    JoinRequest[]
 
   @@id([server, playerId])
   @@index([userId])
   @@map("declared_player")
+  @@schema("accounts")
+}
+
+// ── Alliance Spaces (docs/features/site-comptes-espaces.md, ADR 0005). The site keeps public keys, locked private
+// keys, sealed Clés d'alliance and certificates: never a passphrase, never a key in clear.
+
+/// A person's key pair, born with their first Alliance Space: the Ed25519 public key (base64url) and the private key
+/// locked by the Phrase de chiffrement. Also the trust list, encrypted and authenticated for its owner alone, with a
+/// revision that grows at each write (two tabs do not overwrite each other, and an older list served is noticed).
+model PersonalKey {
+  userId            String   @id
+  publicKey         String   @unique
+  lockedPrivateKey  String
+  trustList         String?
+  trustListRevision Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("personal_key")
+  @@schema("accounts")
+}
+
+/// An Alliance Space, on a server, for an alliance tag read from the export. Several may carry the same tag. Its id is
+/// drawn by the creator's browser: the Clé d'alliance is sealed and signed for it before the space exists on the site.
+model Space {
+  id           String             @id
+  server       String
+  tag          String
+  name         String
+  createdAt    DateTime           @default(now())
+  members      SpaceMember[]
+  requests     JoinRequest[]
+  certificates SpaceCertificate[]
+
+  @@index([server, tag])
+  @@map("space")
+  @@schema("accounts")
+}
+
+enum SpaceRole {
+  admin
+  delegate
+  member
+
+  @@schema("accounts")
+}
+
+/// A Player in a space, with its role. A Player is in one space at most. `publicKey` is the key its Clés d'alliance are
+/// last sealed for: another key than the account's today means « clé à renvoyer » (passphrase forgotten, boxes deleted)
+/// until an Admin seals them again; the old key stays, for a revocation to name it.
+model SpaceMember {
+  spaceId    String
+  server     String
+  playerId   Int
+  role       SpaceRole
+  joinedAt   DateTime            @default(now())
+  publicKey  String
+  space      Space               @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  player     DeclaredPlayer      @relation(fields: [server, playerId], references: [server, playerId], onDelete: Cascade)
+  sealedKeys SealedAllianceKey[]
+
+  @@id([spaceId, server, playerId])
+  @@unique([server, playerId])
+  @@map("space_member")
+  @@schema("accounts")
+}
+
+/// One version of the Clé d'alliance, sealed for a member and signed by the Admin who sealed it (ADR 0005, format 2).
+/// The version in clear is only for sorting: the one in the box, signed, is what counts.
+model SealedAllianceKey {
+  spaceId  String
+  server   String
+  playerId Int
+  version  Int
+  sealed   String
+  sealedAt DateTime    @default(now())
+  member   SpaceMember @relation(fields: [spaceId, server, playerId], references: [spaceId, server, playerId], onDelete: Cascade)
+
+  @@id([spaceId, server, playerId, version])
+  @@map("sealed_alliance_key")
+  @@schema("accounts")
+}
+
+enum JoinRequestStatus {
+  pending
+  refused
+
+  @@schema("accounts")
+}
+
+/// A request to join a space: one per space and Player, pending or refused (« refusée le … »), without a message.
+model JoinRequest {
+  id        String            @id @default(uuid())
+  spaceId   String
+  server    String
+  playerId  Int
+  status    JoinRequestStatus @default(pending)
+  createdAt DateTime          @default(now())
+  decidedAt DateTime?
+  space     Space             @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  player    DeclaredPlayer    @relation(fields: [server, playerId], references: [server, playerId], onDelete: Cascade)
+
+  @@unique([spaceId, server, playerId])
+  @@map("join_request")
+  @@schema("accounts")
+}
+
+/// A certificate or a revocation signed by an Admin of the space (ADR 0005, « Certificat »): nothing secret, kept in
+/// clear for every member's browser to work out whom to believe.
+model SpaceCertificate {
+  spaceId   String
+  blob      String
+  createdAt DateTime @default(now())
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@id([spaceId, blob])
+  @@map("space_certificate")
   @@schema("accounts")
 }

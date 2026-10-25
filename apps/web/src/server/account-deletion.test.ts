@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { accountDeletionBlocker } from "./account-deletion";
 
 describe("accountDeletionBlocker", () => {
-  it("lets any account be deleted while there are no Alliance Spaces", async () => {
+  it("lets an account be deleted when no rule objects", async () => {
     expect(await accountDeletionBlocker("user-1")).toBeNull();
   });
 

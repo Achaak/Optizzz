@@ -4,7 +4,6 @@
 import { APIError, betterAuth, type DBAdapterInstance } from "better-auth";
 import { magicLink } from "better-auth/plugins";
 import { confirmLinkUrl } from "~/lib/login-links";
-import { accountDeletionBlocker } from "~/server/account-deletion";
 import { magicLinkEmail } from "~/server/email/magic-link-email";
 import type { SendEmail } from "~/server/email/send-email";
 
@@ -16,9 +15,14 @@ interface AuthOptions {
   secret: string;
   database: DBAdapterInstance;
   sendEmail: SendEmail;
+  /**
+   * Before an account is deleted: the reason that blocks it (shown to the person), or null once what the cascades do
+   * not take is tidied (src/server/auth.ts: the last Admin of a space with others; a space where it is alone).
+   */
+  beforeDeleteUser?: (userId: string) => Promise<string | null>;
 }
 
-export function createAuth({ baseURL, secret, database, sendEmail }: AuthOptions) {
+export function createAuth({ baseURL, secret, database, sendEmail, beforeDeleteUser }: AuthOptions) {
   return betterAuth({
     secret,
     baseURL,
@@ -33,7 +37,7 @@ export function createAuth({ baseURL, secret, database, sendEmail }: AuthOptions
         enabled: true,
         // Better Auth then deletes the user: the database cascades to everything it owns.
         beforeDelete: async (user) => {
-          const reason = await accountDeletionBlocker(user.id);
+          const reason = beforeDeleteUser ? await beforeDeleteUser(user.id) : null;
           if (reason) throw new APIError("BAD_REQUEST", { message: reason });
         },
       },

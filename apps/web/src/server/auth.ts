@@ -4,10 +4,13 @@ import "server-only";
 
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { env } from "~/env";
+import { accountDeletionBlocker } from "~/server/account-deletion";
 import { createAuth } from "~/server/auth-config";
 import { db } from "~/server/db";
 import { createEmailSender } from "~/server/email/send-email";
 import { siteOrigin } from "~/server/site-origin";
+import { adminMemberships, deleteLonelySpaces } from "~/server/spaces/prisma-store";
+import { lastAdminBlocker } from "~/server/spaces/space-service";
 
 /** The site's own address, never the request's: the magic links, and the only origin /api/extension/link answers. */
 export const ownOrigin = siteOrigin({
@@ -29,4 +32,12 @@ export const auth = createAuth({
     log: (message) => console.info(message),
     fetch,
   }),
+  // The last Admin of a space with other members names another Admin first; a space where the account is alone goes.
+  beforeDeleteUser: async (userId) => {
+    const reason = await accountDeletionBlocker(userId, [
+      async (id) => lastAdminBlocker(await adminMemberships(db, id)),
+    ]);
+    if (!reason) await deleteLonelySpaces(db, userId);
+    return reason;
+  },
 });
