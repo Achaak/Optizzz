@@ -9,6 +9,7 @@ import {
   storeCurrentPlayer,
   storeLink,
 } from "@/data/optizzz-account";
+import { storeAllianceMembers } from "@/data/alliance-members";
 import { accountService, answer, senderKind } from "./background";
 
 const S5 = "https://s5.fourmizzz.fr";
@@ -219,6 +220,9 @@ describe("who may send what", () => {
     expect(senderKind({ id: ID, url: `${S5}/Reine.php`, tab }, ID, BASE)).toBe("game");
     expect(senderKind({ id: ID, url: "https://optizzz.fr/connect-extension", tab }, ID, BASE)).toBe("link");
     expect(senderKind({ id: ID, url: "https://optizzz.fr/account", tab }, ID, BASE)).toBeNull();
+    expect(senderKind({ id: ID, url: "https://optizzz.fr/spaces/0b8f6c1e", tab }, ID, BASE)).toBe("space");
+    expect(senderKind({ id: ID, url: "https://optizzz.fr/spaces", tab }, ID, BASE)).toBeNull();
+    expect(senderKind({ id: ID, url: "https://evil.example/spaces/0b8f6c1e", tab }, ID, BASE)).toBeNull();
     expect(senderKind({ id: "another-extension", url: `${BASE}popup.html` }, ID, BASE)).toBeNull();
     expect(senderKind({ id: ID, url: "https://evil.example/connect-extension", tab }, ID, BASE)).toBeNull();
   });
@@ -233,5 +237,32 @@ describe("who may send what", () => {
     await answer(service(), { type: "optizzz-account", action: "connect" }, "game");
     expect(opened).toBe(1);
     expect(await answer(service(), token, "link")).toEqual({ ok: true });
+  });
+});
+
+describe("the Members page for « Donner l'accès »", () => {
+  const ask = { type: "optizzz-space", action: "members", server: "s5" } as const;
+  const list = { tag: "ABC", pseudos: ["Bruno", "Alice"], readAt: new Date("2026-10-24T11:00:00Z") };
+
+  it("goes only to the space script, and only while the extension is linked", async () => {
+    await storeAllianceMembers(S5, list);
+    expect(answer(service(), ask, "game")).toBeNull();
+    expect(answer(service(), ask, "link")).toBeNull();
+    expect(await answer(service(), ask, "space")).toEqual({ status: "unlinked" });
+    await storeLink(TOKEN, NOW);
+    permitted = false;
+    expect(await answer(service(), ask, "space")).toEqual({ status: "unlinked" });
+  });
+
+  it("hands the last list kept for the server, read from storage without any request", async () => {
+    await storeLink(TOKEN, NOW);
+    expect(await answer(service(), ask, "space")).toEqual({ status: "linked", members: null });
+    await storeAllianceMembers(S5, list);
+    expect(await answer(service(), ask, "space")).toEqual({
+      status: "linked",
+      members: { tag: "ABC", pseudos: ["Bruno", "Alice"], readAt: list.readAt.getTime() },
+    });
+    expect(await answer(service(), { ...ask, server: "s9" }, "space")).toEqual({ status: "unlinked" });
+    expect(site.calls).toEqual([]);
   });
 });

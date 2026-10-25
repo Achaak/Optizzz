@@ -43,7 +43,9 @@ export default defineConfig({
           // 142: first version honouring data_collection_permissions on Firefox for Android.
           strict_min_version: "142.0",
           // Nothing without an Optizzz account. Linked, on a click: the account's token and the game's pseudo and
-          // server (src/features/optizzz-account/permission.ts), consented to on « Connecter mon Compte Optizzz ».
+          // server, and for an Admin's « Donner l'accès » the Members page list handed to the Alliance Space page in
+          // the same browser (src/features/optizzz-account/permission.ts), consented to on « Connecter mon Compte
+          // Optizzz ».
           data_collection_permissions: { required: ["none"], optional: ["authenticationInfo", "websiteContent"] },
         },
         gecko_android: { strict_min_version: "142.0" },

@@ -1,6 +1,7 @@
 // Messages to the background script, which alone holds the token and talks to optizzz.fr. The settings (popup and the
 // game's dialog) ask for the account's state and act on a click; the link script of « Connecter l'extension » hands
-// over the token. The background checks who sends each one (background.ts).
+// over the token; the space script of the Alliance Spaces asks for the last Members page list. The background checks
+// who sends each one (background.ts).
 import type { AttachedPlayer } from "@/data/optizzz-account";
 
 /** The account block of « Fonctionnalités ». */
@@ -24,6 +25,13 @@ export type AccountAction =
 
 export type LinkMessage =
   { type: "optizzz-link"; action: "start" } | { type: "optizzz-link"; action: "token"; token: string };
+
+/** From the space script on an Alliance Space page: the last Members page list kept for a server (« s5 »). */
+export interface SpaceMessage {
+  type: "optizzz-space";
+  action: "members";
+  server: string;
+}
 
 const record = (message: unknown): Record<string, unknown> | null =>
   typeof message === "object" && message !== null ? (message as Record<string, unknown>) : null;
@@ -49,6 +57,11 @@ export function isLinkMessage(message: unknown): message is LinkMessage {
   const m = record(message);
   if (m?.type !== "optizzz-link") return false;
   return m.action === "start" || (m.action === "token" && typeof m.token === "string" && /^[\w-]{43}$/.test(m.token));
+}
+
+export function isSpaceMessage(message: unknown): message is SpaceMessage {
+  const m = record(message);
+  return m?.type === "optizzz-space" && m.action === "members" && typeof m.server === "string";
 }
 
 /** From the settings: the background's answer. */

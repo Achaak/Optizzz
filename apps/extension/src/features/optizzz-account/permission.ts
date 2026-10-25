@@ -1,8 +1,10 @@
 // The optional permissions « Connecter mon Compte Optizzz » asks for (ADR 0007): optizzz.fr, and `scripting` to put
-// the link script on its page « Connecter l'extension ». Optional, so that an update disables nobody's extension. On
-// Firefox, also the consent to send data to optizzz.fr (data_collection_permissions, optional in the manifest).
+// the extension's scripts on its pages « Connecter l'extension » and the Alliance Spaces. Optional, so that an update
+// disables nobody's extension. On Firefox, also the consent to send data to optizzz.fr (data_collection_permissions,
+// optional in the manifest).
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
 import { SITE_URL } from "@optizzz/game/site-links/site";
+import { SPACES_PATH } from "@optizzz/game/site-links/space-bridge";
 
 /** As in the manifest's optional_host_permissions. */
 export const SITE_ORIGIN_PATTERN = `${SITE_URL}/*`;
@@ -10,7 +12,8 @@ export const SITE_ORIGIN_PATTERN = `${SITE_URL}/*`;
 /**
  * Firefox's categories for what a linked extension sends (docs/features/site-comptes-espaces.md):
  * `authenticationInfo` for the account's registration (the token, and the game's pseudo, which is also the game's
- * login name), `websiteContent` for the pseudo read in the game's header.
+ * login name), `websiteContent` for the pseudo read in the game's header, and for the list of the game's Members page
+ * an Admin's extension hands to the Alliance Space page open in the same browser (never to the site's server).
  */
 export const SITE_DATA_COLLECTION = ["authenticationInfo", "websiteContent"] as const;
 
@@ -33,6 +36,19 @@ export const LINK_SCRIPT = {
   js: ["/optizzz-link.js"],
   matches: [`${SITE_URL}${CONNECT_EXTENSION_PATH}`, `${SITE_URL}${CONNECT_EXTENSION_PATH}?*`],
 } as const;
+
+/**
+ * The space script, registered with the link script, only on the pages of the Alliance Spaces: « Donner l'accès » asks
+ * it for the last list of the game's Members page (@optizzz/game/site-links/space-bridge.ts).
+ */
+export const SPACE_SCRIPT = {
+  id: "optizzz-space",
+  js: ["/optizzz-space.js"],
+  matches: [`${SITE_URL}${SPACES_PATH}/*`],
+} as const;
+
+/** Every script the extension registers on optizzz.fr while it is granted. */
+export const SITE_SCRIPTS = [LINK_SCRIPT, SPACE_SCRIPT] as const;
 
 /** The extension's page that explains and asks (only an extension page may ask, and Firefox's popup would close). */
 export const CONNECT_PAGE = "/connect-account.html";

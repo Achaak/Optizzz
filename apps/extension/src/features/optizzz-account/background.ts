@@ -1,8 +1,12 @@
 // The background half of the link to an Optizzz account: it alone keeps the token and talks to optizzz.fr, on a
 // message from the settings (a click, or opening them) or from the link script on « Connecter l'extension ». Never on a
-// timer, and nothing at all while the extension is not linked (ADR 0005). See docs/features/site-comptes-espaces.md.
+// timer, and nothing at all while the extension is not linked (ADR 0005). It also answers the space script of an
+// Alliance Space page with the last Members page list. See docs/features/site-comptes-espaces.md.
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
+import { serverById } from "@optizzz/game/servers";
 import { SITE_URL } from "@optizzz/game/site-links/site";
+import { SPACES_PATH, type MembersAnswer } from "@optizzz/game/site-links/space-bridge";
+import { loadAllianceMembers } from "@/data/alliance-members";
 import {
   decline,
   forgetLink,
@@ -17,7 +21,15 @@ import {
 } from "@/data/optizzz-account";
 import { siteApi } from "./api";
 import { syncLinkScript } from "./link-script";
-import { isAccountAction, isLinkMessage, type AccountAction, type AccountStatus, type LinkMessage } from "./messages";
+import {
+  isAccountAction,
+  isLinkMessage,
+  isSpaceMessage,
+  type AccountAction,
+  type AccountStatus,
+  type LinkMessage,
+  type SpaceMessage,
+} from "./messages";
 import { gameServerOf, offerFor } from "./offer";
 import { CONNECT_PAGE, SITE_PERMISSION, SITE_ORIGIN_PATTERN } from "./permission";
 
@@ -115,6 +127,21 @@ export function accountService({ now, fetch, permitted, openConnectPage }: Depen
     return status(origin, notice);
   }
 
+  /**
+   * « Donner l'accès » on an Alliance Space page: the last Members page list kept for the server, for the page in this
+   * browser to check the newcomer's pseudo. Only while the extension is linked; nothing is fetched, from the game or
+   * the site, and the list goes to the page alone.
+   */
+  async function members(serverId: string): Promise<MembersAnswer> {
+    const server = serverById(serverId);
+    if (!(await loadLink()) || !(await permitted()) || server?.id !== serverId) return { status: "unlinked" };
+    const list = await loadAllianceMembers(server.origin);
+    return {
+      status: "linked",
+      members: list && { tag: list.tag, pseudos: list.pseudos, readAt: list.readAt.getTime() },
+    };
+  }
+
   /** The link script asks whether it may take a token: only after « Connecter mon Compte Optizzz ». */
   async function linkStart(): Promise<{ ok: boolean }> {
     return { ok: (await permitted()) && (await isLinkRequested(now())) };
@@ -137,18 +164,22 @@ export function accountService({ now, fetch, permitted, openConnectPage }: Depen
     disconnect,
     linkStart,
     linkToken,
+    members,
     connect: openConnectPage,
   };
 }
 
 type Sender = Browser.runtime.MessageSender;
 
-/** Who sends a message: one of the extension's pages, its scripts on the game, or its link script on optizzz.fr. */
+/**
+ * Who sends a message: one of the extension's pages, its scripts on the game, its link script on optizzz.fr
+ * « Connecter l'extension », or its space script on an Alliance Space page.
+ */
 export function senderKind(
   sender: Sender,
   extensionId: string,
   extensionBase: string,
-): "page" | "game" | "link" | null {
+): "page" | "game" | "link" | "space" | null {
   if (sender.id !== extensionId || !sender.url) return null;
   if (sender.url.startsWith(extensionBase)) return "page";
   let url: URL;
@@ -160,15 +191,20 @@ export function senderKind(
   if (!sender.tab) return null;
   if (gameServerOf(url.origin)) return "game";
   if (url.origin === SITE_URL && url.pathname === CONNECT_EXTENSION_PATH) return "link";
+  if (url.origin === SITE_URL && url.pathname.startsWith(`${SPACES_PATH}/`)) return "space";
   return null;
 }
 
-/** What a message gets: the settings may ask from a page or the game; the token comes only from the link script. */
+/**
+ * What a message gets: the settings may ask from a page or the game; the token comes only from the link script; the
+ * Members page list goes only to the space script.
+ */
 export function answer(
   service: ReturnType<typeof accountService>,
-  message: AccountAction | LinkMessage,
+  message: AccountAction | LinkMessage | SpaceMessage,
   from: ReturnType<typeof senderKind>,
 ): Promise<unknown> | null {
+  if (message.type === "optizzz-space") return from === "space" ? service.members(message.server) : null;
   if (message.type === "optizzz-link") {
     if (from !== "link") return null;
     return message.action === "start" ? service.linkStart() : service.linkToken(message.token);
@@ -212,7 +248,7 @@ export function setUpOptizzzAccount(): void {
   });
 
   browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-    if (!isAccountAction(message) && !isLinkMessage(message)) return false;
+    if (!isAccountAction(message) && !isLinkMessage(message) && !isSpaceMessage(message)) return false;
     const reply = answer(service, message, senderKind(sender, browser.runtime.id, browser.runtime.getURL("/")));
     if (!reply) {
       sendResponse(null);

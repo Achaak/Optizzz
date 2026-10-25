@@ -1,6 +1,7 @@
 // The last list of the player's alliance members read on the game's Members page, with its date, one per server. Kept
-// by `collect` when the player opens the page, never by a request to the game: an Admin's approval and the departure
-// alerts of the Alliance Spaces will read it (docs/features/site-comptes-espaces.md). Nothing of it leaves the browser.
+// by `collect` when the player opens the page, never by a request to the game: an Admin's approval reads it, handed by
+// the background to the Alliance Space page open in this browser (features/optizzz-account/space-page.ts), and the
+// departure alerts will (docs/features/site-comptes-espaces.md). It is never sent to the site's server.
 import { readAllianceTag, readMembersHuntingField } from "@optizzz/game/pages/alliance";
 import { storage } from "wxt/utils/storage";
 
