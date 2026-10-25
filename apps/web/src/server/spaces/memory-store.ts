@@ -20,6 +20,7 @@ interface Member extends PlayerRef {
   joinedAt: Date;
   publicKey: string;
   sealed: SealedKeyInput[];
+  resendNeeded?: boolean;
 }
 
 interface Request extends PlayerRef {
@@ -75,6 +76,7 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
               sealedFor: m.publicKey,
               currentKey: keys.get(player.userId)?.publicKey ?? null,
               versions: m.sealed.map((s) => s.version).sort((a, b) => a - b),
+              resendNeeded: m.resendNeeded ?? false,
             };
           }),
       ),
@@ -108,7 +110,12 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
     },
     sealFor: (player, publicKey, sealed) => {
       const member = members.find((m) => m.spaceId === spaceId && same(m, player));
-      if (member) Object.assign(member, { publicKey, sealed: [...sealed] });
+      if (member) Object.assign(member, { publicKey, sealed: [...sealed], resendNeeded: false });
+      return Promise.resolve();
+    },
+    askResend: (player) => {
+      const member = members.find((m) => m.spaceId === spaceId && same(m, player));
+      if (member) member.resendNeeded = true;
       return Promise.resolve();
     },
     addVersion: (version) => {
@@ -238,6 +245,7 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
             spaceTag: spaces.get(m.spaceId)?.tag ?? "",
             role: m.role,
             sealedFor: m.publicKey,
+            resendNeeded: m.resendNeeded ?? false,
           })),
       ),
     requestsOf: (userId) =>

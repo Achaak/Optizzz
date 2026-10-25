@@ -173,31 +173,88 @@ export async function resignAfterRevocation({
   return signed;
 }
 
-/** « Retirer Admin »: the revocation, and the certificates signed again with it. */
-export async function withdrawAdmin({
+/** A member who stays in the space, with the key their access is sealed for. */
+interface Remaining {
+  playerId: number;
+  publicKey: string;
+}
+
+/** Every version sealed for each member one believes, as the site replaces their boxes. */
+type Resealed = { playerId: number; sealed: SealedAllianceKey[] }[];
+
+/**
+ * The steps « Retirer Admin » and « Exclure » share: the revocation of `subject`, the certificates that stop counting
+ * with it signed again in one's own name (`resignAfterRevocation`), then every version of `keyring` sealed and signed by
+ * oneself for each member of `stay` one believes once the revocation counts (`whoToTrust`), oneself included. All the
+ * versions, and every believed member: the boxes the revoked Admin had sealed stop opening with the revocation (ADR
+ * 0005, « Qui croire »), and a box does not say who sealed it. A member of `stay` one does not believe is left out, with
+ * their older boxes: an Admin sends them every version later, by « Renvoyer l'accès ».
+ */
+async function revokeAndReseal({
   me,
+  kind,
   subject,
+  keyring,
   trust,
-  keep,
+  stay,
   now,
 }: {
   me: KeyPair;
+  kind: "admin-revocation" | "exclusion";
   subject: string;
+  keyring: AllianceKeyring;
   trust: SpaceTrust;
-  keep: readonly string[];
+  stay: readonly Remaining[];
   now: number;
-}): Promise<{ revocation: string; resigned: string[] }> {
-  const revocation = await sign(me, trust, "admin-revocation", subject, now);
-  return { revocation, resigned: await resignAfterRevocation({ me, trust, revocation, keep, now }) };
+}): Promise<{ revocation: string; resigned: string[]; sealed: Resealed }> {
+  const revocation = await sign(me, trust, kind, subject, now);
+  const resigned = await resignAfterRevocation({
+    me,
+    trust,
+    revocation,
+    keep: stay.map((r) => r.publicKey),
+    now,
+  });
+  const { members } = await whoToTrust(addCertificates(trust, [revocation, ...resigned]));
+  const recipients = stay.filter((r) => r.publicKey === me.publicKey || members.includes(r.publicKey));
+  const sealed = await Promise.all(
+    recipients.map(async (r) => ({
+      playerId: r.playerId,
+      sealed: await sealAllianceKeyring(keyring, { spaceId: trust.spaceId, recipient: r.publicKey, admin: me }),
+    })),
+  );
+  return { revocation, resigned, sealed };
 }
 
 /**
- * « Exclure » (ticket 18): the exclusion, the certificates that stop counting with it signed again in one's own name
- * (`resignAfterRevocation`), and a new version of the Clé d'alliance, drawn here. Every version, the new one and the
- * older ones (to read older data), is sealed and signed by oneself for each remaining member one believes once the
- * exclusion counts (`whoToTrust`), oneself included: the boxes an excluded Admin had sealed stop opening with the
- * exclusion (ADR 0005, « Qui croire »), and a box does not say who sealed it. A remaining member one does not believe
- * is left out, with their older boxes: an Admin sends them every version later, by « Renvoyer l'accès ».
+ * « Retirer Admin » (ticket 18b): the revocation, the certificates signed again with it, and every version of the
+ * Clé d'alliance sealed again by oneself for each remaining member one believes, the withdrawn Admin included (they
+ * stay a member and read everything): without it, the members whose boxes the withdrawn Admin had sealed could no longer
+ * open them. No new version.
+ */
+export async function withdrawAdmin({
+  me,
+  keyring,
+  subject,
+  trust,
+  remaining,
+  now,
+}: {
+  me: KeyPair;
+  keyring: AllianceKeyring;
+  subject: string;
+  trust: SpaceTrust;
+  /** The members of the space, the withdrawn Admin among them. */
+  remaining: readonly Remaining[];
+  now: number;
+}): Promise<{ revocation: string; resigned: string[]; sealed: Resealed }> {
+  return revokeAndReseal({ me, kind: "admin-revocation", subject, keyring, trust, stay: remaining, now });
+}
+
+/**
+ * « Exclure » (ticket 18): the exclusion, the certificates signed again with it, and a new version of the Clé
+ * d'alliance, drawn here; every version, the new one and the older ones (to read older data), is sealed for each
+ * remaining member one believes once the exclusion counts (`revokeAndReseal`).
  */
 export async function excludeMember({
   me,
@@ -212,33 +269,25 @@ export async function excludeMember({
   subject: string;
   trust: SpaceTrust;
   /** The members who stay, with the key their access is sealed for. */
-  remaining: readonly { playerId: number; publicKey: string }[];
+  remaining: readonly Remaining[];
   now: number;
 }): Promise<{
   exclusion: string;
   resigned: string[];
   version: number;
-  sealed: { playerId: number; sealed: SealedAllianceKey[] }[];
+  sealed: Resealed;
 }> {
-  const stay = remaining.filter((r) => r.publicKey !== subject);
-  const exclusion = await sign(me, trust, "exclusion", subject, now);
-  const resigned = await resignAfterRevocation({
+  const rotated = await rotateAllianceKey(keyring);
+  const { revocation, resigned, sealed } = await revokeAndReseal({
     me,
+    kind: "exclusion",
+    subject,
+    keyring: rotated,
     trust,
-    revocation: exclusion,
-    keep: stay.map((r) => r.publicKey),
+    stay: remaining.filter((r) => r.publicKey !== subject),
     now,
   });
-  const { members } = await whoToTrust(addCertificates(trust, [exclusion, ...resigned]));
-  const rotated = await rotateAllianceKey(keyring);
-  const recipients = stay.filter((r) => r.publicKey === me.publicKey || members.includes(r.publicKey));
-  const sealed = await Promise.all(
-    recipients.map(async (r) => ({
-      playerId: r.playerId,
-      sealed: await sealAllianceKeyring(rotated, { spaceId: trust.spaceId, recipient: r.publicKey, admin: me }),
-    })),
-  );
-  return { exclusion, resigned, version: Math.max(...rotated.map((k) => k.version)), sealed };
+  return { exclusion: revocation, resigned, version: Math.max(...rotated.map((k) => k.version)), sealed };
 }
 
 /**

@@ -111,11 +111,12 @@ async function checkCertificate(
 const sealedForToday = (member: MemberRow) => member.sealedFor === member.currentKey;
 
 /**
- * « à jour », or « à renvoyer »: a key changed since (passphrase forgotten), or a version of the Clé d'alliance missing
- * (a new version sealed after an exclusion by an Admin who did not believe this member's key).
+ * « à jour », or « à renvoyer »: a key changed since (passphrase forgotten), a version of the Clé d'alliance missing
+ * (a new version sealed after an exclusion by an Admin who did not believe this member's key), or every version left
+ * unsealed again at an Admin's withdrawal for the same reason (`resendNeeded`).
  */
 const keyStatus = (member: MemberRow, versions: readonly number[]) =>
-  sealedForToday(member) && versions.every((v) => member.versions.includes(v))
+  sealedForToday(member) && !member.resendNeeded && versions.every((v) => member.versions.includes(v))
     ? ("current" as const)
     : ("resend" as const);
 
@@ -211,7 +212,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
                 spaceId: membership.spaceId,
                 name: membership.spaceName,
                 role: membership.role,
-                keyStatus: membership.sealedFor === key?.publicKey ? "current" : "resend",
+                keyStatus: membership.sealedFor === key?.publicKey && !membership.resendNeeded ? "current" : "resend",
                 // The export says the Player left the space's alliance: offered to leave the space.
                 leftAlliance: inExport !== undefined && (inExport === null || !sameTag(inExport, membership.spaceTag)),
               },
@@ -435,15 +436,10 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
     },
 
     /**
-     * Name or withdraw an Admin or a Délégué. Naming an Admin comes with an Admin certificate, withdrawing one with a
-     * revocation signed by an Admin of the space acting now, and possibly the certificates their browser signed again
-     * (src/lib/spaces/access.ts, `withdrawAdmin`). Never the last Admin, never oneself as an Admin (one cannot revoke
-     * oneself).
+     * Name an Admin (with an Admin certificate by the acting Admin), or name or withdraw a Délégué. Withdrawing an
+     * Admin seals the Clé d'alliance again: `withdrawAdmin`.
      */
-    async setRole(
-      userId: string,
-      input: { spaceId: string; playerId: number; role: SpaceRole; certificate?: string; certificates?: string[] },
-    ) {
+    async setRole(userId: string, input: { spaceId: string; playerId: number; role: SpaceRole; certificate?: string }) {
       if (!["admin", "delegate", "member"].includes(input.role)) throw invalid();
       await inExistingSpace(input.spaceId, async (tx) => {
         const [members, versions] = await Promise.all([tx.members(), tx.versions()]);
@@ -451,7 +447,8 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         const target = members.find((m) => m.playerId === input.playerId);
         if (!target) throw RELOAD();
         if (target.role === input.role) return;
-        const extra = input.certificates ?? [];
+        // An Admin is withdrawn with every version sealed again: `withdrawAdmin`.
+        if (target.role === "admin") throw invalid();
         if (input.role === "admin") {
           if (keyStatus(target, versions) !== "current")
             throw invalid(`L'accès de ${target.pseudo} doit d'abord lui être renvoyé.`);
@@ -460,25 +457,56 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
             issuer: me.sealedFor,
             subject: target.sealedFor,
           });
-        } else if (target.role === "admin") {
-          if (target.userId === userId) throw invalid("Demandez à un autre Admin de vous retirer ce rôle.");
-          if (adminCount(members) <= 1) throw invalid("Le dernier Admin de l'espace ne peut pas être retiré.");
-          await checkCertificate(input.certificate, input.spaceId, {
-            kinds: ["admin-revocation"],
-            issuer: me.sealedFor,
-            subject: target.sealedFor,
-          });
         }
-        await checkGrants(extra, input.spaceId, me.sealedFor, members);
         await tx.setRole(target, input.role);
-        const certificates = [...(input.certificate === undefined ? [] : [input.certificate]), ...extra];
-        if (certificates.length > 0) await tx.addCertificates(certificates);
+        if (input.certificate !== undefined && input.role === "admin") await tx.addCertificates([input.certificate]);
       });
     },
 
     /**
-     * Certificates an Admin's browser signs on its own (a new Admin certifying the Admins it believes, a certificate
-     * signed again after a withdrawal, a changed key certified again after the Code de sécurité): member and Admin
+     * « Retirer Admin » (ticket 18b): the Admin becomes a member. The acting Admin's browser signed the revocation,
+     * signed again the certificates that stop counting with it, and sealed every version of the Clé d'alliance again for
+     * the members it believes, itself included (src/lib/spaces/access.ts, `withdrawAdmin`): their boxes are replaced,
+     * since those the withdrawn Admin had sealed stop opening. The members it did not believe keep their boxes,
+     * « à renvoyer ». No new version. Never the last Admin, never oneself (one cannot revoke oneself).
+     */
+    async withdrawAdmin(
+      userId: string,
+      input: {
+        spaceId: string;
+        playerId: number;
+        revocation: string;
+        certificates: string[];
+        sealed: SealedForMember[];
+      },
+    ) {
+      await inExistingSpace(input.spaceId, async (tx) => {
+        const [members, versions] = await Promise.all([tx.members(), tx.versions()]);
+        const me = actor(members, versions, userId, { admin: true });
+        const target = members.find((m) => m.playerId === input.playerId);
+        if (target?.role !== "admin") throw RELOAD();
+        if (target.userId === userId) throw invalid("Demandez à un autre Admin de vous retirer ce rôle.");
+        if (adminCount(members) <= 1) throw invalid("Le dernier Admin de l'espace ne peut pas être retiré.");
+        await checkCertificate(input.revocation, input.spaceId, {
+          kinds: ["admin-revocation"],
+          issuer: me.sealedFor,
+          subject: target.sealedFor,
+        });
+        await checkGrants(input.certificates, input.spaceId, me.sealedFor, members);
+        checkResealed(input.sealed, members, versions, versions, me);
+        await tx.setRole(target, "member");
+        await reseal(tx, input.sealed, members);
+        for (const member of members) {
+          const left = !input.sealed.some((s) => s.playerId === member.playerId);
+          if (left && keyStatus(member, versions) === "current") await tx.askResend(member);
+        }
+        await tx.addCertificates([input.revocation, ...input.certificates]);
+      });
+    },
+
+    /**
+     * Certificates an Admin's browser signs on its own (a new Admin certifying the Admins it believes, a changed key
+     * certified again after the Code de sécurité): member and Admin
      * certificates only, by the acting Admin, about members of the space.
      */
     async addCertificates(userId: string, input: { spaceId: string; certificates: string[] }) {
@@ -523,13 +551,10 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         const remaining = members.filter((m) => m !== target);
         await checkGrants(input.certificates, input.spaceId, me.sealedFor, remaining);
         if (input.version !== Math.max(0, ...versions) + 1) throw KEY_CHANGED();
-        checkNewVersion(input.sealed, remaining, [...versions, input.version], me);
+        checkResealed(input.sealed, remaining, [...versions, input.version], versions, me);
         if ((await tx.addVersion(input.version)) === "taken") throw KEY_CHANGED();
         await tx.removeMember(target);
-        for (const { playerId, sealed } of input.sealed) {
-          const member = remaining.find((m) => m.playerId === playerId);
-          if (member) await tx.sealFor(member, member.sealedFor, sealed);
-        }
+        await reseal(tx, input.sealed, remaining);
         await tx.addCertificates([input.exclusion, ...input.certificates]);
       });
     },
@@ -588,26 +613,35 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
 }
 
 /**
- * Every version, the new one included (`versions`), sealed for distinct remaining members whose access was up to date
- * (sealed for their key today, every older version held), the acting Admin among them. The site cannot open the boxes:
- * their signature is for the members to check.
+ * After an exclusion or an Admin's withdrawal: every version (`versions`, a new one included after an exclusion)
+ * sealed for distinct remaining members whose access was up to date with the versions the space had (`held`: sealed for
+ * their key today, every one held), the acting Admin among them. Which members the acting Admin believes is decided in
+ * its browser; the site cannot open the boxes either: their signature is for the members to check.
  */
-function checkNewVersion(
+function checkResealed(
   sealed: SealedForMember[],
   remaining: MemberRow[],
   versions: readonly number[],
+  held: readonly number[],
   me: MemberRow,
 ): void {
   if (sealed.length === 0 || sealed.length > remaining.length) throw invalid();
   if (new Set(sealed.map((s) => s.playerId)).size !== sealed.length) throw invalid();
-  const older = versions.slice(0, -1);
   for (const entry of sealed) {
     if (!Number.isInteger(entry.playerId)) throw invalid();
     checkAllVersions(entry.sealed, versions);
     const member = remaining.find((m) => m.playerId === entry.playerId);
-    if (!member || keyStatus(member, older) !== "current") throw RELOAD();
+    if (!member || keyStatus(member, held) !== "current") throw RELOAD();
   }
   if (!sealed.some((s) => s.playerId === me.playerId)) throw invalid();
+}
+
+/** Replaces the boxes of each member sealed again (`checkResealed`), for the key they were sealed for. */
+async function reseal(tx: SpaceTransaction, sealed: SealedForMember[], remaining: MemberRow[]): Promise<void> {
+  for (const entry of sealed) {
+    const member = remaining.find((m) => m.playerId === entry.playerId);
+    if (member) await tx.sealFor(member, member.sealedFor, entry.sealed);
+  }
 }
 
 /** Member and Admin certificates by `issuer`, each about a member's key (an Admin's, for an Admin certificate). */

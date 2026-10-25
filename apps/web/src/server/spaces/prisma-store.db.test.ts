@@ -5,7 +5,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient } from "~/generated/prisma/client";
-import { excludeMember, grantAccess, newSpace, openSpace } from "~/lib/spaces/access";
+import { excludeMember, grantAccess, newSpace, openSpace, withdrawAdmin } from "~/lib/spaces/access";
 import { adminMemberships, deleteLonelySpaces, prismaSpaceStore } from "./prisma-store";
 import { spaceService } from "./space-service";
 
@@ -105,16 +105,100 @@ describe.skipIf(!url)("the Alliance Spaces' store on Postgres", () => {
     const admin = await signCertificate({ kind: "admin", spaceId, subject: pb.publicKey, admin: pa });
     await service.setRole(a.userId, { spaceId, playerId: b.playerId, role: "admin", certificate: admin });
     const later = Date.now() + 10;
+    // Each Admin's browser: its own root, the site's certificates, every version sealed again.
+    const prepare = async (me: KeyPair, actor: string, subject: KeyPair, playerId: number) => {
+      const view = await member(actor);
+      const trust = {
+        spaceId,
+        verified: [{ publicKey: pa.publicKey, role: "admin" as const, verifiedAt: 0 }],
+        certificates: view.certificates,
+      };
+      const prepared = await withdrawAdmin({
+        me,
+        keyring: await openSpace(me, view.sealed, trust),
+        subject: subject.publicKey,
+        trust,
+        remaining: view.members.map((m) => ({ playerId: m.playerId, publicKey: m.sealedFor })),
+        now: later,
+      });
+      return { spaceId, playerId, ...prepared, certificates: prepared.resigned };
+    };
     const [byA, byB] = await Promise.all([
-      signCertificate({ kind: "admin-revocation", spaceId, subject: pb.publicKey, admin: pa, issuedAt: later }),
-      signCertificate({ kind: "admin-revocation", spaceId, subject: pa.publicKey, admin: pb, issuedAt: later }),
+      prepare(pa, a.userId, pb, b.playerId),
+      prepare(pb, b.userId, pa, a.playerId),
     ]);
     const results = await Promise.allSettled([
-      service.setRole(a.userId, { spaceId, playerId: b.playerId, role: "member", certificate: byA }),
-      service.setRole(b.userId, { spaceId, playerId: a.playerId, role: "member", certificate: byB }),
+      service.withdrawAdmin(a.userId, byA),
+      service.withdrawAdmin(b.userId, byB),
     ]);
     expect(results.map((r) => r.status).sort()).toEqual(["fulfilled", "rejected"]);
     expect((await member(c.userId)).members.filter((m) => m.role === "admin")).toHaveLength(1);
+  });
+
+  it("refuses a withdrawal badly sealed, then seals every version again for the believed members", async () => {
+    const [pa, pb, pc] = pairs as [KeyPair, KeyPair, KeyPair];
+    // The Admin who stayed after the previous test names the other one Admin again, then withdraws them.
+    const bStayed = (await member(a.userId)).members.some((m) => m.playerId === b.playerId && m.role === "admin");
+    const [me, actor, subject, target] = bStayed ? [pb, b, pa, a] : [pa, a, pb, b];
+    const named = await signCertificate({
+      kind: "admin",
+      spaceId,
+      subject: subject.publicKey,
+      admin: me,
+      issuedAt: Date.now() + 1000,
+    });
+    await service.setRole(actor.userId, { spaceId, playerId: target.playerId, role: "admin", certificate: named });
+    const current = await member(actor.userId);
+    // The creator, and oneself (the winner of the previous test sealed every box again).
+    const trust = {
+      spaceId,
+      verified: [pa, me].map((p) => ({ publicKey: p.publicKey, role: "admin" as const, verifiedAt: 0 })),
+      certificates: current.certificates,
+    };
+    const keyring = await openSpace(me, current.sealed, trust);
+    const prepared = await withdrawAdmin({
+      me,
+      keyring,
+      subject: subject.publicKey,
+      trust,
+      remaining: current.members.map((m) => ({ playerId: m.playerId, publicKey: m.sealedFor })),
+      now: Date.now() + 2000,
+    });
+    const input = {
+      spaceId,
+      playerId: target.playerId,
+      revocation: prepared.revocation,
+      certificates: prepared.resigned,
+      sealed: prepared.sealed,
+    };
+    expect(prepared.sealed).toHaveLength(3);
+    for (const sealed of [
+      prepared.sealed.filter((s) => s.playerId !== actor.playerId),
+      prepared.sealed.map((s) => ({ ...s, sealed: [] })),
+    ])
+      await expect(service.withdrawAdmin(actor.userId, { ...input, sealed })).rejects.toThrow();
+    const forged = await signCertificate({
+      kind: "admin-revocation",
+      spaceId,
+      subject: subject.publicKey,
+      admin: pc,
+    });
+    await expect(service.withdrawAdmin(actor.userId, { ...input, revocation: forged })).rejects.toThrow("autorisation");
+    await service.withdrawAdmin(actor.userId, input);
+    const after = await member(c.userId);
+    expect(after.members.filter((m) => m.role === "admin").map((m) => m.playerId)).toEqual([actor.playerId]);
+    // Chloe's box is the one the Admin who stayed sealed: it opens with that Admin alone believed.
+    const opened = await openSpace(pc, after.sealed, {
+      spaceId,
+      verified: [{ publicKey: me.publicKey, role: "admin", verifiedAt: 0 }],
+      certificates: [],
+    });
+    expect(opened).toEqual(keyring);
+    // A member the Admin who withdrew had not believed: « à renvoyer », the boxes kept.
+    await prismaSpaceStore(db).inSpace(spaceId, (tx) => tx.askResend({ server: "s5", playerId: c.playerId }));
+    const marked = await member(c.userId);
+    expect(marked.me.keyStatus).toBe("resend");
+    expect(marked.sealed).toEqual(after.sealed);
   });
 
   it("makes a forgotten passphrase « clé à renvoyer », its boxes gone and its old key kept", async () => {

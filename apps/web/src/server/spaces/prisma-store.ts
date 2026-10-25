@@ -49,6 +49,7 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
         sealedFor: m.publicKey,
         currentKey: m.player.user.personalKey?.publicKey ?? null,
         versions: m.sealedKeys.map((k) => k.version),
+        resendNeeded: m.resendNeeded,
       }));
     },
     async requests() {
@@ -110,8 +111,15 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
       await tx.sealedAllianceKey.deleteMany({ where: { spaceId, server: player.server, playerId: player.playerId } });
       await tx.spaceMember.update({
         where: memberKey(spaceId, player),
-        data: { publicKey, sealedKeys: { create: sealed.map((s) => ({ version: s.version, sealed: s.sealed })) } },
+        data: {
+          publicKey,
+          resendNeeded: false,
+          sealedKeys: { create: sealed.map((s) => ({ version: s.version, sealed: s.sealed })) },
+        },
       });
+    },
+    async askResend(player) {
+      await tx.spaceMember.update({ where: memberKey(spaceId, player), data: { resendNeeded: true } });
     },
     async addVersion(version) {
       // ON CONFLICT DO NOTHING: a version already there is told, without aborting the transaction.
@@ -258,6 +266,7 @@ export function prismaSpaceStore(db: PrismaClient): SpaceStore {
         spaceTag: m.space.tag,
         role: m.role,
         sealedFor: m.publicKey,
+        resendNeeded: m.resendNeeded,
       }));
     },
     async requestsOf(userId) {

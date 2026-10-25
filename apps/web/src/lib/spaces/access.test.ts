@@ -1,3 +1,4 @@
+import { createAllianceKeyring, openAllianceKeyring } from "@optizzz/crypto/alliance-key";
 import { openCertificate, signCertificate } from "@optizzz/crypto/certificate";
 import { generateKeyPair, type KeyPair } from "@optizzz/crypto/personal-key";
 import { whoToTrust, type SpaceTrust } from "@optizzz/crypto/trust";
@@ -128,11 +129,13 @@ describe("signing again after a revocation", () => {
         await cert(withdrawn, "member", member, T + 3_600_000),
       ],
     };
-    const { revocation, resigned } = await withdrawAdmin({
+    const keyring = await createAllianceKeyring();
+    const { revocation, resigned, sealed } = await withdrawAdmin({
       me: creator,
+      keyring,
       subject: withdrawn.publicKey,
       trust,
-      keep: [member.publicKey, withdrawn.publicKey],
+      remaining: [creator, withdrawn, member].map((p, i) => ({ playerId: i + 1, publicKey: p.publicKey })),
       now: T + 100,
     });
     const after = { ...trust, certificates: [...trust.certificates, revocation, ...resigned] };
@@ -141,5 +144,30 @@ describe("signing again after a revocation", () => {
     expect(trusted.members).toEqual(expect.arrayContaining([member.publicKey, withdrawn.publicKey]));
     // The revocation is dated after the latest statement about the withdrawn key.
     expect((await openCertificate(revocation, SPACE)).issuedAt).toBe(T + 100);
+    // Every member, the withdrawn Admin included, gets the access sealed again by the one who withdrew.
+    expect(sealed.map((s) => s.playerId)).toEqual([1, 2, 3]);
+    const opened = await openAllianceKeyring(
+      (sealed[2]?.sealed ?? []).map((s) => s.sealed),
+      { spaceId: SPACE, member, trusted: trusted.admins },
+    );
+    expect(opened).toEqual(keyring);
+  });
+
+  it("leaves out, at a withdrawal, a member one does not believe", async () => {
+    const [creator, withdrawn, stranger] = (await pairs(3)) as [KeyPair, KeyPair, KeyPair];
+    const trust: SpaceTrust = {
+      spaceId: SPACE,
+      verified: [{ publicKey: creator.publicKey, role: "admin", verifiedAt: T }],
+      certificates: [await cert(creator, "admin", withdrawn, T + 1)],
+    };
+    const { sealed } = await withdrawAdmin({
+      me: creator,
+      keyring: await createAllianceKeyring(),
+      subject: withdrawn.publicKey,
+      trust,
+      remaining: [creator, withdrawn, stranger].map((p, i) => ({ playerId: i + 1, publicKey: p.publicKey })),
+      now: T + 100,
+    });
+    expect(sealed.map((s) => s.playerId)).toEqual([1, 2]);
   });
 });

@@ -29,6 +29,8 @@ const keyInput = z.object({ publicKey: text(64), lockedPrivateKey: text(200) });
 const sealed = z.array(z.object({ version: z.number().int(), sealed: text(300) })).max(1000);
 const spaceId = z.object({ spaceId: text(64) });
 const certificate = text(200);
+/** Every version sealed again for each member, after an exclusion or an Admin's withdrawal. */
+const resealed = z.array(z.object({ playerId: z.number().int(), sealed })).max(200);
 
 export const spacesRouter = createTRPCRouter({
   key: protectedProcedure.query(({ ctx }) => run(() => spaces.key(ctx.userId))),
@@ -71,10 +73,19 @@ export const spacesRouter = createTRPCRouter({
         playerId: z.number().int(),
         role: z.enum(["admin", "delegate", "member"]),
         certificate: certificate.optional(),
-        certificates: z.array(certificate).max(50).optional(),
       }),
     )
     .mutation(({ ctx, input }) => run(() => spaces.setRole(ctx.userId, input))),
+  withdrawAdmin: protectedProcedure
+    .input(
+      spaceId.extend({
+        playerId: z.number().int(),
+        revocation: certificate,
+        certificates: z.array(certificate).max(50),
+        sealed: resealed,
+      }),
+    )
+    .mutation(({ ctx, input }) => run(() => spaces.withdrawAdmin(ctx.userId, input))),
   addCertificates: protectedProcedure
     .input(spaceId.extend({ certificates: z.array(certificate).max(50) }))
     .mutation(({ ctx, input }) => run(() => spaces.addCertificates(ctx.userId, input))),
@@ -85,7 +96,7 @@ export const spacesRouter = createTRPCRouter({
         exclusion: certificate,
         certificates: z.array(certificate).max(50),
         version: z.number().int(),
-        sealed: z.array(z.object({ playerId: z.number().int(), sealed })).max(200),
+        sealed: resealed,
       }),
     )
     .mutation(({ ctx, input }) => run(() => spaces.exclude(ctx.userId, input))),

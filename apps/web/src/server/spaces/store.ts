@@ -43,6 +43,11 @@ export interface MemberRow extends PlayerRef {
   currentKey: string | null;
   /** The versions of the Clé d'alliance sealed for it, ascending. */
   versions: number[];
+  /**
+   * « Accès à renvoyer » although nothing is missing: at an Admin's withdrawal, the Admin who withdrew did not believe
+   * this member's key and did not seal every version again for it (ticket 18b). Its boxes stay.
+   */
+  resendNeeded: boolean;
 }
 
 export interface RequestRow extends PlayerRef {
@@ -79,8 +84,13 @@ export interface SpaceTransaction {
   /** The space a Player is in, if any (one at most). */
   spaceOfPlayer(player: PlayerRef): Promise<string | null>;
   addMember(member: PlayerRef & { role: SpaceRole; publicKey: string }, sealed: SealedKeyInput[]): Promise<void>;
-  /** « Clé à renvoyer » done: the member's key, and every version sealed for it (replacing older boxes). */
+  /**
+   * « Clé à renvoyer » done, or every version sealed again: the member's key, and every version sealed for it
+   * (replacing older boxes, and clearing `resendNeeded`).
+   */
   sealFor(player: PlayerRef, publicKey: string, sealed: SealedKeyInput[]): Promise<void>;
+  /** Marks the member « à renvoyer », its boxes kept (`MemberRow.resendNeeded`). */
+  askResend(player: PlayerRef): Promise<void>;
   /** A new version of the Clé d'alliance: « taken » when the space already has this number. */
   addVersion(version: number): Promise<"added" | "taken">;
 
@@ -114,6 +124,7 @@ interface MembershipRow extends PlayerRef {
   spaceTag: string;
   role: SpaceRole;
   sealedFor: string;
+  resendNeeded: boolean;
 }
 
 interface OwnRequestRow extends PlayerRef {

@@ -318,22 +318,9 @@ describe("roles", () => {
 
   it("withdraws an Admin with a revocation; never the last one, never oneself", async () => {
     await nameAdmin(alice, bruno);
-    const view = await memberView(alice);
-    const { revocation, resigned } = await withdrawAdmin({
-      me: alice.pair,
-      subject: bruno.pair.publicKey,
-      trust: knowledge(alice, view),
-      keep: view.members.map((m) => m.publicKey ?? ""),
-      now: NOW + 2000,
-    });
-    await expect(service.setRole("alice", { spaceId, playerId: 1, role: "member" })).rejects.toThrow("un autre Admin");
-    await service.setRole("alice", {
-      spaceId,
-      playerId: 2,
-      role: "member",
-      certificate: revocation,
-      certificates: resigned,
-    });
+    const input = await prepareWithdrawal(alice, bruno, NOW + 2000);
+    await expect(service.withdrawAdmin("alice", { ...input, playerId: 1 })).rejects.toThrow("un autre Admin");
+    await service.withdrawAdmin("alice", input);
     expect((await memberView(chloe)).members.find((m) => m.pseudo === "Bruno")?.role).toBe("member");
     expect((await trustedIn(knowledge(chloe, await memberView(chloe)))).admins).toEqual([alice.pair.publicKey]);
   });
@@ -341,31 +328,15 @@ describe("roles", () => {
   it("refuses a revocation signed by a key that is no longer an Admin of the space", async () => {
     await nameAdmin(alice, bruno);
     await nameAdmin(alice, chloe);
-    const view = await memberView(alice);
-    // Bruno signs a revocation of Chloe, then loses his role before sending it.
-    const byBruno = await signCertificate({
-      kind: "admin-revocation",
-      spaceId,
-      subject: chloe.pair.publicKey,
-      admin: bruno.pair,
-      issuedAt: NOW + 3000,
-    });
-    const { revocation } = await withdrawAdmin({
-      me: alice.pair,
-      subject: bruno.pair.publicKey,
-      trust: knowledge(alice, view),
-      keep: [],
-      now: NOW + 2000,
-    });
-    await service.setRole("alice", { spaceId, playerId: 2, role: "member", certificate: revocation });
-    await expect(
-      service.setRole("bruno", { spaceId, playerId: 3, role: "member", certificate: byBruno }),
-    ).rejects.toThrow("Seul un Admin");
-    await expect(service.addCertificates("bruno", { spaceId, certificates: [byBruno] })).rejects.toThrow(
+    // Bruno prepares the withdrawal of Chloe, then loses his role before sending it.
+    const byBruno = await prepareWithdrawal(bruno, chloe, NOW + 3000);
+    await withdraw(alice, bruno);
+    await expect(service.withdrawAdmin("bruno", byBruno)).rejects.toThrow("Seul un Admin");
+    await expect(service.addCertificates("bruno", { spaceId, certificates: [byBruno.revocation] })).rejects.toThrow(
       "Seul un Admin",
     );
     // Even through an Admin's hands, a revocation is not one of the certificates an Admin adds silently.
-    await expect(service.addCertificates("alice", { spaceId, certificates: [byBruno] })).rejects.toThrow(
+    await expect(service.addCertificates("alice", { spaceId, certificates: [byBruno.revocation] })).rejects.toThrow(
       "autorisation",
     );
   });
@@ -689,5 +660,167 @@ describe("a Player who left the alliance", () => {
     memory.setAlliance({ server: "s5", playerId: 2 }, "abc");
     expect((await memberView(bruno)).leaveProposal).toBeNull();
     expect((await service.overview("bruno")).players[0]?.membership?.leftAlliance).toBe(false);
+  });
+});
+
+/** « Retirer Admin »: what the Admin's browser signs and seals, from what it knows of the space. */
+async function prepareWithdrawal(admin: Person, target: Person, now = NOW + 20_000) {
+  const view = await memberView(admin);
+  const member = view.members.find((m) => m.playerId === target.playerId);
+  if (!member) throw new Error("not a member");
+  const prepared = await withdrawAdmin({
+    me: admin.pair,
+    keyring: await keyringOf(admin),
+    subject: member.sealedFor,
+    trust: knowledge(admin, view),
+    remaining: view.members
+      .filter((m) => m.keyStatus === "current")
+      .map((m) => ({ playerId: m.playerId, publicKey: m.sealedFor })),
+    now,
+  });
+  return {
+    spaceId,
+    playerId: target.playerId,
+    revocation: prepared.revocation,
+    certificates: prepared.resigned,
+    sealed: prepared.sealed,
+  };
+}
+
+async function withdraw(admin: Person, target: Person) {
+  const input = await prepareWithdrawal(admin, target);
+  await service.withdrawAdmin(admin.userId, input);
+  admin.trust.certificates.push(input.revocation, ...input.certificates);
+  return input;
+}
+
+describe("withdrawing an Admin", () => {
+  let dan: Person;
+
+  beforeEach(async () => {
+    dan = await person("dan", 4, "Dan");
+    await create(alice);
+    await join(alice, bruno);
+    await join(alice, chloe);
+    await join(alice, dan);
+    await nameAdmin(alice, bruno);
+  });
+
+  it("seals every version again: the boxes the withdrawn Admin had sealed stop opening with the withdrawal", async () => {
+    // Bruno excluded Dan: every box of the space, version 1 included, is now signed by Bruno.
+    await exclude(bruno, dan);
+    const before = await encryptData("avant", await keyringOf(chloe));
+    await withdraw(alice, bruno);
+
+    const view = await memberView(chloe);
+    expect(view.members.map((m) => [m.pseudo, m.role, m.keyStatus])).toEqual([
+      ["Alice", "admin", "current"],
+      ["Bruno", "member", "current"],
+      ["Chloe", "member", "current"],
+    ]);
+    expect(view.versions).toEqual([1, 2]);
+    // Each believed member, the withdrawn Admin and the one who withdrew included, opens every version.
+    for (const who of [alice, bruno, chloe]) {
+      const keyring = await keyringOf(who);
+      expect(keyring.map((k) => k.version)).toEqual([1, 2]);
+      expect(await decryptData(before, keyring)).toBe("avant");
+    }
+    expect((await trustedIn(knowledge(chloe, view))).admins).toEqual([alice.pair.publicKey]);
+  });
+
+  it("refuses a withdrawal not signed by the acting Admin, of oneself, of the last Admin, or badly sealed", async () => {
+    const input = await prepareWithdrawal(alice, bruno);
+    expect(input.sealed.map((s) => s.playerId).sort()).toEqual([1, 2, 3, 4]);
+    const forged = await signCertificate({
+      kind: "admin-revocation",
+      spaceId,
+      subject: bruno.pair.publicKey,
+      admin: chloe.pair,
+    });
+    const asExclusion = await signCertificate({
+      kind: "exclusion",
+      spaceId,
+      subject: bruno.pair.publicKey,
+      admin: alice.pair,
+    });
+    await expect(service.withdrawAdmin("alice", { ...input, revocation: forged })).rejects.toThrow("autorisation");
+    await expect(service.withdrawAdmin("alice", { ...input, revocation: asExclusion })).rejects.toThrow("autorisation");
+    await expect(service.withdrawAdmin("chloe", input)).rejects.toThrow("Seul un Admin");
+    await expect(service.withdrawAdmin("alice", { ...input, playerId: 1 })).rejects.toThrow("un autre Admin");
+    await expect(service.withdrawAdmin("alice", { ...input, playerId: 3 })).rejects.toThrow("rechargez");
+    // Not through a change of role either.
+    await expect(service.setRole("alice", { spaceId, playerId: 2, role: "member" })).rejects.toThrow(SpaceError);
+    const boxes = input.sealed[0]?.sealed ?? [];
+    // Without the acting Admin, twice the same member, for someone outside the space, without every version, or none.
+    const badly = [
+      input.sealed.filter((s) => s.playerId !== 1),
+      [...input.sealed.filter((s) => s.playerId !== 3), { playerId: 2, sealed: boxes }],
+      [...input.sealed.filter((s) => s.playerId !== 4), { playerId: 9, sealed: boxes }],
+      input.sealed.map((s) => ({ ...s, sealed: [] })),
+      [],
+    ];
+    for (const sealed of badly)
+      await expect(service.withdrawAdmin("alice", { ...input, sealed })).rejects.toThrow(SpaceError);
+    // Nothing changed on the way.
+    expect((await memberView(alice)).members.find((m) => m.pseudo === "Bruno")?.role).toBe("admin");
+    await service.withdrawAdmin("alice", input);
+    expect((await memberView(alice)).members.find((m) => m.pseudo === "Bruno")?.role).toBe("member");
+  });
+
+  it("refuses a sealing missing a version", async () => {
+    await exclude(alice, dan);
+    const input = await prepareWithdrawal(alice, bruno);
+    const sealed = input.sealed.map((s) => ({ ...s, sealed: s.sealed.filter((b) => b.version === 2) }));
+    await expect(service.withdrawAdmin("alice", { ...input, sealed })).rejects.toThrow("rechargez");
+  });
+
+  it("leaves a member one does not believe « à renvoyer », still reading what they read", async () => {
+    // Eve's access was sealed by Alice, but the site added her without any certificate: Alice does not believe her.
+    const eve = await person("eve", 5, "Eve");
+    exchangeCodes(alice, eve);
+    alice.trust.verified = alice.trust.verified.filter((v) => v.publicKey !== eve.pair.publicKey);
+    eve.trust = { spaceId, verified: eve.trust.verified, certificates: [] };
+    const view = await memberView(alice);
+    const { sealed } = await grantAccess({
+      me: alice.pair,
+      keyring: await keyringOf(alice),
+      recipient: eve.pair.publicKey,
+      trust: knowledge(alice, view),
+      now: NOW + 5000,
+    });
+    await memory.store.inSpace(spaceId, (tx) =>
+      tx.addMember({ server: "s5", playerId: 5, role: "member", publicKey: eve.pair.publicKey }, sealed),
+    );
+    const message = await encryptData("avant", await keyringOf(alice));
+
+    const input = await withdraw(alice, bruno);
+    expect(input.sealed.map((s) => s.playerId).sort()).toEqual([1, 2, 3, 4]);
+    const eveView = await memberView(eve);
+    expect(eveView.me.keyStatus).toBe("resend");
+    expect(await decryptData(message, await keyringOf(eve))).toBe("avant");
+    expect((await memberView(alice)).members.find((m) => m.pseudo === "Eve")?.keyStatus).toBe("resend");
+    expect((await service.overview("eve")).players[0]?.membership?.keyStatus).toBe("resend");
+
+    // « Renvoyer l'accès » after the Code de sécurité.
+    exchangeCodes(alice, eve);
+    const now = await memberView(alice);
+    const resent = await grantAccess({
+      me: alice.pair,
+      keyring: await keyringOf(alice),
+      recipient: eve.pair.publicKey,
+      trust: knowledge(alice, now),
+      now: NOW + 30_000,
+    });
+    await service.resend("alice", { spaceId, playerId: 5, publicKey: eve.pair.publicKey, ...resent });
+    expect((await memberView(eve)).me.keyStatus).toBe("current");
+  });
+
+  it("keeps one Admin when two Admins withdraw each other: the second is no longer an Admin", async () => {
+    const [byAlice, byBruno] = await Promise.all([prepareWithdrawal(alice, bruno), prepareWithdrawal(bruno, alice)]);
+    await service.withdrawAdmin("alice", byAlice);
+    await expect(service.withdrawAdmin("bruno", byBruno)).rejects.toThrow("Seul un Admin");
+    const view = await memberView(chloe);
+    expect(view.members.filter((m) => m.role === "admin").map((m) => m.pseudo)).toEqual(["Alice"]);
+    expect((await keyringOf(chloe)).map((k) => k.version)).toEqual([1]);
   });
 });

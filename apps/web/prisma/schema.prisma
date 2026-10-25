@@ -297,15 +297,18 @@ enum SpaceRole {
 /// last sealed for: another key than the account's today means « clé à renvoyer » (passphrase forgotten, boxes deleted)
 /// until an Admin seals them again; the old key stays, for a revocation to name it.
 model SpaceMember {
-  spaceId    String
-  server     String
-  playerId   Int
-  role       SpaceRole
-  joinedAt   DateTime            @default(now())
-  publicKey  String
-  space      Space               @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  player     DeclaredPlayer      @relation(fields: [server, playerId], references: [server, playerId], onDelete: Cascade)
-  sealedKeys SealedAllianceKey[]
+  spaceId      String
+  server       String
+  playerId     Int
+  role         SpaceRole
+  joinedAt     DateTime            @default(now())
+  publicKey    String
+  /// « Accès à renvoyer » after an Admin's withdrawal by an Admin who did not believe this member's key: the boxes stay
+  /// (older data stays readable) until an Admin seals every version again (ticket 18b).
+  resendNeeded Boolean             @default(false)
+  space        Space               @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  player       DeclaredPlayer      @relation(fields: [server, playerId], references: [server, playerId], onDelete: Cascade)
+  sealedKeys   SealedAllianceKey[]
 
   @@id([spaceId, server, playerId])
   @@unique([server, playerId])

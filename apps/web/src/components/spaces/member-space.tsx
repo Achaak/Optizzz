@@ -178,8 +178,9 @@ function AccessPanel({
         <>
           {view.sealed.length > 0 ? (
             <p>
-              L&apos;accès à l&apos;espace a changé pour tous les membres après le départ de quelqu&apos;un, et le
-              nouveau doit encore vous être donné&nbsp;: vous lisez les données d&apos;avant, pas les nouvelles.
+              {view.versions.some((v) => !view.sealed.some((s) => s.version === v))
+                ? "L'accès à l'espace a changé pour tous les membres après le départ de quelqu'un, et le nouveau doit encore vous être donné : vous lisez les données d'avant, pas les nouvelles."
+                : "L'accès à l'espace a été redonné à tous les membres après le retrait d'un Admin, et doit encore vous être renvoyé : en attendant, vous lisez ce que vous lisiez déjà."}{" "}
               Échangez le Code de sécurité avec un Admin&nbsp;; il vous renverra l&apos;accès.
             </p>
           ) : (
@@ -431,6 +432,10 @@ function MembersPanel({
   );
 }
 
+/** The members whose access is up to date, with the key it is sealed for: whom to seal every version for again. */
+const currentMembers = (view: MemberView) =>
+  view.members.filter((m) => m.keyStatus === "current").map((m) => ({ playerId: m.playerId, publicKey: m.sealedFor }));
+
 function MemberActions({
   view,
   access,
@@ -448,6 +453,7 @@ function MemberActions({
   const resend = api.spaces.resend.useMutation();
   const addCertificates = api.spaces.addCertificates.useMutation();
   const exclude = api.spaces.exclude.useMutation();
+  const withdraw = api.spaces.withdrawAdmin.useMutation();
   const grant = useGrant(view, access);
   const [open, setOpen] = useState<"exchange" | "exclude" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -593,25 +599,24 @@ function MemberActions({
           <Button
             size="sm"
             variant="outline"
-            disabled={busy}
+            disabled={busy || !access.keyring}
             onClick={() =>
               void run(async () => {
-                const keep = view.members
-                  .filter((m) => m.keyStatus === "current" && m.publicKey)
-                  .map((m) => m.publicKey ?? "");
-                const { revocation, resigned } = await withdrawAdmin({
+                if (!access.keyring) return;
+                const { revocation, resigned, sealed } = await withdrawAdmin({
                   me,
+                  keyring: access.keyring,
                   subject: member.sealedFor,
                   trust: access.trust,
-                  keep,
+                  remaining: currentMembers(view),
                   now: Date.now(),
                 });
-                await setRole.mutateAsync({
+                await withdraw.mutateAsync({
                   spaceId,
                   playerId: member.playerId,
-                  role: "member",
-                  certificate: revocation,
+                  revocation,
                   certificates: resigned,
+                  sealed,
                 });
                 await remember([revocation, ...resigned]);
               })
@@ -653,15 +658,12 @@ function MemberActions({
               onClick={() =>
                 void run(async () => {
                   if (!access.keyring) return;
-                  const remaining = view.members
-                    .filter((m) => m.playerId !== member.playerId && m.keyStatus === "current")
-                    .map((m) => ({ playerId: m.playerId, publicKey: m.sealedFor }));
                   const prepared = await excludeMember({
                     me,
                     keyring: access.keyring,
                     subject: member.sealedFor,
                     trust: access.trust,
-                    remaining,
+                    remaining: currentMembers(view).filter((m) => m.playerId !== member.playerId),
                     now: Date.now(),
                   });
                   await exclude.mutateAsync({
