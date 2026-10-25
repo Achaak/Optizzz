@@ -1,7 +1,8 @@
 // What a page of an Alliance Space on optizzz.fr and the extension's script on it agree on (docs/features/site-comptes-
-// espaces.md, « Espaces d'alliance : réalisation (ticket 17) »). « Donner l'accès » asks the Admin's linked extension
-// for its last list of the game's Members page, by `window.postMessage` within the page: the list goes from the
-// extension to the page open in the same browser, never to the site's server. No token ever crosses.
+// espaces.md, « Espaces d'alliance : réalisation (ticket 17) » and « (ticket 18) »). « Donner l'accès », and the
+// departure alerts of an Admin's or Délégué's page, ask the linked extension for its last list of the game's Members
+// page, by `window.postMessage` within the page: the list goes from the extension to the page open in the same
+// browser, never to the site's server. No token ever crosses.
 
 /** The pages of the Alliance Spaces, where the extension's script runs (once optizzz.fr is granted). */
 export const SPACES_PATH = "/spaces";

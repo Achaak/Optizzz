@@ -53,9 +53,11 @@ export default function PrivacyPage() {
           votre clé privée chiffrée par cette phrase, ainsi que vos vérifications du Code de sécurité, chiffrées pour
           vous seul. Les autorisations signées par les Admins (qui est membre, qui est Admin) sont gardées en clair.
           Quand un Admin donne l&apos;accès, son extension remet à la page de l&apos;espace, dans son navigateur, la
-          dernière liste des membres lue sur la page Membres du jeu : elle n&apos;est pas envoyée au site. Une clé
-          privée ouverte reste dans votre navigateur le temps de la session, ou 30 jours si vous cochez «&nbsp;Se
-          souvenir sur cet appareil&nbsp;» ; «&nbsp;Se déconnecter&nbsp;» l&apos;efface.
+          dernière liste des membres lue sur la page Membres du jeu : elle n&apos;est pas envoyée au site. Pour les
+          Admins et Délégués, la page de l&apos;espace en tire les membres absents de l&apos;alliance et depuis
+          quand&nbsp;: ces alertes sont gardées chiffrées avec la Clé d&apos;alliance. Une clé privée ouverte reste dans
+          votre navigateur le temps de la session, ou 30 jours si vous cochez «&nbsp;Se souvenir sur cet appareil&nbsp;»
+          ; «&nbsp;Se déconnecter&nbsp;» l&apos;efface.
         </p>
         <p>
           Depuis «&nbsp;Mon compte&nbsp;», vous pouvez retirer une extension liée, vous déconnecter de ce navigateur ou

@@ -128,9 +128,9 @@ export function accountService({ now, fetch, permitted, openConnectPage }: Depen
   }
 
   /**
-   * « Donner l'accès » on an Alliance Space page: the last Members page list kept for the server, for the page in this
-   * browser to check the newcomer's pseudo. Only while the extension is linked; nothing is fetched, from the game or
-   * the site, and the list goes to the page alone.
+   * « Donner l'accès » and the departure alerts on an Alliance Space page: the last Members page list kept for the
+   * server, for the page in this browser to check the newcomer's pseudo or find the members who left. Only while the
+   * extension is linked; nothing is fetched, from the game or the site, and the list goes to the page alone.
    */
   async function members(serverId: string): Promise<MembersAnswer> {
     const server = serverById(serverId);

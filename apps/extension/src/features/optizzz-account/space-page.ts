@@ -1,6 +1,7 @@
 // The space script's work on an Alliance Space page of optizzz.fr, apart from its entrypoint so a test can run it. It
 // runs in the extension's isolated world and answers the page's requests for the last list of the game's Members page
-// (@optizzz/game/site-links/space-bridge.ts), which « Donner l'accès » checks in the Admin's browser. Only requests
+// (@optizzz/game/site-links/space-bridge.ts), which « Donner l'accès » checks and the departure alerts compare in an
+// Admin's or Délégué's browser. Only requests
 // from the page's own window are heard, and the reply goes back to the page's origin alone.
 import {
   isMembersAnswer,
