@@ -157,6 +157,9 @@ importers:
 
   apps/extension:
     dependencies:
+      '@optizzz/crypto':
+        specifier: workspace:*
+        version: link:../../packages/crypto
       '@optizzz/game':
         specifier: workspace:*
         version: link:../../packages/game

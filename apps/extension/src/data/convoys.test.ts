@@ -6,9 +6,12 @@ import {
   CONVOYS_MAX_AGE,
   convoysOutdated,
   loadConvoys,
+  loadIncomingConvoys,
+  readIncomingConvoys,
   readKeptConvoys,
   refreshConvoys,
   storeConvoys,
+  storeIncomingConvoys,
 } from "./convoys";
 
 const ORIGIN = "https://s5.fourmizzz.fr";
@@ -32,6 +35,17 @@ describe("readKeptConvoys", () => {
     ]);
     expect(readKeptConvoys(parse("<div id='data'></div>"), now)).toEqual([]);
     expect(readKeptConvoys(parse("<p>Connexion</p>"), now)).toBeNull();
+  });
+});
+
+describe("convoys on their way to me", () => {
+  it("are read on commerce.php and kept per server, apart from those I send", async () => {
+    const incoming = readIncomingConvoys(parse(commerceHtml), now);
+    expect(incoming?.map((c) => [c.sender, c.food, c.materials])).toEqual([["Polyergus", 2, 1]]);
+    expect(readIncomingConvoys(parse("<p>Connexion</p>"), now)).toBeNull();
+    await storeIncomingConvoys(ORIGIN, incoming ?? [], now);
+    expect(await loadIncomingConvoys(ORIGIN)).toEqual({ readAt: now, convoys: incoming });
+    expect(await loadConvoys(ORIGIN)).toBeNull();
   });
 });
 

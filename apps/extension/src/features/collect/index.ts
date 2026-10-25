@@ -1,7 +1,8 @@
 import { readGarrison, storeGarrison } from "@/data/garrison";
 import { readSection, sourceOf } from "@/features/end-times/end-pages";
 import { storeSection } from "@/data/end-times";
-import { readKeptConvoys, storeConvoys } from "@/data/convoys";
+import { readIncomingConvoys, readKeptConvoys, storeConvoys, storeIncomingConvoys } from "@/data/convoys";
+import { sendsConvoys } from "@/data/envois";
 import { isInbox, keepConvoyMessages } from "@/data/convoy-history";
 import { readConvoyMessages } from "@optizzz/game/pages/messages";
 import type { Feature } from "../feature";
@@ -43,14 +44,27 @@ export const collect: Feature = {
       if (capacities) await storeCapacities(origin, capacities);
     }
 
+    // The Convois Envoi of the logged-in player, checked in « Compte Optizzz »: their convoys both ways and the
+    // inbox's history, as this page shows them (docs/features/site-envois.md). Sent by the background, encrypted.
+    const pseudo = on("optizzz-account") ? readLoggedInPseudo(document) : null;
+    const sendsConvoysHere =
+      pseudo !== null &&
+      (path === "/commerce.php" || path === "/messagerie.php") &&
+      (await sendsConvoys(origin, pseudo));
+
     // Convoys on their way: the workers they carry, off the header's count.
-    if (path === "/commerce.php" && on("convoy", "workers")) {
+    if (path === "/commerce.php" && (on("convoy", "workers") || sendsConvoysHere)) {
       const convoys = readKeptConvoys(document, now);
       if (convoys) await storeConvoys(origin, convoys, now, readStock(document)?.workers);
     }
+    // Convoys on their way to me: only for the Envoi, they take none of my workers.
+    if (path === "/commerce.php" && sendsConvoysHere) {
+      const incoming = readIncomingConvoys(document, now);
+      if (incoming) await storeIncomingConvoys(origin, incoming, now);
+    }
 
     // Convoys delivered and received, read in the inbox: the game deletes its messages after a week.
-    if (path === "/messagerie.php" && on("convoy", "history") && isInbox(document)) {
+    if (path === "/messagerie.php" && (on("convoy", "history") || sendsConvoysHere) && isInbox(document)) {
       await keepConvoyMessages(origin, readConvoyMessages(document, now), now);
     }
 
@@ -66,7 +80,6 @@ export const collect: Feature = {
     // Optizzz account: the header's pseudo, for the offer « Rattacher Pseudo (S5) » (sent only on that click), and the
     // last list of the alliance's members, kept here for the Alliance Spaces: nothing of either leaves the browser.
     if (on("optizzz-account")) {
-      const pseudo = readLoggedInPseudo(document);
       if (pseudo) await storeCurrentPlayer(origin, pseudo);
       if (path === "/alliance.php" && location.search === "?Membres") {
         const members = readAllianceMembers(document, now);

@@ -81,12 +81,14 @@ function refresh() {
  * remembered with the others, so that a click opens `notice.url`. Nothing when the notifications are switched off or
  * not permitted.
  */
-export function sendNotice(notice: Notice): Promise<void> {
+export function sendNotice(notice: Notice, { once = false }: { once?: boolean } = {}): Promise<void> {
   const send = running.then(async () => {
     if (!isEnabled(await loadToggles(), "alerts", "notifications")) return;
     if (!(await browser.permissions.contains(NOTIFICATIONS_PERMISSION))) return;
     const now = new Date();
     const sent = (await storage.getItem<SentNotifications>(SENT_KEY)) ?? {};
+    // `once`: an event already announced (before the browser restarted, say) is not announced again.
+    if (once && sent[notice.id]) return;
     const updated = await deliverNotices([notice], sent, now, (item) =>
       browser.notifications.create(item.id, {
         type: "basic",

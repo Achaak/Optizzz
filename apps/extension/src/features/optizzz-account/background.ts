@@ -1,11 +1,20 @@
 // The background half of the link to an Optizzz account: it alone keeps the token and talks to optizzz.fr, on a
-// message from the settings (a click, or opening them) or from the link script on « Connecter l'extension ». Never on a
-// timer, and nothing at all while the extension is not linked (ADR 0005). It also answers the space script of an
-// Alliance Space page with the last Members page list. See docs/features/site-comptes-espaces.md.
+// message from the settings (a click, or opening them) or from the link script on « Connecter l'extension », and for
+// the Envois (envois.ts): a few seconds after a game page changed what a checked category keeps, and the relève, which
+// only reads the site. Nothing at all while the extension is not linked (ADR 0005). It also answers the space script
+// of an Alliance Space page with the last Members page list, and takes the Clé d'alliance from it. See
+// docs/features/site-comptes-espaces.md and docs/features/site-envois.md.
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
 import { serverById } from "@optizzz/game/servers";
 import { SITE_URL } from "@optizzz/game/site-links/site";
-import { SPACES_PATH, type MembersAnswer } from "@optizzz/game/site-links/space-bridge";
+import type { EnvoiCrypto } from "@optizzz/game/site-links/envois";
+import {
+  ACCOUNT_PATH,
+  ALLIANCE_KEYS,
+  SPACES_PATH,
+  type HandedKey,
+  type MembersAnswer,
+} from "@optizzz/game/site-links/space-bridge";
 import { loadAllianceMembers } from "@/data/alliance-members";
 import {
   decline,
@@ -20,13 +29,16 @@ import {
   storeLink,
 } from "@/data/optizzz-account";
 import { siteApi } from "./api";
+import { envoiService, RELEVE_MINUTES, type EnvoiService } from "./envois";
 import { syncLinkScript } from "./link-script";
 import {
   isAccountAction,
+  isEnvoiMessage,
   isLinkMessage,
   isSpaceMessage,
   type AccountAction,
   type AccountStatus,
+  type EnvoiMessage,
   type LinkMessage,
   type SpaceMessage,
 } from "./messages";
@@ -41,6 +53,8 @@ interface Dependencies {
   /** optizzz.fr granted (and, on Firefox, the consent to send data there). */
   permitted: () => Promise<boolean>;
   openConnectPage: () => Promise<unknown>;
+  /** The Envois (envois.ts): the Joueurs' choices, the Clé d'alliance, the relève. */
+  envois: Pick<EnvoiService, "status" | "choose" | "forget" | "receiveKeys" | "releve" | "incoming">;
 }
 
 type Notice = AccountStatus["notice"];
@@ -50,7 +64,7 @@ const REMOVED: Notice = {
   text: "Cette extension a été retirée de votre Compte Optizzz : connectez-la de nouveau pour rattacher vos Joueurs.",
 };
 
-export function accountService({ now, fetch, permitted, openConnectPage }: Dependencies) {
+export function accountService({ now, fetch, permitted, openConnectPage, envois }: Dependencies) {
   /** The block's state; with `refresh`, the account's Players are read again on the site first. */
   async function status(origin: string | null, notice: Notice = null, refresh = false): Promise<AccountStatus> {
     let link = await loadLink();
@@ -60,6 +74,7 @@ export function accountService({ now, fetch, permitted, openConnectPage }: Depen
       if (players.ok) await storeAttachedPlayers(players.value);
       else if (players.unlinked) {
         await forgetLink();
+        await envois.forget();
         link = null;
         notice ??= REMOVED;
       }
@@ -78,6 +93,7 @@ export function accountService({ now, fetch, permitted, openConnectPage }: Depen
       permitted: allowed,
       offer: offer && { origin: offer.origin, serverName: offer.server.name, pseudo: offer.pseudo },
       players: attached,
+      envois: link && allowed ? await envois.status() : [],
       notice,
     };
   }
@@ -99,6 +115,7 @@ export function accountService({ now, fetch, permitted, openConnectPage }: Depen
     }
     if (result.unlinked) {
       await forgetLink();
+      await envois.forget();
       return status(origin, REMOVED);
     }
     return { ...current, notice: { kind: "error", text: result.message } };
@@ -124,6 +141,8 @@ export function accountService({ now, fetch, permitted, openConnectPage }: Depen
         };
     }
     await forgetLink();
+    // The Clé d'alliance goes with the link, and whatever was read with it.
+    await envois.forget();
     return status(origin, notice);
   }
 
@@ -157,9 +176,19 @@ export function accountService({ now, fetch, permitted, openConnectPage }: Depen
     return { ok: true };
   }
 
+  /** A category checked or unchecked for one of the account's Joueurs. */
+  async function choose(message: Extract<AccountAction, { action: "choose" }>): Promise<AccountStatus> {
+    const attached = await loadAttachedPlayers();
+    if (attached.some((p) => p.server === message.server && p.pseudo === message.pseudo))
+      await envois.choose(message.server, message.pseudo, message.choices);
+    return status(null);
+  }
+
   return {
     status,
     attach,
+    choose,
+    envois,
     decline: declineOffer,
     disconnect,
     linkStart,
@@ -191,20 +220,43 @@ export function senderKind(
   if (!sender.tab) return null;
   if (gameServerOf(url.origin)) return "game";
   if (url.origin === SITE_URL && url.pathname === CONNECT_EXTENSION_PATH) return "link";
-  if (url.origin === SITE_URL && url.pathname.startsWith(`${SPACES_PATH}/`)) return "space";
+  if (url.origin === SITE_URL && (url.pathname.startsWith(`${SPACES_PATH}/`) || url.pathname === ACCOUNT_PATH))
+    return "space";
   return null;
 }
 
 /**
  * What a message gets: the settings may ask from a page or the game; the token comes only from the link script; the
- * Members page list goes only to the space script.
+ * Members page list goes only to the space script, and the Clé d'alliance comes only from it; the game's pages ask
+ * for the relève and the alliance's convoys.
  */
 export function answer(
   service: ReturnType<typeof accountService>,
-  message: AccountAction | LinkMessage | SpaceMessage,
+  message: AccountAction | LinkMessage | SpaceMessage | EnvoiMessage,
   from: ReturnType<typeof senderKind>,
 ): Promise<unknown> | null {
-  if (message.type === "optizzz-space") return from === "space" ? service.members(message.server) : null;
+  if (message.type === "optizzz-space") {
+    if (from !== "space") return null;
+    switch (message.action) {
+      case "members":
+        return service.members(message.server);
+      case "keys":
+        return service.envois.receiveKeys({
+          type: ALLIANCE_KEYS,
+          spaceId: message.spaceId,
+          keys: message.keys,
+          expiresAt: message.expiresAt,
+        });
+      case "forget":
+        return service.envois.forget().then(() => null);
+    }
+  }
+  if (message.type === "optizzz-envois") {
+    if (from !== "game") return null;
+    return message.action === "page-open"
+      ? service.envois.releve("page").then(() => null)
+      : service.envois.incoming(message.origin);
+  }
   if (message.type === "optizzz-link") {
     if (from !== "link") return null;
     return message.action === "start" ? service.linkStart() : service.linkToken(message.token);
@@ -221,15 +273,61 @@ export function answer(
       return service.disconnect(null);
     case "connect":
       return service.connect().then(() => null);
+    case "choose":
+      return service.choose(message);
   }
 }
 
-export function setUpOptizzzAccount(): void {
+const RELEVE_ALARM = "optizzz-releve";
+
+/** What a change in storage.local is about: the convoys kept for a server (« convoys:s5.fourmizzz.fr »…). */
+const CONVOY_KEYS = /^(?:convoys|incomingConvoys|convoy-history):(s\d{1,2}\.fourmizzz\.fr)$/;
+
+/**
+ * The account's background. `crypto` binds libsodium to a space's Clé d'alliance: the background's entrypoint passes
+ * it in, the only file of the background allowed to import it (ADR 0007, eslint.config.js).
+ */
+export function setUpOptizzzAccount({
+  crypto,
+  notify,
+}: {
+  crypto: (keys: HandedKey[]) => EnvoiCrypto;
+  notify: (notice: { id: string; message: string; url: string }) => Promise<void>;
+}): void {
+  const permitted = () => browser.permissions.contains(SITE_PERMISSION);
+  const envois = envoiService({
+    now: () => new Date(),
+    fetch: (url, init) => fetch(url, init),
+    permitted,
+    crypto,
+    notify,
+    later: (ms, run) => setTimeout(run, ms),
+  });
   const service = accountService({
     now: () => new Date(),
     fetch: (url, init) => fetch(url, init),
-    permitted: () => browser.permissions.contains(SITE_PERMISSION),
+    permitted,
     openConnectPage: () => browser.tabs.create({ url: browser.runtime.getURL(CONNECT_PAGE) }),
+    envois,
+  });
+
+  // An Envoi a few seconds after a game page changed what is kept: never from the relève's alarm.
+  browser.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local") return;
+    for (const key of Object.keys(changes)) {
+      const host = CONVOY_KEYS.exec(key)?.[1];
+      if (host) envois.changed(host);
+    }
+  });
+  // The relève, every 5 minutes: it reads optizzz.fr only, and nothing at all without a Clé d'alliance.
+  browser.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name !== RELEVE_ALARM) return;
+    envois.releve("alarm").catch((error: unknown) => {
+      console.error("[Optizzz] the relève failed", error);
+    });
+  });
+  void browser.alarms.get(RELEVE_ALARM).then((alarm) => {
+    if (!alarm) void browser.alarms.create(RELEVE_ALARM, { periodInMinutes: RELEVE_MINUTES });
   });
   const sync = () => {
     syncLinkScript().catch((error: unknown) => {
@@ -248,7 +346,8 @@ export function setUpOptizzzAccount(): void {
   });
 
   browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-    if (!isAccountAction(message) && !isLinkMessage(message) && !isSpaceMessage(message)) return false;
+    if (!isAccountAction(message) && !isLinkMessage(message) && !isSpaceMessage(message) && !isEnvoiMessage(message))
+      return false;
     const reply = answer(service, message, senderKind(sender, browser.runtime.id, browser.runtime.getURL("/")));
     if (!reply) {
       sendResponse(null);

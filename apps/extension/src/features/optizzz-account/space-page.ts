@@ -1,9 +1,13 @@
-// The space script's work on an Alliance Space page of optizzz.fr, apart from its entrypoint so a test can run it. It
-// runs in the extension's isolated world and answers the page's requests for the last list of the game's Members page
-// (@optizzz/game/site-links/space-bridge.ts), which « Donner l'accès » checks and the departure alerts compare in an
-// Admin's or Délégué's browser. Only requests
-// from the page's own window are heard, and the reply goes back to the page's origin alone.
+// The space script's work on optizzz.fr, apart from its entrypoint so a test can run it. It runs in the extension's
+// isolated world, on the pages of the Alliance Spaces and on « Mon compte », and hears only its own page's window
+// (@optizzz/game/site-links/space-bridge.ts):
+// - the requests for the last list of the game's Members page, which « Donner l'accès » checks and the departure
+//   alerts compare in an Admin's or Délégué's browser; the reply goes back to the page's origin alone;
+// - the Clé d'alliance the space page hands over once its access is open (never the private key), and
+//   « Se déconnecter », for the background to keep or forget it (docs/features/site-envois.md).
 import {
+  isAllianceKeysMessage,
+  isForgetKeysMessage,
   isMembersAnswer,
   isMembersRequest,
   MEMBERS_REPLY,
@@ -22,9 +26,30 @@ const UNLINKED: MembersAnswer = { status: "unlinked" };
 
 /** Starts listening; returns how to stop (for the tests). */
 export function runSpacePage({ win, send }: SpacePageDependencies): () => void {
+  const forward = (message: SpaceMessage) => {
+    send(message).catch((error: unknown) => {
+      console.error("[Optizzz] the Clé d'alliance could not be handed to the extension", error);
+    });
+  };
   const listener = (event: MessageEvent) => {
-    if (event.source !== win || event.origin !== win.location.origin || !isMembersRequest(event.data)) return;
-    const { id, server } = event.data;
+    if (event.source !== win || event.origin !== win.location.origin) return;
+    const data: unknown = event.data;
+    if (isAllianceKeysMessage(data)) {
+      forward({
+        type: "optizzz-space",
+        action: "keys",
+        spaceId: data.spaceId,
+        keys: data.keys,
+        expiresAt: data.expiresAt,
+      });
+      return;
+    }
+    if (isForgetKeysMessage(data)) {
+      forward({ type: "optizzz-space", action: "forget" });
+      return;
+    }
+    if (!isMembersRequest(data)) return;
+    const { id, server } = data;
     send({ type: "optizzz-space", action: "members", server })
       .catch(() => null)
       .then((reply) => {

@@ -30,6 +30,15 @@ export default defineConfig({
     optional_permissions: ["notifications", "scripting"],
     host_permissions: ["*://*.fourmizzz.fr/*"],
     optional_host_permissions: ["https://optizzz.fr/*"],
+    // libsodium's WebAssembly, in the background only, for the Envois (ADR 0007, docs/features/site-envois.md):
+    // 'wasm-unsafe-eval' lets it compile, nothing else is allowed. Each browser's own default plus this keyword:
+    // Chrome's already has it; Firefox's (MV3) does not.
+    content_security_policy: {
+      extension_pages:
+        browser === "firefox"
+          ? "script-src 'self' 'wasm-unsafe-eval'; upgrade-insecure-requests;"
+          : "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+    },
     // The combat simulator and the server map are framed over the game (src/utils/page-dialog.ts). Side effect: the
     // game's pages can tell the extension is installed by loading these pages.
     web_accessible_resources: [

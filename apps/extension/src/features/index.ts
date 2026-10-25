@@ -8,6 +8,7 @@ import { combatReports } from "./combat-reports";
 import { combatSimulator } from "./combat-simulator";
 import { compactGamePages, compactNumbers } from "./compact-numbers";
 import { convoyHistory, convoyPlanner, convoyWorkers } from "./convoy";
+import { allianceConvoys, envoiRelay } from "./optizzz-account/alliance-convoys";
 import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
 import { floodPlanner } from "./flood";
@@ -50,6 +51,7 @@ export const features: Feature[] = [
   convoyPlanner,
   convoyWorkers,
   convoyHistory,
+  allianceConvoys,
   targets,
   membersColumns,
   profileProduction,
@@ -64,6 +66,7 @@ export const features: Feature[] = [
   serverMap,
   watchlist,
   gameLevels,
+  envoiRelay,
   safeReload,
   // Last: the game's numbers are shortened once the others have read the page.
   compactGamePages,

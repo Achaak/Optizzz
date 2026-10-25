@@ -1,4 +1,10 @@
-import { MEMBERS_REPLY, MEMBERS_REQUEST, SPACE_BRIDGE_ATTRIBUTE } from "@optizzz/game/site-links/space-bridge";
+import {
+  ALLIANCE_KEYS,
+  FORGET_KEYS,
+  MEMBERS_REPLY,
+  MEMBERS_REQUEST,
+  SPACE_BRIDGE_ATTRIBUTE,
+} from "@optizzz/game/site-links/space-bridge";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runSpacePage } from "./space-page";
 
@@ -39,6 +45,26 @@ describe("the space script on an Alliance Space page", () => {
       );
     });
     expect(send).toHaveBeenCalledWith({ type: "optizzz-space", action: "members", server: "s5" });
+  });
+
+  it("hands the background the Clé d'alliance the page gives, and « Se déconnecter », from its own page only", () => {
+    const { send } = start(null);
+    const keys = {
+      type: ALLIANCE_KEYS,
+      spaceId: "0b9d6f0e-3c4a-4f5e-9a7b-1c2d3e4f5a6b",
+      keys: [{ version: 1, key: "A".repeat(43) }],
+      expiresAt: null,
+    };
+    request({ data: keys, source: null });
+    request({ data: keys, origin: "https://evil.example" });
+    request({ data: { ...keys, keys: [{ version: 1, key: "short" }] } });
+    expect(send).not.toHaveBeenCalled();
+    request({ data: keys });
+    request({ data: { type: FORGET_KEYS } });
+    expect(send.mock.calls).toEqual([
+      [{ type: "optizzz-space", action: "keys", spaceId: keys.spaceId, keys: keys.keys, expiresAt: null }],
+      [{ type: "optizzz-space", action: "forget" }],
+    ]);
   });
 
   it("hears only its own page, and answers « unlinked » when the background does not answer", async () => {

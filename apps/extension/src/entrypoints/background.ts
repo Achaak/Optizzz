@@ -1,4 +1,10 @@
-import { setUpAlerts } from "@/features/alerts/background";
+import { decryptData, encryptData } from "@optizzz/crypto/data";
+import { dataFingerprint } from "@optizzz/crypto/data-fingerprint";
+import { fromBase64Url } from "@optizzz/crypto/encoding";
+import type { EnvoiCrypto } from "@optizzz/game/site-links/envois";
+import type { HandedKey } from "@optizzz/game/site-links/space-bridge";
+import { sendNotice, setUpAlerts } from "@/features/alerts/background";
+import { loadNotificationSettings } from "@/features/alerts/notification-settings";
 import { setUpWatchlist } from "@/features/watchlist/background";
 import { isOpenWatchlistMessage, watchlistUrl } from "@/features/watchlist/open";
 import { isOpenSimulatorMessage, simulatorUrl } from "@/features/combat-simulator/open";
@@ -6,10 +12,29 @@ import { isOpenServerMapMessage, serverMapUrl } from "@/features/server-map/open
 import { loadToggles } from "@/features/toggles";
 import { setUpOptizzzAccount } from "@/features/optizzz-account/background";
 
+/**
+ * libsodium bound to the versions of a space's Clé d'alliance (ADR 0005, « Donnée d'alliance chiffrée »). Only here
+ * and in the extension's pages: the game's scripts never load it (ADR 0007).
+ */
+function envoiCrypto(keys: HandedKey[]): EnvoiCrypto {
+  const keyring = keys.map(({ version, key }) => ({ version, key: fromBase64Url(key) }));
+  return {
+    encrypt: (text) => encryptData(text, keyring),
+    decrypt: (blob) => decryptData(blob, keyring),
+    fingerprint: (text) => dataFingerprint(text, keyring),
+  };
+}
+
 export default defineBackground(() => {
   setUpAlerts();
   setUpWatchlist();
-  setUpOptizzzAccount();
+  setUpOptizzzAccount({
+    crypto: envoiCrypto,
+    // « Un convoi de Pseudo vous arrive à 18 h 12 »: off unless switched on, once per convoy.
+    notify: async (notice) => {
+      if ((await loadNotificationSettings())["alliance-convoy"]) await sendNotice(notice, { once: true });
+    },
+  });
 
   // No answer is sent: the content script only asks for the tab.
   browser.runtime.onMessage.addListener((message: unknown) => {

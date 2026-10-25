@@ -4,7 +4,7 @@
 // optional in the manifest).
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
 import { SITE_URL } from "@optizzz/game/site-links/site";
-import { SPACES_PATH } from "@optizzz/game/site-links/space-bridge";
+import { ACCOUNT_PATH, SPACES_PATH } from "@optizzz/game/site-links/space-bridge";
 
 /** As in the manifest's optional_host_permissions. */
 export const SITE_ORIGIN_PATTERN = `${SITE_URL}/*`;
@@ -12,8 +12,10 @@ export const SITE_ORIGIN_PATTERN = `${SITE_URL}/*`;
 /**
  * Firefox's categories for what a linked extension sends (docs/features/site-comptes-espaces.md):
  * `authenticationInfo` for the account's registration (the token, and the game's pseudo, which is also the game's
- * login name), `websiteContent` for the pseudo read in the game's header, and for the list of the game's Members page
- * an Admin's extension hands to the Alliance Space page open in the same browser (never to the site's server).
+ * login name), `websiteContent` for the pseudo read in the game's header, for the list of the game's Members page
+ * an Admin's extension hands to the Alliance Space page open in the same browser (never to the site's server), and for
+ * the Envois: what the game's pages showed of a category the player checked (the convoys), encrypted before it leaves
+ * (docs/features/site-envois.md). Nothing else is collected: no browsing activity, no other site.
  */
 export const SITE_DATA_COLLECTION = ["authenticationInfo", "websiteContent"] as const;
 
@@ -38,13 +40,14 @@ export const LINK_SCRIPT = {
 } as const;
 
 /**
- * The space script, registered with the link script, only on the pages of the Alliance Spaces: « Donner l'accès » asks
- * it for the last list of the game's Members page (@optizzz/game/site-links/space-bridge.ts).
+ * The space script, registered with the link script, only on the pages of the Alliance Spaces and on « Mon compte »:
+ * « Donner l'accès » asks it for the last list of the game's Members page, the space page hands it the Clé d'alliance,
+ * and « Se déconnecter » tells it to forget it (@optizzz/game/site-links/space-bridge.ts).
  */
 export const SPACE_SCRIPT = {
   id: "optizzz-space",
   js: ["/optizzz-space.js"],
-  matches: [`${SITE_URL}${SPACES_PATH}/*`],
+  matches: [`${SITE_URL}${SPACES_PATH}/*`, `${SITE_URL}${ACCOUNT_PATH}`, `${SITE_URL}${ACCOUNT_PATH}?*`],
 } as const;
 
 /** Every script the extension registers on optizzz.fr while it is granted. */

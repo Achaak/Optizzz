@@ -162,12 +162,24 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
     watchList.append(item);
   }
 
+  // The Envois of the Alliance Space: what the members send to Optizzz, read back by the relève.
+  const spaceTitle = doc.createElement("h3");
+  spaceTitle.className = "optizzz-subtitle";
+  spaceTitle.textContent = "Espace d'alliance";
+  const spaceList = doc.createElement("ul");
+  spaceList.className = "notifications";
+  spaceList.append(checkboxRow("alliance-convoy", "Convoi d'un membre en route vers vous"));
+  const spaceNote = doc.createElement("p");
+  spaceNote.className = "optizzz-note";
+  spaceNote.textContent =
+    "« Un convoi de Pseudo vous arrive à 18 h 12 » : d'après les convois que les membres de votre Espace d'alliance envoient à Optizzz.";
+
   section.append(intro);
   if (!switchedOn) section.append(off);
   else if (!isEnabled(toggles, "end-times")) section.append(needs);
   section.append(gameTitle, list, watchTitle);
   if (!isEnabled(toggles, "watchlist")) section.append(watchOff);
-  section.append(watchList);
+  section.append(watchList, spaceTitle, spaceList, spaceNote);
 
   const check = () => {
     permission

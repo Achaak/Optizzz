@@ -11,7 +11,15 @@ const MISSED_AFTER = 15 * MINUTE;
 
 import type { WatchNotificationKind } from "../watchlist/describe";
 
-export type NotificationKind = "famine" | "full" | "construction" | "hunt" | "attack" | WatchNotificationKind;
+export type NotificationKind =
+  | "famine"
+  | "full"
+  | "construction"
+  | "hunt"
+  | "attack"
+  | WatchNotificationKind
+  /** « Un convoi de Pseudo vous arrive à 18 h 12 », from the relève of the Envois (docs/features/site-envois.md). */
+  | "alliance-convoy";
 
 /** All off unless switched on: a missing key means off. */
 export type NotificationSettings = Partial<Record<NotificationKind, boolean>>;

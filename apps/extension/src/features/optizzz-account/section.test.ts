@@ -3,13 +3,29 @@ import type { AccountAction, AccountStatus } from "./messages";
 import { buildAccountSection } from "./section";
 
 const S5 = "https://s5.fourmizzz.fr";
-const unlinked: AccountStatus = { linked: false, permitted: false, offer: null, players: [], notice: null };
+const unlinked: AccountStatus = { linked: false, permitted: false, offer: null, players: [], envois: [], notice: null };
 const linked: AccountStatus = {
   linked: true,
   permitted: true,
   offer: { origin: S5, serverName: "S5", pseudo: "Calystene" },
   players: [],
+  envois: [],
   notice: null,
+};
+
+const choices = {
+  production: false,
+  convoys: false,
+  floods: false,
+  hunts: false,
+  army: "none",
+  levels: false,
+} as const;
+const sending: AccountStatus = {
+  ...linked,
+  offer: null,
+  players: [{ server: "s5", pseudo: "Calystene" }],
+  envois: [{ server: "s5", pseudo: "Calystene", choices, spaceName: null, problem: null, lastSentAt: null }],
 };
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -92,6 +108,61 @@ describe("the « Compte Optizzz » block", () => {
     personClick(buttonNamed(section, "Déconnecter"));
     await settle();
     expect(asked.at(-1)).toEqual({ type: "optizzz-account", action: "disconnect" });
+  });
+
+  it("lists the six categories of each Joueur, all unticked, and only « Convois » can be ticked today", async () => {
+    const { section } = mount(() => sending);
+    await settle();
+    expect(section.querySelector("legend")?.textContent).toBe("Envois de Calystene (S5)");
+    const boxes = [...section.querySelectorAll<HTMLInputElement>("input[data-category]")];
+    expect(boxes.map((b) => [b.dataset.category, b.checked, b.disabled])).toEqual([
+      ["production", false, true],
+      ["convoys", false, false],
+      ["floods", false, true],
+      ["hunts", false, true],
+      ["army", false, true],
+      ["levels", false, true],
+    ]);
+    expect(section.textContent).toContain("Vos convois envoyés, reçus et en route.");
+  });
+
+  it("ticks « Convois » on a person's click only, and says what stops the Envoi", async () => {
+    const answer: AccountStatus = {
+      ...sending,
+      envois: [
+        {
+          server: "s5",
+          pseudo: "Calystene",
+          choices: { ...choices, convoys: true },
+          spaceName: "ABC sur S5",
+          problem: "Ouvrez votre espace sur optizzz.fr pour reprendre l'envoi.",
+          lastSentAt: null,
+        },
+      ],
+    };
+    const { section, asked } = mount((action) => (action.action === "choose" ? answer : sending));
+    await settle();
+    const box = section.querySelector<HTMLInputElement>('input[data-category="convoys"]');
+    if (!box) throw new Error("no box");
+    box.checked = true;
+    box.dispatchEvent(new Event("change"));
+    await settle();
+    expect(asked).toHaveLength(1);
+    box.checked = true;
+    const event = new Event("change");
+    Object.defineProperty(event, "isTrusted", { value: true });
+    box.dispatchEvent(event);
+    await settle();
+    expect(asked.at(-1)).toEqual({
+      type: "optizzz-account",
+      action: "choose",
+      server: "s5",
+      pseudo: "Calystene",
+      choices: { ...choices, convoys: true },
+    });
+    expect(section.querySelector('[role="status"]')?.textContent).toBe(
+      "Ouvrez votre espace sur optizzz.fr pour reprendre l'envoi.",
+    );
   });
 
   it("says when optizzz.fr was taken back from a linked extension", async () => {

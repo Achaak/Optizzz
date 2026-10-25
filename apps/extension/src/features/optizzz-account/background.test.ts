@@ -7,10 +7,12 @@ import {
   loadLink,
   requestLink,
   storeCurrentPlayer,
+  storeAttachedPlayers,
   storeLink,
 } from "@/data/optizzz-account";
 import { storeAllianceMembers } from "@/data/alliance-members";
 import { accountService, answer, senderKind } from "./background";
+import type { SpaceMessage } from "./messages";
 
 const S5 = "https://s5.fourmizzz.fr";
 const TOKEN = "T".repeat(43);
@@ -58,6 +60,28 @@ let site: ReturnType<typeof fakeSite>;
 let permitted: boolean;
 let now: Date;
 let opened: number;
+/** What reached the Envois (envois.ts has its own tests). */
+let envoiCalls: string[];
+const envois = {
+  status: () => Promise.resolve([]),
+  choose: () => {
+    envoiCalls.push("choose");
+    return Promise.resolve();
+  },
+  forget: () => {
+    envoiCalls.push("forget");
+    return Promise.resolve();
+  },
+  receiveKeys: () => {
+    envoiCalls.push("keys");
+    return Promise.resolve({ ok: true });
+  },
+  releve: () => {
+    envoiCalls.push("releve");
+    return Promise.resolve();
+  },
+  incoming: () => Promise.resolve({ problem: null, convoys: [] }),
+};
 const service = () =>
   accountService({
     now: () => now,
@@ -67,6 +91,7 @@ const service = () =>
       opened++;
       return Promise.resolve();
     },
+    envois,
   });
 
 beforeEach(() => {
@@ -75,6 +100,7 @@ beforeEach(() => {
   permitted = true;
   now = NOW;
   opened = 0;
+  envoiCalls = [];
 });
 
 describe("without a linked account", () => {
@@ -189,11 +215,30 @@ describe("linked", () => {
     expect(site.calls).toEqual([]);
   });
 
-  it("« Déconnecter » removes the token on the site and here", async () => {
+  it("« Déconnecter » removes the token on the site and here, and forgets the Clé d'alliance", async () => {
     const status = await service().disconnect(null);
     expect(site.calls).toEqual([expect.objectContaining({ method: "DELETE", authorization: `Bearer ${TOKEN}` })]);
     expect(status).toMatchObject({ linked: false, notice: { kind: "success" } });
     expect(await loadLink()).toBeNull();
+    expect(envoiCalls).toEqual(["forget"]);
+  });
+
+  it("changes the categories of an attached Joueur only", async () => {
+    const choices = {
+      production: false,
+      convoys: true,
+      floods: false,
+      hunts: false,
+      army: "none" as const,
+      levels: false,
+    };
+    const choose = { type: "optizzz-account", action: "choose", server: "s5", pseudo: "Calystene", choices } as const;
+    await answer(service(), choose, "page");
+    expect(envoiCalls).toEqual([]);
+    await storeAttachedPlayers([{ server: "s5", pseudo: "Calystene" }]);
+    await answer(service(), choose, "page");
+    expect(envoiCalls).toEqual(["choose"]);
+    expect(answer(service(), choose, "space")).toBeNull();
   });
 
   it("« Déconnecter » forgets the token even when the site cannot be reached, and says so", async () => {
@@ -219,7 +264,9 @@ describe("who may send what", () => {
     expect(senderKind({ id: ID, url: `${BASE}popup.html` }, ID, BASE)).toBe("page");
     expect(senderKind({ id: ID, url: `${S5}/Reine.php`, tab }, ID, BASE)).toBe("game");
     expect(senderKind({ id: ID, url: "https://optizzz.fr/connect-extension", tab }, ID, BASE)).toBe("link");
-    expect(senderKind({ id: ID, url: "https://optizzz.fr/account", tab }, ID, BASE)).toBeNull();
+    // « Se déconnecter » is on /account: the space script runs there too, to forget the Clé d'alliance.
+    expect(senderKind({ id: ID, url: "https://optizzz.fr/account", tab }, ID, BASE)).toBe("space");
+    expect(senderKind({ id: ID, url: "https://optizzz.fr/accounts", tab }, ID, BASE)).toBeNull();
     expect(senderKind({ id: ID, url: "https://optizzz.fr/spaces/0b8f6c1e", tab }, ID, BASE)).toBe("space");
     expect(senderKind({ id: ID, url: "https://optizzz.fr/spaces", tab }, ID, BASE)).toBeNull();
     expect(senderKind({ id: ID, url: "https://evil.example/spaces/0b8f6c1e", tab }, ID, BASE)).toBeNull();
@@ -237,6 +284,35 @@ describe("who may send what", () => {
     await answer(service(), { type: "optizzz-account", action: "connect" }, "game");
     expect(opened).toBe(1);
     expect(await answer(service(), token, "link")).toEqual({ ok: true });
+  });
+});
+
+describe("the Clé d'alliance and the game's pages", () => {
+  const keys: SpaceMessage = {
+    type: "optizzz-space",
+    action: "keys",
+    spaceId: "0b9d6f0e-3c4a-4f5e-9a7b-1c2d3e4f5a6b",
+    keys: [{ version: 1, key: "A".repeat(43) }],
+    expiresAt: null,
+  };
+
+  it("takes the Clé d'alliance and « Se déconnecter » from the space script only", async () => {
+    expect(answer(service(), keys, "game")).toBeNull();
+    expect(answer(service(), keys, "page")).toBeNull();
+    expect(answer(service(), { type: "optizzz-space", action: "forget" }, "game")).toBeNull();
+    await answer(service(), keys, "space");
+    await answer(service(), { type: "optizzz-space", action: "forget" }, "space");
+    expect(envoiCalls).toEqual(["keys", "forget"]);
+  });
+
+  it("starts the relève and answers the alliance's convoys for the game's pages only", async () => {
+    expect(answer(service(), { type: "optizzz-envois", action: "page-open" }, "space")).toBeNull();
+    await answer(service(), { type: "optizzz-envois", action: "page-open" }, "game");
+    expect(envoiCalls).toEqual(["releve"]);
+    expect(await answer(service(), { type: "optizzz-envois", action: "incoming", origin: S5 }, "game")).toEqual({
+      problem: null,
+      convoys: [],
+    });
   });
 });
 

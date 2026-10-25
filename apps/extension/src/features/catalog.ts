@@ -245,7 +245,7 @@ export const featureCatalog = [
     id: "optizzz-account",
     label: "Compte Optizzz",
     description:
-      "En tête de cet onglet : lier l'extension à votre Compte Optizzz, facultatif, et y rattacher votre Joueur sur un clic. Sans compte lié, rien n'est envoyé. Garde aussi dans votre navigateur la dernière liste de la page Membres de votre alliance.",
+      "En tête de cet onglet : lier l'extension à votre Compte Optizzz, facultatif, y rattacher votre Joueur sur un clic, et choisir ce qui part chiffré vers l'Espace de votre alliance (rien par défaut). Sans compte lié, rien n'est envoyé. Sur les Convois : ceux de l'alliance en route vers vous. Garde aussi dans votre navigateur la dernière liste de la page Membres de votre alliance.",
     options: [],
   },
   {

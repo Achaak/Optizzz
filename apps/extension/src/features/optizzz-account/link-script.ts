@@ -11,10 +11,16 @@ export async function syncLinkScript(): Promise<void> {
   // Without the `scripting` permission, the API is not even there (whatever the types say).
   const scripting = (browser as { scripting?: typeof browser.scripting }).scripting;
   if (!scripting) return;
-  const registered = new Set(
-    (await scripting.getRegisteredContentScripts({ ids: SITE_SCRIPTS.map((s) => s.id) })).map((s) => s.id),
-  );
+  const current = await scripting.getRegisteredContentScripts({ ids: SITE_SCRIPTS.map((s) => s.id) });
+  const registered = new Set(current.map((s) => s.id));
   if (granted) {
+    // A script whose pages changed since it was registered (the space script, now also on « Mon compte »).
+    const moved = SITE_SCRIPTS.filter((s) => {
+      const known = current.find((c) => c.id === s.id);
+      return known && [...(known.matches ?? [])].sort().join(" ") !== [...s.matches].sort().join(" ");
+    });
+    if (moved.length > 0)
+      await scripting.updateContentScripts(moved.map((s) => ({ id: s.id, js: [...s.js], matches: [...s.matches] })));
     const missing = SITE_SCRIPTS.filter((s) => !registered.has(s.id));
     if (missing.length > 0)
       await scripting.registerContentScripts(

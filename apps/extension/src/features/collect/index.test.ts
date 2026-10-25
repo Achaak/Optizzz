@@ -7,12 +7,15 @@ import type { ContentScriptContext } from "wxt/utils/content-script-context";
 import reineHtml from "../end-times/__fixtures__/reine-laying.html?raw";
 import commerceHtml from "../convoy/__fixtures__/commerce.html?raw";
 import messagerieHtml from "@optizzz/game/pages/__fixtures__/messagerie-convoys.html?raw";
-import { loadConvoys } from "@/data/convoys";
+import { loadConvoys, loadIncomingConvoys } from "@/data/convoys";
+import { storeChoices } from "@/data/envois";
+import { NO_ENVOIS } from "@optizzz/game/site-links/envois";
 import { loadConvoyHistory } from "@/data/convoy-history";
 import { loadSections } from "@/data/end-times";
 import { collect } from ".";
 
 const ORIGIN = location.origin;
+const S5 = "https://s5.fourmizzz.fr";
 const ctx = {} as ContentScriptContext;
 
 beforeEach(() => {
@@ -70,6 +73,33 @@ describe("collect", () => {
     expect(await loadLastGameServer()).toBe(ORIGIN);
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
+  });
+
+  it("keeps the convoys both ways when the player sends them, convoy options off, without a request", async () => {
+    const happyDOM = (window as unknown as { happyDOM: { setURL: (url: string) => void } }).happyDOM;
+    happyDOM.setURL("https://s5.fourmizzz.fr/commerce.php");
+    document.documentElement.innerHTML = new DOMParser().parseFromString(
+      commerceHtml,
+      "text/html",
+    ).documentElement.innerHTML;
+    const options = { "convoy.workers": false, "convoy.history": false };
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    await collect.run(ctx, options);
+    expect(await loadIncomingConvoys(S5)).toBeNull();
+    expect(await loadConvoys(S5)).toBeNull();
+
+    await storeChoices("s5", "Formica", { ...NO_ENVOIS, convoys: true });
+    await collect.run(ctx, options);
+    expect((await loadConvoys(S5))?.convoys).toHaveLength(2);
+    expect((await loadIncomingConvoys(S5))?.convoys.map((c) => c.sender)).toEqual(["Polyergus"]);
+    // Switched off with « Compte Optizzz »: nothing kept for the Envoi.
+    fakeBrowser.reset();
+    await storeChoices("s5", "Formica", { ...NO_ENVOIS, convoys: true });
+    await collect.run(ctx, { ...options, "optizzz-account": false });
+    expect(await loadIncomingConvoys(S5)).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+    happyDOM.setURL(`${ORIGIN}/Reine.php`);
   });
 
   it("keeps the convoys delivered and received listed by the inbox, only when that option is on", async () => {
