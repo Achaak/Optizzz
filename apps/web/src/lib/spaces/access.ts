@@ -4,6 +4,7 @@
 import {
   createAllianceKeyring,
   openAllianceKeyring,
+  rotateAllianceKey,
   sealAllianceKeyring,
   type AllianceKeyring,
   type SealedAllianceKey,
@@ -188,6 +189,56 @@ export async function withdrawAdmin({
 }): Promise<{ revocation: string; resigned: string[] }> {
   const revocation = await sign(me, trust, "admin-revocation", subject, now);
   return { revocation, resigned: await resignAfterRevocation({ me, trust, revocation, keep, now }) };
+}
+
+/**
+ * « Exclure » (ticket 18): the exclusion, the certificates that stop counting with it signed again in one's own name
+ * (`resignAfterRevocation`), and a new version of the Clé d'alliance, drawn here. Every version, the new one and the
+ * older ones (to read older data), is sealed and signed by oneself for each remaining member one believes once the
+ * exclusion counts (`whoToTrust`), oneself included: the boxes an excluded Admin had sealed stop opening with the
+ * exclusion (ADR 0005, « Qui croire »), and a box does not say who sealed it. A remaining member one does not believe
+ * is left out, with their older boxes: an Admin sends them every version later, by « Renvoyer l'accès ».
+ */
+export async function excludeMember({
+  me,
+  keyring,
+  subject,
+  trust,
+  remaining,
+  now,
+}: {
+  me: KeyPair;
+  keyring: AllianceKeyring;
+  subject: string;
+  trust: SpaceTrust;
+  /** The members who stay, with the key their access is sealed for. */
+  remaining: readonly { playerId: number; publicKey: string }[];
+  now: number;
+}): Promise<{
+  exclusion: string;
+  resigned: string[];
+  version: number;
+  sealed: { playerId: number; sealed: SealedAllianceKey[] }[];
+}> {
+  const stay = remaining.filter((r) => r.publicKey !== subject);
+  const exclusion = await sign(me, trust, "exclusion", subject, now);
+  const resigned = await resignAfterRevocation({
+    me,
+    trust,
+    revocation: exclusion,
+    keep: stay.map((r) => r.publicKey),
+    now,
+  });
+  const { members } = await whoToTrust(addCertificates(trust, [exclusion, ...resigned]));
+  const rotated = await rotateAllianceKey(keyring);
+  const recipients = stay.filter((r) => r.publicKey === me.publicKey || members.includes(r.publicKey));
+  const sealed = await Promise.all(
+    recipients.map(async (r) => ({
+      playerId: r.playerId,
+      sealed: await sealAllianceKeyring(rotated, { spaceId: trust.spaceId, recipient: r.publicKey, admin: me }),
+    })),
+  );
+  return { exclusion, resigned, version: Math.max(...rotated.map((k) => k.version)), sealed };
 }
 
 /**

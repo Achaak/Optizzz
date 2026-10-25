@@ -37,7 +37,7 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
       const rows = await tx.spaceMember.findMany({
         where: { spaceId },
         orderBy: [{ joinedAt: "asc" }, { playerId: "asc" }],
-        include: { player: PLAYER_WITH_KEY },
+        include: { player: PLAYER_WITH_KEY, sealedKeys: { select: { version: true }, orderBy: { version: "asc" } } },
       });
       return rows.map((m): MemberRow => ({
         server: m.server,
@@ -48,6 +48,7 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
         joinedAt: m.joinedAt,
         sealedFor: m.publicKey,
         currentKey: m.player.user.personalKey?.publicKey ?? null,
+        versions: m.sealedKeys.map((k) => k.version),
       }));
     },
     async requests() {
@@ -69,9 +70,8 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
       }));
     },
     async versions() {
-      const rows = await tx.sealedAllianceKey.findMany({
+      const rows = await tx.allianceKeyVersion.findMany({
         where: { spaceId },
-        distinct: ["version"],
         select: { version: true },
         orderBy: { version: "asc" },
       });
@@ -112,6 +112,27 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
         where: memberKey(spaceId, player),
         data: { publicKey, sealedKeys: { create: sealed.map((s) => ({ version: s.version, sealed: s.sealed })) } },
       });
+    },
+    async addVersion(version) {
+      // ON CONFLICT DO NOTHING: a version already there is told, without aborting the transaction.
+      const { count } = await tx.allianceKeyVersion.createMany({ data: [{ spaceId, version }], skipDuplicates: true });
+      return count === 1 ? "added" : "taken";
+    },
+    absenceAlerts: () =>
+      tx.spaceAbsenceAlerts.findUnique({ where: { spaceId }, select: { blob: true, revision: true } }),
+    async saveAbsenceAlerts(blob, expectedRevision) {
+      if (expectedRevision === 0) {
+        const created = await tx.spaceAbsenceAlerts.createMany({
+          data: [{ spaceId, blob, revision: 1 }],
+          skipDuplicates: true,
+        });
+        return created.count === 1 ? 1 : null;
+      }
+      const { count } = await tx.spaceAbsenceAlerts.updateMany({
+        where: { spaceId, revision: expectedRevision },
+        data: { blob, revision: { increment: 1 } },
+      });
+      return count === 1 ? expectedRevision + 1 : null;
     },
     async setRole(player, role) {
       await tx.spaceMember.update({ where: memberKey(spaceId, player), data: { role } });
@@ -202,6 +223,7 @@ export function prismaSpaceStore(db: PrismaClient): SpaceStore {
         await db.space.create({
           data: {
             ...space,
+            keyVersions: { create: { version: 1 } },
             members: {
               create: {
                 server: creator.server,
@@ -226,13 +248,14 @@ export function prismaSpaceStore(db: PrismaClient): SpaceStore {
     async membershipsOf(userId) {
       const rows = await db.spaceMember.findMany({
         where: { player: { userId } },
-        include: { space: { select: { name: true } } },
+        include: { space: { select: { name: true, tag: true } } },
       });
       return rows.map((m) => ({
         server: m.server,
         playerId: m.playerId,
         spaceId: m.spaceId,
         spaceName: m.space.name,
+        spaceTag: m.space.tag,
         role: m.role,
         sealedFor: m.publicKey,
       }));

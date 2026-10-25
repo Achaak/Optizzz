@@ -4,7 +4,15 @@
 // Everything that decides whom to believe runs in the browsers (src/lib/spaces/), never here.
 import { openCertificate, type Certificate, type CertificateKind } from "@optizzz/crypto/certificate";
 import { serverById } from "@optizzz/game/servers";
-import type { MemberRow, PlayerRef, SealedKeyInput, SpaceRole, SpaceStore, SpaceTransaction } from "./store";
+import type {
+  MemberRow,
+  PlayerRef,
+  SealedForMember,
+  SealedKeyInput,
+  SpaceRole,
+  SpaceStore,
+  SpaceTransaction,
+} from "./store";
 
 export class SpaceError extends Error {
   override readonly name = "SpaceError";
@@ -22,6 +30,8 @@ const LOCKED_KEY = /^[A-Za-z0-9_-]{130}$/;
 /** A Clé d'alliance sealed and signed for a member: 181 bytes (ADR 0005, format 2). */
 const SEALED_KEY = /^[A-Za-z0-9_-]{242}$/;
 const TRUST_LIST = /^[A-Za-z0-9_-]{56,1000000}$/;
+/** Encrypted alliance data (ADR 0005, format 1): 45 bytes and more. */
+const ALLIANCE_DATA = /^[A-Za-z0-9_-]{60,200000}$/;
 const SPACE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const MAX_NAME = 60;
 const MAX_CERTIFICATES = 50;
@@ -31,6 +41,11 @@ const NOT_FOUND = () => new SpaceError("not-found", "Cet espace n'existe pas, ou
 const NOT_MEMBER = () => new SpaceError("forbidden", "Vous n'êtes pas membre de cet espace.");
 const NOT_ADMIN = () => new SpaceError("forbidden", "Seul un Admin de l'espace peut le faire.");
 const RELOAD = () => new SpaceError("conflict", "L'espace a changé entre-temps : rechargez la page.");
+const KEY_CHANGED = () =>
+  new SpaceError(
+    "conflict",
+    "Un autre Admin vient de changer l'accès à l'espace : rechargez la page, puis recommencez si besoin.",
+  );
 const BAD_PROOF = () =>
   new SpaceError(
     "invalid",
@@ -61,7 +76,7 @@ function checkSealed(sealed: SealedKeyInput[]): void {
 }
 
 /** Every version of the space, sealed: the history belongs to the alliance. */
-function checkAllVersions(sealed: SealedKeyInput[], versions: number[]): void {
+function checkAllVersions(sealed: SealedKeyInput[], versions: readonly number[]): void {
   checkSealed(sealed);
   const given = sealed.map((s) => s.version).sort((a, b) => a - b);
   if (given.length !== versions.length || given.some((v, i) => v !== versions[i])) throw RELOAD();
@@ -92,15 +107,34 @@ async function checkCertificate(
   return certificate;
 }
 
-const keyStatus = (member: MemberRow) =>
-  member.sealedFor === member.currentKey ? ("current" as const) : ("resend" as const);
+/** Whether the member's boxes were sealed for the account's key today (not after a forgotten passphrase). */
+const sealedForToday = (member: MemberRow) => member.sealedFor === member.currentKey;
 
-/** The acting person's membership; with `admin`, an Admin whose access is up to date (they sign with that key). */
-function actor(members: MemberRow[], userId: string, { admin }: { admin: boolean }): MemberRow {
+/**
+ * « à jour », or « à renvoyer »: a key changed since (passphrase forgotten), or a version of the Clé d'alliance missing
+ * (a new version sealed after an exclusion by an Admin who did not believe this member's key).
+ */
+const keyStatus = (member: MemberRow, versions: readonly number[]) =>
+  sealedForToday(member) && versions.every((v) => member.versions.includes(v))
+    ? ("current" as const)
+    : ("resend" as const);
+
+/**
+ * The acting person's membership; with `admin`, an Admin whose access is up to date (they sign with that key); with
+ * `alerts`, an Admin or a Délégué whose access is up to date (they encrypt with the newest version).
+ */
+function actor(
+  members: MemberRow[],
+  versions: readonly number[],
+  userId: string,
+  { admin, alerts = false }: { admin: boolean; alerts?: boolean },
+): MemberRow {
   const me = members.find((m) => m.userId === userId);
   if (!me) throw NOT_MEMBER();
   if (admin && me.role !== "admin") throw NOT_ADMIN();
-  if (admin && keyStatus(me) !== "current")
+  if (alerts && me.role === "member")
+    throw new SpaceError("forbidden", "Seul un Admin ou un Délégué de l'espace peut le faire.");
+  if ((admin || alerts) && keyStatus(me, versions) !== "current")
     throw new SpaceError("forbidden", "Votre accès à l'espace doit d'abord vous être renvoyé par un autre Admin.");
   return me;
 }
@@ -167,7 +201,8 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         extensionLinked: linked,
         players: await Promise.all(
           players.map(async (player) => {
-            const alliance = (await store.exportAlliance(player)) ?? null;
+            const inExport = await store.exportAlliance(player);
+            const alliance = inExport ?? null;
             const membership = memberships.find((m) => samePlayer(m, player)) ?? null;
             return {
               ...player,
@@ -177,6 +212,8 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
                 name: membership.spaceName,
                 role: membership.role,
                 keyStatus: membership.sealedFor === key?.publicKey ? "current" : "resend",
+                // The export says the Player left the space's alliance: offered to leave the space.
+                leftAlliance: inExport !== undefined && (inExport === null || !sameTag(inExport, membership.spaceTag)),
               },
               requests: requests
                 .filter((r) => samePlayer(r, player))
@@ -228,16 +265,18 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
       const summary = SPACE_ID.test(spaceId) ? await store.spaceSummary(spaceId) : null;
       if (!summary) throw NOT_FOUND();
       return inExistingSpace(spaceId, async (tx) => {
-        const [space, members] = await Promise.all([tx.space(), tx.members()]);
+        const [space, members, versions] = await Promise.all([tx.space(), tx.members(), tx.versions()]);
         if (!space) throw NOT_FOUND();
         const me = members.find((m) => m.userId === userId);
         if (me) {
           const isAdmin = me.role === "admin";
-          const [requests, versions, certificates, sealed] = await Promise.all([
+          const [requests, certificates, sealed, absenceAlerts, alliance] = await Promise.all([
             isAdmin ? tx.requests() : Promise.resolve([]),
-            tx.versions(),
             tx.certificates(),
-            keyStatus(me) === "current" ? tx.sealedFor(me) : Promise.resolve([]),
+            // Still the older versions while a newer one waits to be sent: older data stays readable.
+            sealedForToday(me) ? tx.sealedFor(me) : Promise.resolve([]),
+            me.role === "member" ? Promise.resolve(null) : tx.absenceAlerts(),
+            store.exportAlliance(me),
           ]);
           return {
             kind: "member" as const,
@@ -247,8 +286,11 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
               playerId: me.playerId,
               pseudo: me.pseudo,
               role: me.role,
-              keyStatus: keyStatus(me),
+              keyStatus: keyStatus(me, versions),
             },
+            // The export says the Player left the space's alliance: they are offered to leave the space.
+            leaveProposal:
+              alliance === undefined || (alliance !== null && sameTag(alliance, space.tag)) ? null : { alliance },
             members: members.map((m) => ({
               server: m.server,
               playerId: m.playerId,
@@ -257,7 +299,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
               joinedAt: m.joinedAt,
               publicKey: m.currentKey,
               sealedFor: m.sealedFor,
-              keyStatus: keyStatus(m),
+              keyStatus: keyStatus(m, versions),
               isMe: m.userId === userId,
             })),
             requests: requests.map((r) => ({
@@ -272,6 +314,8 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
             versions,
             sealed,
             certificates,
+            /** Admins and Délégués only: encrypted with the Clé d'alliance (src/lib/spaces/absences.ts). */
+            absenceAlerts,
           };
         }
         const [key, linked, players, requests] = await Promise.all([
@@ -296,7 +340,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
           admins:
             request?.status === "pending"
               ? members
-                  .filter((m) => m.role === "admin" && keyStatus(m) === "current")
+                  .filter((m) => m.role === "admin" && keyStatus(m, versions) === "current")
                   .map((m) => ({ pseudo: m.pseudo, publicKey: m.sealedFor }))
               : [],
         };
@@ -337,14 +381,14 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
     ) {
       checkPublicKey(input.publicKey);
       await inExistingSpace(input.spaceId, async (tx) => {
-        const members = await tx.members();
-        const me = actor(members, userId, { admin: true });
+        const [members, versions] = await Promise.all([tx.members(), tx.versions()]);
+        const me = actor(members, versions, userId, { admin: true });
         const request = (await tx.requests()).find((r) => r.id === input.requestId && r.status === "pending");
         if (!request) throw RELOAD();
         if (request.currentKey !== input.publicKey) throw RELOAD();
         if (await tx.spaceOfPlayer(request))
           throw new SpaceError("conflict", `${request.pseudo} est déjà dans un espace.`);
-        checkAllVersions(input.sealed, await tx.versions());
+        checkAllVersions(input.sealed, versions);
         await checkCertificate(input.certificate, input.spaceId, {
           kinds: ["member"],
           issuer: me.sealedFor,
@@ -361,7 +405,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
 
     async refuse(userId: string, input: { spaceId: string; requestId: string }) {
       await inExistingSpace(input.spaceId, async (tx) => {
-        actor(await tx.members(), userId, { admin: true });
+        actor(await tx.members(), await tx.versions(), userId, { admin: true });
         const request = (await tx.requests()).find((r) => r.id === input.requestId && r.status === "pending");
         if (request) await tx.refuseRequest(request.id, now());
       });
@@ -374,11 +418,12 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
     ) {
       checkPublicKey(input.publicKey);
       await inExistingSpace(input.spaceId, async (tx) => {
-        const members = await tx.members();
-        const me = actor(members, userId, { admin: true });
+        const [members, versions] = await Promise.all([tx.members(), tx.versions()]);
+        const me = actor(members, versions, userId, { admin: true });
         const member = members.find((m) => m.playerId === input.playerId);
-        if (!member || keyStatus(member) !== "resend" || member.currentKey !== input.publicKey) throw RELOAD();
-        checkAllVersions(input.sealed, await tx.versions());
+        if (!member || keyStatus(member, versions) !== "resend" || member.currentKey !== input.publicKey)
+          throw RELOAD();
+        checkAllVersions(input.sealed, versions);
         await checkCertificate(input.certificate, input.spaceId, {
           kinds: [member.role === "admin" ? "admin" : "member"],
           issuer: me.sealedFor,
@@ -401,14 +446,14 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
     ) {
       if (!["admin", "delegate", "member"].includes(input.role)) throw invalid();
       await inExistingSpace(input.spaceId, async (tx) => {
-        const members = await tx.members();
-        const me = actor(members, userId, { admin: true });
+        const [members, versions] = await Promise.all([tx.members(), tx.versions()]);
+        const me = actor(members, versions, userId, { admin: true });
         const target = members.find((m) => m.playerId === input.playerId);
         if (!target) throw RELOAD();
         if (target.role === input.role) return;
         const extra = input.certificates ?? [];
         if (input.role === "admin") {
-          if (keyStatus(target) !== "current")
+          if (keyStatus(target, versions) !== "current")
             throw invalid(`L'accès de ${target.pseudo} doit d'abord lui être renvoyé.`);
           await checkCertificate(input.certificate, input.spaceId, {
             kinds: ["admin"],
@@ -439,9 +484,68 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
     async addCertificates(userId: string, input: { spaceId: string; certificates: string[] }) {
       await inExistingSpace(input.spaceId, async (tx) => {
         const members = await tx.members();
-        const me = actor(members, userId, { admin: true });
+        const me = actor(members, await tx.versions(), userId, { admin: true });
         await checkGrants(input.certificates, input.spaceId, me.sealedFor, members);
         if (input.certificates.length > 0) await tx.addCertificates(input.certificates);
+      });
+    },
+
+    /**
+     * « Exclure » (ticket 18): the access is cut at once (membership and boxes deleted). The acting Admin's browser
+     * signed the exclusion, signed again the certificates that stop counting with it, and sealed every version of the
+     * Clé d'alliance, a new one included, for the remaining members it believes, itself included (their boxes are
+     * replaced; the others keep theirs, without the new version, « à renvoyer »). One version N per space: a version
+     * that is not the next number (another Admin changed the key meanwhile) is refused, and the database refuses a
+     * second row of the same number (src/server/spaces/prisma-store.ts, `alliance_key_version`).
+     */
+    async exclude(
+      userId: string,
+      input: {
+        spaceId: string;
+        playerId: number;
+        exclusion: string;
+        certificates: string[];
+        version: number;
+        sealed: SealedForMember[];
+      },
+    ) {
+      await inExistingSpace(input.spaceId, async (tx) => {
+        const [members, versions] = await Promise.all([tx.members(), tx.versions()]);
+        const me = actor(members, versions, userId, { admin: true });
+        const target = members.find((m) => m.playerId === input.playerId);
+        if (!target) throw RELOAD();
+        if (target.userId === userId) throw invalid("Pour partir de l'espace, utilisez « Quitter ».");
+        await checkCertificate(input.exclusion, input.spaceId, {
+          kinds: ["exclusion"],
+          issuer: me.sealedFor,
+          subject: target.sealedFor,
+        });
+        const remaining = members.filter((m) => m !== target);
+        await checkGrants(input.certificates, input.spaceId, me.sealedFor, remaining);
+        if (input.version !== Math.max(0, ...versions) + 1) throw KEY_CHANGED();
+        checkNewVersion(input.sealed, remaining, [...versions, input.version], me);
+        if ((await tx.addVersion(input.version)) === "taken") throw KEY_CHANGED();
+        await tx.removeMember(target);
+        for (const { playerId, sealed } of input.sealed) {
+          const member = remaining.find((m) => m.playerId === playerId);
+          if (member) await tx.sealFor(member, member.sealedFor, sealed);
+        }
+        await tx.addCertificates([input.exclusion, ...input.certificates]);
+      });
+    },
+
+    /**
+     * The absence alerts, encrypted in an Admin's or a Délégué's browser with the newest version: written if the
+     * revision is still the one they read (0 when there are none yet).
+     */
+    async saveAbsenceAlerts(userId: string, input: { spaceId: string; blob: string; expectedRevision: number }) {
+      if (!ALLIANCE_DATA.test(input.blob) || !Number.isInteger(input.expectedRevision) || input.expectedRevision < 0)
+        throw invalid();
+      return inExistingSpace(input.spaceId, async (tx) => {
+        actor(await tx.members(), await tx.versions(), userId, { admin: false, alerts: true });
+        const revision = await tx.saveAbsenceAlerts(input.blob, input.expectedRevision);
+        if (revision === null) throw RELOAD();
+        return { revision };
       });
     },
 
@@ -449,7 +553,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
     async leave(userId: string, input: { spaceId: string }) {
       return inExistingSpace(input.spaceId, async (tx) => {
         const members = await tx.members();
-        const me = actor(members, userId, { admin: false });
+        const me = actor(members, [], userId, { admin: false });
         if (members.length === 1) {
           await tx.deleteSpace();
           return { deleted: true };
@@ -464,7 +568,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
     async rename(userId: string, input: { spaceId: string; name: string }) {
       const name = checkName(input.name);
       await inExistingSpace(input.spaceId, async (tx) => {
-        actor(await tx.members(), userId, { admin: true });
+        actor(await tx.members(), await tx.versions(), userId, { admin: true });
         await tx.rename(name);
       });
     },
@@ -481,6 +585,29 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
       });
     },
   };
+}
+
+/**
+ * Every version, the new one included (`versions`), sealed for distinct remaining members whose access was up to date
+ * (sealed for their key today, every older version held), the acting Admin among them. The site cannot open the boxes:
+ * their signature is for the members to check.
+ */
+function checkNewVersion(
+  sealed: SealedForMember[],
+  remaining: MemberRow[],
+  versions: readonly number[],
+  me: MemberRow,
+): void {
+  if (sealed.length === 0 || sealed.length > remaining.length) throw invalid();
+  if (new Set(sealed.map((s) => s.playerId)).size !== sealed.length) throw invalid();
+  const older = versions.slice(0, -1);
+  for (const entry of sealed) {
+    if (!Number.isInteger(entry.playerId)) throw invalid();
+    checkAllVersions(entry.sealed, versions);
+    const member = remaining.find((m) => m.playerId === entry.playerId);
+    if (!member || keyStatus(member, older) !== "current") throw RELOAD();
+  }
+  if (!sealed.some((s) => s.playerId === me.playerId)) throw invalid();
 }
 
 /** Member and Admin certificates by `issuer`, each about a member's key (an Admin's, for an Admin certificate). */

@@ -41,6 +41,8 @@ export interface MemberRow extends PlayerRef {
   sealedFor: string;
   /** The account's key today (null before a first passphrase). */
   currentKey: string | null;
+  /** The versions of the Clé d'alliance sealed for it, ascending. */
+  versions: number[];
 }
 
 export interface RequestRow extends PlayerRef {
@@ -53,12 +55,24 @@ export interface RequestRow extends PlayerRef {
   currentKey: string | null;
 }
 
+/** Every version of the Clé d'alliance sealed for one member. */
+export interface SealedForMember {
+  playerId: number;
+  sealed: SealedKeyInput[];
+}
+
+/** The absence alerts of a space, encrypted with its Clé d'alliance (src/lib/spaces/absences.ts). */
+export interface AbsenceAlertsRow {
+  blob: string;
+  revision: number;
+}
+
 /** What one space's operations read and write, inside one transaction that holds the space. */
 export interface SpaceTransaction {
   space(): Promise<SpaceRow | null>;
   members(): Promise<MemberRow[]>;
   requests(): Promise<RequestRow[]>;
-  /** The versions of the Clé d'alliance sealed in the space, ascending. */
+  /** The versions of the Clé d'alliance of the space, ascending: one row each, never two of the same number. */
   versions(): Promise<number[]>;
   sealedFor(player: PlayerRef): Promise<SealedKeyInput[]>;
   certificates(): Promise<string[]>;
@@ -67,6 +81,12 @@ export interface SpaceTransaction {
   addMember(member: PlayerRef & { role: SpaceRole; publicKey: string }, sealed: SealedKeyInput[]): Promise<void>;
   /** « Clé à renvoyer » done: the member's key, and every version sealed for it (replacing older boxes). */
   sealFor(player: PlayerRef, publicKey: string, sealed: SealedKeyInput[]): Promise<void>;
+  /** A new version of the Clé d'alliance: « taken » when the space already has this number. */
+  addVersion(version: number): Promise<"added" | "taken">;
+
+  absenceAlerts(): Promise<AbsenceAlertsRow | null>;
+  /** Writes the alerts if their revision is still `expectedRevision` (0: none yet); the new revision, or null. */
+  saveAbsenceAlerts(blob: string, expectedRevision: number): Promise<number | null>;
   setRole(player: PlayerRef, role: SpaceRole): Promise<void>;
   removeMember(player: PlayerRef): Promise<void>;
   addCertificates(blobs: string[]): Promise<void>;
@@ -91,6 +111,7 @@ export interface SpaceSummary {
 interface MembershipRow extends PlayerRef {
   spaceId: string;
   spaceName: string;
+  spaceTag: string;
   role: SpaceRole;
   sealedFor: string;
 }
@@ -120,7 +141,7 @@ export interface SpaceStore {
   /** The Player's alliance tag in the latest export: null without alliance, undefined when not in the export. */
   exportAlliance(player: PlayerRef): Promise<string | null | undefined>;
   extensionLinked(userId: string): Promise<boolean>;
-  /** « taken » when the id is already used, or the Player is already in a space. */
+  /** « taken » when the id is already used, or the Player is already in a space. Version 1 is the space's first. */
   createSpace(
     space: Omit<SpaceRow, "createdAt">,
     creator: PlayerRef & { publicKey: string },

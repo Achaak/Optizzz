@@ -1,6 +1,6 @@
 // The Alliance Spaces for the signed-in account (src/server/spaces/space-service.ts holds the rules). The site only
-// ever receives what browsers sealed and signed: public keys, locked private keys, sealed Clés d'alliance, certificates
-// and the encrypted trust list.
+// ever receives what browsers sealed and signed: public keys, locked private keys, sealed Clés d'alliance, certificates,
+// the encrypted trust list and the absence alerts encrypted with the Clé d'alliance.
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -78,6 +78,20 @@ export const spacesRouter = createTRPCRouter({
   addCertificates: protectedProcedure
     .input(spaceId.extend({ certificates: z.array(certificate).max(50) }))
     .mutation(({ ctx, input }) => run(() => spaces.addCertificates(ctx.userId, input))),
+  exclude: protectedProcedure
+    .input(
+      spaceId.extend({
+        playerId: z.number().int(),
+        exclusion: certificate,
+        certificates: z.array(certificate).max(50),
+        version: z.number().int(),
+        sealed: z.array(z.object({ playerId: z.number().int(), sealed })).max(200),
+      }),
+    )
+    .mutation(({ ctx, input }) => run(() => spaces.exclude(ctx.userId, input))),
+  saveAbsenceAlerts: protectedProcedure
+    .input(spaceId.extend({ blob: text(200_000), expectedRevision: z.number().int() }))
+    .mutation(({ ctx, input }) => run(() => spaces.saveAbsenceAlerts(ctx.userId, input))),
   leave: protectedProcedure.input(spaceId).mutation(({ ctx, input }) => run(() => spaces.leave(ctx.userId, input))),
   rename: protectedProcedure
     .input(spaceId.extend({ name: text(200) }))

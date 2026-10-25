@@ -1,6 +1,7 @@
 // The Alliance Spaces' store in memory, for the tests of the rules (space-service.test.ts) and of the browsers' flows.
 // It follows the Prisma store (prisma-store.ts): one space per Player, cascades, « clé à renvoyer » on a reset.
 import type {
+  AbsenceAlertsRow,
   KeyRow,
   MemberRow,
   PlayerRef,
@@ -37,6 +38,8 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
   let members: Member[] = [];
   let requests: Request[] = [];
   const certificates = new Map<string, string[]>();
+  const versions = new Map<string, Set<number>>();
+  const absences = new Map<string, AbsenceAlertsRow>();
   let nextRequest = 1;
 
   const same = (a: PlayerRef, b: PlayerRef) => a.server === b.server && a.playerId === b.playerId;
@@ -71,6 +74,7 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
               joinedAt: m.joinedAt,
               sealedFor: m.publicKey,
               currentKey: keys.get(player.userId)?.publicKey ?? null,
+              versions: m.sealed.map((s) => s.version).sort((a, b) => a - b),
             };
           }),
       ),
@@ -93,12 +97,7 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
             };
           }),
       ),
-    versions: () =>
-      Promise.resolve(
-        [...new Set(members.filter((m) => m.spaceId === spaceId).flatMap((m) => m.sealed.map((s) => s.version)))].sort(
-          (a, b) => a - b,
-        ),
-      ),
+    versions: () => Promise.resolve([...(versions.get(spaceId) ?? [])].sort((a, b) => a - b)),
     sealedFor: (player) => Promise.resolve(members.find((m) => m.spaceId === spaceId && same(m, player))?.sealed ?? []),
     certificates: () => Promise.resolve([...(certificates.get(spaceId) ?? [])]),
     spaceOfPlayer: (player) => Promise.resolve(members.find((m) => same(m, player))?.spaceId ?? null),
@@ -111,6 +110,19 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
       const member = members.find((m) => m.spaceId === spaceId && same(m, player));
       if (member) Object.assign(member, { publicKey, sealed: [...sealed] });
       return Promise.resolve();
+    },
+    addVersion: (version) => {
+      const known = versions.get(spaceId) ?? new Set<number>();
+      if (known.has(version)) return Promise.resolve("taken");
+      versions.set(spaceId, known.add(version));
+      return Promise.resolve("added");
+    },
+    absenceAlerts: () => Promise.resolve(absences.get(spaceId) ?? null),
+    saveAbsenceAlerts: (blob, expected) => {
+      const revision = absences.get(spaceId)?.revision ?? 0;
+      if (revision !== expected) return Promise.resolve(null);
+      absences.set(spaceId, { blob, revision: revision + 1 });
+      return Promise.resolve(revision + 1);
     },
     setRole: (player, role) => {
       const member = members.find((m) => m.spaceId === spaceId && same(m, player));
@@ -157,6 +169,8 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
       members = members.filter((m) => m.spaceId !== spaceId);
       requests = requests.filter((r) => r.spaceId !== spaceId);
       certificates.delete(spaceId);
+      versions.delete(spaceId);
+      absences.delete(spaceId);
       return Promise.resolve();
     },
   });
@@ -198,6 +212,7 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
     createSpace: (space, creator, sealed) => {
       if (spaces.has(space.id) || members.some((m) => same(m, creator))) return Promise.resolve("taken");
       spaces.set(space.id, { ...space, createdAt: now() });
+      versions.set(space.id, new Set([1]));
       members.push({ ...creator, spaceId: space.id, role: "admin", joinedAt: now(), sealed: [...sealed] });
       return Promise.resolve("created");
     },
@@ -220,6 +235,7 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
             playerId: m.playerId,
             spaceId: m.spaceId,
             spaceName: spaces.get(m.spaceId)?.name ?? "",
+            spaceTag: spaces.get(m.spaceId)?.tag ?? "",
             role: m.role,
             sealedFor: m.publicKey,
           })),
@@ -246,6 +262,10 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
     /** A Player declared by an account, with its alliance in the export. */
     addPlayer(userId: string, player: PlayerRef & { pseudo: string; alliance: string | null }) {
       players.push({ ...player, userId });
+    },
+    /** The Player's alliance in a newer export. */
+    setAlliance(ref: PlayerRef, alliance: string | null) {
+      playerOf(ref).alliance = alliance;
     },
     link(userId: string) {
       linked.add(userId);

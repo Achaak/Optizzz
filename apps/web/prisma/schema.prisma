@@ -20,7 +20,6 @@ model ExportRead {
   readAt  DateTime @updatedAt
 
   @@id([server, kind])
-
   @@schema("public")
 }
 
@@ -46,7 +45,6 @@ model Player {
   @@index([server, alliance])
   @@index([server, pseudo])
   @@index([server, field])
-
   @@schema("public")
 }
 
@@ -66,7 +64,6 @@ model Alliance {
 
   @@id([server, tag])
   @@index([server, totalField])
-
   @@schema("public")
 }
 
@@ -83,7 +80,6 @@ model PlayerDay {
 
   @@id([server, playerId, day])
   @@index([server, day])
-
   @@schema("public")
 }
 
@@ -100,7 +96,6 @@ model AllianceDay {
 
   @@id([server, tag, day])
   @@index([server, day])
-
   @@schema("public")
 }
 
@@ -124,7 +119,6 @@ model JournalEntry {
   @@index([server, at])
   @@index([server, playerId, at])
   @@index([server, tag, at])
-
   @@schema("public")
 }
 
@@ -144,13 +138,13 @@ model MapFile {
 
 /// An Optizzz account: the email alone. `name` stays empty (Better Auth requires the column).
 model User {
-  id            String    @id
+  id            String           @id
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String           @unique
+  emailVerified Boolean          @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
   sessions      Session[]
   accounts      Account[]
   extensions    ExtensionToken[]
@@ -235,14 +229,14 @@ model ExtensionToken {
 /// A Player (a pseudo on a Server) declared by the account's extension, on a click. The primary key makes a Player
 /// belong to one account only. Not a proof (ADR 0005): an Admin stays the human check.
 model DeclaredPlayer {
-  server     String
+  server      String
   /// The player's id in the public export.
-  playerId   Int
+  playerId    Int
   /// The pseudo when declared.
-  pseudo     String
-  declaredAt DateTime @default(now())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pseudo      String
+  declaredAt  DateTime      @default(now())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   memberships SpaceMember[]
   requests    JoinRequest[]
 
@@ -275,14 +269,16 @@ model PersonalKey {
 /// An Alliance Space, on a server, for an alliance tag read from the export. Several may carry the same tag. Its id is
 /// drawn by the creator's browser: the Clé d'alliance is sealed and signed for it before the space exists on the site.
 model Space {
-  id           String             @id
-  server       String
-  tag          String
-  name         String
-  createdAt    DateTime           @default(now())
-  members      SpaceMember[]
-  requests     JoinRequest[]
-  certificates SpaceCertificate[]
+  id            String               @id
+  server        String
+  tag           String
+  name          String
+  createdAt     DateTime             @default(now())
+  members       SpaceMember[]
+  requests      JoinRequest[]
+  certificates  SpaceCertificate[]
+  keyVersions   AllianceKeyVersion[]
+  absenceAlerts SpaceAbsenceAlerts?
 
   @@index([server, tag])
   @@map("space")
@@ -330,6 +326,32 @@ model SealedAllianceKey {
 
   @@id([spaceId, server, playerId, version])
   @@map("sealed_alliance_key")
+  @@schema("accounts")
+}
+
+/// The versions of a space's Clé d'alliance, by number: one row each, so that two Admins who change the key at once
+/// cannot both write a version N (ADR 0005, « Modèle de confiance ») : the database refuses the second.
+model AllianceKeyVersion {
+  spaceId   String
+  version   Int
+  createdAt DateTime @default(now())
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@id([spaceId, version])
+  @@map("alliance_key_version")
+  @@schema("accounts")
+}
+
+/// The absence alerts of a space (members missing from the game's Members page, and since when), encrypted with the
+/// Clé d'alliance in an Admin's or a Délégué's browser: the site cannot read them. The revision grows at each write.
+model SpaceAbsenceAlerts {
+  spaceId   String   @id
+  blob      String
+  revision  Int
+  updatedAt DateTime @updatedAt
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@map("space_absence_alerts")
   @@schema("accounts")
 }
 
