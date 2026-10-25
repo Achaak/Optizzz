@@ -6,7 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { authClient } from "~/lib/auth-client";
-import { loginErrorMessage } from "~/lib/login-links";
+import { loginErrorMessage, RETURN_KEY, returnPath } from "~/lib/login-links";
 
 type State = { step: "form"; error: string | null } | { step: "sending" } | { step: "sent"; email: string };
 
@@ -19,6 +19,13 @@ export function LoginForm() {
     event.preventDefault();
     const address = email.trim();
     setState({ step: "sending" });
+    // Back to the invitation link once signed in, even though the link comes back by email (src/app/account).
+    const back = returnPath(params.get("next"));
+    try {
+      if (back) localStorage.setItem(RETURN_KEY, back);
+    } catch {
+      // Refused: one lands on /account, which links to the spaces.
+    }
     const { error } = await authClient.signIn.magicLink({
       email: address,
       callbackURL: "/account",

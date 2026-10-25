@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { confirmLinkUrl, loginErrorMessage, verifyLinkPath } from "./login-links";
+import { confirmLinkUrl, loginErrorMessage, returnPath, verifyLinkPath } from "./login-links";
+
+describe("returnPath", () => {
+  it("goes back to the spaces or to an invitation link, and nowhere else", () => {
+    expect(returnPath("/spaces")).toBe("/spaces");
+    expect(returnPath("/spaces/0b8f6c1e-8a51-4f77-9a2e-5d1c2b3a4f60")).toBe(
+      "/spaces/0b8f6c1e-8a51-4f77-9a2e-5d1c2b3a4f60",
+    );
+    expect(returnPath("https://evil.example/spaces")).toBeNull();
+    expect(returnPath("//evil.example")).toBeNull();
+    expect(returnPath("/spaces/../account")).toBeNull();
+    expect(returnPath(null)).toBeNull();
+  });
+});
 
 describe("confirmLinkUrl", () => {
   it("points the emailed link at the confirmation page, not at the verification itself", () => {

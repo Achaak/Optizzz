@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
+import { forgetKeysOnDevice } from "~/lib/spaces/key-session";
 import { removeExtension } from "./actions";
 
 /** « Se déconnecter » (this browser) and « Se déconnecter partout » (every session of the account). */
@@ -34,6 +35,8 @@ export function SignOutButtons() {
         return;
       }
     }
+    // « Se déconnecter » also forgets the opened key on this device.
+    forgetKeysOnDevice();
     await authClient.signOut();
     router.replace("/");
     router.refresh();
@@ -90,6 +93,7 @@ export function DeleteAccount({ email }: { email: string }) {
     const { error } = await authClient.deleteUser({});
     setBusy(false);
     if (!error) {
+      forgetKeysOnDevice();
       router.replace("/login?deleted");
       router.refresh();
       return;

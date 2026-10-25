@@ -264,6 +264,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
               role: m.role,
               joinedAt: m.joinedAt,
               publicKey: m.currentKey,
+              sealedFor: m.sealedFor,
               keyStatus: keyStatus(m),
               isMe: m.userId === userId,
             })),

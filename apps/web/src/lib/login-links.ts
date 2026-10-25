@@ -14,6 +14,16 @@ export function verifyLinkPath(token: string): string {
   return `/api/auth/magic-link/verify?${params.toString()}`;
 }
 
+/** Where to go back after signing in (an invitation link, /spaces): only those pages of the site, nothing else. */
+export function returnPath(value: string | null): string | null {
+  return value !== null && /^\/spaces(\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/.test(value)
+    ? value
+    : null;
+}
+
+/** The browser's note of where to go back, kept while the magic link travels by email. */
+export const RETURN_KEY = "optizzz:after-login";
+
 /** What the login page says about the `error` Better Auth sends back to it. */
 export function loginErrorMessage(code: string | null): string | null {
   if (!code) return null;
