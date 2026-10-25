@@ -68,7 +68,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-25, avant le tic
 - **Échanger le Code de sécurité** (obligatoire, sans case « j'ai comparé ») :
   - le nouveau venu, après sa demande, choisit l'Admin avec qui il parle (sauté s'il n'y en a qu'un) ; il voit « Envoyez ce code à Pseudo sur Discord », un bouton « Copier », et un champ « Collez le code que Pseudo vous a envoyé » ;
   - l'Admin, sur la demande, voit « Copier mon code » et « Collez le code de Pseudo » ;
-  - chaque côté a son propre code (tirés tous deux des deux clés publiques) : coller le sien ne marche pas. Chaque navigateur calcule le code attendu de l'autre et compare tout seul ; espaces et tirets sont ignorés, les chiffres peuvent aussi se taper (lus de vive voix) ;
+  - chaque côté a son propre code, tiré de sa seule clé publique : coller le sien ne marche pas. Chaque navigateur calcule le code attendu de l'autre et compare tout seul ; espaces et tirets sont ignorés, les chiffres peuvent aussi se taper (lus de vive voix) ;
   - codes concordants : « Donner l'accès » s'active chez l'Admin, et le nouveau venu, qui a collé un code concordant, accepte d'office les clés que cet Admin a signées pour lui. Il lit l'espace dès que l'Admin a donné l'accès, sans autre geste ;
   - codes différents : « Les codes ne correspondent pas. N'allez pas plus loin et prévenez-nous. » Rien n'est retenu ;
   - l'Admin n'a donc que deux gestes : envoyer le lien, puis coller le code reçu et cliquer « Donner l'accès ».
