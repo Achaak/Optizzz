@@ -71,7 +71,8 @@ export function useSpaceAccess(view: MemberView | undefined): SpaceAccess {
       const [trusted, opened] = await Promise.all([trustedIn(trust), openCertificates(trust)]);
       let keyring: AllianceKeyring | null = null;
       let keyringError: CryptoError | null = null;
-      if (view.me.keyStatus === "current") {
+      // Also while a newer version waits to be sent back: the older ones still read older data.
+      if (view.sealed.length > 0) {
         try {
           keyring = await openSpace(pair, view.sealed, trust);
         } catch (error) {

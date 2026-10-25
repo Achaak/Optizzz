@@ -17,6 +17,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { api } from "~/trpc/react";
 import { errorText } from "./errors";
+import { LeaveSpace } from "./leave-space";
 import { Callout, Panel } from "./parts";
 import type { MemberView } from "./use-space-access";
 
@@ -25,7 +26,6 @@ export function SpaceSettings({ view }: { view: MemberView }) {
   const router = useRouter();
   const utils = api.useUtils();
   const rename = api.spaces.rename.useMutation();
-  const leave = api.spaces.leave.useMutation();
   const remove = api.spaces.delete.useMutation();
   const spaceId = view.space.id;
   const isAdmin = view.me.role === "admin";
@@ -33,7 +33,6 @@ export function SpaceSettings({ view }: { view: MemberView }) {
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
-  const alone = view.members.length === 1;
 
   const gone = async () => {
     await utils.spaces.invalidate();
@@ -73,35 +72,7 @@ export function SpaceSettings({ view }: { view: MemberView }) {
       )}
       {error && <Callout>{error}</Callout>}
       <div className="flex flex-wrap gap-2">
-        <AlertDialog onOpenChange={() => setDialogError(null)}>
-          <AlertDialogTrigger render={<Button variant="outline" />}>Quitter</AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Quitter {view.space.name}&nbsp;?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {alone
-                  ? "Vous êtes seul dans l'espace : il sera supprimé avec tout ce qu'il contient."
-                  : "Vous ne lirez plus l'espace. Pour revenir, il faudra demander de nouveau à rejoindre."}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            {dialogError && <Callout>{dialogError}</Callout>}
-            <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <Button
-                variant="destructive"
-                disabled={leave.isPending}
-                onClick={() => {
-                  leave
-                    .mutateAsync({ spaceId })
-                    .then(gone)
-                    .catch((failure: unknown) => setDialogError(errorText(failure)));
-                }}
-              >
-                Quitter l&apos;espace
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <LeaveSpace view={view} />
         {isAdmin && (
           <AlertDialog
             onOpenChange={() => {

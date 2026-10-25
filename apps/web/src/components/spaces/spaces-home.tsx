@@ -74,6 +74,12 @@ function PlayerSpaces({ player }: { player: PlayerEntry }) {
             · {ROLE_LABEL[player.membership.role]}
             {player.membership.keyStatus === "resend" && " · accès à renvoyer"}
           </span>
+          {player.membership.leftAlliance && (
+            <span className="block font-medium">
+              ⚠ D&apos;après l&apos;export public, {player.pseudo} n&apos;est plus dans l&apos;alliance de cet espace
+              {player.alliance ? ` (maintenant ${player.alliance})` : ""}&nbsp;: ouvrez l&apos;espace pour le quitter.
+            </span>
+          )}
         </p>
       ) : player.alliance === null ? (
         <p className="text-muted-foreground">

@@ -2,13 +2,25 @@
 
 // A space as its member sees it (docs/features/site-comptes-espaces.md, « Page d'un espace »): the access, the
 // members, the requests (Admins), the alerts (Admins and Délégués) and the settings. An Admin's gestures are two:
-// paste the newcomer's code, then « Donner l'accès »; sealing, signing and the trust list happen without them.
+// paste the newcomer's code, then « Donner l'accès »; sealing, signing and the trust list happen without them. The
+// same for « Exclure »: one confirmation, and the new access for the others is made without them (ticket 18).
+import { formatDateTime } from "@optizzz/game/format/time-format";
 import { serverById } from "@optizzz/game/servers";
 import { useState } from "react";
 import { CopyInvitation } from "~/components/spaces/copy-invitation";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { shortDate } from "~/lib/short-date";
-import { certify, grantAccess, withdrawAdmin } from "~/lib/spaces/access";
+import type { Absence } from "~/lib/spaces/absences";
+import { certify, excludeMember, grantAccess, withdrawAdmin } from "~/lib/spaces/access";
 import { askExtensionForMembers } from "~/lib/spaces/extension-bridge";
 import { checkMembersList, membersCheckMessage } from "~/lib/spaces/members-check";
 import {
@@ -23,9 +35,11 @@ import { api } from "~/trpc/react";
 import { AdminExchange } from "./admin-exchange";
 import { CodeExchange } from "./code-exchange";
 import { errorText } from "./errors";
+import { LeaveSpace } from "./leave-space";
 import { PassphraseUnlock } from "./passphrase-forms";
 import { Callout, Panel } from "./parts";
 import { SpaceSettings } from "./space-settings";
+import { useAbsenceAlerts } from "./use-absence-alerts";
 import { useSpaceAccess, type MemberView, type SpaceAccess } from "./use-space-access";
 import { useSpaceKeys } from "./space-keys";
 
@@ -33,6 +47,9 @@ type Member = MemberView["members"][number];
 type Request = MemberView["requests"][number];
 
 const ROLE_LABEL = { admin: "Admin", delegate: "Délégué", member: "Membre" } as const;
+
+/** « absent depuis le 24/10 à 13 h 36 », Paris time, as Optizzz writes times. */
+const absentSince = (absence: Absence) => `absent depuis le ${formatDateTime(new Date(absence.since))}`;
 
 /** Whether this browser does not believe a member's key (« La clé de Pseudo a changé »). */
 function keyChanged(member: Member, access: SpaceAccess, view: MemberView): boolean {
@@ -46,6 +63,7 @@ function keyChanged(member: Member, access: SpaceAccess, view: MemberView): bool
 export function MemberSpace({ view }: { view: MemberView }) {
   const keys = useSpaceKeys();
   const access = useSpaceAccess(keys.pair && keys.trust ? view : undefined);
+  const absences = useAbsenceAlerts(view, access.keyring);
   const server = serverById(view.space.server);
   const isAdmin = view.me.role === "admin";
   const canAct = isAdmin && view.me.keyStatus === "current" && access.keyring !== null && keys.pair !== null;
@@ -62,15 +80,17 @@ export function MemberSpace({ view }: { view: MemberView }) {
         </p>
       </div>
 
+      {view.leaveProposal && <LeaveProposal view={view} alliance={view.leaveProposal.alliance} />}
+
       <AccessPanel view={view} access={access} pseudoOf={pseudoOf} />
 
       {(isAdmin || view.me.role === "delegate") && keys.pair && (
-        <AlertsPanel view={view} access={access} isAdmin={isAdmin} pseudoOf={pseudoOf} />
+        <AlertsPanel view={view} access={access} isAdmin={isAdmin} pseudoOf={pseudoOf} absences={absences} />
       )}
 
       {isAdmin && <RequestsPanel view={view} access={access} canAct={canAct} />}
 
-      <MembersPanel view={view} access={access} canAct={canAct} />
+      <MembersPanel view={view} access={access} canAct={canAct} absences={absences} />
 
       <Panel title="Inviter">
         <p className="text-muted-foreground">
@@ -86,6 +106,22 @@ export function MemberSpace({ view }: { view: MemberView }) {
         Les Envois (convois, floods, états de l&apos;armée) arrivent à l&apos;étape suivante d&apos;Optizzz.
       </p>
     </div>
+  );
+}
+
+/** The export says the Player left the space's alliance: they are offered to leave, never made to. */
+function LeaveProposal({ view, alliance }: { view: MemberView; alliance: string | null }) {
+  return (
+    <Callout tone="warning">
+      <div className="space-y-3">
+        <p>
+          D&apos;après l&apos;export public du jeu, {view.me.pseudo} n&apos;est plus dans {view.space.tag}
+          {alliance ? ` : il est maintenant dans ${alliance}` : ", ni dans aucune autre alliance"}. Si vous avez quitté
+          l&apos;alliance, quittez aussi cet espace. Si vous y revenez bientôt, vous pouvez rester.
+        </p>
+        <LeaveSpace view={view} label="Quitter l'espace" />
+      </div>
+    </Callout>
   );
 }
 
@@ -140,11 +176,19 @@ function AccessPanel({
       )}
       {view.me.keyStatus === "resend" ? (
         <>
-          <p>
-            Votre accès à l&apos;espace doit vous être renvoyé, depuis votre nouvelle phrase secrète. Échangez le Code
-            de sécurité avec un Admin&nbsp;: il vous renverra l&apos;accès, et vous lirez l&apos;espace dès qu&apos;il
-            l&apos;aura fait.
-          </p>
+          {view.sealed.length > 0 ? (
+            <p>
+              L&apos;accès à l&apos;espace a changé pour tous les membres après le départ de quelqu&apos;un, et le
+              nouveau doit encore vous être donné&nbsp;: vous lisez les données d&apos;avant, pas les nouvelles.
+              Échangez le Code de sécurité avec un Admin&nbsp;; il vous renverra l&apos;accès.
+            </p>
+          ) : (
+            <p>
+              Votre accès à l&apos;espace doit vous être renvoyé, depuis votre nouvelle phrase secrète. Échangez le Code
+              de sécurité avec un Admin&nbsp;: il vous renverra l&apos;accès, et vous lirez l&apos;espace dès qu&apos;il
+              l&apos;aura fait.
+            </p>
+          )}
           <AdminExchange spaceId={view.space.id} admins={admins} verified={access.verified} />
         </>
       ) : access.keyring ? (
@@ -166,16 +210,22 @@ function AlertsPanel({
   access,
   isAdmin,
   pseudoOf,
+  absences,
 }: {
   view: MemberView;
   access: SpaceAccess;
   isAdmin: boolean;
   pseudoOf: (key: string | undefined) => string | null;
+  absences: Absence[];
 }) {
   const changed = view.members.filter((m) => keyChanged(m, access, view));
   const toResend = view.members.filter((m) => m.keyStatus === "resend" && !m.isMe);
   const pending = view.requests.filter((r) => r.status === "pending");
   const alerts: React.ReactNode[] = [
+    ...absences.map(
+      (a) =>
+        `${a.pseudo} : ${absentSince(a)} de la page Membres de ${view.space.tag}. Rien n'est retiré tout seul${isAdmin ? " : excluez-le s'il ne revient pas" : ""}.`,
+    ),
     ...(access.badCertificates > 0 ? [BAD_CERTIFICATE] : []),
     ...access.crossRevocations.map(
       ([a, b]) =>
@@ -201,6 +251,10 @@ function AlertsPanel({
           ))}
         </ul>
       )}
+      <p className="text-xs text-muted-foreground">
+        Les absences viennent de la page Membres du jeu, lue par l&apos;extension d&apos;un Admin ou d&apos;un Délégué à
+        l&apos;ouverture de cette page.
+      </p>
     </Panel>
   );
 }
@@ -335,7 +389,17 @@ function RequestRow({
   );
 }
 
-function MembersPanel({ view, access, canAct }: { view: MemberView; access: SpaceAccess; canAct: boolean }) {
+function MembersPanel({
+  view,
+  access,
+  canAct,
+  absences,
+}: {
+  view: MemberView;
+  access: SpaceAccess;
+  canAct: boolean;
+  absences: Absence[];
+}) {
   const now = new Date();
   return (
     <Panel title={`Membres (${String(view.members.length)})`}>
@@ -352,6 +416,13 @@ function MembersPanel({ view, access, canAct }: { view: MemberView; access: Spac
               {member.isMe && <span className="text-muted-foreground">(vous)</span>}
             </div>
             {keyChanged(member, access, view) && <p className="font-medium">⚠ {changedKey(member.pseudo)}</p>}
+            {absences
+              .filter((a) => a.playerId === member.playerId)
+              .map((a) => (
+                <p key={a.playerId} className="font-medium">
+                  ⚠ {absentSince(a)} de la page Membres de {view.space.tag}
+                </p>
+              ))}
             {!member.isMe && <MemberActions view={view} access={access} member={member} canAct={canAct} />}
           </li>
         ))}
@@ -376,8 +447,9 @@ function MemberActions({
   const setRole = api.spaces.setRole.useMutation();
   const resend = api.spaces.resend.useMutation();
   const addCertificates = api.spaces.addCertificates.useMutation();
+  const exclude = api.spaces.exclude.useMutation();
   const grant = useGrant(view, access);
-  const [open, setOpen] = useState<"exchange" | null>(null);
+  const [open, setOpen] = useState<"exchange" | "exclude" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const spaceId = view.space.id;
@@ -548,12 +620,67 @@ function MemberActions({
             Retirer Admin
           </Button>
         )}
+        <Button size="sm" variant="destructive" disabled={busy} onClick={() => setOpen("exclude")}>
+          Exclure
+        </Button>
         {open === "exchange" && !exchanged && (
           <Button size="sm" variant="ghost" onClick={() => setOpen(null)}>
             Annuler
           </Button>
         )}
       </div>
+      <AlertDialog
+        open={open === "exclude"}
+        onOpenChange={(next) => {
+          if (!next && !busy) setOpen(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exclure {member.pseudo}&nbsp;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {member.pseudo} perd tout de suite l&apos;accès à l&apos;espace
+              {member.role === "admin" ? ", et son rôle d'Admin" : ""}. Ce qui sera envoyé ensuite lui restera
+              illisible&nbsp;; ce qu&apos;il a déjà lu reste lu. Pour revenir, il devra demander de nouveau à rejoindre.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {error && <Callout>{error}</Callout>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Annuler</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={busy || !access.keyring}
+              onClick={() =>
+                void run(async () => {
+                  if (!access.keyring) return;
+                  const remaining = view.members
+                    .filter((m) => m.playerId !== member.playerId && m.keyStatus === "current")
+                    .map((m) => ({ playerId: m.playerId, publicKey: m.sealedFor }));
+                  const prepared = await excludeMember({
+                    me,
+                    keyring: access.keyring,
+                    subject: member.sealedFor,
+                    trust: access.trust,
+                    remaining,
+                    now: Date.now(),
+                  });
+                  await exclude.mutateAsync({
+                    spaceId,
+                    playerId: member.playerId,
+                    exclusion: prepared.exclusion,
+                    certificates: prepared.resigned,
+                    version: prepared.version,
+                    sealed: prepared.sealed,
+                  });
+                  await remember([prepared.exclusion, ...prepared.resigned]);
+                })
+              }
+            >
+              {busy ? "Exclusion…" : `Exclure ${member.pseudo}`}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {open === "exchange" && !exchanged && (
         <p className="text-xs text-muted-foreground">
           Pour nommer {member.pseudo} Admin, échangez d&apos;abord le Code de sécurité avec lui.

@@ -1,7 +1,8 @@
 "use client";
 
 // One space's page, for a signed-in person: as a member, or as someone invited. Asked again every few seconds while
-// something waits on someone else (a request, an access to send back), so that the page follows without a reload.
+// something waits on someone else (a request, an access to send back), and for Admins and Délégués (requests,
+// departure alerts), so that the page follows without a reload.
 import Link from "next/link";
 import { api } from "~/trpc/react";
 import { errorText } from "./errors";
@@ -23,7 +24,7 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
         if (!data) return false;
         if (data.kind === "invitation") return data.request?.status === "pending" ? WAITING_MS : false;
         if (data.me.keyStatus === "resend") return WAITING_MS;
-        return data.me.role === "admin" ? ADMIN_MS : false;
+        return data.me.role === "member" ? false : ADMIN_MS;
       },
     },
   );
