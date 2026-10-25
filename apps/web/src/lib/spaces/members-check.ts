@@ -3,7 +3,7 @@
 // hours ago (docs/features/site-comptes-espaces.md, « Approuver »). Pure, so the rule is tested apart from the page.
 import type { MembersAnswer } from "@optizzz/game/site-links/space-bridge";
 
-export const MEMBERS_LIST_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const MEMBERS_LIST_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export type MembersCheck =
   { ok: true } | { ok: false; reason: "no-extension" | "unlinked" | "no-list" | "other-alliance" | "stale" | "absent" };

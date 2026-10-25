@@ -4,15 +4,7 @@
 // Everything that decides whom to believe runs in the browsers (src/lib/spaces/), never here.
 import { openCertificate, type Certificate, type CertificateKind } from "@optizzz/crypto/certificate";
 import { serverById } from "@optizzz/game/servers";
-import type {
-  MemberRow,
-  PlayerRef,
-  SealedKeyInput,
-  SpaceRole,
-  SpaceStore,
-  SpaceSummary,
-  SpaceTransaction,
-} from "./store";
+import type { MemberRow, PlayerRef, SealedKeyInput, SpaceRole, SpaceStore, SpaceTransaction } from "./store";
 
 export class SpaceError extends Error {
   override readonly name = "SpaceError";
@@ -511,4 +503,3 @@ export function lastAdminBlocker(
 
 export type SpaceView = Awaited<ReturnType<ReturnType<typeof spaceService>["view"]>>;
 export type SpacesOverview = Awaited<ReturnType<ReturnType<typeof spaceService>["overview"]>>;
-export type { SpaceSummary };

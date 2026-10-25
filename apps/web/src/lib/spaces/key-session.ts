@@ -5,7 +5,7 @@ import type { KeyPair } from "@optizzz/crypto/personal-key";
 
 const PREFIX = "optizzz:key:";
 const REVISION_PREFIX = "optizzz:trust-revision:";
-export const REMEMBER_MS = 30 * 24 * 60 * 60 * 1000;
+const REMEMBER_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface Stored {
   publicKey: string;

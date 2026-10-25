@@ -46,9 +46,21 @@ export default function PrivacyPage() {
           un seul compte. Sans extension liée, rien de l&apos;extension n&apos;arrive au site.
         </p>
         <p>
+          Pour un Espace d&apos;alliance, le site garde l&apos;espace (serveur, tag, nom, date), ses membres (Joueur,
+          rôle, date) et les demandes à rejoindre. Les données de l&apos;alliance sont chiffrées dans votre navigateur
+          avec une Clé d&apos;alliance que le site ne connaît pas : il n&apos;en garde que des copies scellées pour
+          chaque membre. Votre phrase secrète ne quitte jamais votre navigateur ; le site garde votre clé publique et
+          votre clé privée chiffrée par cette phrase, ainsi que vos vérifications du Code de sécurité, chiffrées pour
+          vous seul. Les autorisations signées par les Admins (qui est membre, qui est Admin) sont gardées en clair.
+          Quand un Admin donne l&apos;accès, son extension remet à la page de l&apos;espace, dans son navigateur, la
+          dernière liste des membres lue sur la page Membres du jeu : elle n&apos;est pas envoyée au site. Une clé
+          privée ouverte reste dans votre navigateur le temps de la session, ou 30 jours si vous cochez «&nbsp;Se
+          souvenir sur cet appareil&nbsp;» ; «&nbsp;Se déconnecter&nbsp;» l&apos;efface.
+        </p>
+        <p>
           Depuis «&nbsp;Mon compte&nbsp;», vous pouvez retirer une extension liée, vous déconnecter de ce navigateur ou
-          partout, et supprimer votre compte : tout ce qui lui appartient (connexions, extensions liées, Joueurs) est
-          effacé tout de suite.
+          partout, et supprimer votre compte : tout ce qui lui appartient (connexions, extensions liées, Joueurs, place
+          dans les espaces, clés, vérifications) est effacé tout de suite.
         </p>
       </section>
       <section className="space-y-2">

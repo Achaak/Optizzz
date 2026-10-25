@@ -3,7 +3,7 @@
 // told by a word and a mark, not by colour alone (ADR 0003).
 import { cn } from "cn";
 
-export const INVITATION_STEPS = [
+const INVITATION_STEPS = [
   "Se connecter",
   "Connecter l'extension",
   "Rattacher votre pseudo",

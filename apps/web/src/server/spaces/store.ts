@@ -88,14 +88,14 @@ export interface SpaceSummary {
   memberCount: number;
 }
 
-export interface MembershipRow extends PlayerRef {
+interface MembershipRow extends PlayerRef {
   spaceId: string;
   spaceName: string;
   role: SpaceRole;
   sealedFor: string;
 }
 
-export interface OwnRequestRow extends PlayerRef {
+interface OwnRequestRow extends PlayerRef {
   spaceId: string;
   spaceName: string;
   status: "pending" | "refused";
