@@ -28,6 +28,8 @@ jobs:
       # Required by the site's build (src/env.js); dummies: no account is opened in CI.
       BETTER_AUTH_SECRET: ci-secret-not-used-anywhere-at-all
       BETTER_AUTH_URL: http://localhost:3000
+      # The site's Discord reminders (src/server/reminders/at-rest.ts): a dummy, 32 bytes in base64. Nothing is posted.
+      DISCORD_REMINDERS_KEY: Y2ktZHVtbXkta2V5LW5vdC1mb3ItcHJvZHVjdGlvbiE=
       # The site's tests against Postgres (prisma-store.db.test.ts): migrations first, then vitest.
       TEST_DATABASE_URL: postgresql://optizzz:optizzz@localhost:5432/optizzz
     steps:

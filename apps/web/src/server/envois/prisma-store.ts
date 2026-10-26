@@ -65,10 +65,10 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
     },
     async writeItems(spaceId, player, category, items, removed, now) {
       const mine = { spaceId, server: player.server, playerId: player.playerId, category };
-      await db.$transaction(async (tx) => {
+      return db.$transaction(async (tx) => {
         await tx.envoiItem.deleteMany({ where: { spaceId, expiresAt: { lte: now } } });
         if (removed.length > 0) await tx.envoiItem.deleteMany({ where: { ...mine, fingerprint: { in: removed } } });
-        if (items.length === 0) return;
+        if (items.length === 0) return 0;
         const known = new Map(
           (
             await tx.envoiItem.findMany({
@@ -79,11 +79,13 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
         );
         const added = items.filter((i) => !known.has(i.fingerprint));
         // Two Envois of the same Joueur at once: the second insert of a fingerprint is skipped, not an error.
-        if (added.length > 0)
-          await tx.envoiItem.createMany({
-            data: added.map((i) => ({ ...mine, ...i, updatedAt: now })),
-            skipDuplicates: true,
-          });
+        const created =
+          added.length > 0
+            ? await tx.envoiItem.createMany({
+                data: added.map((i) => ({ ...mine, ...i, updatedAt: now })),
+                skipDuplicates: true,
+              })
+            : { count: 0 };
         for (const item of items) {
           const row = known.get(item.fingerprint);
           if (!row || (row.blob === item.blob && row.detail === item.detail)) continue;
@@ -98,6 +100,7 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
             },
           });
         }
+        return created.count;
       });
     },
     async forgetStates(player, removed, withoutDetail, now) {

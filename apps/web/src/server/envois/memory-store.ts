@@ -57,6 +57,7 @@ export function memoryEnvoiStore() {
           r.expiresAt > now &&
           !(r.spaceId === spaceId && same(r, player) && r.category === category && removed.includes(r.fingerprint)),
       );
+      let added = 0;
       for (const item of items) {
         const known = rows.find(
           (r) =>
@@ -67,6 +68,7 @@ export function memoryEnvoiStore() {
             Object.assign(known, { blob: item.blob, detail: item.detail, expiresAt: item.expiresAt, updatedAt: now });
           continue;
         }
+        added += 1;
         rows.push({
           id: String(nextId++),
           spaceId,
@@ -80,7 +82,7 @@ export function memoryEnvoiStore() {
           updatedAt: now,
         });
       }
-      return Promise.resolve();
+      return Promise.resolve(added);
     },
     forgetStates: (player, removed, withoutDetail, now) => {
       rows = rows.filter((r) => !(same(r, player) && removed.includes(r.category)));

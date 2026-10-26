@@ -3,7 +3,8 @@
 // « Discord », for an Admin (docs/features/site-discord.md): the webhook's address and the events that go to the
 // alliance's channel, each off by default. Encrypted here with the Clé d'alliance; a record written before a member's
 // exclusion is encrypted again with the newest version when an Admin opens the page, and the page offers to replace
-// an address that member knows. The messages leave from the extension of the member who acts, never from the site.
+// an address that member knows. The announcements leave from the extension of the member who acts, never from the
+// site; the site's own content-free reminders go to a second webhook (reminders-section.tsx).
 import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
 import {
   DISCORD_EVENT_LABELS,
@@ -16,9 +17,11 @@ import { useEffect, useId, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { knownByExcluded, lockDiscord, openDiscord, refusalText, staleDiscord } from "~/lib/spaces/discord";
+import { maskedWebhook } from "~/lib/spaces/reminders";
 import { api } from "~/trpc/react";
 import { errorText } from "./errors";
 import { Callout, Panel } from "./parts";
+import { RemindersSection } from "./reminders-section";
 import type { MemberView } from "./use-space-access";
 
 const NOT_A_WEBHOOK =
@@ -78,12 +81,6 @@ function useDiscordSettings(view: MemberView, keyring: AllianceKeyring | null) {
 
   const ready = opened !== null && opened.blob === (stored?.blob ?? null);
   return { settings: ready ? opened.settings : undefined, problem, newest, save, writable };
-}
-
-/** « …/api/webhooks/1234…/••••abcd »: enough to recognise it, not to copy it from over a shoulder. */
-function maskedUrl(url: string): string {
-  const [, id = "", token = ""] = /\/api\/webhooks\/(\d+)\/(.+)$/.exec(url) ?? [];
-  return `discord.com/api/webhooks/${id.slice(0, 4)}…/••••${token.slice(-4)}`;
 }
 
 export function DiscordPanel({ view, keyring }: { view: MemberView; keyring: AllianceKeyring | null }) {
@@ -166,7 +163,7 @@ export function DiscordPanel({ view, keyring }: { view: MemberView; keyring: All
               <p id={`${id}-help`} className="break-words text-muted-foreground">
                 {current.url ? (
                   <>
-                    Webhook enregistré&nbsp;: <span className="break-all">{maskedUrl(current.url)}</span>.
+                    Webhook enregistré&nbsp;: <span className="break-all">{maskedWebhook(current.url)}</span>.
                   </>
                 ) : (
                   "Dans Discord : Paramètres du salon › Intégrations › Webhooks › Nouveau webhook, puis « Copier l'URL du webhook »."
@@ -231,6 +228,7 @@ export function DiscordPanel({ view, keyring }: { view: MemberView; keyring: All
         Chaque membre garde la main&nbsp;: rien ne part sur Discord pour une catégorie qu&apos;il n&apos;envoie pas à
         l&apos;espace, ni tant qu&apos;il n&apos;a pas autorisé Discord dans son extension.
       </p>
+      <RemindersSection spaceId={view.space.id} spaceName={view.space.name} announcementsUrl={settings?.url ?? null} />
     </Panel>
   );
 }

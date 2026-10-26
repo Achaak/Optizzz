@@ -1,7 +1,7 @@
 import { createAllianceKeyring, rotateAllianceKey } from "@optizzz/crypto/alliance-key";
 import { encryptData } from "@optizzz/crypto/data";
 import { describe, expect, it } from "vitest";
-import { knownByExcluded, lockDiscord, openDiscord, refusalText, staleDiscord } from "./discord";
+import { knownByExcluded, lockDiscord, openDiscord, refusalText, staleDiscord, suspensionText } from "./discord";
 
 const URL_OK = "https://discord.com/api/webhooks/1234/tok";
 
@@ -42,5 +42,13 @@ describe("refusalText", () => {
     );
     expect(refusalText({ status: 401, at, pseudo: "Bruno" })).toContain("l'adresse du webhook n'est pas valable");
     expect(refusalText({ status: 400, at, pseudo: "Bruno" })).toContain("erreur 400");
+  });
+});
+
+describe("suspensionText", () => {
+  it("says the site's reminders are suspended, since when and why", () => {
+    expect(suspensionText({ status: 404, at: new Date("2026-10-26T12:00:00Z") })).toBe(
+      "Discord a refusé le dernier rappel du site, le 26/10 à 13 h 00 : ce webhook n'existe plus (supprimé dans Discord ?). Les rappels sont suspendus : enregistrez une nouvelle adresse.",
+    );
   });
 });

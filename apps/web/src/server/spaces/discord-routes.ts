@@ -1,7 +1,7 @@
 // The Discord webhook in the extension's API (/api/extension/discord, docs/features/site-discord.md), with the token
 // alone, like the rest of it (src/server/extension/extension-api.ts): no session of the site, no CORS header. The site
 // hands each member's extension the webhook still encrypted, and takes a refusal of Discord without any of the message:
-// it never posts to Discord itself.
+// it never posts to this webhook itself (its own content-free reminders go to a second one: src/server/reminders/).
 import { json, problem, tokenUser, unauthorized, type ExtensionStore } from "~/server/extension/extension-api";
 import { SpaceError, type spaceService } from "./space-service";
 

@@ -5,6 +5,7 @@
 // closes), the dates, and the pseudo of whoever decided. « Couverte » is not kept: every reader works it out from the
 // convoys attached to the Demande.
 import { DEMANDES_KEPT_MS, isDemandeId, OPEN_STATUSES, type DemandeStatus } from "@optizzz/game/site-links/demandes";
+import type { ReminderKind } from "~/lib/spaces/reminders";
 import type { PlayerRef } from "~/server/envois/store";
 import type { DemandeRow, DemandeStore } from "./store";
 
@@ -60,7 +61,17 @@ const served = (row: DemandeRow) => ({
   endedAt: time(row.endedAt),
 });
 
-export function demandeService(store: DemandeStore, now: () => Date = () => new Date()) {
+/**
+ * Asks for the site's reminder on Discord (src/server/reminders/service.ts, docs/features/site-discord.md): it posts
+ * later, content-free, if an Admin switched « Demandes à valider » on, and never fails a Demande.
+ */
+type Remind = (spaceId: string, kind: ReminderKind) => void;
+
+export function demandeService(
+  store: DemandeStore,
+  now: () => Date = () => new Date(),
+  remind: Remind = () => undefined,
+) {
   function playerRef(body: Record<string, unknown>): PlayerRef {
     if (typeof body.server !== "string" || !/^s\d{1,2}$/.test(body.server) || !isPlayerId(body.playerId))
       throw invalid();
@@ -148,6 +159,8 @@ export function demandeService(store: DemandeStore, now: () => Date = () => new 
         at,
       );
       if (!created) throw invalid();
+      // A new Demande waits to be validated: the only moment one becomes « à valider ».
+      remind(space.id, "demands");
     },
 
     /** An Admin or a Délégué validates or refuses a Demande à valider: never their own. */

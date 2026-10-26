@@ -11,6 +11,7 @@
         "BETTER_AUTH_URL",
         "BREVO_API_KEY",
         "EMAIL_FROM",
+        "DISCORD_REMINDERS_KEY",
         "VERCEL_ENV",
         "VERCEL_URL"
       ],

@@ -285,6 +285,8 @@ model Space {
   envois        EnvoiItem[]
   discord       SpaceDiscord?
   demandes      Demande[]
+  reminders     SpaceReminders?
+  remindersSent SpaceReminderSent[]
 
   @@index([server, tag])
   @@map("space")
@@ -383,6 +385,37 @@ model SpaceDiscord {
   space           Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
   @@map("space_discord")
+  @@schema("accounts")
+}
+
+/// The site's own reminders on Discord (docs/features/site-discord.md, « Rappels du site », ADR 0005 « Discord »): a
+/// second webhook, not the announcements' one, whose address the site reads. Encrypted at rest with the site's key
+/// (DISCORD_REMINDERS_KEY, src/server/reminders/at-rest.ts): a stolen copy of the database does not give it, whoever
+/// runs the site does. `kinds`: the events an Admin switched on. `suspended…`: Discord said the webhook is gone (401,
+/// 404); no reminder leaves until an Admin saves an address again.
+model SpaceReminders {
+  spaceId         String    @id
+  sealedUrl       String
+  kinds           String[]
+  updatedAt       DateTime  @updatedAt
+  suspendedStatus Int?
+  suspendedAt     DateTime?
+  space           Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@map("space_reminders")
+  @@schema("accounts")
+}
+
+/// When the site last posted a reminder of a kind for a space: one at most every 30 minutes, claimed by a conditional
+/// write before posting.
+model SpaceReminderSent {
+  spaceId String
+  kind    String
+  sentAt  DateTime
+  space   Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@id([spaceId, kind])
+  @@map("space_reminder_sent")
   @@schema("accounts")
 }
 

@@ -13,7 +13,7 @@ Un joueur demande à son alliance des ressources pour une construction ou une re
 - **Rattachement** : le convoi lancé depuis « Envoyer un convoi » compte pour la Demande ; un convoi lancé ailleurs ne compte que dans le Solde.
 - **Conservation** : une Demande close, annulée ou refusée est effacée 90 jours après ; un convoi rattaché, 90 jours après son arrivée. Supprimer son compte efface ses Demandes ; supprimer l'espace aussi.
 - **Tous les membres voient les Demandes** sur le site. L'extension relève les validées, celles à valider pour un Admin ou un Délégué, et les Demandes ouvertes de son propre Joueur (pour les clore).
-- **Discord** : pas d'annonce de Demande dans ce ticket (facultative au ticket ; elle pourra s'ajouter par le même `announce`, coupée par défaut, sous la même règle de consentement).
+- **Discord** : pas d'annonce de Demande par l'extension (facultative au ticket ; elle pourra s'ajouter par le même `announce`, coupée par défaut, sous la même règle de consentement). Le site, lui, fait le rappel sans contenu « Nouvelle Demande à valider sur l'espace XYZ » à chaque Demande faite, si un Admin l'a coché (`site-discord.md`, « Rappels du site »).
 
 ## Ce que voit le site, et pourquoi
 

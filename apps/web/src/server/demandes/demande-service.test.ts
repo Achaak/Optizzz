@@ -64,6 +64,22 @@ describe("the Demandes on the site", () => {
     expect(demandes[0]?.blob).not.toContain("demande");
   });
 
+  it("asks for the site's reminder on Discord when a Demande waits to be validated, only then", async () => {
+    const reminders: [string, string][] = [];
+    service = demandeService(
+      memory.store,
+      () => now,
+      (spaceId, kind) => reminders.push([spaceId, kind]),
+    );
+    await ask(lasius, 1);
+    await service.decide(messor.userId, { id: id(1), decision: "validated" });
+    await service.cancel(lasius.userId, { id: id(1) });
+    expect(reminders).toEqual([[SPACE, "demands"]]);
+    await sends(lasius, []);
+    await failure(ask(lasius, 2));
+    expect(reminders).toHaveLength(1);
+  });
+
   it("asks the requester to send Production and Convois first", async () => {
     await sends(lasius, ["convoys"]);
     const error = await failure(ask(lasius, 1));
