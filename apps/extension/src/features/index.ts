@@ -10,6 +10,7 @@ import { compactGamePages, compactNumbers } from "./compact-numbers";
 import { convoyHistory, convoyPlanner, convoyWorkers } from "./convoy";
 import { allianceConvoys, envoiRelay } from "./optizzz-account/alliance-convoys";
 import { allianceFloods } from "./optizzz-account/alliance-floods";
+import { stateRereads } from "./optizzz-account/state-rereads";
 import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
 import { floodPlanner } from "./flood";
@@ -69,6 +70,7 @@ export const features: Feature[] = [
   watchlist,
   gameLevels,
   envoiRelay,
+  stateRereads,
   safeReload,
   // Last: the game's numbers are shortened once the others have read the page.
   compactGamePages,

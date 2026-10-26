@@ -13,7 +13,20 @@ import { formatEndTime, formatEndTimeShort } from "@optizzz/game/format/time-for
 import { CONVOY_ITEM, convoyEnvoiItems, convoysToward, type ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import { FLOOD_ITEM, floodEnvoiItems, floodsToward, type FloodItem } from "@optizzz/game/site-links/envoi-floods";
 import {
+  ARMY_UNITS,
+  isStateCategory,
+  nextStateItem,
+  stateIdentity,
+  stateItemSchema,
+  STATE_CATEGORIES,
+  STATES_KEPT_MS,
+  type DatedItem,
+  type StateCategory,
+  type StateItem,
+} from "@optizzz/game/site-links/envoi-states";
+import {
   categoriesOf,
+  isSent,
   newestPerFingerprint,
   openEnvoi,
   sealEnvoi,
@@ -48,7 +61,9 @@ import {
 import { loadLaunches } from "@/data/launches";
 import { forgetLink, loadAttachedPlayers, loadCurrentPlayer, loadLink } from "@/data/optizzz-account";
 import { loadSentAttacks } from "@/data/sent-attacks";
+import { loadStatePages } from "@/data/state-pages";
 import { pairLaunches } from "@/features/flood/attacks";
+import { stateReading } from "./envoi-states";
 import { siteApi, type EnvoiBody } from "./api";
 
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
@@ -61,8 +76,8 @@ export const RELEVE_MINUTES = 5;
 const PAGE_RELEVE_GAP_MS = 60_000;
 const DAY = 24 * 3600_000;
 
-/** The list categories, in the order they leave. */
-const LISTS: readonly ListCategory[] = ["convoys", "floods"];
+/** The categories, lists then states, in the order they leave. */
+const LISTS: readonly ListCategory[] = ["convoys", "floods", ...STATE_CATEGORIES];
 
 export const MISSING_KEY = "Ouvrez votre espace sur optizzz.fr pour reprendre l'envoi.";
 const NO_SPACE = "Pas encore dans un Espace d'alliance sur optizzz.fr : rien ne part.";
@@ -94,6 +109,20 @@ export interface FloodsAnswer {
   /** The space's members, and the alliance's from the last Members page when it is the space's alliance. */
   members: string[];
   floods: FloodItem[];
+}
+
+/** The members' states sent to the space, for « Partage » (stateOfEnvoi turns each into shared states). */
+export interface StatesAnswer {
+  problem: ReadProblem;
+  /** The space's alliance tag. */
+  tag: string | null;
+  rows: {
+    category: StateCategory;
+    observedAt: number;
+    item: StateItem;
+    /** The army by unit: for an Admin only. */
+    units: Record<string, number> | null;
+  }[];
 }
 
 /** One Joueur's Envois, for « Fonctionnalités » → « Compte Optizzz ». */
@@ -128,7 +157,7 @@ interface Dependencies {
 /** One item of a list category, built from what the extension keeps. */
 interface ListItem {
   identity: string;
-  item: ConvoyItem | FloodItem;
+  item: unknown;
   /** The Admins' blob's content (the army sent with a flood), or null. */
   detail: unknown;
   /** When the extension read it. */
@@ -138,6 +167,8 @@ interface ListItem {
   expiresAt: number;
   /** Nothing about it can change any more (a flood arrived): what was sent stays as it was. */
   frozen: boolean;
+  /** A state's reading and the one before it: kept with what was sent, and dated in its digest. */
+  state?: DatedItem;
 }
 
 interface ListBuild {
@@ -227,17 +258,77 @@ async function floodList(server: string, origin: string, me: string, at: Date): 
   return { items, staysWhenGone: (item) => item.at <= at.getTime() };
 }
 
-const LIST_BUILDERS: Record<ListCategory, typeof convoyList> = { convoys: convoyList, floods: floodList };
+/**
+ * A state of a Joueur, one row: its reading from what the game's pages showed, with the one sent before as its
+ * previous (nextStateItem); the army by unit in the Admins' blob when « Par unité » is chosen. Nothing while a page it
+ * needs was never read: what the site has stays.
+ */
+function stateList(category: StateCategory) {
+  return async (server: string, origin: string, me: string, at: Date, previous: SentItems): Promise<ListBuild> => {
+    const read = stateReading(category, await loadStatePages(origin), at);
+    if (!read) return { items: [], staysWhenGone: () => true };
+    const last = Object.values(previous).find((item) => item?.state)?.state ?? null;
+    const next = nextStateItem(me, read.reading, read.observedAt, last);
+    const units = category === "army" && (await loadChoices(server, me)).army === "units" ? read.units : undefined;
+    return {
+      items: [
+        {
+          identity: [stateIdentity(server, category), me.toLowerCase()].join("|"),
+          item: next.item,
+          detail: units ? { units } : null,
+          observedAt: next.observedAt,
+          at: next.observedAt,
+          expiresAt: next.observedAt + STATES_KEPT_MS,
+          frozen: false,
+          state: next,
+        },
+      ],
+      // A row under another fingerprint (another version of the key) is replaced, never kept twice.
+      staysWhenGone: () => false,
+    };
+  };
+}
+
+type Builder = (server: string, origin: string, me: string, at: Date, previous: SentItems) => Promise<ListBuild>;
+
+const LIST_BUILDERS: Record<ListCategory, Builder> = {
+  convoys: convoyList,
+  floods: floodList,
+  production: stateList("production"),
+  hunts: stateList("hunts"),
+  army: stateList("army"),
+  levels: stateList("levels"),
+};
 
 /**
  * A row of the relève, opened, or null for a category the game's pages do not show. The army sent with a flood (the
  * Admins' blob) is not shown in the game: it is never opened here. Throws EnvoiRefused.
  */
 async function openRow(
-  row: { server: string; playerId: number; category: string; fingerprint: string; blob: string },
+  row: {
+    server: string;
+    playerId: number;
+    category: string;
+    fingerprint: string;
+    blob: string;
+    detail?: string | null;
+  },
   cipher: EnvoiCrypto,
 ): Promise<ReleveRow | null> {
   const base = { playerId: row.playerId, fingerprint: row.fingerprint };
+  if (isStateCategory(row.category)) {
+    const filed = { ...row, category: row.category };
+    const { observedAt, item } = await openEnvoi(filed, cipher, stateItemSchema(row.category));
+    // The army by unit comes to an Admin only; one that does not name this row is left out.
+    const units =
+      row.category === "army" && row.detail
+        ? await openEnvoi({ ...filed, blob: row.detail }, cipher, ARMY_UNITS).then(
+            (opened) => opened.item.units,
+            () => null,
+          )
+        : null;
+    return { ...base, observedAt, category: row.category, item, units };
+  }
   if (row.category === "convoys") {
     const { observedAt, item } = await openEnvoi({ ...row, category: "convoys" }, cipher, CONVOY_ITEM);
     return { ...base, observedAt, category: "convoys", item };
@@ -306,7 +397,7 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
     const joueur = joueurKey(server, pseudo);
     const kept = await link();
     const origin = originOf(server);
-    if (!kept || !origin || !(await loadChoices(server, pseudo))[category]) return;
+    if (!kept || !origin || !isSent(await loadChoices(server, pseudo), category)) return;
     const player = await spacePlayer(server, pseudo);
     if (!player?.space) return setProblem(joueur, NO_SPACE);
     const space = player.space;
@@ -321,7 +412,7 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
     const keyVersion = newestVersion(keys);
     const previousState = await loadSent(joueur);
     const previous = previousState.lists[category] ?? {};
-    const { items, staysWhenGone } = await LIST_BUILDERS[category](server, origin, player.pseudo, at);
+    const { items, staysWhenGone } = await LIST_BUILDERS[category](server, origin, player.pseudo, at, previous);
 
     const sent: SentItems = {};
     for (const listed of items) {
@@ -333,7 +424,10 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
         continue;
       }
       // The item alone when it has no Admins' blob: the digests of the convoys sent before ticket 21 still match.
-      const digest = JSON.stringify(listed.detail === null ? listed.item : [listed.item, listed.detail]);
+      // A state is dated in its digest: one dated anew (STATE_REFRESH_MS) is sealed again.
+      const digest = listed.state
+        ? JSON.stringify([listed.observedAt, listed.item, listed.detail])
+        : JSON.stringify(listed.detail === null ? listed.item : [listed.item, listed.detail]);
       if (known?.digest === digest && known.keyVersion === keyVersion) {
         sent[fingerprint] = known;
         continue;
@@ -347,11 +441,18 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
         ...(listed.kind !== undefined && { kind: listed.kind }),
         at: listed.at,
         expiresAt: listed.expiresAt,
+        ...(listed.state && { state: listed.state }),
       } satisfies SentItem;
     }
     const removed = Object.entries(previous)
       .filter(([fingerprint, item]) => item && !sent[fingerprint] && !staysWhenGone(item))
       .map(([fingerprint]) => fingerprint);
+    // A state read again unchanged: the site already has it, nothing leaves (its pages are read at every game page).
+    const unchanged =
+      removed.length === 0 &&
+      Object.keys(sent).length === Object.keys(previous).length &&
+      Object.entries(sent).every(([fingerprint, item]) => previous[fingerprint] === item);
+    if (isStateCategory(category) && unchanged && !previousState.retry.includes(category)) return;
 
     const body: EnvoiBody = {
       server,
@@ -439,12 +540,25 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
     if (!kept) return;
     const player = await spacePlayer(server, pseudo, true);
     if (player) await siteApi(kept.token, fetch).saveSettings(server, player.playerId, categoriesOf(choices));
-    await sendLists(
-      server,
-      pseudo,
-      LISTS.filter((category) => choices[category] && !before[category]),
+    // Newly sent, or the army switched between « Nombre » and « Par unité ».
+    const start = LISTS.filter(
+      (category) =>
+        isSent(choices, category) &&
+        (!isSent(before, category) || (category === "army" && choices.army !== before.army)),
     );
-    if (!LISTS.some((category) => choices[category])) await setProblem(joueurKey(server, pseudo), null, []);
+    // A state unchecked went from the site with its choice: checked again, it leaves in full.
+    const joueur = joueurKey(server, pseudo);
+    const state = await loadSent(joueur);
+    const forgotten = STATE_CATEGORIES.filter((category) => !isSent(choices, category) || start.includes(category));
+    if (forgotten.some((category) => state.lists[category]))
+      await storeSent(joueur, {
+        ...state,
+        lists: Object.fromEntries(
+          Object.entries(state.lists).filter(([category]) => !forgotten.includes(category as StateCategory)),
+        ),
+      });
+    await sendLists(server, pseudo, start);
+    if (!LISTS.some((category) => isSent(choices, category))) await setProblem(joueur, null, []);
   }
 
   /** The space page handed over the Clé d'alliance: kept, unless older than a version already seen. */
@@ -608,6 +722,24 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
     };
   }
 
+  /**
+   * « Partage »: the members' states from the last relève (each the latest reading and the one before it), the army
+   * by unit for an Admin only, with the space's tag to check it is the alliance shown.
+   */
+  async function states(origin: string): Promise<StatesAnswer> {
+    const read = await readRows(origin);
+    if (read.problem !== null) return { problem: read.problem, tag: null, rows: [] };
+    return {
+      problem: null,
+      tag: read.player.space?.tag ?? null,
+      rows: read.rows.flatMap((r) =>
+        r.category === "convoys" || r.category === "floods"
+          ? []
+          : [{ category: r.category, observedAt: r.observedAt, item: r.item, units: r.units }],
+      ),
+    };
+  }
+
   /** Each attached Joueur's Envois, for « Compte Optizzz ». */
   async function status(): Promise<JoueurEnvois[]> {
     const attached = await loadAttachedPlayers();
@@ -639,6 +771,7 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
     releve,
     incoming,
     floods,
+    states,
     status,
     refreshSpaces,
     sendList,

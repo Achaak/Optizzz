@@ -4,6 +4,7 @@ import { storeSection } from "@/data/end-times";
 import { readIncomingConvoys, readKeptConvoys, storeConvoys, storeIncomingConvoys } from "@/data/convoys";
 import { sendsCategory } from "@/data/envois";
 import { storeSentAttacks } from "@/data/sent-attacks";
+import { keepStateOfPage, wantedParts } from "@/data/state-pages";
 import { readSentAttacks } from "@/features/flood/attacks";
 import { isInbox, keepConvoyMessages } from "@/data/convoy-history";
 import { readConvoyMessages } from "@optizzz/game/pages/messages";
@@ -77,6 +78,10 @@ export const collect: Feature = {
     if (pseudo !== null && listsAttacks && (await sendsCategory(origin, pseudo, "floods"))) {
       await storeSentAttacks(origin, readSentAttacks(document, now), now);
     }
+
+    // The state Envois of the logged-in player (Production, Chasses, Armée, Niveaux et chantiers), checked in « Compte
+    // Optizzz »: what this page shows of their state, only the parts a checked category needs. Sent by the background.
+    if (pseudo !== null) await keepStateOfPage(origin, document, path, await wantedParts(origin, pseudo), now);
 
     // The army by place: combat simulator, flood plan and its « Flood max » column, research advice.
     if (path === "/armee.php" && (on("combat-simulator") || on("flood") || on("research-advice"))) {

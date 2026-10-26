@@ -110,21 +110,44 @@ describe("the « Compte Optizzz » block", () => {
     expect(asked.at(-1)).toEqual({ type: "optizzz-account", action: "disconnect" });
   });
 
-  it("lists the six categories of each Joueur, all unticked, and only « Convois » and « Floods » can be ticked today", async () => {
+  it("lists the six categories of each Joueur, all off, the army as « Rien », « Nombre » or « Par unité »", async () => {
     const { section } = mount(() => sending);
     await settle();
     expect(section.querySelector("legend")?.textContent).toBe("Envois de Calystene (S5)");
     const boxes = [...section.querySelectorAll<HTMLInputElement>("input[data-category]")];
     expect(boxes.map((b) => [b.dataset.category, b.checked, b.disabled])).toEqual([
-      ["production", false, true],
+      ["production", false, false],
       ["convoys", false, false],
       ["floods", false, false],
-      ["hunts", false, true],
-      ["army", false, true],
-      ["levels", false, true],
+      ["hunts", false, false],
+      ["levels", false, false],
     ]);
+    const army = section.querySelector<HTMLSelectElement>('select[data-category="army"]');
+    expect([...(army?.options ?? [])].map((o) => [o.textContent, o.selected])).toEqual([
+      ["Rien", true],
+      ["Nombre", false],
+      ["Par unité", false],
+    ]);
+    expect(section.textContent).not.toContain("bientôt");
     expect(section.textContent).toContain("Vos convois envoyés, reçus et en route.");
-    expect(section.textContent).toContain("l'armée, pour les Admins seuls");
+    expect(section.textContent).toContain("le détail, pour les Admins seuls");
+  });
+
+  it("chooses the army « Par unité » on a person's choice only", async () => {
+    const { section, asked } = mount(() => sending);
+    await settle();
+    const army = section.querySelector<HTMLSelectElement>('select[data-category="army"]');
+    if (!army) throw new Error("no list");
+    army.value = "units";
+    army.dispatchEvent(new Event("change"));
+    await settle();
+    expect(army.value).toBe("none");
+    army.value = "units";
+    const event = new Event("change");
+    Object.defineProperty(event, "isTrusted", { value: true });
+    army.dispatchEvent(event);
+    await settle();
+    expect(asked.at(-1)).toMatchObject({ action: "choose", choices: { ...choices, army: "units" } });
   });
 
   it("ticks « Floods » apart from « Convois »", async () => {

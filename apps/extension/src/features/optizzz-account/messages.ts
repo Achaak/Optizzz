@@ -48,7 +48,7 @@ export type SpaceMessage =
  */
 export type EnvoiMessage =
   | { type: "optizzz-envois"; action: "page-open" }
-  | { type: "optizzz-envois"; action: "incoming" | "floods"; origin: string };
+  | { type: "optizzz-envois"; action: "incoming" | "floods" | "states"; origin: string };
 
 const record = (message: unknown): Record<string, unknown> | null =>
   typeof message === "object" && message !== null ? (message as Record<string, unknown>) : null;
@@ -85,7 +85,8 @@ export function isEnvoiMessage(message: unknown): message is EnvoiMessage {
   const m = record(message);
   if (m?.type !== "optizzz-envois") return false;
   return (
-    m.action === "page-open" || ((m.action === "incoming" || m.action === "floods") && typeof m.origin === "string")
+    m.action === "page-open" ||
+    ((m.action === "incoming" || m.action === "floods" || m.action === "states") && typeof m.origin === "string")
   );
 }
 

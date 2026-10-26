@@ -6,16 +6,21 @@ import {
   loadSharedStates,
   setManualValue,
   type SharedStates,
-  type ValueKey,
 } from "@/data/shared-states";
+import type { ValueKey } from "@optizzz/game/sharing/shared-state";
 import { UNITS, unitLabel } from "@optizzz/game/army/units";
 import { BUILDINGS, RESEARCH } from "@optizzz/game/levels";
 import { formatAmount } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
 import { NumberField } from "@/utils/NumberField";
 import { formatEndTime, formatPastTime } from "@optizzz/game/format/time-format";
+import { productionPerDay, stateOfEnvoi } from "@optizzz/game/site-links/envoi-states";
+import type { MemberStates } from "@optizzz/game/sharing/shared-state";
+import type { StatesAnswer } from "@/features/optizzz-account/envois";
+import { askEnvois } from "@/features/optizzz-account/messages";
 import { memberRows, type MemberRow } from "./member-rows";
-import { parseShares } from "./share-text";
+import { withEnvois } from "./merge";
+import { parseShares } from "@optizzz/game/sharing/share-text";
 
 interface Props {
   origin: string;
@@ -82,6 +87,7 @@ const SUMMARY_COLUMNS: Column[] = [
 
 const GROUPS = [
   { id: "summary", label: "Résumé" },
+  { id: "production", label: "Production" },
   { id: "buildings", label: "Bâtiments" },
   { id: "research", label: "Recherches" },
   { id: "army", label: "Armée" },
@@ -89,7 +95,7 @@ const GROUPS = [
 ] as const;
 type Group = (typeof GROUPS)[number]["id"];
 
-const COLUMNS: Record<Exclude<Group, "army" | "works">, Column[]> = {
+const COLUMNS: Record<Exclude<Group, "army" | "works" | "production">, Column[]> = {
   summary: SUMMARY_COLUMNS,
   buildings: BUILDING_COLUMNS,
   research: RESEARCH_COLUMNS,
@@ -99,7 +105,8 @@ const COLUMNS: Record<Exclude<Group, "army" | "works">, Column[]> = {
 type Sort = "pseudo" | ValueKey;
 
 export function AllianceSharing({ origin, alliance, members, me }: Props) {
-  const [states, setStates] = useState<SharedStates | null>(null);
+  const [pasted, setStates] = useState<SharedStates | null>(null);
+  const [envois, setEnvois] = useState<MemberStates[]>([]);
   const [group, setGroup] = useState<Group>("summary");
   const [sort, setSort] = useState<Sort>("pseudo");
   const [editing, setEditing] = useState(false);
@@ -123,6 +130,28 @@ export function AllianceSharing({ origin, alliance, members, me }: Props) {
       await reload();
     })();
   }, [origin, alliance, members, me, reload]);
+
+  // The members' Envois to their Alliance Space, from the extension's last relève: only for the space of this
+  // alliance. The army by unit comes for an Admin only (optizzz.fr hands it to nobody else).
+  useEffect(() => {
+    if (!alliance) return;
+    const server = new URL(origin).host.split(".")[0] ?? "";
+    askEnvois<StatesAnswer>({ type: "optizzz-envois", action: "states", origin })
+      .then((answer) => {
+        if (answer?.problem !== null || answer.tag?.toLowerCase() !== alliance.toLowerCase()) return;
+        setEnvois(
+          answer.rows.map((row) =>
+            stateOfEnvoi(row.category, { observedAt: row.observedAt, item: row.item }, row.units, { server, alliance }),
+          ),
+        );
+      })
+      .catch(() => null);
+  }, [origin, alliance]);
+
+  const states = useMemo(
+    () => (pasted && members ? withEnvois(pasted, envois, members) : null),
+    [pasted, envois, members],
+  );
 
   const rows = useMemo(() => {
     if (!states || !members) return [];
@@ -214,7 +243,76 @@ export function AllianceSharing({ origin, alliance, members, me }: Props) {
   const readCell = (row: MemberRow) => <td>{row.readAt ? formatPastTime(row.readAt, now) : ""}</td>;
 
   let table;
-  if (group === "army") {
+  if (group === "production") {
+    table = (
+      <table className="optizzz-table">
+        <thead>
+          <tr>
+            <th>Membre</th>
+            <th title="Récolte, moins la taxe versée, plus les colonies">Production / jour</th>
+            <th>Récolte</th>
+            <th>Taxe versée</th>
+            <th>Colonies</th>
+            <th className="left">Chasses en cours</th>
+            <th>Relevé</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const latest = states.members[row.pseudo]?.latest;
+            const production = latest?.production;
+            const perDay = production && productionPerDay(production, now);
+            const hunts = (latest?.hunts ?? []).filter((hunt) => hunt.returnsAt > now);
+            const lastReturn = hunts.reduce<Date | null>(
+              (last, h) => (!last || h.returnsAt > last ? h.returnsAt : last),
+              null,
+            );
+            return (
+              <tr key={row.pseudo} className={row.stale ? "stale" : undefined}>
+                {memberCell(row)}
+                <td>
+                  {perDay && (
+                    <>
+                      {perDay.coloniesKnown ? "" : "≥ "}
+                      <Amount value={perDay.total} />
+                    </>
+                  )}
+                </td>
+                <td>{perDay && <Amount value={perDay.harvest} />}</td>
+                <td title={production?.master ? `À ${production.master}` : undefined}>
+                  {perDay &&
+                    (production.taxRate > 0 ? (
+                      <>
+                        −<Amount value={perDay.taxPaid} />
+                      </>
+                    ) : (
+                      "aucune"
+                    ))}
+                </td>
+                <td>
+                  {perDay &&
+                    (production.colonies === null ? (
+                      "inconnues"
+                    ) : (
+                      <>
+                        +<Amount value={perDay.colonies} />
+                      </>
+                    ))}
+                </td>
+                <td className="left">
+                  {latest?.hunts &&
+                    (hunts.length === 0
+                      ? "aucune"
+                      : `${String(hunts.length)} · ${formatAmount(hunts.reduce((sum, h) => sum + h.fieldGain, 0))} cm² · retour ${lastReturn ? formatEndTime(lastReturn, now) : ""}`)}
+                </td>
+                {readCell(row)}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  } else if (group === "army") {
     table = (
       <table className="optizzz-table">
         <thead>
@@ -319,9 +417,11 @@ export function AllianceSharing({ origin, alliance, members, me }: Props) {
     <div className="alliance-sharing optizzz-panel">
       <h2 className="optizzz-panel-title">Partage {alliance}</h2>
       <p className="optizzz-note">
-        Les états que les membres ont copiés depuis « Mon état » (menu Fourmilière). Collez ci-dessous le salon Discord
-        où ils les partagent : Optizzz ne lit que les lignes [optizzz:…]. ↑ ↓ : changé dans les dernières 24 h ; en
-        grisé : relevé de plus de 3 jours ; en italique : saisi à la main.
+        Les états que les membres ont copiés depuis « Mon état » (menu Fourmilière), et ceux qu'ils envoient à votre
+        Espace d'alliance sur optizzz.fr : pour chaque partie, le relevé le plus récent l'emporte. Collez ci-dessous le
+        salon Discord où ils les partagent : Optizzz ne lit que les lignes [optizzz:…]. ↑ ↓ : changé dans les dernières
+        24 h ; en grisé : relevé de plus de 3 jours ; en italique : saisi à la main.
+        {envois.length > 0 && " Le détail par unité des armées envoyées n'est montré qu'aux Admins de l'espace."}
       </p>
 
       <div className="import">
@@ -345,7 +445,7 @@ export function AllianceSharing({ origin, alliance, members, me }: Props) {
             </button>
           ))}
         </div>
-        {group !== "works" && (
+        {group !== "works" && group !== "production" && (
           <label>
             <input type="checkbox" checked={editing} onChange={(event) => setEditing(event.target.checked)} /> Corriger
             à la main

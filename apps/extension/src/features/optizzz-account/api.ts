@@ -47,6 +47,8 @@ const envoisSchema = z.object({
       category: z.string(),
       fingerprint: z.string(),
       blob: z.string(),
+      /** The Admins' blob: the site hands it to an Admin only (null for the others). */
+      detail: z.string().nullish(),
     }),
   ),
   live: z.array(z.string()).nullable(),

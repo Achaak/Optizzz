@@ -11,7 +11,7 @@ import {
   storeLink,
 } from "@/data/optizzz-account";
 import { storeAllianceMembers } from "@/data/alliance-members";
-import { accountService, answer, changedCategory, senderKind } from "./background";
+import { accountService, answer, changedCategory, changedStates, senderKind } from "./background";
 import type { SpaceMessage } from "./messages";
 
 const S5 = "https://s5.fourmizzz.fr";
@@ -82,6 +82,7 @@ const envois = {
   },
   incoming: () => Promise.resolve({ problem: null, convoys: [] }),
   floods: () => Promise.resolve({ problem: null, me: "Messor", members: [], floods: [] }),
+  states: () => Promise.resolve({ problem: null, tag: "ABC", rows: [] }),
 };
 const service = () =>
   accountService({
@@ -313,6 +314,12 @@ describe("the Clé d'alliance and the game's pages", () => {
     expect(changedCategory("flood:s5.fourmizzz.fr:launches")).toEqual({ host: "s5.fourmizzz.fr", category: "floods" });
     expect(changedCategory("flood:s5.fourmizzz.fr:defenses")).toBeNull();
     expect(changedCategory("sentAttacks:example.com")).toBeNull();
+  });
+
+  it("calls for the states' Envois when what the pages showed of the player's state changed", () => {
+    expect(changedStates("envoiStates:s5.fourmizzz.fr")).toBe("s5.fourmizzz.fr");
+    expect(changedStates("envoiStates:example.com")).toBeNull();
+    expect(changedStates("convoys:s5.fourmizzz.fr")).toBeNull();
   });
 
   it("answers the alliance's floods for the game's pages only", async () => {

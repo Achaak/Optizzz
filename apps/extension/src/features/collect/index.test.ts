@@ -14,6 +14,8 @@ import { loadConvoyHistory } from "@/data/convoy-history";
 import { loadSections } from "@/data/end-times";
 import armeeHtml from "../flood/__fixtures__/armee-attacks-s5.html?raw";
 import { loadSentAttacks } from "@/data/sent-attacks";
+import { loadStatePages } from "@/data/state-pages";
+import coloniesHtml from "@optizzz/game/pages/__fixtures__/colonies.html?raw";
 import { collect } from ".";
 
 const ORIGIN = location.origin;
@@ -118,6 +120,27 @@ describe("collect", () => {
       [34250, "Cible_1"],
       [34251, "Cible_2"],
     ]);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+    happyDOM.setURL(`${ORIGIN}/Reine.php`);
+  });
+
+  it("keeps the colonies page for a Production sent, without a request", async () => {
+    const happyDOM = (window as unknown as { happyDOM: { setURL: (url: string) => void } }).happyDOM;
+    happyDOM.setURL("https://s5.fourmizzz.fr/colonies.php");
+    const header =
+      '<span id="pseudo">Messor</span><div id="data"><span id="nb_nourriture">1</span><span id="nb_materiaux">2</span><span id="nb_ouvrieres">3</span><span id="quantite_tdc">4</span></div>';
+    document.documentElement.innerHTML = `<body>${header}${coloniesHtml}</body>`;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    await collect.run(ctx, {});
+    expect(await loadStatePages(S5)).toEqual({});
+
+    await storeChoices("s5", "Messor", { ...NO_ENVOIS, production: true });
+    await collect.run(ctx, {});
+    const kept = await loadStatePages(S5);
+    expect(kept.stock).toMatchObject({ huntingField: 4, workers: 3 });
+    expect(kept.colonies?.colonies.map((c) => c.pseudo)).toEqual(["Colonie_1"]);
+    expect(kept.armee).toBeUndefined();
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
     happyDOM.setURL(`${ORIGIN}/Reine.php`);

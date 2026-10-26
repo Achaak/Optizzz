@@ -3,14 +3,18 @@
 // browser's session (only the background reads it), storage.local until its date with « Se souvenir sur cet
 // appareil ». The highest version seen per space stays, even after « Se déconnecter ». The site's answer about the
 // spaces, what was last sent, and the relève (decrypted) in storage.session: forgotten when the browser closes.
-import { NO_ENVOIS, type EnvoiChoices } from "@optizzz/game/site-links/envois";
+import { isSent, NO_ENVOIS, type EnvoiCategory, type EnvoiChoices } from "@optizzz/game/site-links/envois";
+import type { ArmyUnits, DatedItem, StateCategory, StateItem } from "@optizzz/game/site-links/envoi-states";
 import type { HandedKey } from "@optizzz/game/site-links/space-bridge";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import type { FloodItem } from "@optizzz/game/site-links/envoi-floods";
 import { storage } from "wxt/utils/storage";
 
-/** The categories whose Envois are lists of items, one encrypted row each. */
-export type ListCategory = "convoys" | "floods";
+/**
+ * Every category of the Envois: lists of items (convoys, floods), one encrypted row each, and states (production,
+ * hunts, army, levels), one encrypted row per Joueur.
+ */
+export type ListCategory = EnvoiCategory;
 
 const CHOICES_KEY = "local:optizzzAccount:envoiChoices";
 const SESSION_KEYS = "session:optizzzAccount:allianceKeys";
@@ -33,7 +37,7 @@ export async function loadChoices(server: string, pseudo: string): Promise<Envoi
 /** Whether the game's logged-in player on this server sends a category: collect then keeps what it needs. */
 export async function sendsCategory(origin: string, pseudo: string, category: ListCategory): Promise<boolean> {
   const server = /^(s\d{1,2})\.fourmizzz\.fr$/.exec(new URL(origin).host)?.[1];
-  return server !== undefined && (await loadChoices(server, pseudo))[category];
+  return server !== undefined && isSent(await loadChoices(server, pseudo), category);
 }
 
 export async function storeChoices(server: string, pseudo: string, choices: EnvoiChoices): Promise<void> {
@@ -122,6 +126,8 @@ export interface SentItem {
   kind?: string;
   at: number;
   expiresAt: number;
+  /** A state's reading and the one before it, as sent: the next one is told from it. */
+  state?: DatedItem;
 }
 
 export type SentItems = Partial<Record<string, SentItem>>;
@@ -167,7 +173,12 @@ export type ReleveRow = {
   playerId: number;
   fingerprint: string;
   observedAt: number;
-} & ({ category: "convoys"; item: ConvoyItem } | { category: "floods"; item: FloodItem });
+} & (
+  | { category: "convoys"; item: ConvoyItem }
+  | { category: "floods"; item: FloodItem }
+  /** `units`: the army by unit, sent to the Admins only (null for the others, and for the other states). */
+  | { category: StateCategory; item: StateItem; units: ArmyUnits["units"] | null }
+);
 
 export interface SpaceReleve {
   cursor: number;

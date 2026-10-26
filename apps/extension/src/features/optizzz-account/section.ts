@@ -2,41 +2,47 @@
 // disconnect, and the offer « Rattacher Pseudo (S5) à votre Compte Optizzz », made once. Everything goes through the
 // background script, which alone holds the token (messages.ts).
 import { formatPastTime } from "@optizzz/game/format/time-format";
+import { categoriesOf } from "@optizzz/game/site-links/envois";
 import { isEnabled, type Toggles } from "../toggles";
 import type { JoueurEnvois } from "./envois";
 import type { AccountAction, AccountStatus } from "./messages";
 
 /**
- * The six categories of the Envois (docs/features/site-envois.md), each with a plain sentence of what leaves. The
- * Convois and the Floods send today; the others are shown, unticked and greyed « (bientôt) », until their ticket (22).
+ * The six categories of the Envois (docs/features/site-envois.md), each with a plain sentence of what leaves. All off
+ * by default; the army is « Rien », « Nombre » or « Par unité », as in « Mon état ».
  */
 const CATEGORIES = [
   {
     id: "production",
     label: "Production",
-    ready: false,
-    sentence: "Votre TDC, vos ouvrières, la taxe et vos colonies.",
+    sentence:
+      "Votre TDC, vos ouvrières, ce qu'elles récoltent, la taxe versée à votre colonisateur et ce que vous rapportent vos colonies.",
   },
-  { id: "convoys", label: "Convois", ready: true, sentence: "Vos convois envoyés, reçus et en route." },
+  { id: "convoys", label: "Convois", sentence: "Vos convois envoyés, reçus et en route." },
   {
     id: "floods",
     label: "Floods",
-    ready: true,
     sentence:
       "Vos attaques en route, leur cible et leur arrivée ; avec le Plan de flood, la prise attendue et l'armée envoyée (l'armée, pour les Admins seuls).",
   },
-  { id: "hunts", label: "Chasses", ready: false, sentence: "Vos chasses en cours, leur retour et leur gain." },
-  { id: "army", label: "Armée", ready: false, sentence: "Rien, le nombre de vos unités, ou le détail par unité." },
+  { id: "hunts", label: "Chasses", sentence: "Vos chasses en cours, leur retour et leur gain." },
+  {
+    id: "army",
+    label: "Armée",
+    sentence: "Le nombre de vos fourmis, ou aussi le détail par unité (le détail, pour les Admins seuls).",
+  },
   {
     id: "levels",
     label: "Niveaux et chantiers",
-    ready: false,
     sentence: "Vos niveaux de constructions et de recherches, et vos chantiers.",
   },
 ] as const;
 
-/** The categories that send today, each a list of items. */
-const isList = (id: string): id is "convoys" | "floods" => id === "convoys" || id === "floods";
+const ARMY_CHOICES = [
+  { value: "none", label: "Rien" },
+  { value: "count", label: "Nombre" },
+  { value: "units", label: "Par unité" },
+] as const;
 
 export const accountEnabled = (toggles: Toggles) => isEnabled(toggles, "optizzz-account");
 
@@ -60,7 +66,7 @@ export const ACCOUNT_STYLE = `
 .account-categories { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--optizzz-space-3); }
 .account-categories label { display: flex; gap: var(--optizzz-space-3); align-items: center; cursor: pointer; }
 .account-categories input { margin: 0; }
-.account-categories input:disabled + span { opacity: 0.6; }
+.account-categories .account-army { cursor: default; }
 .account-categories .optizzz-note { margin: var(--optizzz-space-1) 0 0; }`;
 
 export function buildAccountSection(doc: Document, input: AccountSectionInput): HTMLElement {
@@ -212,30 +218,49 @@ export function buildAccountSection(doc: Document, input: AccountSectionInput): 
     );
     const list = doc.createElement("ul");
     list.className = "account-categories";
+    const choose = (choices: JoueurEnvois["choices"]) =>
+      run({ type: "optizzz-account", action: "choose", server: joueur.server, pseudo: joueur.pseudo, choices });
     for (const category of CATEGORIES) {
       const item = doc.createElement("li");
       const label = doc.createElement("label");
-      const box = doc.createElement("input");
-      box.type = "checkbox";
-      box.dataset.category = category.id;
-      box.checked = category.ready && isList(category.id) && joueur.choices[category.id];
-      box.disabled = !category.ready;
-      box.addEventListener("change", (event) => {
-        if (!event.isTrusted) {
-          box.checked = !box.checked;
-          return;
-        }
-        run({
-          type: "optizzz-account",
-          action: "choose",
-          server: joueur.server,
-          pseudo: joueur.pseudo,
-          choices: isList(category.id) ? { ...joueur.choices, [category.id]: box.checked } : joueur.choices,
-        });
-      });
       const name = doc.createElement("span");
-      name.textContent = category.ready ? category.label : `${category.label} (bientôt)`;
-      label.append(box, name);
+      name.textContent = category.label;
+      if (category.id === "army") {
+        // « Rien », « Nombre » or « Par unité »: a list, as in « Mon état ».
+        const select = doc.createElement("select");
+        select.dataset.category = category.id;
+        for (const choice of ARMY_CHOICES) {
+          const option = doc.createElement("option");
+          option.value = choice.value;
+          option.textContent = choice.label;
+          option.selected = joueur.choices.army === choice.value;
+          select.append(option);
+        }
+        select.addEventListener("change", (event) => {
+          const army = ARMY_CHOICES.find((choice) => choice.value === select.value)?.value;
+          if (!event.isTrusted || !army) {
+            select.value = joueur.choices.army;
+            return;
+          }
+          choose({ ...joueur.choices, army });
+        });
+        label.className = "account-army";
+        label.append(name, select);
+      } else {
+        const id = category.id;
+        const box = doc.createElement("input");
+        box.type = "checkbox";
+        box.dataset.category = id;
+        box.checked = joueur.choices[id];
+        box.addEventListener("change", (event) => {
+          if (!event.isTrusted) {
+            box.checked = !box.checked;
+            return;
+          }
+          choose({ ...joueur.choices, [id]: box.checked });
+        });
+        label.append(box, name);
+      }
       item.append(label, paragraph(category.sentence, "optizzz-note"));
       list.append(item);
     }
@@ -243,7 +268,7 @@ export function buildAccountSection(doc: Document, input: AccountSectionInput): 
 
     const state = joueur.problem
       ? paragraph(joueur.problem, "optizzz-callout optizzz-callout--warning")
-      : (joueur.choices.convoys || joueur.choices.floods) && joueur.spaceName
+      : categoriesOf(joueur.choices).length > 0 && joueur.spaceName
         ? paragraph(
             `Espace « ${joueur.spaceName} »${joueur.lastSentAt ? ` · dernier envoi ${formatPastTime(new Date(joueur.lastSentAt), new Date())}` : ""}.`,
             "optizzz-note",

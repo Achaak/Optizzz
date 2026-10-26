@@ -8,6 +8,7 @@ import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link"
 import { serverById } from "@optizzz/game/servers";
 import { SITE_URL } from "@optizzz/game/site-links/site";
 import type { EnvoiCrypto } from "@optizzz/game/site-links/envois";
+import { STATE_CATEGORIES } from "@optizzz/game/site-links/envoi-states";
 import {
   ACCOUNT_PATH,
   ALLIANCE_KEYS,
@@ -54,7 +55,10 @@ interface Dependencies {
   permitted: () => Promise<boolean>;
   openConnectPage: () => Promise<unknown>;
   /** The Envois (envois.ts): the Joueurs' choices, the Clé d'alliance, the relève. */
-  envois: Pick<EnvoiService, "status" | "choose" | "forget" | "receiveKeys" | "releve" | "incoming" | "floods">;
+  envois: Pick<
+    EnvoiService,
+    "status" | "choose" | "forget" | "receiveKeys" | "releve" | "incoming" | "floods" | "states"
+  >;
 }
 
 type Notice = AccountStatus["notice"];
@@ -260,6 +264,8 @@ export function answer(
         return service.envois.incoming(message.origin);
       case "floods":
         return service.envois.floods(message.origin);
+      case "states":
+        return service.envois.states(message.origin);
     }
   }
   if (message.type === "optizzz-link") {
@@ -299,6 +305,12 @@ export function changedCategory(key: string): { host: string; category: "convoys
   return host ? { host, category: "floods" } : null;
 }
 
+/** What the game's pages showed of the player's state, for a server (state-pages.ts): every state category's Envoi. */
+const STATE_KEYS = /^envoiStates:(s\d{1,2}\.fourmizzz\.fr)$/;
+
+/** The game's host whose states a change of this storage.local key calls for, if any. */
+export const changedStates = (key: string): string | null => STATE_KEYS.exec(key)?.[1] ?? null;
+
 /**
  * The account's background. `crypto` binds libsodium to a space's Clé d'alliance: the background's entrypoint passes
  * it in, the only file of the background allowed to import it (ADR 0007, eslint.config.js).
@@ -333,6 +345,8 @@ export function setUpOptizzzAccount({
     for (const key of Object.keys(changes)) {
       const change = changedCategory(key);
       if (change) envois.changed(change.host, change.category);
+      const states = changedStates(key);
+      if (states) for (const category of STATE_CATEGORIES) envois.changed(states, category);
     }
   });
   // The relève, every 5 minutes: it reads optizzz.fr only, and nothing at all without a Clé d'alliance.

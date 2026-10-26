@@ -9,6 +9,7 @@ import { storeAttachedPlayers, storeCurrentPlayer, storeLink } from "@/data/opti
 import { armyFromKeys } from "@optizzz/game/army/units";
 import { writeLaunches } from "@/data/launches";
 import { storeSentAttacks } from "@/data/sent-attacks";
+import { keepStatePages } from "@/data/state-pages";
 import { ENVOI_DELAY_MS, envoiService, MISSING_KEY } from "./envois";
 
 const S5 = "https://s5.fourmizzz.fr";
@@ -102,7 +103,9 @@ function fakeSite() {
     }
     if (pathname === "/api/extension/envois" && method === "POST") {
       const category = body?.category as string;
-      if (!(settings.get(1) ?? []).includes(category))
+      const checked = settings.get(1) ?? [];
+      const sends = (c: string) => checked.includes(c);
+      if (!(sends(category) || (category === "army" && (sends("army-count") || sends("army-units")))))
         return Promise.resolve(Response.json({ error: "category-off", message: "off" }, { status: 409 }));
       if (body?.keyVersion !== version)
         return Promise.resolve(Response.json({ error: "stale-key", message: MISSING_KEY }, { status: 409 }));
@@ -576,5 +579,135 @@ describe("the Envois of the floods", () => {
     // Arrived: no longer on its way.
     now = new Date(ARRIVAL.getTime() + 1000);
     expect((await service().floods(S5)).floods).toEqual([]);
+  });
+});
+
+describe("the Envois of the states", () => {
+  let site: ReturnType<typeof fakeSite>;
+  let now: Date;
+  let timers: { ms: number; run: () => void }[];
+  const service = () =>
+    envoiService({
+      now: () => now,
+      fetch: site.fetch,
+      permitted: () => Promise.resolve(true),
+      crypto: fakeCrypto,
+      notify: () => Promise.resolve(),
+      later: (ms, run) => timers.push({ ms, run }),
+    });
+  const flush = async () => {
+    const due = timers;
+    timers = [];
+    for (const timer of due) timer.run();
+    for (let i = 0; i < 50; i++) await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  };
+  const opened = async (blob: string | undefined) =>
+    JSON.parse(await fakeCrypto([KEY_1]).decrypt(blob ?? "")) as {
+      item: { pseudo: string; reading: Record<string, unknown>; previous: { reading: unknown } | null };
+      observedAt: number;
+    };
+  const posts = (category: string) => site.posts().filter((p) => p.body?.category === category);
+  const items = (category: string) =>
+    (posts(category).at(-1)?.body?.items ?? []) as { fingerprint: string; blob: string; detail?: string }[];
+
+  beforeEach(async () => {
+    fakeBrowser.reset();
+    site = fakeSite();
+    now = NOW;
+    timers = [];
+    await storeLink(TOKEN, NOW);
+    await storeAttachedPlayers([{ server: "s5", pseudo: "Messor" }]);
+    await storeCurrentPlayer(S5, "Messor");
+    await storeKeys(SPACE, [KEY_1], null);
+    await keepStatePages(S5, {
+      stock: { readAt: NOW.getTime(), huntingField: 10_000, workers: 12_000 },
+      ressources: {
+        readAt: NOW.getTime(),
+        foodWorkers: 4_000,
+        materialWorkers: 6_000,
+        mushroomPerDay: 0,
+        taxRate: 0,
+        hunts: [],
+      },
+      armee: { readAt: NOW.getTime(), units: { JSN: 1_000 }, attackAnts: 0, unknownAttacks: 0, coming: [] },
+    });
+  });
+
+  it("sends each checked state in one encrypted row, the army by unit in the Admins' blob only « Par unité »", async () => {
+    await service().choose("s5", "Messor", { ...NO_ENVOIS, production: true, army: "count" });
+    const settings = site.calls.filter((c) => c.path === "/api/extension/envoi-settings").at(-1);
+    expect(settings?.body?.categories).toEqual(["production", "army-count"]);
+    expect(items("production")).toHaveLength(1);
+    expect((await opened(items("production")[0]?.blob)).item).toMatchObject({
+      pseudo: "Messor",
+      reading: { huntingField: 10_000, workers: 12_000, colonies: null },
+      previous: null,
+    });
+    expect(items("army")[0]?.detail).toBeUndefined();
+    expect(posts("hunts")).toEqual([]);
+
+    await service().choose("s5", "Messor", { ...NO_ENVOIS, production: true, army: "units" });
+    const detail = await opened(items("army")[0]?.detail);
+    expect(detail.item).toEqual({ units: { JSN: 1_000 } });
+  });
+
+  it("sends nothing again while the reading does not change, and the previous reading when it does", async () => {
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, production: true });
+    now = new Date(NOW.getTime() + 60_000);
+    await keepStatePages(S5, { stock: { readAt: now.getTime(), huntingField: 10_000, workers: 12_000 } });
+    envois.changed("s5.fourmizzz.fr", "production");
+    await flush();
+    expect(posts("production")).toHaveLength(1);
+
+    await keepStatePages(S5, { stock: { readAt: now.getTime(), huntingField: 10_500, workers: 12_000 } });
+    envois.changed("s5.fourmizzz.fr", "production");
+    await flush();
+    expect(posts("production")).toHaveLength(2);
+    const sent = await opened(items("production")[0]?.blob);
+    expect(sent.observedAt).toBe(now.getTime());
+    expect(sent.item.previous?.reading).toMatchObject({ huntingField: 10_000 });
+    // Still the same row: a state is one row per Joueur and category.
+    expect(site.rows().filter((r) => r.category === "production")).toHaveLength(1);
+  });
+
+  it("sends nothing before the pages a state needs were read", async () => {
+    await service().choose("s5", "Messor", { ...NO_ENVOIS, levels: true });
+    expect(posts("levels")).toEqual([]);
+  });
+
+  it("opens the members' states at the relève, their units for an Admin, for « Partage »", async () => {
+    const sealed = (category: string, fingerprint: string, item: unknown) =>
+      fakeCrypto([KEY_1]).encrypt(
+        JSON.stringify({ v: 1, server: "s5", playerId: 2, category, fingerprint, observedAt: 5, item }),
+      );
+    const reading = { total: 50, incomplete: false, returnsAt: null };
+    site.addRow({
+      id: "1",
+      server: "s5",
+      playerId: 2,
+      category: "army",
+      fingerprint: "a2",
+      blob: await sealed("army", "a2", { pseudo: "Lasius", reading, previous: null }),
+      detail: await sealed("army", "a2", { units: { SN: 50 } }),
+    });
+    site.addRow({
+      id: "2",
+      server: "s5",
+      playerId: 2,
+      category: "hunts",
+      fingerprint: "h2",
+      // Filed under another row: refused.
+      blob: await sealed("hunts", "h9", { pseudo: "Lasius", reading: { hunts: [] }, previous: null }),
+    });
+    await service().releve("page");
+    expect(await service().states(S5)).toEqual({
+      problem: null,
+      tag: "ABC",
+      rows: [
+        { category: "army", observedAt: 5, item: { pseudo: "Lasius", reading, previous: null }, units: { SN: 50 } },
+      ],
+    });
   });
 });
