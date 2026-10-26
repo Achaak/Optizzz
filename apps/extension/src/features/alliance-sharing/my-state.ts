@@ -1,7 +1,7 @@
 // The player's own state to share, from the pages read when they open « Mon état » (docs/features/partage-alliance.md).
 import type { Launch } from "@/data/launches";
 import { readGarrison } from "@/data/garrison";
-import type { SharedArmy, SharedState } from "@/data/shared-states";
+import type { SharedArmy, SharedState } from "@optizzz/game/sharing/shared-state";
 import { readTroops, UNITS } from "@optizzz/game/army/units";
 import { readBuildingLevels, readResearchLevels } from "@optizzz/game/pages/levels";
 import { readStock } from "@optizzz/game/pages/resources";

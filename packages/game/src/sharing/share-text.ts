@@ -1,10 +1,10 @@
 // The text a member copies to share their state, and reading back a pasted channel (docs/features/partage-alliance.md).
 import { z } from "zod";
-import type { SharedArmy, SharedState } from "@/data/shared-states";
-import { UNITS, unitLabel } from "@optizzz/game/army/units";
-import { BUILDINGS, RESEARCH, sameName } from "@optizzz/game/levels";
-import { formatNumber } from "@optizzz/game/format/number-format";
-import { dayMonth, formatDateTime } from "@optizzz/game/format/time-format";
+import type { SharedArmy, SharedState } from "./shared-state";
+import { UNITS, unitLabel } from "../army/units";
+import { BUILDINGS, RESEARCH, sameName } from "../levels";
+import { formatNumber } from "../format/number-format";
+import { dayMonth, formatDateTime } from "../format/time-format";
 
 // Compact payload of the data line: levels and units as arrays in the order of BUILDINGS, RESEARCH and UNITS, a work
 // by its index in BUILDINGS then RESEARCH (its name when unknown), times in minutes since 1970.

@@ -8,8 +8,8 @@ import {
   rememberMyShare,
   setManualValue,
   valueOf,
-  type SharedState,
 } from "./shared-states";
+import type { SharedState } from "@optizzz/game/sharing/shared-state";
 
 const ORIGIN = "https://s5.fourmizzz.fr";
 const at = (iso: string) => new Date(iso);

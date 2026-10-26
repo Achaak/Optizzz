@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { SharedState } from "@/data/shared-states";
-import { UNITS } from "@optizzz/game/army/units";
-import { BUILDINGS, RESEARCH } from "@optizzz/game/levels";
+import type { SharedState } from "./shared-state";
+import { UNITS } from "../army/units";
+import { BUILDINGS, RESEARCH } from "../levels";
 import { formatShare, parseShares } from "./share-text";
 
 const at = (iso: string) => new Date(iso);

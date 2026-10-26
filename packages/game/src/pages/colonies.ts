@@ -1,11 +1,17 @@
 // colonies.php: the player's colonies and the troops occupying them, and their own master. Selectors are documented in
 // docs/research/fourmizzz-pages.md (« colonies.php et profil »).
 import { readTroops } from "../army/units";
+import { parseGameInteger } from "../format/game-number";
+import { parseGameDuration } from "./work-queue";
 
 export interface Colony {
   pseudo: string;
   /** My troops occupying it, by unit key: still my army, away from home. */
   troops: Record<string, number>;
+  /** How long it has been mine (« Cette colonie vous appartient depuis 3j 4h »), ms; null when not written. */
+  heldFor: number | null;
+  /** What it brought me since (« Elle vous a rapporté 0 nourriture et 0 matériaux »); null when not written. */
+  brought: { food: number; materials: number } | null;
 }
 
 export interface ColoniesPage {
@@ -45,7 +51,21 @@ export function readColonies(doc: Document): ColoniesPage {
     const label = [...(box.querySelector("p")?.childNodes ?? [])].find((node) =>
       node.textContent?.includes("Troupes présentes"),
     );
-    return [{ pseudo, troops: label ? troopsAfter(label) : {} }];
+    const held = [...box.querySelectorAll("p")].find((p) => p.textContent.includes("appartient depuis"));
+    const text = held?.textContent ?? "";
+    const since = /appartient depuis\s*([^\n]*?)\s*Elle/.exec(text.replace(/\s+/g, " "))?.[1] ?? "";
+    const amounts = [...(held?.querySelectorAll(".sur_une_ligne") ?? [])].map((span) =>
+      parseGameInteger(span.textContent),
+    );
+    const [food, materials] = amounts;
+    return [
+      {
+        pseudo,
+        troops: label ? troopsAfter(label) : {},
+        heldFor: held ? parseGameDuration(since) : null,
+        brought: food !== undefined && materials !== undefined ? { food, materials } : null,
+      },
+    ];
   });
   const master = masterBox?.querySelector("a[href*='Membre.php']")?.textContent.trim() ?? null;
   return { master, colonies };

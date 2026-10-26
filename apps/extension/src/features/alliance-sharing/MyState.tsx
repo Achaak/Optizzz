@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { loadLaunches, type Launch } from "@/data/launches";
-import { loadMyLastShare, rememberMyShare, type SharedState } from "@/data/shared-states";
+import { loadMyLastShare, rememberMyShare } from "@/data/shared-states";
+import type { SharedState } from "@optizzz/game/sharing/shared-state";
 import { fetchGamePage } from "@/utils/game-page";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { collectMyState, type Me, type MyPages, type ShareChoices } from "./my-state";
 import { readChoices, writeChoices } from "./settings";
-import { formatShare } from "./share-text";
+import { formatShare } from "@optizzz/game/sharing/share-text";
 
 interface Props {
   origin: string;

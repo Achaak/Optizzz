@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { SharedState, SharedStates } from "@/data/shared-states";
+import type { SharedStates } from "@/data/shared-states";
+import type { SharedState } from "@optizzz/game/sharing/shared-state";
 import { memberRows } from "./member-rows";
 
 const at = (iso: string) => new Date(iso);

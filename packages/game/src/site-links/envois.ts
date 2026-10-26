@@ -58,6 +58,10 @@ export function categoriesOf(choices: EnvoiChoices): SentCategory[] {
   );
 }
 
+/** Whether a Joueur's choices send a category: the army as a number or by unit. */
+export const isSent = (choices: EnvoiChoices, category: EnvoiCategory): boolean =>
+  category === "army" ? choices.army !== "none" : choices[category];
+
 /** « Envoie : convois, floods », or « N'envoie rien ». */
 export function sendsLabel(categories: readonly SentCategory[]): string {
   const known = SENT_CATEGORIES.filter((category) => categories.includes(category));

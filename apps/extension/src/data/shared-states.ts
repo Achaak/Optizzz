@@ -1,59 +1,14 @@
 // States the alliance members share by copy-paste (docs/features/partage-alliance.md), remembered per server.
 import { storage } from "wxt/utils/storage";
-import { BUILDINGS, RESEARCH, type BuildingKey, type ResearchKey } from "@optizzz/game/levels";
+import {
+  sharedValue,
+  type MemberStates,
+  type SharedArmy,
+  type SharedState,
+  type SharedWork,
+  type ValueKey,
+} from "@optizzz/game/sharing/shared-state";
 import { withStorageLock } from "@/utils/storage-lock";
-
-export interface SharedWork {
-  /** As the game writes it: « Armes », « Champignonnière ». */
-  name: string;
-  /** The level reached when it ends. */
-  level: number;
-  endsAt: Date;
-}
-
-export interface SharedArmy {
-  total: number;
-  /** By unit key (« JSN »), when the player shares the detail. */
-  units?: Partial<Record<string, number>>;
-  /** Some troops are away and could not be counted (hunt without Compte+, attack sent outside the flood plan). */
-  incomplete: boolean;
-  /** When the troops away come back, if known. */
-  returnsAt?: Date;
-}
-
-/** What a member shared, each part only when they chose to share it. */
-export interface SharedState {
-  /** « s5 ». */
-  server: string;
-  /** Alliance tag. */
-  alliance: string;
-  pseudo: string;
-  readAt: Date;
-  huntingField?: number;
-  workers?: number;
-  buildings?: Partial<Record<BuildingKey, number>>;
-  research?: Partial<Record<ResearchKey, number>>;
-  works?: SharedWork[];
-  army?: SharedArmy;
-}
-
-/** A member's states: the latest, and the one before it to show what changed. */
-export interface MemberStates {
-  latest: SharedState;
-  previous?: SharedState;
-}
-
-/** A value of a member that can be shared or entered by hand. */
-export type ValueKey = "huntingField" | "workers" | "army" | `buildings.${BuildingKey}` | `research.${ResearchKey}`;
-
-/** Every value, in display order. */
-export const VALUE_KEYS: readonly ValueKey[] = [
-  "huntingField",
-  "workers",
-  "army",
-  ...BUILDINGS.map((building) => `buildings.${building.key}` as const),
-  ...RESEARCH.map((research) => `research.${research.key}` as const),
-];
 
 export interface ManualValue {
   value: number;
@@ -68,7 +23,7 @@ export interface SharedStates {
 }
 
 /** Dates as numbers: browser storage keeps JSON only. */
-interface StoredState extends Omit<SharedState, "readAt" | "works" | "army"> {
+interface StoredState extends Omit<SharedState, "readAt" | "works" | "army" | "production" | "hunts"> {
   readAt: number;
   works?: (Omit<SharedWork, "endsAt"> & { endsAt: number })[];
   army?: Omit<SharedArmy, "returnsAt"> & { returnsAt?: number };
@@ -130,15 +85,6 @@ export async function loadSharedStates(origin: string, alliance: string): Promis
     );
   }
   return { members, manual };
-}
-
-/** The value `state` shares for `valueKey`, if it shares it. */
-export function sharedValue(state: SharedState, valueKey: ValueKey): number | undefined {
-  if (valueKey === "huntingField") return state.huntingField;
-  if (valueKey === "workers") return state.workers;
-  if (valueKey === "army") return state.army?.total;
-  const [group, level] = valueKey.split(".") as ["buildings" | "research", string];
-  return (state[group] as Partial<Record<string, number>> | undefined)?.[level];
 }
 
 /** A member's value: the one entered by hand when it is newer than their latest state, else the shared one. */

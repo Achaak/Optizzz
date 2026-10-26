@@ -1,12 +1,6 @@
 // The rows of the alliance's table (« Partage »), from the states remembered (docs/features/partage-alliance.md).
-import {
-  sharedValue,
-  valueOf,
-  VALUE_KEYS,
-  type SharedStates,
-  type SharedWork,
-  type ValueKey,
-} from "@/data/shared-states";
+import { valueOf, type SharedStates } from "@/data/shared-states";
+import { sharedValue, VALUE_KEYS, type SharedWork, type ValueKey } from "@optizzz/game/sharing/shared-state";
 import { BUILDINGS, RESEARCH, sameName } from "@optizzz/game/levels";
 
 const HOUR = 60 * 60_000;
