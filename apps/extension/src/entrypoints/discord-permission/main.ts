@@ -18,7 +18,7 @@ const show = (granted: boolean) => {
   if (!result || !button) return;
   button.hidden = granted;
   result.textContent = granted
-    ? "Discord autorisé : vos prochains convois y seront annoncés. Vous pouvez fermer cet onglet."
+    ? "Discord autorisé : vos prochains convois et attaques y seront annoncés, selon ce que vous envoyez. Vous pouvez fermer cet onglet."
     : "Refusé : rien n'est annoncé sur Discord, le reste de l'extension marche comme avant. Vous pouvez réessayer.";
 };
 

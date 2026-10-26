@@ -39,7 +39,7 @@ export interface DiscordStatus {
   problem: string | null;
 }
 
-const LABELS: Record<DiscordEvent, string> = { convoys: "convois" };
+const LABELS: Record<DiscordEvent, string> = { convoys: "convois", floods: "floods" };
 
 const TIMEOUT_MS = 15_000;
 /** At most this many lines wait during a rate limit: older ones are dropped rather than flooding the channel later. */

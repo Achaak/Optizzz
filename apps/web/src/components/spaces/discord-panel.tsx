@@ -219,7 +219,7 @@ export function DiscordPanel({ view, keyring }: { view: MemberView; keyring: All
               ))}
               <p className="text-xs text-muted-foreground">
                 {current.url
-                  ? "Rien n'est coché d'avance. Les floods et les autres annonces arriveront ensuite."
+                  ? "Rien n'est coché d'avance. Les floods ne disent jamais l'armée envoyée."
                   : "Enregistrez d'abord l'adresse du webhook."}
               </p>
             </fieldset>
