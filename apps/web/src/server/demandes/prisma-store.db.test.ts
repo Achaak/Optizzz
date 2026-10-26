@@ -81,9 +81,9 @@ describe.skipIf(!url)("the Demandes' store on Postgres", () => {
     await service.decide(admin.userId, { id: ids[0], decision: "validated" });
     // Two validators at once: the second changes nothing.
     await expect(service.decide(admin.userId, { id: ids[0], decision: "refused" })).rejects.toThrow("a changé");
-    expect(await service.close(member.userId, { server: "s5", playerId: member.playerId, ids })).toEqual({
-      closed: ids,
-    });
+    // Both closed, in whatever order the database lists them.
+    const { closed } = await service.close(member.userId, { server: "s5", playerId: member.playerId, ids });
+    expect([...closed].sort()).toEqual([...ids].sort());
 
     const page = await service.read(admin.userId, { spaceId, scope: "page" });
     expect(page.demandes.map((d) => [d.id, d.status, d.rank, d.decidedByPseudo])).toEqual([
