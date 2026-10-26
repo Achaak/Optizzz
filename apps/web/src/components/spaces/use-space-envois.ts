@@ -62,6 +62,8 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
     error: query.error,
     version: data?.version ?? null,
     sends: data?.sends ?? [],
+    /** The encrypted rows, for the convoys attached to the Demandes (use-space-demandes.ts). */
+    items: data?.items ?? null,
     convoys: keyring ? (opened?.convoys ?? null) : null,
     floods: keyring ? (opened?.floods ?? null) : null,
     states: keyring ? (opened?.states ?? null) : null,

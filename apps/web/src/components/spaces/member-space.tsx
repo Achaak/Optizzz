@@ -37,6 +37,7 @@ import { api } from "~/trpc/react";
 import { AdminExchange } from "./admin-exchange";
 import { CodeExchange } from "./code-exchange";
 import { ConvoysPanel } from "./convoys-panel";
+import { DemandesPanel } from "./demandes-panel";
 import { DiscordPanel } from "./discord-panel";
 import { errorText } from "./errors";
 import { FloodsPanel } from "./floods-panel";
@@ -47,6 +48,7 @@ import { SpaceSettings } from "./space-settings";
 import { StatePanel } from "./state-panel";
 import { useAbsenceAlerts } from "./use-absence-alerts";
 import { useSpaceAccess, type MemberView, type SpaceAccess } from "./use-space-access";
+import { useSpaceDemandes } from "./use-space-demandes";
 import { useKeyHandover, useSpaceEnvois } from "./use-space-envois";
 import { useSpaceKeys } from "./space-keys";
 
@@ -72,6 +74,7 @@ const TABS = [
   { value: "state", label: "État" },
   { value: "floods", label: "Floods" },
   { value: "convoys", label: "Convois" },
+  { value: "demandes", label: "Demandes" },
 ] as const;
 
 export function MemberSpace({ view }: { view: MemberView }) {
@@ -79,6 +82,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const access = useSpaceAccess(keys.pair && keys.trust ? view : undefined);
   const absences = useAbsenceAlerts(view, access.keyring);
   const envois = useSpaceEnvois(view, access.keyring);
+  const demandes = useSpaceDemandes(view, access.keyring, envois.items);
   const versionHidden = useKeyHandover(view, access.keyring, keys.userId);
   const [tab, setTab] = useState<(typeof TABS)[number]["value"]>("space");
   const server = serverById(view.space.server);
@@ -126,6 +130,14 @@ export function MemberSpace({ view }: { view: MemberView }) {
           isAdmin={isAdmin}
           loading={envois.loading || (access.keyring !== null && envois.floods === null)}
         />
+      </div>
+    );
+
+  if (tab === "demandes")
+    return (
+      <div className="max-w-4xl space-y-6">
+        {header}
+        <DemandesPanel view={view} demandes={demandes} sends={envois.sends} loading={envois.loading} />
       </div>
     );
 
@@ -177,8 +189,9 @@ export function MemberSpace({ view }: { view: MemberView }) {
       <SpaceSettings view={view} />
 
       <p className="text-sm text-muted-foreground">
-        L&apos;état des membres (production, armée, chasses, niveaux et chantiers), leurs floods et leurs convois sont
-        dans les onglets «&nbsp;État&nbsp;», «&nbsp;Floods&nbsp;» et «&nbsp;Convois&nbsp;».
+        L&apos;état des membres (production, armée, chasses, niveaux et chantiers), leurs floods, leurs convois et leurs
+        Demandes sont dans les onglets «&nbsp;État&nbsp;», «&nbsp;Floods&nbsp;», «&nbsp;Convois&nbsp;» et
+        «&nbsp;Demandes&nbsp;».
       </p>
     </div>
   );
