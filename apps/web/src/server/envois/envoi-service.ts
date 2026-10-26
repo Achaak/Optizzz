@@ -20,17 +20,35 @@ const DAY = 24 * 3600_000;
 const CURSOR_OVERLAP = 10_000;
 const MAX_ITEMS = 2000;
 
+interface CategoryRules {
+  /** The settings that let it go: any of them. */
+  settings: readonly string[];
+  /** How long a row may stay at most, whatever an extension says. */
+  longest: number;
+  /** The setting that lets an item carry a blob for the Admins only; null when it never does. */
+  detail: string | null;
+  /** A state is one row per Joueur (docs/features/site-envois.md, « Ce que garde le site »). */
+  maxItems: number;
+}
+
 /**
- * The categories whose Envois are lists of items: the setting that lets them go, how long a row may stay at most
- * whatever an extension says, and whether an item may carry a blob for the Admins only.
+ * The categories of the Envois: lists of items (convoys, floods) and states, one row per Joueur holding the latest
+ * reading and the one before it (production, hunts, army, levels).
  */
-const LIST_CATEGORIES = {
+const CATEGORIES = {
   // 90 days after an arrival that may be a few days ahead.
-  convoys: { setting: "convoys", longest: 100 * DAY, detail: false },
+  convoys: { settings: ["convoys"], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
   // 7 days after an arrival at most 30 days ahead (the longest trip the flood plan notes), and the army sent.
-  floods: { setting: "floods", longest: 40 * DAY, detail: true },
-} as const;
-type ListCategory = keyof typeof LIST_CATEGORIES;
+  floods: { settings: ["floods"], longest: 40 * DAY, detail: "floods", maxItems: MAX_ITEMS },
+  // A state not sent again for 90 days goes; the army by unit only while « Par unité » is chosen.
+  production: { settings: ["production"], longest: 100 * DAY, detail: null, maxItems: 1 },
+  hunts: { settings: ["hunts"], longest: 100 * DAY, detail: null, maxItems: 1 },
+  army: { settings: ["army-count", "army-units"], longest: 100 * DAY, detail: "army-units", maxItems: 1 },
+  levels: { settings: ["levels"], longest: 100 * DAY, detail: null, maxItems: 1 },
+} satisfies Record<string, CategoryRules>;
+
+/** The states, whose row goes as soon as their category is unchecked. */
+const STATES = ["production", "hunts", "army", "levels"] as const;
 
 const FINGERPRINT = /^[A-Za-z0-9_-]{22}$/;
 /** Encrypted alliance data (ADR 0005, format 1): 45 bytes and more. */
@@ -116,6 +134,18 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
       if (!Array.isArray(categories) || categories.length > 20 || !categories.every(isSentCategory)) throw invalid();
       await ownPlayer(userId, player);
       await store.saveSettings(player, [...new Set(categories)]);
+      // A state unchecked goes from the site at once, and the army by unit when « Par unité » is no longer chosen.
+      const chosen: readonly string[] = categories;
+      const checked = (rules: CategoryRules) => rules.settings.some((setting) => chosen.includes(setting));
+      await store.forgetStates(
+        player,
+        STATES.filter((category) => !checked(CATEGORIES[category])),
+        STATES.filter((category) => {
+          const rules: CategoryRules = CATEGORIES[category];
+          return rules.detail !== null && !chosen.includes(rules.detail);
+        }),
+        now(),
+      );
     },
 
     /**
@@ -127,10 +157,13 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
       const player = playerRef(body);
       const category = body.category;
       const keyVersion = body.keyVersion;
-      if (typeof category !== "string" || !(category in LIST_CATEGORIES)) throw invalid();
-      const rules = LIST_CATEGORIES[category as ListCategory];
+      const rules: CategoryRules | null =
+        typeof category === "string" && Object.hasOwn(CATEGORIES, category)
+          ? CATEGORIES[category as keyof typeof CATEGORIES]
+          : null;
+      if (typeof category !== "string" || !rules) throw invalid();
       if (!isPlayerId(keyVersion) || keyVersion < 1) throw invalid();
-      if (!Array.isArray(body.items) || body.items.length > MAX_ITEMS) throw invalid();
+      if (!Array.isArray(body.items) || body.items.length > rules.maxItems) throw invalid();
       if (!Array.isArray(body.removed) || body.removed.length > MAX_ITEMS) throw invalid();
       const removed = body.removed.map((f) => {
         if (typeof f !== "string" || !FINGERPRINT.test(f)) throw invalid();
@@ -145,7 +178,8 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
           typeof value === "string" && ALLIANCE_DATA.test(value) && blobKeyVersion(value) === keyVersion;
         if (typeof fingerprint !== "string" || !FINGERPRINT.test(fingerprint)) throw invalid();
         if (typeof blob !== "string" || !sealed(blob)) throw invalid();
-        if (detail !== null && (!rules.detail || typeof detail !== "string" || !sealed(detail))) throw invalid();
+        if (detail !== null && (rules.detail === null || typeof detail !== "string" || !sealed(detail)))
+          throw invalid();
         if (typeof expiresAt !== "number" || !Number.isFinite(expiresAt)) throw invalid();
         // Already past its date: not kept.
         if (expiresAt <= at.getTime()) continue;
@@ -162,8 +196,13 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
       const spaceId = await store.spaceOf(player);
       const space = spaceId ? await store.space(spaceId) : null;
       if (!space) throw new EnvoiError("not-found", "Ce Joueur n'est dans aucun Espace d'alliance.");
-      if (!(await store.settingsOf(player)).includes(rules.setting))
+      const settings = await store.settingsOf(player);
+      if (!rules.settings.some((setting) => settings.includes(setting)))
         throw new EnvoiError("category-off", "Cette catégorie n'est pas cochée pour ce Joueur : rien n'est gardé.");
+      // The army by unit while « Par unité » is not chosen (the site did not get the choice yet): the extension is
+      // told the category is off, and tells it again.
+      if (rules.detail !== null && items.some((i) => i.detail !== null) && !settings.includes(rules.detail))
+        throw new EnvoiError("category-off", "« Par unité » n'est pas choisi pour ce Joueur : rien n'est gardé.");
       const newest = Math.max(0, ...space.versions.map((v) => v.version));
       if (keyVersion !== newest) throw STALE_KEY();
       await store.writeItems(space.id, player, category, items, removed, at);

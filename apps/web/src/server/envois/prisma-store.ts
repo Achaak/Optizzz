@@ -100,6 +100,16 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
         }
       });
     },
+    async forgetStates(player, removed, withoutDetail, now) {
+      const mine = { server: player.server, playerId: player.playerId };
+      await db.$transaction([
+        db.envoiItem.deleteMany({ where: { ...mine, category: { in: removed } } }),
+        db.envoiItem.updateMany({
+          where: { ...mine, category: { in: withoutDetail }, detail: { not: null } },
+          data: { detail: null, updatedAt: now },
+        }),
+      ]);
+    },
     items: (spaceId, now, since) =>
       db.envoiItem.findMany({
         where: { spaceId, expiresAt: { gt: now }, ...(since && { updatedAt: { gt: since } }) },

@@ -82,6 +82,13 @@ export function memoryEnvoiStore() {
       }
       return Promise.resolve();
     },
+    forgetStates: (player, removed, withoutDetail, now) => {
+      rows = rows.filter((r) => !(same(r, player) && removed.includes(r.category)));
+      for (const r of rows)
+        if (same(r, player) && withoutDetail.includes(r.category) && r.detail !== null)
+          Object.assign(r, { detail: null, updatedAt: now });
+      return Promise.resolve();
+    },
     items: (spaceId, now, since) =>
       Promise.resolve(
         rows

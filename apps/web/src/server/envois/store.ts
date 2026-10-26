@@ -69,6 +69,11 @@ export interface EnvoiStore {
     removed: string[],
     now: Date,
   ): Promise<void>;
+  /**
+   * A Joueur's states unchecked: the rows of `removed` go (in every space), and the Admins' blob of `withoutDetail`
+   * (their `updatedAt` then moves to `now`, for the relève).
+   */
+  forgetStates(player: PlayerRef, removed: string[], withoutDetail: string[], now: Date): Promise<void>;
   /** The space's items not yet expired; with `since`, only those written after it. */
   items(spaceId: string, now: Date, since?: Date): Promise<ItemRow[]>;
   /** The ids of every item of the space not yet expired: what the readers keep. */

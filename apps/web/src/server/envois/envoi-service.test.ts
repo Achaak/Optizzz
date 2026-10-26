@@ -273,4 +273,77 @@ describe("the Envois on the site", () => {
       expect(row && row.expiresAt.getTime() - now.getTime()).toBeLessThanOrEqual(40 * DAY);
     });
   });
+
+  describe("the states", () => {
+    const state = async (text: string, detail: string | null = null, ring = keyring) => ({
+      fingerprint: fp(9),
+      blob: await encryptData(text, ring),
+      ...(detail !== null && { detail: await encryptData(detail, ring) }),
+      expiresAt: now.getTime() + 90 * DAY,
+    });
+    const sendState = (who: typeof messor, category: string, items: Awaited<ReturnType<typeof state>>[]) =>
+      service.saveEnvoi(who.userId, {
+        server: who.server,
+        playerId: who.playerId,
+        category,
+        keyVersion: 1,
+        items,
+        removed: [],
+      });
+    const choose = (who: typeof messor, categories: string[]) =>
+      service.saveSettings(who.userId, { server: "s5", playerId: who.playerId, categories });
+
+    it("keep one row per Joueur and category, each only while it is checked", async () => {
+      await choose(messor, ["production", "hunts", "levels"]);
+      for (const category of ["production", "hunts", "levels"])
+        await sendState(messor, category, [await state(category)]);
+      expect(memory.rows().map((r) => r.category)).toEqual(["production", "hunts", "levels"]);
+      expect((await failure(sendState(messor, "army", [await state("army")]))).code).toBe("category-off");
+    });
+
+    it("refuse a state of more than one row", async () => {
+      await choose(messor, ["production"]);
+      const two = [await state("a"), { ...(await state("b")), fingerprint: fp(8) }];
+      expect((await failure(sendState(messor, "production", two))).code).toBe("invalid");
+    });
+
+    it("take the army as a number or by unit, the units only « Par unité », for the Admins only", async () => {
+      memory.setRole(SPACE, messor, "admin");
+      await choose(lasius, ["army-count"]);
+      expect((await failure(sendState(lasius, "army", [await state("12 000", "12 000 JSN")]))).code).toBe(
+        "category-off",
+      );
+      await sendState(lasius, "army", [await state("12 000")]);
+      await choose(lasius, ["army-units"]);
+      const sent = await state("12 001", "12 001 JSN");
+      now = new Date(NOW.getTime() + 60_000);
+      await sendState(lasius, "army", [sent]);
+      const admin = await service.readEnvois(messor.userId, { spaceId: SPACE });
+      expect(admin.items.map((r) => [r.category, r.detail])).toEqual([["army", sent.detail]]);
+      const member = await service.readEnvois(lasius.userId, { spaceId: SPACE });
+      expect(member.items.map((r) => [r.category, r.detail])).toEqual([["army", null]]);
+    });
+
+    it("go when their category is unchecked, and the units when « Par unité » is", async () => {
+      await choose(messor, ["production", "army-units", "convoys"]);
+      await sendState(messor, "production", [await state("production")]);
+      await sendState(messor, "army", [await state("army", "units")]);
+      await send(messor, [await item(1)]);
+      now = new Date(NOW.getTime() + 60_000);
+      await choose(messor, ["army-count", "convoys"]);
+      expect(memory.rows().map((r) => [r.category, r.detail, r.updatedAt])).toEqual([
+        ["army", null, now],
+        ["convoys", null, NOW],
+      ]);
+      await choose(messor, []);
+      expect(memory.rows().map((r) => r.category)).toEqual(["convoys"]);
+    });
+
+    it("never stay longer than 100 days without a new Envoi", async () => {
+      await choose(messor, ["levels"]);
+      await sendState(messor, "levels", [{ ...(await state("levels")), expiresAt: now.getTime() + 400 * DAY }]);
+      const [row] = memory.rows();
+      expect(row && row.expiresAt.getTime() - now.getTime()).toBeLessThanOrEqual(100 * DAY);
+    });
+  });
 });

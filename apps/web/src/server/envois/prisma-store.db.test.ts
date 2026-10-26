@@ -137,6 +137,39 @@ describe.skipIf(!url)("the Envois' store on Postgres", () => {
     await db.envoiItem.deleteMany({ where: { spaceId, category: "floods" } });
   });
 
+  it("keeps a state per Joueur, and forgets it, or its units, as soon as it is unchecked", async () => {
+    const keyring = await createAllianceKeyring();
+    const choose = (categories: string[]) =>
+      service.saveSettings(b.userId, { server: "s5", playerId: b.playerId, categories });
+    const send = async (category: string, detail: string | null) =>
+      service.saveEnvoi(b.userId, {
+        server: "s5",
+        playerId: b.playerId,
+        category,
+        keyVersion: 1,
+        items: [
+          {
+            fingerprint: fp(60),
+            blob: await encryptData(category, keyring),
+            ...(detail && { detail: await encryptData(detail, keyring) }),
+            expiresAt: now.getTime() + 90 * DAY,
+          },
+        ],
+        removed: [],
+      });
+    await choose(["convoys", "production", "army-units"]);
+    await send("production", null);
+    await send("army", "12 JSN");
+    const states = { spaceId, category: { in: ["production", "army"] } };
+    expect(await db.envoiItem.count({ where: states })).toBe(2);
+    now = new Date(now.getTime() + 60_000);
+    await choose(["convoys", "army-count"]);
+    const left = await db.envoiItem.findMany({ where: states });
+    expect(left.map((r) => [r.category, r.detail, r.updatedAt])).toEqual([["army", null, now]]);
+    await choose(["convoys"]);
+    expect(await db.envoiItem.count({ where: states })).toBe(0);
+  });
+
   it("erases a Joueur's Envois and settings with their account", async () => {
     await db.user.delete({ where: { id: a.userId } });
     const left = await db.envoiItem.findMany({ where: { spaceId } });
