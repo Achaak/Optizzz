@@ -241,6 +241,7 @@ model DeclaredPlayer {
   requests      JoinRequest[]
   envoiSettings EnvoiSettings?
   envois        EnvoiItem[]
+  demandes      Demande[]
 
   @@id([server, playerId])
   @@index([userId])
@@ -283,6 +284,7 @@ model Space {
   absenceAlerts SpaceAbsenceAlerts?
   envois        EnvoiItem[]
   discord       SpaceDiscord?
+  demandes      Demande[]
 
   @@index([server, tag])
   @@map("space")
@@ -464,5 +466,51 @@ model EnvoiItem {
   @@index([spaceId, updatedAt])
   @@index([expiresAt])
   @@map("envoi_item")
+  @@schema("accounts")
+}
+
+// ── Demandes (docs/features/site-demandes.md, ADR 0005). What a Demande asks for is encrypted with the Clé d'alliance
+// in its requester's browser; the site sees who asked, in which space, its status, its order and its dates.
+
+enum DemandeStatus {
+  pending
+  validated
+  refused
+  closed
+  cancelled
+
+  @@schema("accounts")
+}
+
+/// A Demande: a Joueur asks the alliance for resources for a building or a research. In clear only what the site needs
+/// to apply its rules: the requester, the space, the status (who may change it and when), the requester's order, the
+/// dates and the pseudo of the Admin or Délégué who decided. The building, the levels and the amounts are in `blob`,
+/// sealed for this row (id, server, Joueur). Its id is drawn by the requester's browser, which seals the blob for it.
+/// Closed, cancelled or refused, it goes 90 days later (`expiresAt`); leaving the space keeps it, deleting the account
+/// or the space erases it.
+model Demande {
+  id              String         @id
+  spaceId         String
+  server          String
+  playerId        Int
+  status          DemandeStatus  @default(pending)
+  /// The requester's order among their Demandes: 0 first.
+  rank            Int
+  blob            String
+  keyVersion      Int
+  createdAt       DateTime       @default(now())
+  /// Any change, for the relève of the extensions.
+  updatedAt       DateTime       @default(now())
+  decidedAt       DateTime?
+  decidedByPseudo String?
+  /// Closed, cancelled or refused.
+  endedAt         DateTime?
+  expiresAt       DateTime?
+  space           Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  player          DeclaredPlayer @relation(fields: [server, playerId], references: [server, playerId], onDelete: Cascade)
+
+  @@index([spaceId, updatedAt])
+  @@index([server, playerId])
+  @@map("demande")
   @@schema("accounts")
 }

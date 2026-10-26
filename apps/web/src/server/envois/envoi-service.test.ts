@@ -100,6 +100,22 @@ describe("the Envois on the site", () => {
     expect(memory.rows()).toEqual([]);
   });
 
+  it("keeps the convoys attached to a Demande with « Convois » checked, and refuses them without it", async () => {
+    const sendAttached = async () =>
+      service.saveEnvoi(messor.userId, {
+        server: "s5",
+        playerId: 1,
+        category: "demande-convoys",
+        keyVersion: 1,
+        items: [await item(1)],
+        removed: [],
+      });
+    expect((await failure(sendAttached())).code).toBe("category-off");
+    await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["convoys"] });
+    await sendAttached();
+    expect(memory.rows().map((r) => r.category)).toEqual(["demande-convoys"]);
+  });
+
   it("keeps the encrypted convoys of a checked category, rewriting a row only when it changes", async () => {
     await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["convoys"] });
     const first = await item(1);

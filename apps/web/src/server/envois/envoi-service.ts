@@ -45,6 +45,8 @@ const CATEGORIES = {
   hunts: { settings: ["hunts"], longest: 100 * DAY, detail: null, maxItems: 1 },
   army: { settings: ["army-count", "army-units"], longest: 100 * DAY, detail: "army-units", maxItems: 1 },
   levels: { settings: ["levels"], longest: 100 * DAY, detail: null, maxItems: 1 },
+  // The convoys launched for a Demande (docs/features/site-demandes.md): with « Convois », 90 days after the arrival.
+  "demande-convoys": { settings: ["convoys"], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
 } satisfies Record<string, CategoryRules>;
 
 /** The states, whose row goes as soon as their category is unchecked. */
