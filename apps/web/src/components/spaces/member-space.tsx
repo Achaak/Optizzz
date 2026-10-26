@@ -44,6 +44,7 @@ import { LeaveSpace } from "./leave-space";
 import { PassphraseUnlock } from "./passphrase-forms";
 import { Callout, Panel } from "./parts";
 import { SpaceSettings } from "./space-settings";
+import { StatePanel } from "./state-panel";
 import { useAbsenceAlerts } from "./use-absence-alerts";
 import { useSpaceAccess, type MemberView, type SpaceAccess } from "./use-space-access";
 import { useKeyHandover, useSpaceEnvois } from "./use-space-envois";
@@ -68,6 +69,7 @@ function keyChanged(member: Member, access: SpaceAccess, view: MemberView): bool
 
 const TABS = [
   { value: "space", label: "Espace" },
+  { value: "state", label: "État" },
   { value: "floods", label: "Floods" },
   { value: "convoys", label: "Convois" },
 ] as const;
@@ -97,6 +99,22 @@ export function MemberSpace({ view }: { view: MemberView }) {
       <Segmented label="Partie de l'espace" options={TABS} value={tab} onChange={setTab} />
     </div>
   );
+
+  if (tab === "state")
+    return (
+      <div className="max-w-5xl space-y-6">
+        {header}
+        <StatePanel
+          states={envois.states}
+          refused={envois.refused.states}
+          isAdmin={isAdmin}
+          loading={envois.loading || (access.keyring !== null && envois.states === null)}
+          members={view.members.map((m) => m.pseudo)}
+          server={view.space.server}
+          tag={view.space.tag}
+        />
+      </div>
+    );
 
   if (tab === "floods")
     return (
@@ -159,8 +177,8 @@ export function MemberSpace({ view }: { view: MemberView }) {
       <SpaceSettings view={view} />
 
       <p className="text-sm text-muted-foreground">
-        Les floods et les convois envoyés par les membres sont dans les onglets «&nbsp;Floods&nbsp;» et
-        «&nbsp;Convois&nbsp;». Les états (armée, niveaux, production) arriveront ensuite.
+        L&apos;état des membres (production, armée, chasses, niveaux et chantiers), leurs floods et leurs convois sont
+        dans les onglets «&nbsp;État&nbsp;», «&nbsp;Floods&nbsp;» et «&nbsp;Convois&nbsp;».
       </p>
     </div>
   );
