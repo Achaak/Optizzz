@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   categoriesOf,
   EnvoiRefused,
+  isSent,
   newestPerFingerprint,
   NO_ENVOIS,
   openEnvoi,
@@ -91,5 +92,12 @@ describe("the categories a Joueur sends", () => {
     expect(categoriesOf({ ...NO_ENVOIS, convoys: true, army: "count" })).toEqual(["convoys", "army-count"]);
     expect(sendsLabel(["convoys"])).toBe("Envoie : convois");
     expect(sendsLabel(["convoys", "floods", "army-units"])).toBe("Envoie : convois, floods, armée (par unité)");
+  });
+});
+
+describe("the convoys attached to a Demande", () => {
+  it("leave with « Convois »: no other choice to make", () => {
+    expect(isSent(NO_ENVOIS, "demande-convoys")).toBe(false);
+    expect(isSent({ ...NO_ENVOIS, convoys: true }, "demande-convoys")).toBe(true);
   });
 });

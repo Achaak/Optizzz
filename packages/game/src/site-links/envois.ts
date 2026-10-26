@@ -35,8 +35,11 @@ export const SENT_CATEGORIES = [
 ] as const;
 export type SentCategory = (typeof SENT_CATEGORIES)[number];
 
-/** The categories whose Envois are encrypted rows: one per item (lists) or per Joueur (states). */
-export type EnvoiCategory = "production" | "convoys" | "floods" | "hunts" | "army" | "levels";
+/**
+ * The categories whose Envois are encrypted rows: one per item (lists) or per Joueur (states). `demande-convoys`, the
+ * convoys launched for a Demande (docs/features/site-demandes.md), leaves with « Convois ».
+ */
+export type EnvoiCategory = "production" | "convoys" | "floods" | "hunts" | "army" | "levels" | "demande-convoys";
 
 const LABELS: Record<SentCategory, string> = {
   production: "production",
@@ -60,7 +63,7 @@ export function categoriesOf(choices: EnvoiChoices): SentCategory[] {
 
 /** Whether a Joueur's choices send a category: the army as a number or by unit. */
 export const isSent = (choices: EnvoiChoices, category: EnvoiCategory): boolean =>
-  category === "army" ? choices.army !== "none" : choices[category];
+  category === "army" ? choices.army !== "none" : category === "demande-convoys" ? choices.convoys : choices[category];
 
 /** « Envoie : convois, floods », or « N'envoie rien ». */
 export function sendsLabel(categories: readonly SentCategory[]): string {
