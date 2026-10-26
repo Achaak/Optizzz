@@ -41,7 +41,7 @@ export interface ConvoySignature {
 }
 
 /** A Convoi page opened from « Envoyer un convoi »: the next convoy to `recipient` is the Demande's. */
-export interface ConvoyIntent {
+interface ConvoyIntent {
   demande: string;
   recipient: string;
   openedAt: number;
@@ -50,7 +50,7 @@ export interface ConvoyIntent {
 }
 
 /** A convoy launched for a Demande. */
-export interface AttachedConvoy extends ConvoySignature {
+interface AttachedConvoy extends ConvoySignature {
   /** Drawn by the extension: its identity, whose fingerprint files it on the site. */
   id: string;
   demande: string;

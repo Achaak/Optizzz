@@ -19,7 +19,7 @@ export interface DemandeRow extends PlayerRef {
 }
 
 /** What a change of status writes besides it. */
-export interface DemandeChange {
+interface DemandeChange {
   status: DemandeStatus;
   decidedAt?: Date;
   decidedByPseudo?: string;

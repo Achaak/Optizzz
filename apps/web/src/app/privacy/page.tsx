@@ -81,6 +81,17 @@ export default function PrivacyPage() {
           site note qui a changé l&apos;accès à l&apos;espace et quand («&nbsp;Accès changé le … par Pseudo&nbsp;»).
         </p>
         <p>
+          Les Demandes&nbsp;: un membre qui envoie Production et Convois peut demander des ressources pour une
+          construction ou une recherche. Ce qu&apos;il demande (bâtiment ou recherche, niveaux, nourriture et matériaux)
+          est chiffré dans son navigateur avec la Clé d&apos;alliance. Le site garde en clair ce qui lui sert à
+          appliquer les règles&nbsp;: quel Joueur demande, dans quel espace, l&apos;état de la Demande (à valider,
+          validée, refusée, close, annulée), l&apos;ordre que le demandeur lui donne, les dates, et le pseudo de
+          l&apos;Admin ou du Délégué qui a décidé. «&nbsp;Couverte&nbsp;» n&apos;est pas gardé&nbsp;: chaque membre le
+          calcule dans son navigateur d&apos;après les convois rattachés à la Demande, qui sont des Envois chiffrés
+          comme les autres convois. Tous les membres voient les Demandes ; une Demande close, annulée ou refusée est
+          effacée 90 jours après.
+        </p>
+        <p>
           Discord&nbsp;: un Admin d&apos;un espace peut y enregistrer l&apos;adresse du webhook du salon Discord de
           l&apos;alliance et choisir ce qui y est annoncé (aujourd&apos;hui les convois et les floods, sans l&apos;armée
           envoyée ; rien d&apos;avance). L&apos;adresse et ce choix sont chiffrés dans son navigateur avec la Clé
@@ -94,7 +105,7 @@ export default function PrivacyPage() {
         <p>
           Depuis «&nbsp;Mon compte&nbsp;», vous pouvez retirer une extension liée, vous déconnecter de ce navigateur ou
           partout, et supprimer votre compte : tout ce qui lui appartient (connexions, extensions liées, Joueurs, place
-          dans les espaces, clés, vérifications, Envois) est effacé tout de suite.
+          dans les espaces, clés, vérifications, Envois, Demandes) est effacé tout de suite.
         </p>
       </section>
       <section className="space-y-2">

@@ -6,7 +6,7 @@ import { DEMANDES_KEPT_MS, type DemandeConvoy } from "@optizzz/game/site-links/d
 import type { ConvoySignature, DemandeConvoys } from "@/data/demandes";
 
 /** A Convoi page opened from a Demande waits this long for the convoy launched from it. */
-export const INTENT_MS = 30 * 60_000;
+const INTENT_MS = 30 * 60_000;
 /** Two readings of one convoy's arrival differ by the seconds between page loads. */
 const SAME_ARRIVAL_MS = 2 * 60_000;
 

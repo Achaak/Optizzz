@@ -60,8 +60,6 @@ const served = (row: DemandeRow) => ({
   endedAt: time(row.endedAt),
 });
 
-export type ServedDemande = ReturnType<typeof served>;
-
 export function demandeService(store: DemandeStore, now: () => Date = () => new Date()) {
   function playerRef(body: Record<string, unknown>): PlayerRef {
     if (typeof body.server !== "string" || !/^s\d{1,2}$/.test(body.server) || !isPlayerId(body.playerId))

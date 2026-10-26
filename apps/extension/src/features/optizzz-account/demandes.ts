@@ -281,5 +281,3 @@ export function demandeService({
 
   return { releve, demandes, prepareConvoy, levelsSeen, attach };
 }
-
-export type DemandeService = ReturnType<typeof demandeService>;
