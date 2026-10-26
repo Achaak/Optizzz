@@ -55,3 +55,23 @@ export const SITE_SCRIPTS = [LINK_SCRIPT, SPACE_SCRIPT] as const;
 
 /** The extension's page that explains and asks (only an extension page may ask, and Firefox's popup would close). */
 export const CONNECT_PAGE = "/connect-account.html";
+
+/**
+ * The alliance's Discord webhook (docs/features/site-discord.md): the only address the extension posts to on Discord,
+ * as in the manifest's optional_host_permissions. Asked on a click, once the member's space announces something on
+ * Discord, never at install. On Firefox, also the consent to send there what the game's pages showed
+ * (`websiteContent`: « Messor a envoyé un convoi à Lasius… »).
+ */
+const DISCORD_ORIGIN_PATTERN = "https://discord.com/api/webhooks/*";
+
+export function discordPermission(isFirefox: boolean): SitePermission {
+  return {
+    origins: [DISCORD_ORIGIN_PATTERN],
+    ...(isFirefox && { data_collection: ["websiteContent"] }),
+  };
+}
+
+export const DISCORD_PERMISSION = discordPermission(import.meta.env.FIREFOX);
+
+/** The extension's page that asks for discord.com. */
+export const DISCORD_PAGE = "/discord-permission.html";

@@ -43,6 +43,7 @@ import {
 } from "@/data/envois";
 import { forgetLink, loadAttachedPlayers, loadCurrentPlayer, loadLink } from "@/data/optizzz-account";
 import { siteApi, type EnvoiBody } from "./api";
+import type { DiscordService, DiscordStatus } from "./discord";
 
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
@@ -83,6 +84,8 @@ export interface JoueurEnvois {
   /** What stops the Envoi now, if anything. */
   problem: string | null;
   lastSentAt: number | null;
+  /** What goes to the alliance's Discord for this Joueur, or null when the space announces nothing. */
+  discord: DiscordStatus | null;
 }
 
 interface Dependencies {
@@ -96,6 +99,8 @@ interface Dependencies {
   notify: (notice: { id: string; message: string; url: string }) => Promise<void>;
   /** A timer for the few seconds after a change (setTimeout): never a periodic send. */
   later: (ms: number, run: () => void) => void;
+  /** The alliance's Discord webhook (discord.ts): told the news right after an Envoi. */
+  discord: Pick<DiscordService, "refresh" | "announce" | "status" | "forget">;
 }
 
 const newestVersion = (keys: readonly HandedKey[]) => Math.max(0, ...keys.map((k) => k.version));
@@ -103,7 +108,7 @@ const newestVersion = (keys: readonly HandedKey[]) => Math.max(0, ...keys.map((k
 const originOf = (server: string) => serverById(server)?.origin ?? null;
 const serverOfHost = (host: string) => /^(s\d{1,2})\.fourmizzz\.fr$/.exec(host)?.[1] ?? null;
 
-export function envoiService({ now, fetch, permitted, crypto, notify, later }: Dependencies) {
+export function envoiService({ now, fetch, permitted, crypto, notify, later, discord }: Dependencies) {
   let lastPageReleve = 0;
   const waiting = new Set<string>();
 
@@ -130,6 +135,7 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
     await storeSpaces({ readAt: now().getTime(), players: answer.value.players });
     for (const player of answer.value.players)
       if (player.space) await noteVersion(player.space.id, player.space.version.version);
+    if (answer.value.players.some((p) => p.space)) await discord.refresh(kept.token);
     return answer.value.players;
   }
 
@@ -149,6 +155,48 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
   async function setProblem(joueur: string, problem: string | null, pending = false) {
     const state = await loadSent(joueur);
     await storeSent(joueur, { ...state, problem, pending });
+  }
+
+  /**
+   * Right after an Envoi of the convoys, Discord's news (docs/features/site-discord.md): the convoys the Joueur sent
+   * that this Envoi carries for the first time, still on their way. Not on a first Envoi (what was already on its way
+   * is not news), nor after a change of the Clé d'alliance (every fingerprint changes with it). Discord's answer never
+   * blocks the Envoi.
+   */
+  async function announceConvoys(input: {
+    token: string;
+    spaceId: string;
+    server: string;
+    pseudo: string;
+    previous: SentState;
+    sent: SentState["items"];
+    keyVersion: number;
+    cipher: EnvoiCrypto;
+  }): Promise<void> {
+    const { previous, sent, pseudo } = input;
+    const before = Object.values(previous.items).flatMap((item) => (item ? [item] : []));
+    if (previous.lastSentAt === null || before.some((item) => item.keyVersion !== input.keyVersion)) return;
+    const at = now().getTime();
+    const news = Object.entries(sent).flatMap(([fingerprint, item]) => {
+      if (!item || previous.items[fingerprint] || item.kind !== "transit" || item.at <= at) return [];
+      const convoy = CONVOY_ITEM.safeParse(JSON.parse(item.digest));
+      if (!convoy.success || convoy.data.from.toLowerCase() !== pseudo.toLowerCase()) return [];
+      const { from, to, food, materials } = convoy.data;
+      return [{ kind: "convoy" as const, from, to, food, materials, at: convoy.data.at }];
+    });
+    if (news.length === 0) return;
+    try {
+      await discord.announce({
+        token: input.token,
+        spaceId: input.spaceId,
+        categories: categoriesOf(await loadChoices(input.server, pseudo)),
+        crypto: input.cipher,
+        event: "convoys",
+        news,
+      });
+    } catch (error) {
+      console.error("[Optizzz] Discord: the convoys could not be announced", error);
+    }
   }
 
   /**
@@ -235,6 +283,16 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
     }
     if (result.ok) {
       await storeSent(joueur, { items: sent, lastSentAt: at.getTime(), pending: false, problem: null });
+      await announceConvoys({
+        token: kept.token,
+        spaceId: space.id,
+        server,
+        pseudo,
+        previous,
+        sent,
+        keyVersion,
+        cipher,
+      });
       return;
     }
     if (result.unlinked) return unlinked();
@@ -411,8 +469,10 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
           (p) => p.server === server && p.pseudo.toLowerCase() === pseudo.toLowerCase(),
         )?.space;
         const state = await loadSent(joueurKey(server, pseudo));
-        const sending = categoriesOf(choices).length > 0;
-        const keyMissing = space ? !(await usableKeys(space.id, space.version.version)) : false;
+        const categories = categoriesOf(choices);
+        const sending = categories.length > 0;
+        const keys = space ? await usableKeys(space.id, space.version.version) : null;
+        const keyMissing = space !== undefined && space !== null && !keys;
         return {
           server,
           pseudo,
@@ -420,12 +480,19 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
           spaceName: space?.name ?? null,
           problem: !sending ? null : !space ? NO_SPACE : keyMissing ? MISSING_KEY : state.problem,
           lastSentAt: state.lastSentAt,
+          discord: space && keys ? await discord.status({ spaceId: space.id, categories, crypto: crypto(keys) }) : null,
         };
       }),
     );
   }
 
-  return { changed, choose, receiveKeys, forget: forgetKeys, releve, incoming, status, refreshSpaces, sendConvoys };
+  /** « Se déconnecter »: the Clé d'alliance goes, with what was read with it and the webhook it opened. */
+  async function forget(): Promise<void> {
+    await forgetKeys();
+    await discord.forget();
+  }
+
+  return { changed, choose, receiveKeys, forget, releve, incoming, status, refreshSpaces, sendConvoys };
 }
 
 export type EnvoiService = ReturnType<typeof envoiService>;

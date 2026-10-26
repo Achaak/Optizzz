@@ -6,6 +6,7 @@ import { keepConvoyMessages } from "@/data/convoy-history";
 import { storeConvoys, storeIncomingConvoys } from "@/data/convoys";
 import { loadKeys, storeKeys } from "@/data/envois";
 import { storeAttachedPlayers, storeCurrentPlayer, storeLink } from "@/data/optizzz-account";
+import type { DiscordService } from "./discord";
 import { ENVOI_DELAY_MS, envoiService, MISSING_KEY } from "./envois";
 
 const S5 = "https://s5.fourmizzz.fr";
@@ -129,8 +130,28 @@ function fakeSite() {
   };
 }
 
+/** The Discord webhook (discord.ts, tested on its own): what an Envoi asks it to announce. */
+function fakeDiscord() {
+  const announced: Parameters<DiscordService["announce"]>[0][] = [];
+  const refreshed: string[] = [];
+  const service: Pick<DiscordService, "refresh" | "announce" | "status" | "forget"> = {
+    refresh: (token) => {
+      refreshed.push(token);
+      return Promise.resolve();
+    },
+    announce: (input) => {
+      announced.push(input);
+      return Promise.resolve();
+    },
+    status: () => Promise.resolve(null),
+    forget: () => Promise.resolve(),
+  };
+  return { service, announced, refreshed };
+}
+
 describe("the Envois of the convoys", () => {
   let site: ReturnType<typeof fakeSite>;
+  let discord: ReturnType<typeof fakeDiscord>;
   let now: Date;
   let timers: { ms: number; run: () => void }[];
   let notices: { id: string; message: string }[];
@@ -145,6 +166,7 @@ describe("the Envois of the convoys", () => {
         return Promise.resolve();
       },
       later: (ms, run) => timers.push({ ms, run }),
+      discord: discord.service,
     });
   const flush = async () => {
     const due = timers;
@@ -160,6 +182,7 @@ describe("the Envois of the convoys", () => {
   beforeEach(async () => {
     fakeBrowser.reset();
     site = fakeSite();
+    discord = fakeDiscord();
     now = NOW;
     timers = [];
     notices = [];
@@ -293,6 +316,66 @@ describe("the Envois of the convoys", () => {
     expect((await envois.status())[0]?.problem).toBeNull();
   });
 
+  it("asks Discord to announce a convoy just sent, once, right after the Envoi that carries it", async () => {
+    await keysHanded([KEY_1]);
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
+    // The first Envoi only sends what was already on its way: no news.
+    expect(discord.announced).toEqual([]);
+    expect(discord.refreshed).toEqual([TOKEN]);
+
+    const sent = { recipient: "Polyergus", food: 12_348, materials: 0, arrivesAt: new Date("2026-10-25T17:12:00Z") };
+    await storeConvoys(
+      S5,
+      [{ recipient: "Lasius", food: 0, materials: 350_000, arrivesAt: new Date("2026-10-25T16:12:00Z") }, sent],
+      NOW,
+    );
+    envois.changed("s5.fourmizzz.fr");
+    await flush();
+    expect(discord.announced).toHaveLength(1);
+    expect(discord.announced[0]).toMatchObject({
+      token: TOKEN,
+      spaceId: SPACE,
+      categories: ["convoys"],
+      event: "convoys",
+      news: [
+        { kind: "convoy", from: "Messor", to: "Polyergus", food: 12_348, materials: 0, at: sent.arrivesAt.getTime() },
+      ],
+    });
+    // The same convoys read again: nothing new.
+    envois.changed("s5.fourmizzz.fr");
+    await flush();
+    expect(discord.announced).toHaveLength(1);
+  });
+
+  it("announces neither a convoy on its way to me, nor anything after a change of the Clé d'alliance", async () => {
+    await keysHanded([KEY_1]);
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
+    await storeIncomingConvoys(
+      S5,
+      [{ sender: "Polyergus", food: 2, materials: 1, arrivesAt: new Date("2026-10-25T17:00:00Z") }],
+      NOW,
+    );
+    envois.changed("s5.fourmizzz.fr");
+    await flush();
+    expect(discord.announced).toEqual([]);
+
+    // Version 2 (an exclusion): every fingerprint changes, none of them is news.
+    site.setVersion(2);
+    await keysHanded([KEY_1, KEY_2]);
+    await envois.refreshSpaces();
+    await storeConvoys(
+      S5,
+      [{ recipient: "Lasius", food: 0, materials: 350_000, arrivesAt: new Date("2026-10-25T16:12:00Z") }],
+      NOW,
+    );
+    envois.changed("s5.fourmizzz.fr");
+    await flush();
+    expect(site.posts().at(-1)?.body?.keyVersion).toBe(2);
+    expect(discord.announced).toEqual([]);
+  });
+
   it("does not take a Joueur's data for another's: only the game's logged-in player sends", async () => {
     await keysHanded([KEY_1]);
     await storeCurrentPlayer(S5, "Lasius");
@@ -315,6 +398,7 @@ describe("the relève", () => {
         return Promise.resolve();
       },
       later: () => undefined,
+      discord: fakeDiscord().service,
     });
   const sealed = (playerId: number, fingerprint: string, item: Record<string, unknown>, observedAt = NOW.getTime()) =>
     fakeCrypto([KEY_1]).encrypt(

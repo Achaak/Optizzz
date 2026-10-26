@@ -3,6 +3,7 @@
 // background script, which alone holds the token (messages.ts).
 import { formatPastTime } from "@optizzz/game/format/time-format";
 import { isEnabled, type Toggles } from "../toggles";
+import type { DiscordStatus } from "./discord";
 import type { JoueurEnvois } from "./envois";
 import type { AccountAction, AccountStatus } from "./messages";
 
@@ -52,7 +53,8 @@ export const ACCOUNT_STYLE = `
 .account-categories label { display: flex; gap: var(--optizzz-space-3); align-items: center; cursor: pointer; }
 .account-categories input { margin: 0; }
 .account-categories input:disabled + span { opacity: 0.6; }
-.account-categories .optizzz-note { margin: var(--optizzz-space-1) 0 0; }`;
+.account-categories .optizzz-note { margin: var(--optizzz-space-1) 0 0; }
+.account-discord > * + * { margin-top: var(--optizzz-space-3); }`;
 
 export function buildAccountSection(doc: Document, input: AccountSectionInput): HTMLElement {
   const block = doc.createElement("section");
@@ -244,7 +246,56 @@ export function buildAccountSection(doc: Document, input: AccountSectionInput): 
       state.setAttribute("role", "status");
       block.append(state);
     }
+    if (joueur.discord) block.append(discordBlock(joueur.discord));
     return block;
+  }
+
+  /**
+   * « Discord » (docs/features/site-discord.md): what the alliance announces on its channel, whether this Joueur's news
+   * go there (only for a category they send), and « Autoriser Discord » until the browser lets the extension write there.
+   */
+  function discordBlock(discord: DiscordStatus): HTMLElement {
+    const box = doc.createElement("div");
+    box.className = "account-discord";
+    const labels = discord.events.map((e) => e.label).join(", ");
+    const mine = discord.events.filter((e) => e.consented).map((e) => e.label);
+    box.append(paragraph(`Discord : votre alliance annonce les ${labels} de ses membres sur son salon.`));
+    if (mine.length === 0) {
+      box.append(paragraph("Les vôtres n'y partent que pour une catégorie que vous cochez ci-dessus.", "optizzz-note"));
+    } else if (!discord.permitted) {
+      box.append(
+        paragraph(
+          `Pour que vos ${mine.join(", ")} y soient annoncés juste après chaque envoi, autorisez l'extension à écrire sur Discord. Sans cela, rien n'y part.`,
+          "optizzz-note",
+        ),
+      );
+      const actions = doc.createElement("div");
+      actions.className = "account-actions";
+      actions.append(
+        button("Autoriser Discord", "optizzz-button-primary", () => {
+          input
+            .ask({ type: "optizzz-account", action: "allow-discord" })
+            .then(() => input.afterConnect?.())
+            .catch((error: unknown) => {
+              console.error("[Optizzz] could not open the Discord page", error);
+            });
+        }),
+      );
+      box.append(actions);
+    } else {
+      box.append(
+        paragraph(
+          `Vos ${mine.join(", ")} y sont annoncés juste après chaque envoi, depuis ce navigateur.`,
+          "optizzz-note",
+        ),
+      );
+    }
+    if (discord.problem) {
+      const problem = paragraph(discord.problem, "optizzz-callout optizzz-callout--warning");
+      problem.setAttribute("role", "status");
+      box.append(problem);
+    }
+    return box;
   }
 
   body.append(paragraph("Lecture du Compte Optizzz…", "optizzz-note"));

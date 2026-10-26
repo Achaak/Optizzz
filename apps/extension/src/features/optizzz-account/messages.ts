@@ -27,6 +27,8 @@ export type AccountAction =
   | { type: "optizzz-account"; action: "decline"; origin: string }
   | { type: "optizzz-account"; action: "disconnect" }
   | { type: "optizzz-account"; action: "connect" }
+  /** « Autoriser Discord »: opens the extension's page that asks for discord.com (docs/features/site-discord.md). */
+  | { type: "optizzz-account"; action: "allow-discord" }
   /** A category checked or unchecked for a Joueur. */
   | { type: "optizzz-account"; action: "choose"; server: string; pseudo: string; choices: EnvoiChoices };
 
@@ -60,6 +62,7 @@ export function isAccountAction(message: unknown): message is AccountAction {
       return typeof m.origin === "string";
     case "disconnect":
     case "connect":
+    case "allow-discord":
       return true;
     case "choose":
       return typeof m.server === "string" && typeof m.pseudo === "string" && isChoices(m.choices);
