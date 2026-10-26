@@ -11,7 +11,7 @@ import {
   storeLink,
 } from "@/data/optizzz-account";
 import { storeAllianceMembers } from "@/data/alliance-members";
-import { accountService, answer, senderKind } from "./background";
+import { accountService, answer, changedCategory, senderKind } from "./background";
 import type { SpaceMessage } from "./messages";
 
 const S5 = "https://s5.fourmizzz.fr";
@@ -81,6 +81,7 @@ const envois = {
     return Promise.resolve();
   },
   incoming: () => Promise.resolve({ problem: null, convoys: [] }),
+  floods: () => Promise.resolve({ problem: null, me: "Messor", members: [], floods: [] }),
 };
 const service = () =>
   accountService({
@@ -303,6 +304,21 @@ describe("the Clé d'alliance and the game's pages", () => {
     await answer(service(), keys, "space");
     await answer(service(), { type: "optizzz-space", action: "forget" }, "space");
     expect(envoiCalls).toEqual(["keys", "forget"]);
+  });
+
+  it("calls for the Envoi of the category whose storage changed", () => {
+    expect(changedCategory("convoys:s5.fourmizzz.fr")).toEqual({ host: "s5.fourmizzz.fr", category: "convoys" });
+    expect(changedCategory("convoy-history:s2.fourmizzz.fr")).toEqual({ host: "s2.fourmizzz.fr", category: "convoys" });
+    expect(changedCategory("sentAttacks:s5.fourmizzz.fr")).toEqual({ host: "s5.fourmizzz.fr", category: "floods" });
+    expect(changedCategory("flood:s5.fourmizzz.fr:launches")).toEqual({ host: "s5.fourmizzz.fr", category: "floods" });
+    expect(changedCategory("flood:s5.fourmizzz.fr:defenses")).toBeNull();
+    expect(changedCategory("sentAttacks:example.com")).toBeNull();
+  });
+
+  it("answers the alliance's floods for the game's pages only", async () => {
+    const ask = { type: "optizzz-envois", action: "floods", origin: S5 } as const;
+    expect(answer(service(), ask, "space")).toBeNull();
+    expect(await answer(service(), ask, "game")).toMatchObject({ problem: null, me: "Messor" });
   });
 
   it("starts the relève and answers the alliance's convoys for the game's pages only", async () => {

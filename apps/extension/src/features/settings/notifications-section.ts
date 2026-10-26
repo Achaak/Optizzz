@@ -168,7 +168,10 @@ export function buildNotificationsSection(doc: Document, input: NotificationsTab
   spaceTitle.textContent = "Espace d'alliance";
   const spaceList = doc.createElement("ul");
   spaceList.className = "notifications";
-  spaceList.append(checkboxRow("alliance-convoy", "Convoi d'un membre en route vers vous"));
+  spaceList.append(
+    checkboxRow("alliance-convoy", "Convoi d'un membre en route vers vous"),
+    checkboxRow("alliance-flood", "Flood d'un membre en route vers vous"),
+  );
   const spaceNote = doc.createElement("p");
   spaceNote.className = "optizzz-note";
   spaceNote.textContent =

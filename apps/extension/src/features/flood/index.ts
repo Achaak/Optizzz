@@ -21,6 +21,9 @@ import { fetchGamePage } from "@/utils/game-page";
 import { siteLinksEnabled } from "@/utils/site-tool";
 import { FLOOD_MARGIN } from "@optizzz/game/flood";
 import { loadProbePlan } from "../probes";
+import { isEnabled } from "../toggles";
+import { aimedAt } from "@optizzz/game/site-links/envoi-floods";
+import { askAllianceFloods } from "../optizzz-account/alliance-floods";
 
 async function liveField(pseudo: string): Promise<number | null> {
   try {
@@ -56,7 +59,7 @@ export const floodPlanner: Feature = {
     const stock = readStock(document);
     if (!form || !me || !stock) return;
     const now = new Date();
-    const [playersExport, levels, launches, defense, countLodge] = await Promise.all([
+    const [playersExport, levels, launches, defense, countLodge, allianceFloods] = await Promise.all([
       // The export only gives the trip and a fallback field: without it, the plan is still made.
       loadPlayersExport(origin).catch((error: unknown) => {
         console.warn("[Optizzz] flood plan: public export unavailable", error);
@@ -66,6 +69,8 @@ export const floodPlanner: Feature = {
       checkLaunches(origin, now),
       loadDefense(origin, form.targetId),
       loadCountLodge(origin),
+      // The members' floods on their way, from the Envois: « déjà visée par Pseudo ».
+      isEnabled(toggles, "optizzz-account") ? askAllianceFloods(origin) : null,
     ]);
     const style = document.createElement("style");
     style.textContent = FLOOD_STYLE;
@@ -98,6 +103,7 @@ export const floodPlanner: Feature = {
         countLodge,
         probes: await loadProbePlan(toggles),
         protectedMe: isUnderBeginnerProtection(document),
+        aimedBy: allianceFloods?.floods ? aimedAt(form.target, me, now, allianceFloods.floods) : null,
         margin: FLOOD_MARGIN,
         siteLinks: siteLinksEnabled(toggles),
         onCountLodgeChange: (count) => void saveCountLodge(origin, count),

@@ -1,7 +1,7 @@
 // What the flood planner remembers per server: the attacks sent through the game's form, the armies pasted for
 // targets, and whether the lodge counts.
 import { storage } from "wxt/utils/storage";
-import type { Army } from "@optizzz/game/army/units";
+import { UNITS, type Army } from "@optizzz/game/army/units";
 import { withStorageLock } from "@/utils/storage-lock";
 
 export interface Launch {
@@ -11,6 +11,8 @@ export interface Launch {
   /** What the attack should take when it arrives. */
   take: number;
   arrivesAt: Date;
+  /** The army sent, in `UNITS` order: for the Floods Envoi, whose Admins' blob carries it. Absent before ticket 21. */
+  army?: number[];
 }
 
 interface StoredLaunch extends Omit<Launch, "arrivesAt"> {
@@ -70,10 +72,16 @@ const QUEUE_KEY = "optizzz-flood-queue";
 const MAX_QUEUED = 20;
 const MAX_AHEAD = 30 * 24 * 60 * 60_000;
 
+const isArmy = (value: unknown) =>
+  Array.isArray(value) &&
+  value.length <= UNITS.length &&
+  value.every((count) => Number.isSafeInteger(count) && (count as number) >= 0);
+
 const isStoredLaunch = (value: unknown, now: number): value is StoredLaunch => {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
   return (
+    (v.army === undefined || isArmy(v.army)) &&
     Number.isSafeInteger(v.targetId) &&
     typeof v.target === "string" &&
     v.target.length <= 100 &&

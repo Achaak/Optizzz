@@ -3,7 +3,7 @@ import { storage } from "wxt/utils/storage";
 import { readConvoysOnWay, type ConvoyOnWay } from "@/features/convoy/convoy";
 import { readStock } from "@optizzz/game/pages/resources";
 import { fetchGamePage } from "@/utils/game-page";
-import { sendsConvoys } from "./envois";
+import { sendsCategory } from "./envois";
 import { loadCurrentPlayer } from "./optizzz-account";
 
 /** A convoy I send: those I receive take none of my workers. */
@@ -127,7 +127,7 @@ export async function refreshConvoys(origin: string): Promise<KeptConvoys | null
     await storeConvoys(origin, convoys, now, readStock(doc)?.workers);
     // The same page, read on a game page's opening: for the Convois Envoi too, when the player sends them.
     const pseudo = await loadCurrentPlayer(origin);
-    if (pseudo && (await sendsConvoys(origin, pseudo)))
+    if (pseudo && (await sendsCategory(origin, pseudo, "convoys")))
       await storeIncomingConvoys(origin, readIncomingConvoys(doc, now) ?? [], now);
   } catch (error) {
     console.warn("[Optizzz] convoys: could not read commerce.php again", error);

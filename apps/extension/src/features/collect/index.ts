@@ -2,7 +2,9 @@ import { readGarrison, storeGarrison } from "@/data/garrison";
 import { readSection, sourceOf } from "@/features/end-times/end-pages";
 import { storeSection } from "@/data/end-times";
 import { readIncomingConvoys, readKeptConvoys, storeConvoys, storeIncomingConvoys } from "@/data/convoys";
-import { sendsConvoys } from "@/data/envois";
+import { sendsCategory } from "@/data/envois";
+import { storeSentAttacks } from "@/data/sent-attacks";
+import { readSentAttacks } from "@/features/flood/attacks";
 import { isInbox, keepConvoyMessages } from "@/data/convoy-history";
 import { readConvoyMessages } from "@optizzz/game/pages/messages";
 import type { Feature } from "../feature";
@@ -50,7 +52,7 @@ export const collect: Feature = {
     const sendsConvoysHere =
       pseudo !== null &&
       (path === "/commerce.php" || path === "/messagerie.php") &&
-      (await sendsConvoys(origin, pseudo));
+      (await sendsCategory(origin, pseudo, "convoys"));
 
     // Convoys on their way: the workers they carry, off the header's count.
     if (path === "/commerce.php" && (on("convoy", "workers") || sendsConvoysHere)) {
@@ -66,6 +68,14 @@ export const collect: Feature = {
     // Convoys delivered and received, read in the inbox: the game deletes its messages after a week.
     if (path === "/messagerie.php" && (on("convoy", "history") || sendsConvoysHere) && isInbox(document)) {
       await keepConvoyMessages(origin, readConvoyMessages(document, now), now);
+    }
+
+    // The Floods Envoi of the logged-in player, checked in « Compte Optizzz »: the attacks on their way with the game's
+    // number of each, where the game lists them (Armee.php and the attack form). Sent by the background, encrypted.
+    const listsAttacks =
+      path === "/armee.php" || (path === "/ennemie.php" && new URLSearchParams(location.search).has("Attaquer"));
+    if (pseudo !== null && listsAttacks && (await sendsCategory(origin, pseudo, "floods"))) {
+      await storeSentAttacks(origin, readSentAttacks(document, now), now);
     }
 
     // The army by place: combat simulator, flood plan and its « Flood max » column, research advice.

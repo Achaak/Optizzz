@@ -53,6 +53,8 @@ export interface FloodContext {
   probes: ProbePlan;
   /** I am under the beginner protection: attacking ends it. */
   protectedMe?: boolean;
+  /** « déjà visée par Pseudo, arrivée 18 h 12 »: the other members' floods on their way to the target (Envois). */
+  aimedBy?: string | null;
   /** Kept above the 50 % limit. */
   margin: number;
   /** « Liens vers optizzz.fr » is on: « Ouvrir sur optizzz.fr » and « Copier le lien » are shown. */
@@ -132,6 +134,14 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
   const slotsFact = fact("Attaques possibles");
   const tripFact = fact("Trajet");
   const note = element(doc, "p", `${C}-note optizzz-note`);
+  const aimed = context.aimedBy
+    ? element(
+        doc,
+        "p",
+        `${C}-aimed optizzz-note`,
+        `${context.aimedBy.charAt(0).toUpperCase()}${context.aimedBy.slice(1)} : sa prise n'est pas comptée dans ce plan.`,
+      )
+    : null;
 
   const lodgeLabel = element(doc, "label");
   const lodge = element(doc, "input", `${C}-lodge`);
@@ -392,10 +402,11 @@ export function mountFloodPlanner(doc: Document, context: FloodContext, clock: (
       ants,
       take,
       arrivesAt: new Date(clock().getTime() + context.travelSeconds * 1000),
+      army: [...army],
     });
   });
 
-  box.append(protectedMe, facts, note, lodgeLabel, message, scroll, site, defenseBox, rules);
+  box.append(protectedMe, facts, note, ...(aimed ? [aimed] : []), lodgeLabel, message, scroll, site, defenseBox, rules);
   form.after(box);
   render();
 }

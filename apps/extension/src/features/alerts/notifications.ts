@@ -19,7 +19,9 @@ export type NotificationKind =
   | "attack"
   | WatchNotificationKind
   /** « Un convoi de Pseudo vous arrive à 18 h 12 », from the relève of the Envois (docs/features/site-envois.md). */
-  | "alliance-convoy";
+  | "alliance-convoy"
+  /** « Pseudo vous floode : arrivée aujourd'hui 18 h 12 », from the relève of the Envois. */
+  | "alliance-flood";
 
 /** All off unless switched on: a missing key means off. */
 export type NotificationSettings = Partial<Record<NotificationKind, boolean>>;

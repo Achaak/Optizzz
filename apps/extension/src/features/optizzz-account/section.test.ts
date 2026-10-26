@@ -110,7 +110,7 @@ describe("the « Compte Optizzz » block", () => {
     expect(asked.at(-1)).toEqual({ type: "optizzz-account", action: "disconnect" });
   });
 
-  it("lists the six categories of each Joueur, all unticked, and only « Convois » can be ticked today", async () => {
+  it("lists the six categories of each Joueur, all unticked, and only « Convois » and « Floods » can be ticked today", async () => {
     const { section } = mount(() => sending);
     await settle();
     expect(section.querySelector("legend")?.textContent).toBe("Envois de Calystene (S5)");
@@ -118,12 +118,26 @@ describe("the « Compte Optizzz » block", () => {
     expect(boxes.map((b) => [b.dataset.category, b.checked, b.disabled])).toEqual([
       ["production", false, true],
       ["convoys", false, false],
-      ["floods", false, true],
+      ["floods", false, false],
       ["hunts", false, true],
       ["army", false, true],
       ["levels", false, true],
     ]);
     expect(section.textContent).toContain("Vos convois envoyés, reçus et en route.");
+    expect(section.textContent).toContain("l'armée, pour les Admins seuls");
+  });
+
+  it("ticks « Floods » apart from « Convois »", async () => {
+    const { section, asked } = mount(() => sending);
+    await settle();
+    const box = section.querySelector<HTMLInputElement>('input[data-category="floods"]');
+    if (!box) throw new Error("no box");
+    box.checked = true;
+    const event = new Event("change");
+    Object.defineProperty(event, "isTrusted", { value: true });
+    box.dispatchEvent(event);
+    await settle();
+    expect(asked.at(-1)).toMatchObject({ action: "choose", choices: { ...choices, floods: true } });
   });
 
   it("ticks « Convois » on a person's click only, and says what stops the Envoi", async () => {

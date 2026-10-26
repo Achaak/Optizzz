@@ -6,7 +6,11 @@
 import { NO_ENVOIS, type EnvoiChoices } from "@optizzz/game/site-links/envois";
 import type { HandedKey } from "@optizzz/game/site-links/space-bridge";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
+import type { FloodItem } from "@optizzz/game/site-links/envoi-floods";
 import { storage } from "wxt/utils/storage";
+
+/** The categories whose Envois are lists of items, one encrypted row each. */
+export type ListCategory = "convoys" | "floods";
 
 const CHOICES_KEY = "local:optizzzAccount:envoiChoices";
 const SESSION_KEYS = "session:optizzzAccount:allianceKeys";
@@ -26,10 +30,10 @@ export async function loadChoices(server: string, pseudo: string): Promise<Envoi
   return { ...NO_ENVOIS, ...all[joueurKey(server, pseudo)] };
 }
 
-/** Whether the game's logged-in player on this server sends their convoys: collect then keeps what they need. */
-export async function sendsConvoys(origin: string, pseudo: string): Promise<boolean> {
+/** Whether the game's logged-in player on this server sends a category: collect then keeps what it needs. */
+export async function sendsCategory(origin: string, pseudo: string, category: ListCategory): Promise<boolean> {
   const server = /^(s\d{1,2})\.fourmizzz\.fr$/.exec(new URL(origin).host)?.[1];
-  return server !== undefined && (await loadChoices(server, pseudo)).convoys;
+  return server !== undefined && (await loadChoices(server, pseudo))[category];
 }
 
 export async function storeChoices(server: string, pseudo: string, choices: EnvoiChoices): Promise<void> {
@@ -104,31 +108,52 @@ export interface KeptSpaces {
 export const loadSpaces = () => storage.getItem<KeptSpaces>(SPACES_KEY);
 export const storeSpaces = (spaces: KeptSpaces) => storage.setItem(SPACES_KEY, spaces);
 
-// ── What was last sent, per Joueur: each fingerprint with its blob, to send the same blob again while the item
-// does not change (the site then rewrites nothing, and the relève of the others carries nothing new).
+// ── What was last sent, per Joueur and list category: each fingerprint with its blob (and the Admins' blob), to send
+// the same blobs again while the item does not change (the site then rewrites nothing, and the relève of the others
+// carries nothing new).
 
 export interface SentItem {
   digest: string;
   blob: string;
+  /** The Admins' blob (the army sent with a flood), if any. */
+  detail?: string | null;
   keyVersion: number;
-  kind: ConvoyItem["kind"];
+  /** A convoy's « transit » or « delivered ». */
+  kind?: string;
   at: number;
   expiresAt: number;
 }
 
+export type SentItems = Partial<Record<string, SentItem>>;
+
 export interface SentState {
-  items: Partial<Record<string, SentItem>>;
+  lists: Partial<Record<ListCategory, SentItems>>;
   lastSentAt: number | null;
-  /** Something changed that could not be sent (the site did not answer): sent again at the next game page. */
-  pending: boolean;
+  /** The categories that changed and could not be sent (the site did not answer): sent again at the next game page. */
+  retry: ListCategory[];
   /** What stops the Envoi, to show in « Compte Optizzz ». */
   problem: string | null;
 }
 
-const EMPTY_SENT: SentState = { items: {}, lastSentAt: null, pending: false, problem: null };
+const EMPTY_SENT: SentState = { lists: {}, lastSentAt: null, retry: [], problem: null };
+
+/** Before ticket 21, the convoys alone: under `items`, and `pending` for their retry. */
+type StoredSent = Omit<SentState, "lists" | "retry"> & {
+  lists?: SentState["lists"];
+  retry?: ListCategory[];
+  items?: SentItems;
+  pending?: boolean;
+};
 
 export async function loadSent(joueur: string): Promise<SentState> {
-  return (await storage.getItem<Partial<Record<string, SentState>>>(SENT_KEY))?.[joueur] ?? EMPTY_SENT;
+  const stored = (await storage.getItem<Partial<Record<string, StoredSent>>>(SENT_KEY))?.[joueur];
+  if (!stored) return EMPTY_SENT;
+  const { items, lists, pending, retry, ...rest } = stored;
+  return {
+    ...rest,
+    lists: lists ?? (items ? { convoys: items } : {}),
+    retry: retry ?? (pending ? ["convoys"] : []),
+  };
 }
 
 export async function storeSent(joueur: string, state: SentState): Promise<void> {
@@ -138,12 +163,11 @@ export async function storeSent(joueur: string, state: SentState): Promise<void>
 
 // ── The relève: each space's Envois, opened, with the cursor of the last relève.
 
-export interface ReleveRow {
+export type ReleveRow = {
   playerId: number;
   fingerprint: string;
   observedAt: number;
-  item: ConvoyItem;
-}
+} & ({ category: "convoys"; item: ConvoyItem } | { category: "floods"; item: FloodItem });
 
 export interface SpaceReleve {
   cursor: number;
@@ -151,7 +175,14 @@ export interface SpaceReleve {
 }
 
 export async function loadReleve(spaceId: string): Promise<SpaceReleve | null> {
-  return (await storage.getItem<Partial<Record<string, SpaceReleve>>>(RELEVE_KEY))?.[spaceId] ?? null;
+  const releve = (await storage.getItem<Partial<Record<string, SpaceReleve>>>(RELEVE_KEY))?.[spaceId];
+  if (!releve) return null;
+  // Rows kept before ticket 21 were all convoys, without their category.
+  const rows = Object.entries(releve.rows).map(([id, row]) => [
+    id,
+    row && { ...row, category: (row as { category?: ListCategory }).category ?? "convoys" },
+  ]);
+  return { ...releve, rows: Object.fromEntries(rows) as SpaceReleve["rows"] };
 }
 
 export async function storeReleve(spaceId: string, releve: SpaceReleve): Promise<void> {

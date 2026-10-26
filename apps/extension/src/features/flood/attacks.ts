@@ -127,6 +127,19 @@ export function readAttacksOnWay(doc: Document, now: Date): AttackOnWay[] {
   return readAttackLines(doc, now).map(({ target, arrivesAt }) => ({ target, arrivesAt }));
 }
 
+/** An attack the game lists, with its number: `span#attaque_<n>`, the same as `Armee.php?annuler=<n>`. */
+export interface SentAttack extends AttackOnWay {
+  attackId: number;
+}
+
+/** The attacks the game lists, with the game's number of each one, the same at every reading (the Floods Envoi). */
+export function readSentAttacks(doc: Document, now: Date): SentAttack[] {
+  return readAttackLines(doc, now).flatMap(({ target, arrivesAt, countdown }) => {
+    const attackId = Number(/^attaque_(\d+)$/.exec(countdown.id)?.[1]);
+    return Number.isSafeInteger(attackId) && attackId > 0 ? [{ attackId, target, arrivesAt }] : [];
+  });
+}
+
 const clean = (text: string) => text.replace(/\s+/g, " ").trim();
 
 /**
@@ -163,6 +176,22 @@ function noteLines(note: Element | null): string[] {
  * without Optizzz: `unknown` (it takes a slot, its take is not known).
  */
 export function reconcileLaunches(launches: Launch[], onWay: AttackOnWay[]): { launches: Launch[]; unknown: number } {
+  const pairedAttacks = pairLaunches(launches, onWay);
+  const kept = [...pairedAttacks.entries()]
+    .sort(([a1], [a2]) => a1 - a2)
+    .flatMap(([a, l]) => {
+      const launch = launches[l];
+      const attack = onWay[a];
+      return launch && attack ? [{ ...launch, arrivesAt: attack.arrivesAt }] : [];
+    });
+  return { launches: kept, unknown: onWay.length - pairedAttacks.size };
+}
+
+/**
+ * Per target, each listed attack paired with the noted launch arriving nearest: attack index to launch index. An
+ * attack left out was sent without the Plan de flood.
+ */
+export function pairLaunches(launches: readonly Launch[], onWay: readonly AttackOnWay[]): Map<number, number> {
   const pairs = onWay.flatMap((attack, a) =>
     launches.flatMap((launch, l) =>
       launch.target.toLowerCase() === attack.target.toLowerCase()
@@ -178,12 +207,5 @@ export function reconcileLaunches(launches: Launch[], onWay: AttackOnWay[]): { l
     pairedAttacks.set(a, l);
     pairedLaunches.add(l);
   }
-  const kept = [...pairedAttacks.entries()]
-    .sort(([a1], [a2]) => a1 - a2)
-    .flatMap(([a, l]) => {
-      const launch = launches[l];
-      const attack = onWay[a];
-      return launch && attack ? [{ ...launch, arrivesAt: attack.arrivesAt }] : [];
-    });
-  return { launches: kept, unknown: onWay.length - pairedAttacks.size };
+  return pairedAttacks;
 }

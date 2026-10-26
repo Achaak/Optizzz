@@ -4,6 +4,7 @@ import { afterOnWay, type OnWay } from "@/data/on-way";
 import { formatAmount, formatDecimal, formatNumber, showExactAmount } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTimeShort } from "@optizzz/game/format/time-format";
 import { WAR_LABELS, WAR_TITLES } from "@optizzz/game/diplomacy";
+import { aimedAt, type FloodItem } from "@optizzz/game/site-links/envoi-floods";
 import { listTargets, type Target, type TargetsInput } from "./targets";
 
 // Colours of the game's own panel (table.simulateur) and of the rows of #tabEnnemie.
@@ -30,6 +31,8 @@ export interface TargetsContext extends TargetsInput {
   floodMissing?: string | null;
   /** I am under the beginner protection: attacking ends it. */
   protectedMe?: boolean;
+  /** The members' floods on their way, from the Envois: « déjà visée par Pseudo, arrivée 18 h 12 ». */
+  allianceFloods?: readonly FloodItem[] | null;
 }
 
 export interface FloodSettings {
@@ -277,7 +280,10 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     cell(row, formatDecimal(target.distance), true);
     cell(row, formatDuration(target.travelSeconds * 1000), true);
     cell(row, formatEndTimeShort(target.arrival, now));
-    const state = cell(row, stateText(target));
+    const aimed = context.allianceFloods
+      ? aimedAt(target.pseudo, context.me.pseudo, now, context.allianceFloods)
+      : null;
+    const state = cell(row, [stateText(target), aimed].filter(Boolean).join(" · "));
     state.className = "optizzz-targets-state";
     if (target.state === "free" && !target.stateLive) {
       state.title = "D'après l'export : pas dans le tableau du jeu, sa protection débutant est inconnue.";
