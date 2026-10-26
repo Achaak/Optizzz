@@ -163,14 +163,18 @@ export function demandeService(
       remind(space.id, "demands");
     },
 
-    /** An Admin or a Délégué validates or refuses a Demande à valider: never their own. */
+    /**
+     * An Admin or a Délégué validates or refuses a Demande à valider. An Admin may decide their own (a small alliance
+     * with a single Admin needs no Délégué for it); a Délégué never decides theirs.
+     */
     async decide(userId: string, input: unknown) {
       const decision = record(input).decision;
       if (decision !== "validated" && decision !== "refused") throw invalid();
       const { demande, actor, mine } = await demandeFor(userId, input);
       if (actor.role !== "admin" && actor.role !== "delegate")
         throw new DemandeError("forbidden", "Seuls un Admin ou un Délégué valident les Demandes.");
-      if (mine) throw new DemandeError("forbidden", "Un autre Admin ou Délégué doit décider de votre Demande.");
+      if (mine && actor.role !== "admin")
+        throw new DemandeError("forbidden", "Un Admin ou un autre Délégué doit décider de votre Demande.");
       const at = now();
       await change(demande.id, ["pending"], {
         status: decision,

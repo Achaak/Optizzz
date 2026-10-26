@@ -20,7 +20,7 @@ import { useId, useState } from "react";
 import { NumberField } from "~/components/number-field";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { groupDemandes, type OpenedDemande } from "~/lib/demandes/demandes";
+import { canDecide, groupDemandes, type OpenedDemande } from "~/lib/demandes/demandes";
 import { errorText } from "./errors";
 import { Callout, Panel } from "./parts";
 import type { MemberView } from "./use-space-access";
@@ -69,7 +69,6 @@ export function DemandesPanel({
       </Panel>
     );
 
-  const validator = view.me.role === "admin" || view.me.role === "delegate";
   const mine = (d: OpenedDemande) => d.playerId === view.me.playerId;
   const groups = groupDemandes(demandes.demandes);
   const myOpen = [...groups.pending, ...groups.active].filter(mine).sort((a, b) => a.rank - b.rank);
@@ -187,27 +186,28 @@ export function DemandesPanel({
                     <TableCell className="tabular-nums">{resources(d.content.cost)}</TableCell>
                     <TableCell>{formatDateTime(new Date(d.createdAt))}</TableCell>
                     <TableCell>
-                      {mine(d) ? (
-                        ownActions(d)
-                      ) : validator ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          <Button
-                            size="sm"
-                            disabled={busy}
-                            onClick={() => void run(() => demandes.decide(d.id, "validated"))}
-                          >
-                            Valider
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={busy}
-                            onClick={() => void run(() => demandes.decide(d.id, "refused"))}
-                          >
-                            Refuser
-                          </Button>
-                        </div>
-                      ) : null}
+                      <div className="flex flex-wrap gap-1.5">
+                        {mine(d) && ownActions(d)}
+                        {canDecide(view.me.role, mine(d)) && (
+                          <div className="flex flex-wrap gap-1.5">
+                            <Button
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => void run(() => demandes.decide(d.id, "validated"))}
+                            >
+                              Valider
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={busy}
+                              onClick={() => void run(() => demandes.decide(d.id, "refused"))}
+                            >
+                              Refuser
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

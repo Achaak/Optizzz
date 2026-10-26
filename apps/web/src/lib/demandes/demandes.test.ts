@@ -2,7 +2,7 @@ import { createAllianceKeyring, type AllianceKeyring } from "@optizzz/crypto/all
 import { sealEnvoi } from "@optizzz/game/site-links/envois";
 import { beforeAll, describe, expect, it } from "vitest";
 import { envoiCrypto } from "~/lib/envois/convoys";
-import { groupDemandes, newDemande, openDemandes, type ServedDemande } from "./demandes";
+import { canDecide, groupDemandes, newDemande, openDemandes, type ServedDemande } from "./demandes";
 
 const NOW = new Date("2026-10-26T12:00:00Z");
 const HOUR = 3600_000;
@@ -96,5 +96,16 @@ describe("the Demandes on a space page", () => {
     expect(pseudoAndStatus(groups.pending)).toEqual(["Lasius pending"]);
     expect(pseudoAndStatus(groups.active)).toEqual(["Messor validated", "Lasius validated"]);
     expect(pseudoAndStatus(groups.finished)).toEqual(["Messor closed"]);
+  });
+});
+
+describe("who decides a Demande à valider", () => {
+  it("is an Admin, even for their own, or a Délégué for the others' only", () => {
+    expect(canDecide("admin", false)).toBe(true);
+    expect(canDecide("admin", true)).toBe(true);
+    expect(canDecide("delegate", false)).toBe(true);
+    expect(canDecide("delegate", true)).toBe(false);
+    expect(canDecide("member", false)).toBe(false);
+    expect(canDecide("member", true)).toBe(false);
   });
 });

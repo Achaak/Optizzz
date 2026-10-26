@@ -113,6 +113,14 @@ export async function openDemandes(
 }
 
 /**
+ * Whether a member of this role validates or refuses a Demande à valider, as the site's rule does
+ * (src/server/demandes/demande-service.ts): an Admin any of them, their own too; a Délégué the others' only.
+ */
+export function canDecide(role: "admin" | "delegate" | "member", mine: boolean): boolean {
+  return role === "admin" || (role === "delegate" && !mine);
+}
+
+/**
  * The tab's three lists: to validate; validated (waiting for convoys or covered); finished (closed, cancelled,
  * refused: kept 90 days). Each requester's together, in their order, the oldest requester first.
  */

@@ -115,13 +115,13 @@ describe("the Demandes on the site", () => {
     await ask(lasius, 2, rotated, 2);
   });
 
-  it("lets an Admin or a Délégué validate or refuse, never their own Demande, and only once", async () => {
+  it("lets an Admin or a Délégué validate or refuse, a Délégué never their own Demande, and only once", async () => {
     await ask(lasius, 1);
     await ask(lasius, 2);
     await ask(formica, 3);
     expect((await failure(service.decide(lasius.userId, { id: id(1), decision: "validated" }))).code).toBe("forbidden");
     expect((await failure(service.decide(formica.userId, { id: id(3), decision: "validated" }))).message).toBe(
-      "Un autre Admin ou Délégué doit décider de votre Demande.",
+      "Un Admin ou un autre Délégué doit décider de votre Demande.",
     );
     now = new Date(NOW.getTime() + 60_000);
     await service.decide(formica.userId, { id: id(1), decision: "validated" });
@@ -132,6 +132,18 @@ describe("the Demandes on the site", () => {
       ["validated", "Formica", now.getTime()],
       ["refused", "Messor", now.getTime()],
       ["pending", null, null],
+    ]);
+  });
+
+  it("lets an Admin validate or refuse their own Demande: a lone Admin needs no Délégué", async () => {
+    await ask(messor, 1);
+    await ask(messor, 2);
+    await service.decide(messor.userId, { id: id(1), decision: "validated" });
+    await service.decide(messor.userId, { id: id(2), decision: "refused" });
+    const { demandes } = await read(messor);
+    expect(demandes.map((d) => [d.id, d.status, d.decidedByPseudo])).toEqual([
+      [id(1), "validated", "Messor"],
+      [id(2), "refused", "Messor"],
     ]);
   });
 
