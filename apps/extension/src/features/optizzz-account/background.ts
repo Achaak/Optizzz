@@ -44,7 +44,8 @@ import {
   type SpaceMessage,
 } from "./messages";
 import { gameServerOf, offerFor } from "./offer";
-import { CONNECT_PAGE, SITE_PERMISSION, SITE_ORIGIN_PATTERN } from "./permission";
+import { discordService } from "./discord";
+import { CONNECT_PAGE, DISCORD_PAGE, DISCORD_PERMISSION, SITE_PERMISSION, SITE_ORIGIN_PATTERN } from "./permission";
 
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
@@ -54,6 +55,8 @@ interface Dependencies {
   /** optizzz.fr granted (and, on Firefox, the consent to send data there). */
   permitted: () => Promise<boolean>;
   openConnectPage: () => Promise<unknown>;
+  /** « Autoriser Discord »: the extension's page that asks for discord.com. */
+  openDiscordPage: () => Promise<unknown>;
   /** The Envois (envois.ts): the Joueurs' choices, the Clé d'alliance, the relève. */
   envois: Pick<
     EnvoiService,
@@ -68,7 +71,7 @@ const REMOVED: Notice = {
   text: "Cette extension a été retirée de votre Compte Optizzz : connectez-la de nouveau pour rattacher vos Joueurs.",
 };
 
-export function accountService({ now, fetch, permitted, openConnectPage, envois }: Dependencies) {
+export function accountService({ now, fetch, permitted, openConnectPage, openDiscordPage, envois }: Dependencies) {
   /** The block's state; with `refresh`, the account's Players are read again on the site first. */
   async function status(origin: string | null, notice: Notice = null, refresh = false): Promise<AccountStatus> {
     let link = await loadLink();
@@ -199,6 +202,7 @@ export function accountService({ now, fetch, permitted, openConnectPage, envois 
     linkToken,
     members,
     connect: openConnectPage,
+    allowDiscord: openDiscordPage,
   };
 }
 
@@ -284,6 +288,8 @@ export function answer(
       return service.disconnect(null);
     case "connect":
       return service.connect().then(() => null);
+    case "allow-discord":
+      return service.allowDiscord().then(() => null);
     case "choose":
       return service.choose(message);
   }
@@ -323,19 +329,31 @@ export function setUpOptizzzAccount({
   notify: Parameters<typeof envoiService>[0]["notify"];
 }): void {
   const permitted = () => browser.permissions.contains(SITE_PERMISSION);
+  const later = (ms: number, run: () => void) => {
+    setTimeout(run, ms);
+  };
+  // The alliance's Discord webhook: posted to from here, never from optizzz.fr (docs/features/site-discord.md).
+  const discord = discordService({
+    now: () => new Date(),
+    fetch: (url, init) => fetch(url, init),
+    permitted: () => browser.permissions.contains(DISCORD_PERMISSION),
+    later,
+  });
   const envois = envoiService({
     now: () => new Date(),
     fetch: (url, init) => fetch(url, init),
     permitted,
     crypto,
     notify,
-    later: (ms, run) => setTimeout(run, ms),
+    later,
+    discord,
   });
   const service = accountService({
     now: () => new Date(),
     fetch: (url, init) => fetch(url, init),
     permitted,
     openConnectPage: () => browser.tabs.create({ url: browser.runtime.getURL(CONNECT_PAGE) }),
+    openDiscordPage: () => browser.tabs.create({ url: browser.runtime.getURL(DISCORD_PAGE) }),
     envois,
   });
 

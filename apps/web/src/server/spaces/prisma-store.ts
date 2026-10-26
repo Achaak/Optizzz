@@ -145,6 +145,52 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
       });
       return count === 1 ? expectedRevision + 1 : null;
     },
+    async discord() {
+      const row = await tx.spaceDiscord.findUnique({ where: { spaceId } });
+      if (!row) return null;
+      const { refusedRevision, refusedStatus, refusedAt, refusedByPseudo } = row;
+      return {
+        blob: row.blob,
+        revision: row.revision,
+        refusal:
+          refusedRevision !== null && refusedStatus !== null && refusedAt !== null && refusedByPseudo !== null
+            ? { revision: refusedRevision, status: refusedStatus, at: refusedAt, pseudo: refusedByPseudo }
+            : null,
+      };
+    },
+    async saveDiscord(blob, expectedRevision) {
+      if (expectedRevision === 0) {
+        const created = await tx.spaceDiscord.createMany({
+          data: [{ spaceId, blob, revision: 1 }],
+          skipDuplicates: true,
+        });
+        return created.count === 1 ? 1 : null;
+      }
+      // A new save forgets the refusal of the previous one.
+      const { count } = await tx.spaceDiscord.updateMany({
+        where: { spaceId, revision: expectedRevision },
+        data: {
+          blob,
+          revision: { increment: 1 },
+          refusedRevision: null,
+          refusedStatus: null,
+          refusedAt: null,
+          refusedByPseudo: null,
+        },
+      });
+      return count === 1 ? expectedRevision + 1 : null;
+    },
+    async reportDiscordRefusal(revision, refusal) {
+      await tx.spaceDiscord.updateMany({
+        where: { spaceId, revision },
+        data: {
+          refusedRevision: revision,
+          refusedStatus: refusal.status,
+          refusedAt: refusal.at,
+          refusedByPseudo: refusal.pseudo,
+        },
+      });
+    },
     async setRole(player, role) {
       await tx.spaceMember.update({ where: memberKey(spaceId, player), data: { role } });
     },

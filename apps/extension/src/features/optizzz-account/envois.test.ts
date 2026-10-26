@@ -6,6 +6,7 @@ import { keepConvoyMessages } from "@/data/convoy-history";
 import { storeConvoys, storeIncomingConvoys } from "@/data/convoys";
 import { loadKeys, storeKeys } from "@/data/envois";
 import { storeAttachedPlayers, storeCurrentPlayer, storeLink } from "@/data/optizzz-account";
+import type { DiscordService } from "./discord";
 import { armyFromKeys } from "@optizzz/game/army/units";
 import { writeLaunches } from "@/data/launches";
 import { storeSentAttacks } from "@/data/sent-attacks";
@@ -148,8 +149,28 @@ function fakeSite() {
   };
 }
 
+/** The Discord webhook (discord.ts, tested on its own): what an Envoi asks it to announce. */
+function fakeDiscord() {
+  const announced: Parameters<DiscordService["announce"]>[0][] = [];
+  const refreshed: string[] = [];
+  const service: Pick<DiscordService, "refresh" | "announce" | "status" | "forget"> = {
+    refresh: (token) => {
+      refreshed.push(token);
+      return Promise.resolve();
+    },
+    announce: (input) => {
+      announced.push(input);
+      return Promise.resolve();
+    },
+    status: () => Promise.resolve(null),
+    forget: () => Promise.resolve(),
+  };
+  return { service, announced, refreshed };
+}
+
 describe("the Envois of the convoys", () => {
   let site: ReturnType<typeof fakeSite>;
+  let discord: ReturnType<typeof fakeDiscord>;
   let now: Date;
   let timers: { ms: number; run: () => void }[];
   let notices: { kind: string; id: string; message: string }[];
@@ -164,6 +185,7 @@ describe("the Envois of the convoys", () => {
         return Promise.resolve();
       },
       later: (ms, run) => timers.push({ ms, run }),
+      discord: discord.service,
     });
   const flush = async () => {
     const due = timers;
@@ -179,6 +201,7 @@ describe("the Envois of the convoys", () => {
   beforeEach(async () => {
     fakeBrowser.reset();
     site = fakeSite();
+    discord = fakeDiscord();
     now = NOW;
     timers = [];
     notices = [];
@@ -312,6 +335,66 @@ describe("the Envois of the convoys", () => {
     expect((await envois.status())[0]?.problem).toBeNull();
   });
 
+  it("asks Discord to announce a convoy just sent, once, right after the Envoi that carries it", async () => {
+    await keysHanded([KEY_1]);
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
+    // The first Envoi only sends what was already on its way: no news.
+    expect(discord.announced).toEqual([]);
+    expect(discord.refreshed).toEqual([TOKEN]);
+
+    const sent = { recipient: "Polyergus", food: 12_348, materials: 0, arrivesAt: new Date("2026-10-25T17:12:00Z") };
+    await storeConvoys(
+      S5,
+      [{ recipient: "Lasius", food: 0, materials: 350_000, arrivesAt: new Date("2026-10-25T16:12:00Z") }, sent],
+      NOW,
+    );
+    envois.changed("s5.fourmizzz.fr", "convoys");
+    await flush();
+    expect(discord.announced).toHaveLength(1);
+    expect(discord.announced[0]).toMatchObject({
+      token: TOKEN,
+      spaceId: SPACE,
+      categories: ["convoys"],
+      event: "convoys",
+      news: [
+        { kind: "convoy", from: "Messor", to: "Polyergus", food: 12_348, materials: 0, at: sent.arrivesAt.getTime() },
+      ],
+    });
+    // The same convoys read again: nothing new.
+    envois.changed("s5.fourmizzz.fr", "convoys");
+    await flush();
+    expect(discord.announced).toHaveLength(1);
+  });
+
+  it("announces neither a convoy on its way to me, nor anything after a change of the Clé d'alliance", async () => {
+    await keysHanded([KEY_1]);
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
+    await storeIncomingConvoys(
+      S5,
+      [{ sender: "Polyergus", food: 2, materials: 1, arrivesAt: new Date("2026-10-25T17:00:00Z") }],
+      NOW,
+    );
+    envois.changed("s5.fourmizzz.fr", "convoys");
+    await flush();
+    expect(discord.announced).toEqual([]);
+
+    // Version 2 (an exclusion): every fingerprint changes, none of them is news.
+    site.setVersion(2);
+    await keysHanded([KEY_1, KEY_2]);
+    await envois.refreshSpaces();
+    await storeConvoys(
+      S5,
+      [{ recipient: "Lasius", food: 0, materials: 350_000, arrivesAt: new Date("2026-10-25T16:12:00Z") }],
+      NOW,
+    );
+    envois.changed("s5.fourmizzz.fr", "convoys");
+    await flush();
+    expect(site.posts().at(-1)?.body?.keyVersion).toBe(2);
+    expect(discord.announced).toEqual([]);
+  });
+
   it("does not take a Joueur's data for another's: only the game's logged-in player sends", async () => {
     await keysHanded([KEY_1]);
     await storeCurrentPlayer(S5, "Lasius");
@@ -334,6 +417,7 @@ describe("the relève", () => {
         return Promise.resolve();
       },
       later: () => undefined,
+      discord: fakeDiscord().service,
     });
   const sealed = (playerId: number, fingerprint: string, item: Record<string, unknown>, observedAt = NOW.getTime()) =>
     fakeCrypto([KEY_1]).encrypt(
@@ -443,6 +527,7 @@ describe("the Envois of the floods", () => {
         return Promise.resolve();
       },
       later: (ms, run) => timers.push({ ms, run }),
+      discord: discord.service,
     });
   const flush = async () => {
     const due = timers;
@@ -451,6 +536,7 @@ describe("the Envois of the floods", () => {
     for (let i = 0; i < 50; i++) await Promise.resolve();
     await new Promise((resolve) => setTimeout(resolve, 0));
   };
+  let discord = fakeDiscord();
   const opened = async (blob: string | undefined) =>
     JSON.parse(await fakeCrypto([KEY_1]).decrypt(blob ?? "")) as { item: unknown; fingerprint: string };
   const floodPosts = () => site.posts().filter((p) => p.body?.category === "floods");
@@ -461,6 +547,7 @@ describe("the Envois of the floods", () => {
     now = NOW;
     timers = [];
     notices = [];
+    discord = fakeDiscord();
     await storeLink(TOKEN, NOW);
     await storeAttachedPlayers([{ server: "s5", pseudo: "Messor" }]);
     await storeCurrentPlayer(S5, "Messor");
@@ -537,6 +624,47 @@ describe("the Envois of the floods", () => {
     expect(site.rows().map((r) => r.fingerprint)).toEqual([lasius]);
   });
 
+  it("asks Discord to announce the attacks just launched, never their army, not on the first Envoi", async () => {
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, floods: true });
+    expect(discord.announced).toEqual([]);
+
+    const later = new Date(ARRIVAL.getTime() + 600_000);
+    await storeSentAttacks(
+      S5,
+      [
+        { attackId: 34250, target: "Lasius", arrivesAt: ARRIVAL },
+        { attackId: 34251, target: "Ennemi", arrivesAt: new Date(ARRIVAL.getTime() + 2 * 3600_000) },
+        { attackId: 34252, target: "Lasius", arrivesAt: later },
+        { attackId: 34253, target: "Lasius", arrivesAt: later },
+      ],
+      NOW,
+    );
+    envois.changed("s5.fourmizzz.fr", "floods");
+    await flush();
+    expect(discord.announced).toHaveLength(1);
+    expect(discord.announced[0]).toMatchObject({
+      spaceId: SPACE,
+      categories: ["floods"],
+      event: "floods",
+      news: [
+        {
+          kind: "attacks",
+          from: "Messor",
+          target: "Lasius",
+          count: 2,
+          firstAt: later.getTime(),
+          lastAt: later.getTime(),
+          take: null,
+        },
+      ],
+    });
+    expect(JSON.stringify(discord.announced)).not.toMatch(/JSN|army/);
+    envois.changed("s5.fourmizzz.fr", "floods");
+    await flush();
+    expect(discord.announced).toHaveLength(1);
+  });
+
   it("shows the members' floods to the game's pages, and notifies one newly on its way to me, once", async () => {
     const sealedFlood = (playerId: number, fingerprint: string, item: Record<string, unknown>) =>
       fakeCrypto([KEY_1]).encrypt(
@@ -586,6 +714,7 @@ describe("the Envois of the states", () => {
   let site: ReturnType<typeof fakeSite>;
   let now: Date;
   let timers: { ms: number; run: () => void }[];
+  let discord = fakeDiscord();
   const service = () =>
     envoiService({
       now: () => now,
@@ -594,6 +723,7 @@ describe("the Envois of the states", () => {
       crypto: fakeCrypto,
       notify: () => Promise.resolve(),
       later: (ms, run) => timers.push({ ms, run }),
+      discord: discord.service,
     });
   const flush = async () => {
     const due = timers;
@@ -616,6 +746,7 @@ describe("the Envois of the states", () => {
     site = fakeSite();
     now = NOW;
     timers = [];
+    discord = fakeDiscord();
     await storeLink(TOKEN, NOW);
     await storeAttachedPlayers([{ server: "s5", pseudo: "Messor" }]);
     await storeCurrentPlayer(S5, "Messor");
@@ -670,6 +801,8 @@ describe("the Envois of the states", () => {
     expect(sent.item.previous?.reading).toMatchObject({ huntingField: 10_000 });
     // Still the same row: a state is one row per Joueur and category.
     expect(site.rows().filter((r) => r.category === "production")).toHaveLength(1);
+    // A state is never news on Discord.
+    expect(discord.announced).toEqual([]);
   });
 
   it("sends nothing before the pages a state needs were read", async () => {

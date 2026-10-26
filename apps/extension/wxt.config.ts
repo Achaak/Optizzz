@@ -29,7 +29,9 @@ export default defineConfig({
     // the site's page « Connecter l'extension ». Optional: an update must disable nobody's extension.
     optional_permissions: ["notifications", "scripting"],
     host_permissions: ["*://*.fourmizzz.fr/*"],
-    optional_host_permissions: ["https://optizzz.fr/*"],
+    // discord.com's webhooks: asked only on « Autoriser Discord », once a space announces something on its Discord
+    // (docs/features/site-discord.md). The extension of the member who acts posts there; optizzz.fr never does.
+    optional_host_permissions: ["https://optizzz.fr/*", "https://discord.com/api/webhooks/*"],
     // libsodium's WebAssembly, in the background only, for the Envois (ADR 0007, docs/features/site-envois.md):
     // 'wasm-unsafe-eval' lets it compile, nothing else is allowed. Each browser's own default plus this keyword:
     // Chrome's already has it; Firefox's (MV3) does not.
@@ -54,7 +56,8 @@ export default defineConfig({
           // Nothing without an Optizzz account. Linked, on a click: the account's token and the game's pseudo and
           // server, and for an Admin's « Donner l'accès » the Members page list handed to the Alliance Space page in
           // the same browser (src/features/optizzz-account/permission.ts), consented to on « Connecter mon Compte
-          // Optizzz ».
+          // Optizzz ». `websiteContent` also covers, on « Autoriser Discord », the convoys the member just sent
+          // posted to the webhook their alliance's Admin chose (docs/features/site-discord.md).
           data_collection_permissions: { required: ["none"], optional: ["authenticationInfo", "websiteContent"] },
         },
         gecko_android: { strict_min_version: "142.0" },

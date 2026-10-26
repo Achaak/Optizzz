@@ -25,7 +25,9 @@ const sending: AccountStatus = {
   ...linked,
   offer: null,
   players: [{ server: "s5", pseudo: "Calystene" }],
-  envois: [{ server: "s5", pseudo: "Calystene", choices, spaceName: null, problem: null, lastSentAt: null }],
+  envois: [
+    { server: "s5", pseudo: "Calystene", choices, spaceName: null, problem: null, lastSentAt: null, discord: null },
+  ],
 };
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -174,6 +176,7 @@ describe("the « Compte Optizzz » block", () => {
           spaceName: "ABC sur S5",
           problem: "Ouvrez votre espace sur optizzz.fr pour reprendre l'envoi.",
           lastSentAt: null,
+          discord: null,
         },
       ],
     };
@@ -200,6 +203,47 @@ describe("the « Compte Optizzz » block", () => {
     expect(section.querySelector('[role="status"]')?.textContent).toBe(
       "Ouvrez votre espace sur optizzz.fr pour reprendre l'envoi.",
     );
+  });
+
+  it("says what the alliance announces on Discord, and asks for Discord on a person's click", async () => {
+    const withDiscord = (consented: boolean, permitted: boolean, problem: string | null = null): AccountStatus => ({
+      ...sending,
+      envois: [
+        {
+          server: "s5",
+          pseudo: "Calystene",
+          choices: { ...choices, convoys: consented },
+          spaceName: "ABC sur S5",
+          problem: null,
+          lastSentAt: null,
+          discord: { events: [{ event: "convoys", label: "convois", consented }], permitted, problem },
+        },
+      ],
+    });
+    let status = withDiscord(false, false);
+    const { section, asked } = mount(() => status);
+    await settle();
+    expect(section.textContent).toContain("Discord : votre alliance annonce les convois de ses membres sur son salon.");
+    expect(section.textContent).toContain("Les vôtres n'y partent que pour une catégorie que vous cochez ci-dessus.");
+    expect(buttonNamed(section, "Autoriser Discord")).toBeUndefined();
+
+    status = withDiscord(true, false);
+    const second = mount(() => status);
+    await settle();
+    const allow = buttonNamed(second.section, "Autoriser Discord");
+    allow?.click();
+    await settle();
+    expect(second.asked).toHaveLength(1);
+    personClick(allow);
+    await settle();
+    expect(second.asked.at(-1)).toEqual({ type: "optizzz-account", action: "allow-discord" });
+
+    status = withDiscord(true, true, "Discord a refusé le dernier message.");
+    const third = mount(() => status);
+    await settle();
+    expect(third.section.textContent).toContain("Vos convois y sont annoncés juste après chaque envoi");
+    expect(third.section.textContent).toContain("Discord a refusé le dernier message.");
+    expect(asked).toHaveLength(1);
   });
 
   it("says when optizzz.fr was taken back from a linked extension", async () => {

@@ -54,6 +54,10 @@ const envoisSchema = z.object({
   live: z.array(z.string()).nullable(),
 });
 
+const discordSchema = z.object({
+  spaces: z.array(z.object({ spaceId: z.string(), blob: z.string(), revision: z.number().int() })),
+});
+
 /**
  * An Envoi of a list category, as POST /api/extension/envois takes it; `detail` is the Admins' blob (the army sent with
  * a flood).
@@ -149,6 +153,18 @@ export function siteApi(token: string, fetchFn: Fetch = (url, init) => fetch(url
     sendEnvoi: (body: EnvoiBody) =>
       call(fetchFn, token, EXTENSION_API.envois, { method: "POST", body: JSON.stringify(body) }, () =>
         Promise.resolve(null),
+      ),
+    /** The Discord webhook of each of the account's spaces, still encrypted (docs/features/site-discord.md). */
+    discord: () =>
+      call(fetchFn, token, EXTENSION_API.discord, { method: "GET" }, async (r) => discordSchema.parse(await r.json())),
+    /** Discord refused a message: its HTTP status, for the space's Admins. Nothing of the message. */
+    reportDiscordRefusal: (spaceId: string, revision: number, status: number) =>
+      call(
+        fetchFn,
+        token,
+        EXTENSION_API.discord,
+        { method: "POST", body: JSON.stringify({ spaceId, revision, status }) },
+        () => Promise.resolve(null),
       ),
     /** The relève of a space's Envois: what was written since `since`, and the rows still there. */
     readEnvois: (spaceId: string, since: number | null) =>
