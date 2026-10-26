@@ -74,7 +74,7 @@ export function FloodsPanel({
           const takes = group.floods.flatMap((f) => (f.take === null ? [] : [f.take]));
           return (
             <section key={group.target} className="space-y-2" aria-label={`Floods sur ${group.target}`}>
-              <h3 className="font-medium">
+              <h3 className="font-medium break-words">
                 {group.target}{" "}
                 <span className="font-normal text-muted-foreground">
                   · {group.floods.length === 1 ? "1 flood" : `${String(group.floods.length)} floods`}
