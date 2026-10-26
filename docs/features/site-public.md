@@ -21,7 +21,7 @@ S1 à S5, les seuls qui publient leur export (S1 à S4 en HTTP seulement, S5 en 
 
 ### Cron
 
-Un script de `apps/web/scripts/`, lancé chaque heure par GitHub Actions, lit les exports publics et écrit dans Neon avec Prisma ; il ne télécharge une version que si elle a changé. À la fin, il appelle une route de revalidation du site protégée par un secret : les pages sont reconstruites une fois par heure, sans requête vers la base à chaque visite. Seul le cron écrit les données des serveurs ; le site les lit. Depuis les Comptes Optizzz (ADR 0008), le site de production écrit dans le seul schéma `accounts`, avec le rôle `optizzz_app` ; les aperçus Vercel gardent le rôle en lecture seule `optizzz_read`.
+Un script de `apps/web/scripts/`, lancé chaque heure par GitHub Actions, lit les exports publics et écrit dans Neon avec Prisma ; il ne télécharge une version que si elle a changé. Le plan gratuit de Neon limite à 5 Go par mois ce qui sort de la base : le cron ne relit pas l'état précédent dans la base, il retélécharge l'export précédent depuis l'API (la base seulement s'il n'est plus publié), et il demande les jours déjà gardés par un `groupBy` (le `distinct` de Prisma télécharge toutes les lignes et dédoublonne en mémoire). À la fin, il appelle une route de revalidation du site protégée par un secret : les pages sont reconstruites une fois par heure, sans requête vers la base à chaque visite. Seul le cron écrit les données des serveurs ; le site les lit. Depuis les Comptes Optizzz (ADR 0008), le site de production écrit dans le seul schéma `accounts`, avec le rôle `optizzz_app` ; les aperçus Vercel gardent le rôle en lecture seule `optizzz_read`.
 
 ### Changements partagés avec l'extension
 

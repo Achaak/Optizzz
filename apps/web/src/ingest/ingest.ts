@@ -114,13 +114,18 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
       players: await players(latest.players),
       alliances: await alliances(latest.alliances),
     };
-    // The first pass on a server has nothing to compare with: the Journal starts at the next one.
+    // The first pass on a server has nothing to compare with: the Journal starts at the next one. The previous
+    // reading comes back from the API while it is still published: reading it from the database would count every
+    // player against Neon's network transfer, each hour.
+    const sinceAlliances = readOf("alliances");
     const before: Reading | null = since
-      ? {
-          version: since,
-          players: (await db.player.findMany({ where: { server: server.id } })).map(toPlayer),
-          alliances: (await db.alliance.findMany({ where: { server: server.id } })).map(toAlliance),
-        }
+      ? versions.players.includes(since) && sinceAlliances && versions.alliances.includes(sinceAlliances)
+        ? { version: since, players: await players(since), alliances: await alliances(sinceAlliances) }
+        : {
+            version: since,
+            players: (await db.player.findMany({ where: { server: server.id } })).map(toPlayer),
+            alliances: (await db.alliance.findMany({ where: { server: server.id } })).map(toAlliance),
+          }
       : null;
     const notes = before ? diffReadings(before, after) : [];
     await db.$transaction(
@@ -191,13 +196,9 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
   // The map's file follows the current state; written again when missing (a server read before the map existed).
   const map = await db.mapFile.findUnique({ where: { server: server.id }, select: { version: true } });
   if (map?.version !== latest.players) {
-    const current = report.updated
-      ? { players: await players(latest.players), alliances: await alliances(latest.alliances) }
-      : {
-          players: (await db.player.findMany({ where: { server: server.id } })).map(toPlayer),
-          alliances: (await db.alliance.findMany({ where: { server: server.id } })).map(toAlliance),
-        };
-    const gzip = gzipSync(JSON.stringify(encodeMapData(latest.players, current.players, current.alliances)));
+    const gzip = gzipSync(
+      JSON.stringify(encodeMapData(latest.players, await players(latest.players), await alliances(latest.alliances))),
+    );
     await db.mapFile.upsert({
       where: { server: server.id },
       create: { server: server.id, version: latest.players, gzip },
@@ -205,11 +206,8 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     });
   }
 
-  const storedPlayerDays = await db.playerDay.findMany({
-    where: { server: server.id },
-    distinct: ["day"],
-    select: { day: true },
-  });
+  // A GROUP BY in SQL: Prisma's `distinct` would download every row and drop the doubles in memory.
+  const storedPlayerDays = await db.playerDay.groupBy({ by: ["day"], where: { server: server.id } });
   for (const { day, version } of missingDays(
     versions.players,
     new Set(storedPlayerDays.map((row) => columnDay(row.day))),
@@ -230,11 +228,7 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     report.days++;
   }
 
-  const storedAllianceDays = await db.allianceDay.findMany({
-    where: { server: server.id },
-    distinct: ["day"],
-    select: { day: true },
-  });
+  const storedAllianceDays = await db.allianceDay.groupBy({ by: ["day"], where: { server: server.id } });
   for (const { day, version } of missingDays(
     versions.alliances,
     new Set(storedAllianceDays.map((row) => columnDay(row.day))),
