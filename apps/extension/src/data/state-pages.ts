@@ -19,7 +19,7 @@ import { withStorageLock } from "@/utils/storage-lock";
 
 type Units = Record<string, number>;
 
-export interface KeptWork {
+interface KeptWork {
   name: string;
   level: number;
   endsAt: number;
@@ -61,7 +61,7 @@ export interface StatePages {
 export type StatePart = keyof StatePages;
 
 /** The parts each state category is made of. */
-export const PARTS_OF: Record<StateCategory, readonly StatePart[]> = {
+const PARTS_OF: Record<StateCategory, readonly StatePart[]> = {
   production: ["stock", "ressources", "colonies"],
   hunts: ["ressources"],
   army: ["armee", "ressources", "colonies"],

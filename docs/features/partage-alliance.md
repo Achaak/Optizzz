@@ -43,6 +43,8 @@ Partager entre membres d'une alliance ses niveaux de bâtiments et de recherches
 - **Valeurs manuelles** : case « Corriger à la main », puis toute valeur d'un membre se saisit ; en italique, avec ↺ pour revenir à la valeur partagée. La plus récente l'emporte entre la saisie et le relevé partagé (`valueOf`) : un import plus récent la remplace. La Carte et la Chaîne lisent cette même source pour la Vitesse d'attaque.
 - **Effacement** : les données d'un membre absent de la page Membres ; tout, quand le joueur quitte ou change d'alliance.
 
+- **Envois** (ticket 22, `site-envois.md`) : quand le Joueur est dans un Espace d'alliance sur optizzz.fr, la vue mêle aux états collés ceux que les membres envoient, partie par partie, le relevé le plus récent l'emportant ; un groupe « Production » s'ajoute. Le détail par unité envoyé n'arrive qu'aux Admins de l'espace.
+
 ### Carte
 
 - La Vitesse d'attaque vient des états partagés. Un niveau saisi dans le tableau de la Carte est daté et l'emporte seulement s'il est plus récent que le relevé partagé ; une saisie d'avant cette version compte comme plus ancienne. Pour moi, le niveau du Laboratoire reste prioritaire. Le partage « Pseudo: niveau » de la Carte disparaît ; son format se colle dans « Partage » pendant une version.
@@ -62,19 +64,20 @@ Chacun avec son propre cadrage ; le format v1 porte déjà leurs données :
 
 ## Code
 
-| Fichier                                                                                        | Rôle                                                                                  |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `packages/game/src/levels.ts`                                                                  | Liste des bâtiments et recherches (ordre du format v1 : ajouter, jamais réordonner)   |
-| `packages/game/src/pages/levels.ts` (+ test)                                                   | Tous les niveaux de Construction et du Laboratoire                                    |
-| `packages/game/src/pages/alliance.ts` (+ test)                                                 | Tag d'alliance de l'en-tête (`readAllianceTag`)                                       |
-| `apps/extension/src/data/shared-states.ts` (+ test)                                            | États mémorisés, import, valeurs manuelles (`valueOf`), effacements, mon dernier état |
-| `apps/extension/src/features/alliance-sharing/my-state.ts` (+ test)                            | Mon état d'après les pages lues, armée absente                                        |
-| `apps/extension/src/features/alliance-sharing/share-text.ts` (+ test)                          | Texte copié (résumé + ligne de données) et lecture d'un salon collé                   |
-| `apps/extension/src/features/alliance-sharing/member-rows.ts` (+ test)                         | Lignes du tableau : changements 24 h, relevé ancien, chantiers terminés               |
-| `apps/extension/src/features/alliance-sharing/menu.ts`                                         | Entrées « Mon état » et « Partage » (script léger, toutes les pages)                  |
-| `apps/extension/src/features/alliance-sharing/MyState.tsx`, `AllianceSharing.tsx`, `style.css` | Vues React                                                                            |
-| `apps/extension/src/features/alliance-sharing/settings.ts`                                     | Ce que je partage, mémorisé par serveur                                               |
-| `apps/extension/src/entrypoints/alliance-sharing.content/index.tsx`                            | Script dédié à `fourmiliere.php` et `alliance.php` : monte les vues                   |
-| `apps/extension/src/features/alliance-map/shared-levels.ts`                                    | Vitesse d'attaque partagée pour la Carte et la Chaîne                                 |
+| Fichier                                                                                        | Rôle                                                                                    |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `packages/game/src/levels.ts`                                                                  | Liste des bâtiments et recherches (ordre du format v1 : ajouter, jamais réordonner)     |
+| `packages/game/src/pages/levels.ts` (+ test)                                                   | Tous les niveaux de Construction et du Laboratoire                                      |
+| `packages/game/src/pages/alliance.ts` (+ test)                                                 | Tag d'alliance de l'en-tête (`readAllianceTag`)                                         |
+| `apps/extension/src/data/shared-states.ts` (+ test)                                            | États mémorisés, import, valeurs manuelles (`valueOf`), effacements, mon dernier état   |
+| `apps/extension/src/features/alliance-sharing/my-state.ts` (+ test)                            | Mon état d'après les pages lues, armée absente                                          |
+| `packages/game/src/sharing/share-text.ts`, `shared-state.ts` (+ tests)                         | Texte copié et lecture d'un salon collé ; état partagé et fusion par partie (ticket 22) |
+| `apps/extension/src/features/alliance-sharing/merge.ts` (+ test)                               | « Partage » mêlé aux Envois de l'Espace d'alliance (`site-envois.md`)                   |
+| `apps/extension/src/features/alliance-sharing/member-rows.ts` (+ test)                         | Lignes du tableau : changements 24 h, relevé ancien, chantiers terminés                 |
+| `apps/extension/src/features/alliance-sharing/menu.ts`                                         | Entrées « Mon état » et « Partage » (script léger, toutes les pages)                    |
+| `apps/extension/src/features/alliance-sharing/MyState.tsx`, `AllianceSharing.tsx`, `style.css` | Vues React                                                                              |
+| `apps/extension/src/features/alliance-sharing/settings.ts`                                     | Ce que je partage, mémorisé par serveur                                                 |
+| `apps/extension/src/entrypoints/alliance-sharing.content/index.tsx`                            | Script dédié à `fourmiliere.php` et `alliance.php` : monte les vues                     |
+| `apps/extension/src/features/alliance-map/shared-levels.ts`                                    | Vitesse d'attaque partagée pour la Carte et la Chaîne                                   |
 
 Vérifié dans le jeu (S5, 2026-10-09) : « Mon état » (niveaux, ouvrières, TDC, armée avec une chasse en cours, tag XYZ), « Partage » (22 membres, import d'un état hors alliance écarté avec sa raison), menus, Carte inchangée.
