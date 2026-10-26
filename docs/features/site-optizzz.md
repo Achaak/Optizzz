@@ -43,7 +43,7 @@ Toutes les 5 minutes et à l'ouverture d'une page du jeu, l'extension relève le
 
 L'URL du webhook est un secret de l'alliance, chiffrée. Le détail part du client du membre qui agit ; le site n'envoie que des rappels sans contenu.
 
-Réalisé pour les convois (ticket 25) : `site-discord.md`.
+Réalisé pour les convois et les floods (ticket 25), puis les rappels du site sur un second webhook (ticket 26) : `site-discord.md`.
 
 ## Conservation
 
