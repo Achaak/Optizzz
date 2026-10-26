@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createAllianceKeyring, rotateAllianceKey } from "./alliance-key";
-import { decryptData, encryptData } from "./data";
+import { dataKeyVersion, decryptData, encryptData } from "./data";
 import { fromBase64Url, toBase64Url } from "./encoding";
 import { CryptoError } from "./errors";
 
@@ -95,5 +95,18 @@ describe("alliance data", () => {
 
   it("refuses to encrypt without a key", async () => {
     expect((await failure(encryptData(ARMY, []))).code).toBe("missing-key-version");
+  });
+});
+
+describe("dataKeyVersion", () => {
+  it("reads the version a datum names in clear, without any key", async () => {
+    const keyring = await rotateAllianceKey(await createAllianceKeyring());
+    expect(dataKeyVersion(await encryptData(ARMY, keyring))).toBe(2);
+  });
+
+  it("is null for what is not format 1, or too short", () => {
+    expect(dataKeyVersion(toBase64Url(new Uint8Array([2, 0, 0, 0, 1])))).toBeNull();
+    expect(dataKeyVersion(toBase64Url(new Uint8Array([1, 0, 0])))).toBeNull();
+    expect(dataKeyVersion("!!")).toBeNull();
   });
 });

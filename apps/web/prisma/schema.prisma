@@ -282,6 +282,7 @@ model Space {
   keyVersions   AllianceKeyVersion[]
   absenceAlerts SpaceAbsenceAlerts?
   envois        EnvoiItem[]
+  discord       SpaceDiscord?
 
   @@index([server, tag])
   @@map("space")
@@ -361,6 +362,25 @@ model SpaceAbsenceAlerts {
   space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
   @@map("space_absence_alerts")
+  @@schema("accounts")
+}
+
+/// The space's Discord webhook (docs/features/site-discord.md): its address and the kinds of events that go there,
+/// encrypted with the Clé d'alliance in an Admin's browser; the site cannot read them. The revision grows at each
+/// write. `refused…`: the last refusal of the webhook a member's extension reported for that revision (Discord's HTTP
+/// status, when, from whose extension), content-free, for the Admins' « Discord a refusé le dernier message ».
+model SpaceDiscord {
+  spaceId         String    @id
+  blob            String
+  revision        Int
+  updatedAt       DateTime  @updatedAt
+  refusedRevision Int?
+  refusedStatus   Int?
+  refusedAt       DateTime?
+  refusedByPseudo String?
+  space           Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@map("space_discord")
   @@schema("accounts")
 }
 

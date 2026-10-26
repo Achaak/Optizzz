@@ -1,5 +1,6 @@
 // Against a real database (TEST_DATABASE_URL, migrations applied): the local Docker one, or CI's. Skipped without it.
 import { signCertificate } from "@optizzz/crypto/certificate";
+import { toBase64Url } from "@optizzz/crypto/encoding";
 import { generateKeyPair, type KeyPair } from "@optizzz/crypto/personal-key";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { randomUUID } from "node:crypto";
@@ -373,5 +374,25 @@ describe.skipIf(!url)("member departures on Postgres", () => {
     await expect(service.saveAbsenceAlerts(a.userId, { spaceId, blob, expectedRevision: 0 })).rejects.toThrow(
       "rechargez",
     );
+  });
+
+  it("keeps the Discord webhook with a revision, and a refusal until the next save", async () => {
+    // Encrypted data naming version 2, the space's newest: the site reads no more than that.
+    const blob = (fill: number) => toBase64Url(new Uint8Array([1, 0, 0, 0, 2, ...new Array<number>(45).fill(fill)]));
+    expect(await service.saveDiscord(a.userId, { spaceId, blob: blob(1), expectedRevision: 0 })).toEqual({
+      revision: 1,
+    });
+    const results = await Promise.allSettled([
+      service.saveDiscord(a.userId, { spaceId, blob: blob(2), expectedRevision: 1 }),
+      service.saveDiscord(b.userId, { spaceId, blob: blob(3), expectedRevision: 1 }),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual(["fulfilled", "rejected"]);
+    expect(await service.discordForExtension(a.userId)).toEqual([
+      { spaceId, blob: (await member(a.userId)).discord?.blob, revision: 2 },
+    ]);
+    await service.reportDiscordRefusal(b.userId, { spaceId, revision: 2, status: 404 });
+    expect((await member(a.userId)).discord?.refusal).toMatchObject({ status: 404 });
+    await service.saveDiscord(a.userId, { spaceId, blob: blob(4), expectedRevision: 2 });
+    expect((await member(a.userId)).discord?.refusal).toBeNull();
   });
 });

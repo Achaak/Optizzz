@@ -37,6 +37,7 @@ import { api } from "~/trpc/react";
 import { AdminExchange } from "./admin-exchange";
 import { CodeExchange } from "./code-exchange";
 import { ConvoysPanel } from "./convoys-panel";
+import { DiscordPanel } from "./discord-panel";
 import { errorText } from "./errors";
 import { LeaveSpace } from "./leave-space";
 import { PassphraseUnlock } from "./passphrase-forms";
@@ -137,6 +138,8 @@ export function MemberSpace({ view }: { view: MemberView }) {
         </p>
         <CopyInvitation spaceId={view.space.id} />
       </Panel>
+
+      {isAdmin && <DiscordPanel view={view} keyring={access.keyring} />}
 
       <SpaceSettings view={view} />
 

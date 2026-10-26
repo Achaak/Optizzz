@@ -3,6 +3,7 @@
 // sign, checks who may do what, and refuses a certificate that does not come from an Admin of the space acting now.
 // Everything that decides whom to believe runs in the browsers (src/lib/spaces/), never here.
 import { openCertificate, type Certificate, type CertificateKind } from "@optizzz/crypto/certificate";
+import { dataKeyVersion } from "@optizzz/crypto/data";
 import { serverById } from "@optizzz/game/servers";
 import type {
   MemberRow,
@@ -271,13 +272,14 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         const me = members.find((m) => m.userId === userId);
         if (me) {
           const isAdmin = me.role === "admin";
-          const [requests, certificates, sealed, absenceAlerts, alliance] = await Promise.all([
+          const [requests, certificates, sealed, absenceAlerts, alliance, discord] = await Promise.all([
             isAdmin ? tx.requests() : Promise.resolve([]),
             tx.certificates(),
             // Still the older versions while a newer one waits to be sent: older data stays readable.
             sealedForToday(me) ? tx.sealedFor(me) : Promise.resolve([]),
             me.role === "member" ? Promise.resolve(null) : tx.absenceAlerts(),
             store.exportAlliance(me),
+            isAdmin ? tx.discord() : Promise.resolve(null),
           ]);
           return {
             kind: "member" as const,
@@ -317,6 +319,18 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
             certificates,
             /** Admins and Délégués only: encrypted with the Clé d'alliance (src/lib/spaces/absences.ts). */
             absenceAlerts,
+            /**
+             * Admins only: the Discord webhook encrypted with the Clé d'alliance (src/lib/spaces/discord.ts), and the
+             * last refusal a member's extension reported for this save.
+             */
+            discord: discord && {
+              blob: discord.blob,
+              revision: discord.revision,
+              refusal:
+                discord.refusal?.revision === discord.revision
+                  ? { status: discord.refusal.status, at: discord.refusal.at, pseudo: discord.refusal.pseudo }
+                  : null,
+            },
           };
         }
         const [key, linked, players, requests] = await Promise.all([
@@ -571,6 +585,56 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         const revision = await tx.saveAbsenceAlerts(input.blob, input.expectedRevision);
         if (revision === null) throw RELOAD();
         return { revision };
+      });
+    },
+
+    /**
+     * The Discord webhook and its events (docs/features/site-discord.md), encrypted in an Admin's browser with the
+     * newest version of the Clé d'alliance: written if the revision is still the one they read (0 when there is none
+     * yet). A refusal reported for the previous save is forgotten.
+     */
+    async saveDiscord(userId: string, input: { spaceId: string; blob: string; expectedRevision: number }) {
+      if (!ALLIANCE_DATA.test(input.blob) || !Number.isInteger(input.expectedRevision) || input.expectedRevision < 0)
+        throw invalid();
+      return inExistingSpace(input.spaceId, async (tx) => {
+        const versions = await tx.versions();
+        actor(await tx.members(), versions, userId, { admin: true });
+        if (dataKeyVersion(input.blob) !== Math.max(0, ...versions)) throw KEY_CHANGED();
+        const revision = await tx.saveDiscord(input.blob, input.expectedRevision);
+        if (revision === null) throw RELOAD();
+        return { revision };
+      });
+    },
+
+    /**
+     * For the extension of a member (any member: the message leaves from the one who acts): the webhook of each of the
+     * account's spaces that has one, still encrypted.
+     */
+    async discordForExtension(userId: string) {
+      const spaceIds = [...new Set((await store.membershipsOf(userId)).map((m) => m.spaceId))];
+      const rows = await Promise.all(
+        spaceIds.map((spaceId) =>
+          inExistingSpace(spaceId, async (tx) => {
+            const row = await tx.discord();
+            return row && { spaceId, blob: row.blob, revision: row.revision };
+          }),
+        ),
+      );
+      return rows.filter((row) => row !== null);
+    },
+
+    /**
+     * A member's extension says Discord refused a message (a 4xx other than a rate limit: the webhook was deleted, or
+     * its address is wrong): the Admins see it on the space page until the webhook is saved again. Nothing of the
+     * message comes with it. A report about an older save is ignored.
+     */
+    async reportDiscordRefusal(userId: string, input: { spaceId: string; revision: number; status: number }) {
+      const { revision, status } = input;
+      if (!Number.isInteger(revision) || !Number.isInteger(status) || status < 400 || status > 499 || status === 429)
+        throw invalid();
+      await inExistingSpace(input.spaceId, async (tx) => {
+        const me = actor(await tx.members(), [], userId, { admin: false });
+        await tx.reportDiscordRefusal(revision, { status, at: now(), pseudo: me.pseudo });
       });
     },
 

@@ -73,6 +73,17 @@ export default function PrivacyPage() {
           («&nbsp;Accès changé le … par Pseudo&nbsp;»).
         </p>
         <p>
+          Discord&nbsp;: un Admin d&apos;un espace peut y enregistrer l&apos;adresse du webhook du salon Discord de
+          l&apos;alliance et choisir ce qui y est annoncé (aujourd&apos;hui les convois, rien d&apos;avance).
+          L&apos;adresse et ce choix sont chiffrés dans son navigateur avec la Clé d&apos;alliance&nbsp;: le site les
+          garde sans pouvoir les lire, et ne poste jamais rien sur Discord. C&apos;est l&apos;extension du membre qui
+          agit qui poste, juste après un Envoi, seulement pour une catégorie qu&apos;il envoie et une fois qu&apos;il a
+          autorisé Discord dans son extension&nbsp;; ce qui est posté va alors à Discord, un service tiers choisi par
+          l&apos;alliance. Quand Discord refuse un message, l&apos;extension n&apos;envoie au site que le code de la
+          réponse&nbsp;: le site garde ce code, la date et le pseudo du membre, montrés aux Admins jusqu&apos;au
+          prochain enregistrement du webhook.
+        </p>
+        <p>
           Depuis «&nbsp;Mon compte&nbsp;», vous pouvez retirer une extension liée, vous déconnecter de ce navigateur ou
           partout, et supprimer votre compte : tout ce qui lui appartient (connexions, extensions liées, Joueurs, place
           dans les espaces, clés, vérifications, Envois) est effacé tout de suite.
