@@ -60,7 +60,17 @@ interface Dependencies {
   /** The Envois (envois.ts): the Joueurs' choices, the Clé d'alliance, the relève. */
   envois: Pick<
     EnvoiService,
-    "status" | "choose" | "forget" | "receiveKeys" | "releve" | "incoming" | "floods" | "states"
+    | "status"
+    | "choose"
+    | "forget"
+    | "receiveKeys"
+    | "releve"
+    | "incoming"
+    | "floods"
+    | "states"
+    | "demandes"
+    | "prepareConvoy"
+    | "levelsSeen"
   >;
 }
 
@@ -270,6 +280,12 @@ export function answer(
         return service.envois.floods(message.origin);
       case "states":
         return service.envois.states(message.origin);
+      case "demandes":
+        return service.envois.demandes(message.origin);
+      case "demande-convoy":
+        return service.envois.prepareConvoy(message.origin, message.id, message.stock);
+      case "levels-seen":
+        return service.envois.levelsSeen(message.origin, message.shown).then(() => null);
     }
   }
   if (message.type === "optizzz-link") {
@@ -299,13 +315,24 @@ const RELEVE_ALARM = "optizzz-releve";
 
 /** What a change in storage.local is about: the convoys kept for a server (« convoys:s5.fourmizzz.fr »…). */
 const CONVOY_KEYS = /^(?:convoys|incomingConvoys|convoy-history):(s\d{1,2}\.fourmizzz\.fr)$/;
+/** The convoys attached to a Demande, for a server (data/demandes.ts). */
+const DEMANDE_CONVOY_KEYS = /^demandeConvoys:(s\d{1,2}\.fourmizzz\.fr)$/;
+/** The convoys the player has on their way, for a server: one may be the convoy launched for a Demande. */
+const OUTGOING_KEYS = /^convoys:(s\d{1,2}\.fourmizzz\.fr)$/;
+
+/** The game's host whose convoys on their way a change of this storage.local key lists anew, if any. */
+export const changedOutgoing = (key: string): string | null => OUTGOING_KEYS.exec(key)?.[1] ?? null;
 /** The attacks on their way as the game listed them, and those the Plan de flood noted, for a server. */
 const FLOOD_KEYS = /^(?:sentAttacks:(s\d{1,2}\.fourmizzz\.fr)|flood:(s\d{1,2}\.fourmizzz\.fr):launches)$/;
 
 /** The list category whose Envoi a change of this storage.local key calls for, with its game's host. */
-export function changedCategory(key: string): { host: string; category: "convoys" | "floods" } | null {
+export function changedCategory(
+  key: string,
+): { host: string; category: "convoys" | "floods" | "demande-convoys" } | null {
   const convoys = CONVOY_KEYS.exec(key)?.[1];
   if (convoys) return { host: convoys, category: "convoys" };
+  const attached = DEMANDE_CONVOY_KEYS.exec(key)?.[1];
+  if (attached) return { host: attached, category: "demande-convoys" };
   const floods = FLOOD_KEYS.exec(key);
   const host = floods?.[1] ?? floods?.[2];
   return host ? { host, category: "floods" } : null;
@@ -365,6 +392,12 @@ export function setUpOptizzzAccount({
       if (change) envois.changed(change.host, change.category);
       const states = changedStates(key);
       if (states) for (const category of STATE_CATEGORIES) envois.changed(states, category);
+      // A convoy launched from « Envoyer un convoi » gets attached to its Demande (which then leaves, above).
+      const outgoing = changedOutgoing(key);
+      if (outgoing)
+        envois.attachLaunched(`https://${outgoing}`).catch((error: unknown) => {
+          console.error("[Optizzz] a convoy could not be attached to its Demande", error);
+        });
     }
   });
   // The relève, every 5 minutes: it reads optizzz.fr only, and nothing at all without a Clé d'alliance.

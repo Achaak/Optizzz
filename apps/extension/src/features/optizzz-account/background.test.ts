@@ -11,7 +11,8 @@ import {
   storeLink,
 } from "@/data/optizzz-account";
 import { storeAllianceMembers } from "@/data/alliance-members";
-import { accountService, answer, changedCategory, changedStates, senderKind } from "./background";
+import { accountService, answer, changedCategory, changedOutgoing, changedStates, senderKind } from "./background";
+import { isEnvoiMessage } from "./messages";
 import type { SpaceMessage } from "./messages";
 
 const S5 = "https://s5.fourmizzz.fr";
@@ -84,6 +85,15 @@ const envois = {
   incoming: () => Promise.resolve({ problem: null, convoys: [] }),
   floods: () => Promise.resolve({ problem: null, me: "Messor", members: [], floods: [] }),
   states: () => Promise.resolve({ problem: null, tag: "ABC", rows: [] }),
+  demandes: () => Promise.resolve({ problem: "no-space" as const }),
+  prepareConvoy: () => {
+    envoiCalls.push("prepare");
+    return Promise.resolve({ ok: false as const, message: "non" });
+  },
+  levelsSeen: () => {
+    envoiCalls.push("levels");
+    return Promise.resolve();
+  },
 };
 const service = () =>
   accountService({
@@ -326,6 +336,37 @@ describe("the Clé d'alliance and the game's pages", () => {
     expect(changedCategory("flood:s5.fourmizzz.fr:launches")).toEqual({ host: "s5.fourmizzz.fr", category: "floods" });
     expect(changedCategory("flood:s5.fourmizzz.fr:defenses")).toBeNull();
     expect(changedCategory("sentAttacks:example.com")).toBeNull();
+    expect(changedCategory("demandeConvoys:s5.fourmizzz.fr")).toEqual({
+      host: "s5.fourmizzz.fr",
+      category: "demande-convoys",
+    });
+  });
+
+  it("attaches a convoy launched for a Demande when the convoys on their way are listed anew", () => {
+    expect(changedOutgoing("convoys:s5.fourmizzz.fr")).toBe("s5.fourmizzz.fr");
+    expect(changedOutgoing("incomingConvoys:s5.fourmizzz.fr")).toBeNull();
+  });
+
+  it("answers the Demandes, « Envoyer un convoi » and the levels seen for the game's pages only", async () => {
+    const id = "6f1c2d3e-4b5a-4c7d-8e9f-0a1b2c3d4e5f";
+    const prepare = { type: "optizzz-envois", action: "demande-convoy", origin: S5, id, stock: null } as const;
+    const levels = {
+      type: "optizzz-envois",
+      action: "levels-seen",
+      origin: S5,
+      shown: { levels: { mushroom: 12 }, works: [] },
+    } as const;
+    expect(answer(service(), prepare, "space")).toBeNull();
+    expect(answer(service(), levels, "page")).toBeNull();
+    expect(await answer(service(), { type: "optizzz-envois", action: "demandes", origin: S5 }, "game")).toEqual({
+      problem: "no-space",
+    });
+    await answer(service(), prepare, "game");
+    await answer(service(), levels, "game");
+    expect(envoiCalls).toEqual(["prepare", "levels"]);
+    expect(isEnvoiMessage(prepare)).toBe(true);
+    expect(isEnvoiMessage({ ...prepare, id: "../x" })).toBe(false);
+    expect(isEnvoiMessage({ ...levels, shown: { levels: { mushroom: "12" }, works: [] } })).toBe(false);
   });
 
   it("calls for the states' Envois when what the pages showed of the player's state changed", () => {

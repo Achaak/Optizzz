@@ -64,6 +64,10 @@ import { loadSentAttacks } from "@/data/sent-attacks";
 import { loadStatePages } from "@/data/state-pages";
 import { pairLaunches } from "@/features/flood/attacks";
 import { stateReading } from "./envoi-states";
+import { DEMANDE_CONVOY_ITEM } from "@optizzz/game/site-links/demandes";
+import { loadDemandeConvoys } from "@/data/demandes";
+import { demandeConvoyItems } from "./demande-convoys";
+import { demandeService } from "./demandes";
 import { siteApi, type EnvoiBody } from "./api";
 import { attacksNews, type DiscordNews } from "@optizzz/game/site-links/discord";
 import type { DiscordService, DiscordStatus } from "./discord";
@@ -79,7 +83,7 @@ const PAGE_RELEVE_GAP_MS = 60_000;
 const DAY = 24 * 3600_000;
 
 /** The categories, lists then states, in the order they leave. */
-const LISTS: readonly ListCategory[] = ["convoys", "floods", ...STATE_CATEGORIES];
+const LISTS: readonly ListCategory[] = ["convoys", "demande-convoys", "floods", ...STATE_CATEGORIES];
 
 export const MISSING_KEY = "Ouvrez votre espace sur optizzz.fr pour reprendre l'envoi.";
 const NO_SPACE = "Pas encore dans un Espace d'alliance sur optizzz.fr : rien ne part.";
@@ -295,10 +299,30 @@ function stateList(category: StateCategory) {
   };
 }
 
+/**
+ * The convoys launched for a Demande (docs/features/site-demandes.md): one gone from the game's list before its
+ * arrival was cancelled; one arrived stays as it was sent until its date.
+ */
+async function demandeConvoyList(server: string, origin: string, me: string, at: Date): Promise<ListBuild> {
+  const items = demandeConvoyItems(server, me, await loadDemandeConvoys(origin)).map(
+    ({ identity, item, expiresAt }) => ({
+      identity,
+      item,
+      detail: null,
+      observedAt: at.getTime(),
+      at: item.at,
+      expiresAt,
+      frozen: item.at <= at.getTime(),
+    }),
+  );
+  return { items, staysWhenGone: (item) => item.at <= at.getTime() };
+}
+
 type Builder = (server: string, origin: string, me: string, at: Date, previous: SentItems) => Promise<ListBuild>;
 
 const LIST_BUILDERS: Record<ListCategory, Builder> = {
   convoys: convoyList,
+  "demande-convoys": demandeConvoyList,
   floods: floodList,
   production: stateList("production"),
   hunts: stateList("hunts"),
@@ -343,6 +367,11 @@ async function openRow(
     const { observedAt, item } = await openEnvoi({ ...row, category: "floods" }, cipher, FLOOD_ITEM);
     return { ...base, observedAt, category: "floods", item };
   }
+  if (row.category === "demande-convoys") {
+    const filed = { ...row, category: "demande-convoys" as const };
+    const { observedAt, item } = await openEnvoi(filed, cipher, DEMANDE_CONVOY_ITEM);
+    return { ...base, observedAt, category: "demande-convoys", item };
+  }
   return null;
 }
 
@@ -360,6 +389,9 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     await forgetLink();
     await forgetKeys();
   }
+
+  /** The Demandes (demandes.ts): their relève, and what the game's pages ask of them. */
+  const demandes = demandeService({ now, fetch, crypto, link, unlinked });
 
   /** GET /api/extension/spaces, kept; the newest version of each space is remembered as seen. */
   async function refreshSpaces(): Promise<SpacePlayer[] | null> {
@@ -519,7 +551,9 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
       removed.length === 0 &&
       Object.keys(sent).length === Object.keys(previous).length &&
       Object.entries(sent).every(([fingerprint, item]) => previous[fingerprint] === item);
-    if (isStateCategory(category) && unchanged && !previousState.retry.includes(category)) return;
+    // Nor the convoys attached to Demandes when none changed (most Joueurs never attach one).
+    const quiet = isStateCategory(category) || category === "demande-convoys";
+    if (quiet && unchanged && !previousState.retry.includes(category)) return;
 
     const body: EnvoiBody = {
       server,
@@ -738,7 +772,9 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
       if (player.space) bySpace.set(player.space.id, [...(bySpace.get(player.space.id) ?? []), player]);
     for (const [spaceId, members] of bySpace) {
       const keys = await loadKeys(spaceId, now());
-      if (keys) await releveSpace(kept.token, spaceId, keys, members);
+      if (!keys) continue;
+      await releveSpace(kept.token, spaceId, keys, members);
+      await demandes.releve(kept.token, spaceId, keys);
     }
   }
 
@@ -811,7 +847,7 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
       problem: null,
       tag: read.player.space?.tag ?? null,
       rows: read.rows.flatMap((r) =>
-        r.category === "convoys" || r.category === "floods"
+        r.category === "convoys" || r.category === "floods" || r.category === "demande-convoys"
           ? []
           : [{ category: r.category, observedAt: r.observedAt, item: r.item, units: r.units }],
       ),
@@ -862,6 +898,10 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     status,
     refreshSpaces,
     sendList,
+    demandes: demandes.demandes,
+    prepareConvoy: demandes.prepareConvoy,
+    levelsSeen: demandes.levelsSeen,
+    attachLaunched: demandes.attach,
   };
 }
 

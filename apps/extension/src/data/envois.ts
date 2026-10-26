@@ -8,6 +8,7 @@ import type { ArmyUnits, DatedItem, StateCategory, StateItem } from "@optizzz/ga
 import type { HandedKey } from "@optizzz/game/site-links/space-bridge";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import type { FloodItem } from "@optizzz/game/site-links/envoi-floods";
+import type { DemandeConvoy } from "@optizzz/game/site-links/demandes";
 import { storage } from "wxt/utils/storage";
 
 /**
@@ -23,6 +24,8 @@ const VERSIONS_KEY = "local:optizzzAccount:keyVersions";
 const SPACES_KEY = "local:optizzzAccount:spaces";
 const SENT_KEY = "local:optizzzAccount:sent";
 const RELEVE_KEY = "session:optizzzAccount:releve";
+/** The relève of the Demandes (data/demandes.ts): forgotten with the Clé d'alliance. */
+const DEMANDES_RELEVE_KEY = "session:optizzzAccount:demandes";
 
 /** « s5:Pseudo », lower case: a Joueur. */
 export const joueurKey = (server: string, pseudo: string) => `${server}:${pseudo.toLowerCase()}`;
@@ -76,7 +79,7 @@ export async function storeKeys(spaceId: string, keys: HandedKey[], expiresAt: n
 
 /** « Se déconnecter » (site or extension): no Clé d'alliance stays, nor anything read with it. */
 export async function forgetKeys(): Promise<void> {
-  await storage.removeItems([REMEMBERED_KEYS, SESSION_KEYS, RELEVE_KEY, SPACES_KEY, SENT_KEY]);
+  await storage.removeItems([REMEMBERED_KEYS, SESSION_KEYS, RELEVE_KEY, DEMANDES_RELEVE_KEY, SPACES_KEY, SENT_KEY]);
 }
 
 export async function seenVersion(spaceId: string): Promise<number> {
@@ -176,6 +179,8 @@ export type ReleveRow = {
 } & (
   | { category: "convoys"; item: ConvoyItem }
   | { category: "floods"; item: FloodItem }
+  /** A convoy launched for a Demande, sent by its sender (docs/features/site-demandes.md). */
+  | { category: "demande-convoys"; item: DemandeConvoy }
   /** `units`: the army by unit, sent to the Admins only (null for the others, and for the other states). */
   | { category: StateCategory; item: StateItem; units: ArmyUnits["units"] | null }
 );

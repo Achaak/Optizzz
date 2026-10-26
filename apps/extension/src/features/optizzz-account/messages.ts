@@ -2,6 +2,7 @@
 // game's dialog) ask for the account's state and act on a click; the link script of « Connecter l'extension » hands
 // over the token; the space script of the Alliance Spaces asks for the last Members page list. The background checks
 // who sends each one (background.ts).
+import { isDemandeId, type Resources, type ShownLevels } from "@optizzz/game/site-links/demandes";
 import type { EnvoiChoices } from "@optizzz/game/site-links/envois";
 import { isHandedKeys, type HandedKey } from "@optizzz/game/site-links/space-bridge";
 import type { AttachedPlayer } from "@/data/optizzz-account";
@@ -50,7 +51,11 @@ export type SpaceMessage =
  */
 export type EnvoiMessage =
   | { type: "optizzz-envois"; action: "page-open" }
-  | { type: "optizzz-envois"; action: "incoming" | "floods" | "states"; origin: string };
+  | { type: "optizzz-envois"; action: "incoming" | "floods" | "states" | "demandes"; origin: string }
+  /** « Envoyer un convoi » on a Demande: what to fill commerce.php's form with, within the player's stock. */
+  | { type: "optizzz-envois"; action: "demande-convoy"; origin: string; id: string; stock: Resources | null }
+  /** construction.php or laboratoire.php: the levels and works it shows, to close the Joueur's Demandes reached. */
+  | { type: "optizzz-envois"; action: "levels-seen"; origin: string; shown: ShownLevels };
 
 const record = (message: unknown): Record<string, unknown> | null =>
   typeof message === "object" && message !== null ? (message as Record<string, unknown>) : null;
@@ -84,13 +89,46 @@ function isChoices(value: unknown): value is EnvoiChoices {
   );
 }
 
+const isAmount = (value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0;
+
+function isStock(value: unknown): value is Resources | null {
+  const s = record(value);
+  return value === null || (s !== null && isAmount(s.food) && isAmount(s.materials));
+}
+
+function isShownLevels(value: unknown): value is ShownLevels {
+  const s = record(value);
+  const levels = record(s?.levels);
+  return (
+    levels !== null &&
+    Object.values(levels).every(isAmount) &&
+    Array.isArray(s?.works) &&
+    s.works.length <= 20 &&
+    s.works.every((w) => {
+      const work = record(w);
+      return typeof work?.name === "string" && isAmount(work.level);
+    })
+  );
+}
+
 export function isEnvoiMessage(message: unknown): message is EnvoiMessage {
   const m = record(message);
   if (m?.type !== "optizzz-envois") return false;
-  return (
-    m.action === "page-open" ||
-    ((m.action === "incoming" || m.action === "floods" || m.action === "states") && typeof m.origin === "string")
-  );
+  if (m.action === "page-open") return true;
+  if (typeof m.origin !== "string") return false;
+  switch (m.action) {
+    case "incoming":
+    case "floods":
+    case "states":
+    case "demandes":
+      return true;
+    case "demande-convoy":
+      return isDemandeId(m.id) && isStock(m.stock);
+    case "levels-seen":
+      return isShownLevels(m.shown);
+    default:
+      return false;
+  }
 }
 
 export function isLinkMessage(message: unknown): message is LinkMessage {

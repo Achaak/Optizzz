@@ -1,6 +1,7 @@
 // The site's API for a linked extension (apps/web/src/server/extension/extension-api.ts), called by the background
 // script only, with the token. Answers are checked with zod: they are data, never code.
 import { EXTENSION_API } from "@optizzz/game/site-links/extension-link";
+import { DEMANDE_STATUSES } from "@optizzz/game/site-links/demandes";
 import { SITE_URL } from "@optizzz/game/site-links/site";
 import { z } from "zod";
 import type { ListCategory } from "@/data/envois";
@@ -53,6 +54,24 @@ const envoisSchema = z.object({
   ),
   live: z.array(z.string()).nullable(),
 });
+
+const demandesSchema = z.object({
+  cursor: z.number(),
+  demandes: z.array(
+    z.object({
+      id: z.string(),
+      server: z.string(),
+      playerId: z.number().int(),
+      status: z.enum(DEMANDE_STATUSES),
+      rank: z.number().int(),
+      blob: z.string(),
+      createdAt: z.number(),
+    }),
+  ),
+  live: z.array(z.string()).nullable(),
+});
+
+const closedSchema = z.object({ closed: z.array(z.string()) });
 
 const discordSchema = z.object({
   spaces: z.array(z.object({ spaceId: z.string(), blob: z.string(), revision: z.number().int() })),
@@ -174,6 +193,24 @@ export function siteApi(token: string, fetchFn: Fetch = (url, init) => fetch(url
         `${EXTENSION_API.envois}?space=${encodeURIComponent(spaceId)}${since === null ? "" : `&since=${String(Math.max(0, Math.floor(since)))}`}`,
         { method: "GET" },
         async (r) => envoisSchema.parse(await r.json()),
+      ),
+    /** The relève of a space's Demandes (docs/features/site-demandes.md): what changed since `since`, still encrypted. */
+    readDemandes: (spaceId: string, since: number | null) =>
+      call(
+        fetchFn,
+        token,
+        `${EXTENSION_API.demandes}?space=${encodeURIComponent(spaceId)}${since === null ? "" : `&since=${String(Math.max(0, Math.floor(since)))}`}`,
+        { method: "GET" },
+        async (r) => demandesSchema.parse(await r.json()),
+      ),
+    /** The Joueur's Demandes their game shows reached: closed on the site. */
+    closeDemandes: (server: string, playerId: number, ids: string[]) =>
+      call(
+        fetchFn,
+        token,
+        EXTENSION_API.demandes,
+        { method: "POST", body: JSON.stringify({ server, playerId, close: ids }) },
+        async (r) => closedSchema.parse(await r.json()),
       ),
   };
 }
