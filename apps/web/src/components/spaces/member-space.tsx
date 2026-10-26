@@ -38,6 +38,7 @@ import { AdminExchange } from "./admin-exchange";
 import { CodeExchange } from "./code-exchange";
 import { ConvoysPanel } from "./convoys-panel";
 import { errorText } from "./errors";
+import { FloodsPanel } from "./floods-panel";
 import { LeaveSpace } from "./leave-space";
 import { PassphraseUnlock } from "./passphrase-forms";
 import { Callout, Panel } from "./parts";
@@ -66,6 +67,7 @@ function keyChanged(member: Member, access: SpaceAccess, view: MemberView): bool
 
 const TABS = [
   { value: "space", label: "Espace" },
+  { value: "floods", label: "Floods" },
   { value: "convoys", label: "Convois" },
 ] as const;
 
@@ -95,13 +97,26 @@ export function MemberSpace({ view }: { view: MemberView }) {
     </div>
   );
 
+  if (tab === "floods")
+    return (
+      <div className="max-w-3xl space-y-6">
+        {header}
+        <FloodsPanel
+          floods={envois.floods}
+          refused={envois.refused.floods}
+          isAdmin={isAdmin}
+          loading={envois.loading || (access.keyring !== null && envois.floods === null)}
+        />
+      </div>
+    );
+
   if (tab === "convoys")
     return (
       <div className="max-w-3xl space-y-6">
         {header}
         <ConvoysPanel
           convoys={envois.convoys}
-          refused={envois.refused}
+          refused={envois.refused.convoys}
           members={view.members}
           loading={envois.loading || (access.keyring !== null && envois.convoys === null)}
         />
@@ -141,8 +156,8 @@ export function MemberSpace({ view }: { view: MemberView }) {
       <SpaceSettings view={view} />
 
       <p className="text-sm text-muted-foreground">
-        Les convois envoyés par les membres sont dans l&apos;onglet «&nbsp;Convois&nbsp;». Les floods et les états
-        (armée, niveaux, production) arriveront ensuite.
+        Les floods et les convois envoyés par les membres sont dans les onglets «&nbsp;Floods&nbsp;» et
+        «&nbsp;Convois&nbsp;». Les états (armée, niveaux, production) arriveront ensuite.
       </p>
     </div>
   );

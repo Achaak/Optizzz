@@ -2,8 +2,10 @@
 // (prisma-store.ts): one row per Joueur, category and fingerprint, rewritten only when its blob changes.
 import type { EnvoiStore, ItemRow, KeyVersionInfo, PlayerRef, SpaceInfo } from "./store";
 
+type Role = SpaceInfo["members"][number]["role"];
+
 interface Space extends Omit<SpaceInfo, "members"> {
-  members: PlayerRef[];
+  members: (PlayerRef & { role?: Role })[];
 }
 
 export function memoryEnvoiStore() {
@@ -33,7 +35,14 @@ export function memoryEnvoiStore() {
         members: space.members.map((m) => {
           const player = players.find((p) => same(p, m));
           if (!player) throw new Error("Unknown player");
-          return { ...m, pseudo: player.pseudo, userId: player.userId, categories: settings.get(key(m)) ?? [] };
+          return {
+            server: m.server,
+            playerId: m.playerId,
+            role: m.role ?? "member",
+            pseudo: player.pseudo,
+            userId: player.userId,
+            categories: settings.get(key(m)) ?? [],
+          };
         }),
       });
     },
@@ -54,8 +63,8 @@ export function memoryEnvoiStore() {
             r.spaceId === spaceId && same(r, player) && r.category === category && r.fingerprint === item.fingerprint,
         );
         if (known) {
-          if (known.blob !== item.blob)
-            Object.assign(known, { blob: item.blob, expiresAt: item.expiresAt, updatedAt: now });
+          if (known.blob !== item.blob || known.detail !== item.detail)
+            Object.assign(known, { blob: item.blob, detail: item.detail, expiresAt: item.expiresAt, updatedAt: now });
           continue;
         }
         rows.push({
@@ -66,6 +75,7 @@ export function memoryEnvoiStore() {
           category,
           fingerprint: item.fingerprint,
           blob: item.blob,
+          detail: item.detail,
           expiresAt: item.expiresAt,
           updatedAt: now,
         });
@@ -83,6 +93,7 @@ export function memoryEnvoiStore() {
             category: r.category,
             fingerprint: r.fingerprint,
             blob: r.blob,
+            detail: r.detail,
             updatedAt: r.updatedAt,
           })),
       ),
@@ -104,6 +115,10 @@ export function memoryEnvoiStore() {
     },
     addVersion(spaceId: string, version: KeyVersionInfo) {
       spaces.get(spaceId)?.versions.push(version);
+    },
+    setRole(spaceId: string, player: PlayerRef, role: Role) {
+      const member = spaces.get(spaceId)?.members.find((m) => same(m, player));
+      if (member) member.role = role;
     },
     removeMember(spaceId: string, player: PlayerRef) {
       const space = spaces.get(spaceId);

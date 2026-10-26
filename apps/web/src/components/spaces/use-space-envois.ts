@@ -1,11 +1,13 @@
 "use client";
 
-// A space's Envois for its member's page (docs/features/site-envois.md): the encrypted rows, read again every minute
-// while the page is open, opened here with the Clé d'alliance; what each member sends; the newest key version. The
+// A space's Envois for its member's page (docs/features/site-envois.md): the encrypted rows (convoys, floods), read
+// again every minute while the page is open, opened here with the Clé d'alliance; what each member sends; the newest
+// key version. The army sent with a flood comes only to an Admin: the site leaves it out for the others. The
 // page also hands the opened Clé d'alliance to the extension of this browser, for its own Envois.
 import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
 import { useEffect, useMemo, useState } from "react";
 import { openConvoys, type AllianceConvoy } from "~/lib/envois/convoys";
+import { openFloods, type AllianceFlood } from "~/lib/envois/floods";
 import { handKeysToExtension } from "~/lib/spaces/extension-bridge";
 import { keyKeptUntil } from "~/lib/spaces/key-session";
 import { noteKeyVersion, seenKeyVersion } from "~/lib/spaces/key-versions";
@@ -19,18 +21,27 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
     { spaceId: view.space.id },
     { refetchInterval: REFRESH_MS, refetchIntervalInBackground: false, staleTime: REFRESH_MS / 2, retry: false },
   );
-  const [opened, setOpened] = useState<{ convoys: AllianceConvoy[]; refused: number } | null>(null);
+  const [opened, setOpened] = useState<{
+    convoys: AllianceConvoy[];
+    floods: AllianceFlood[];
+    refused: { convoys: number; floods: number };
+  } | null>(null);
   const data = query.data;
 
   useEffect(() => {
     if (!data || !keyring) return;
     const run = { cancelled: false };
-    openConvoys(data.items, keyring, data.sends)
-      .then((result) => {
-        if (!run.cancelled) setOpened(result);
+    Promise.all([openConvoys(data.items, keyring, data.sends), openFloods(data.items, keyring)])
+      .then(([convoys, floods]) => {
+        if (!run.cancelled)
+          setOpened({
+            convoys: convoys.convoys,
+            floods: floods.floods,
+            refused: { convoys: convoys.refused, floods: floods.refused },
+          });
       })
       .catch((error: unknown) => {
-        console.error("[Optizzz] the convoys could not be opened", error);
+        console.error("[Optizzz] the Envois could not be opened", error);
       });
     return () => {
       run.cancelled = true;
@@ -43,7 +54,8 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
     version: data?.version ?? null,
     sends: data?.sends ?? [],
     convoys: keyring ? (opened?.convoys ?? null) : null,
-    refused: opened?.refused ?? 0,
+    floods: keyring ? (opened?.floods ?? null) : null,
+    refused: opened?.refused ?? { convoys: 0, floods: 0 },
   };
 }
 

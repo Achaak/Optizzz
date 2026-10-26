@@ -9,6 +9,7 @@ export interface PlayerRef {
 interface SpaceMemberInfo extends PlayerRef {
   pseudo: string;
   userId: string;
+  role: "admin" | "delegate" | "member";
   /** What this Joueur sends (SENT_CATEGORIES), as their extension last said. */
   categories: string[];
 }
@@ -33,6 +34,8 @@ export interface SpaceInfo {
 export interface ItemInput {
   fingerprint: string;
   blob: string;
+  /** The Admins' blob (the army sent with a flood), or null: handed to the space's Admins only. */
+  detail: string | null;
   keyVersion: number;
   expiresAt: Date;
 }
@@ -42,6 +45,7 @@ export interface ItemRow extends PlayerRef {
   category: string;
   fingerprint: string;
   blob: string;
+  detail: string | null;
   updatedAt: Date;
 }
 
@@ -54,7 +58,7 @@ export interface EnvoiStore {
   saveSettings(player: PlayerRef, categories: string[]): Promise<void>;
   /**
    * Writes the Joueur's items of a category in a space: a new fingerprint is added, a known one replaced only when its
-   * blob changed (its `updatedAt` then moves to `now`, which the relève follows), and the fingerprints `removed` go.
+   * blob or its detail changed (its `updatedAt` then moves to `now`, which the relève follows), and the fingerprints `removed` go.
    * Rows past their `expiresAt` in the space go too.
    */
   writeItems(

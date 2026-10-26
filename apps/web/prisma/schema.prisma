@@ -431,6 +431,9 @@ model EnvoiItem {
   category    String
   fingerprint String
   blob        String
+  /// The Admins' blob (the army sent with a flood), encrypted with the same Clé d'alliance: the site hands it to the
+  /// space's Admins only. Reserved by the site, not by the encryption (docs/features/site-envois.md).
+  detail      String?
   keyVersion  Int
   expiresAt   DateTime
   updatedAt   DateTime       @default(now())

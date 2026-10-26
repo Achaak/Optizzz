@@ -104,6 +104,39 @@ describe.skipIf(!url)("the Envois' store on Postgres", () => {
     expect(spaces.players[0]?.space?.members.map((m) => m.categories)).toEqual([["convoys"], ["convoys"]]);
   });
 
+  it("keeps a flood's army apart, rewrites it when it alone changes, and hands it to the Admins only", async () => {
+    const keyring = await createAllianceKeyring();
+    await service.saveSettings(b.userId, { server: "s5", playerId: b.playerId, categories: ["convoys", "floods"] });
+    const flood = async (army: string) => ({
+      fingerprint: fp(50),
+      blob: await encryptData("flood", keyring),
+      detail: await encryptData(army, keyring),
+      expiresAt: now.getTime() + 2 * DAY,
+    });
+    const send = (item: unknown) =>
+      service.saveEnvoi(b.userId, {
+        server: "s5",
+        playerId: b.playerId,
+        category: "floods",
+        keyVersion: 1,
+        items: [item],
+        removed: [],
+      });
+    const first = await flood("100 JSN");
+    await send(first);
+    now = new Date(now.getTime() + 60_000);
+    const changed = { ...first, detail: await encryptData("200 JSN", keyring) };
+    await send(changed);
+    const floodOf = (read: Awaited<ReturnType<typeof service.readEnvois>>) =>
+      read.items.find((r) => r.category === "floods");
+    // a is the space's Admin, b a member.
+    expect(floodOf(await service.readEnvois(a.userId, { spaceId }))?.detail).toBe(changed.detail);
+    expect(floodOf(await service.readEnvois(b.userId, { spaceId }))?.detail).toBeNull();
+    const row = await db.envoiItem.findFirst({ where: { spaceId, category: "floods" } });
+    expect(row?.updatedAt).toEqual(now);
+    await db.envoiItem.deleteMany({ where: { spaceId, category: "floods" } });
+  });
+
   it("erases a Joueur's Envois and settings with their account", async () => {
     await db.user.delete({ where: { id: a.userId } });
     const left = await db.envoiItem.findMany({ where: { spaceId } });
