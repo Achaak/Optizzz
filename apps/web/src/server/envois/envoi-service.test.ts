@@ -27,6 +27,7 @@ describe("the Envois on the site", () => {
   let service: ReturnType<typeof envoiService>;
   let now: Date;
   let keyring: AllianceKeyring;
+  let reminders: [string, string][];
 
   const item = async (n: number, text = `convoi ${String(n)}`, ring = keyring) => ({
     fingerprint: fp(n),
@@ -51,7 +52,12 @@ describe("the Envois on the site", () => {
   beforeEach(async () => {
     memory = memoryEnvoiStore();
     now = NOW;
-    service = envoiService(memory.store, () => now);
+    reminders = [];
+    service = envoiService(
+      memory.store,
+      () => now,
+      (spaceId, kind) => reminders.push([spaceId, kind]),
+    );
     keyring = await createAllianceKeyring();
     for (const p of [messor, lasius, outsider]) memory.addPlayer(p);
     memory.addSpace({ id: SPACE, server: "s5", tag: "ABC", name: "ABC sur S5" }, [messor, lasius]);
@@ -264,6 +270,22 @@ describe("the Envois on the site", () => {
       expect((await failure(send(messor, [{ ...(await item(3)), detail: first.detail } as never]))).code).toBe(
         "invalid",
       );
+    });
+
+    it("ask for a reminder on Discord when a flood row is new, never for one already kept nor for convoys", async () => {
+      await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["floods", "convoys"] });
+      const first = await flood(1);
+      await sendFloods(messor, [first]);
+      expect(reminders).toEqual([[SPACE, "floods"]]);
+      await sendFloods(messor, [first]);
+      await sendFloods(messor, [], [fp(1)]);
+      await send(messor, [await item(2)]);
+      expect(reminders).toHaveLength(1);
+      await sendFloods(messor, [await flood(3)]);
+      expect(reminders).toEqual([
+        [SPACE, "floods"],
+        [SPACE, "floods"],
+      ]);
     });
 
     it("never keep a flood longer than 40 days, whatever the extension says", async () => {

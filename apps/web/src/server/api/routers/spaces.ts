@@ -1,10 +1,12 @@
 // The Alliance Spaces for the signed-in account (src/server/spaces/space-service.ts holds the rules). The site only
 // ever receives what browsers sealed and signed: public keys, locked private keys, sealed Clés d'alliance, certificates,
-// the encrypted trust list, and the absence alerts and the Discord webhook encrypted with the Clé d'alliance.
+// the encrypted trust list, and the absence alerts and the Discord webhook encrypted with the Clé d'alliance. Apart
+// from them, the reminders' webhook, which the site reads to post content-free reminders (ADR 0005, « Discord »).
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { SpaceError } from "~/server/spaces/space-service";
+import { reminders } from "~/server/reminders/service";
 import { spaces } from "~/server/spaces/service";
 
 const CODES = {
@@ -106,6 +108,13 @@ export const spacesRouter = createTRPCRouter({
   saveDiscord: protectedProcedure
     .input(spaceId.extend({ blob: text(200_000), expectedRevision: z.number().int() }))
     .mutation(({ ctx, input }) => run(() => spaces.saveDiscord(ctx.userId, input))),
+  /** The site's own reminders on Discord (src/server/reminders/): a second webhook, which the site reads. Admins. */
+  reminders: protectedProcedure
+    .input(spaceId)
+    .query(({ ctx, input }) => run(() => reminders.view(ctx.userId, input.spaceId))),
+  saveReminders: protectedProcedure
+    .input(spaceId.extend({ url: text(500).nullable().optional(), kinds: z.array(text(40)).max(20) }))
+    .mutation(({ ctx, input }) => run(() => reminders.save(ctx.userId, input))),
   leave: protectedProcedure.input(spaceId).mutation(({ ctx, input }) => run(() => spaces.leave(ctx.userId, input))),
   rename: protectedProcedure
     .input(spaceId.extend({ name: text(200) }))

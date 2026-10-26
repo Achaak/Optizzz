@@ -37,6 +37,8 @@ interface Person {
 let memory: ReturnType<typeof memoryStore>;
 let service: ReturnType<typeof spaceService>;
 let spaceId: string;
+/** The site's reminders on Discord asked for: [space, kind]. */
+let reminders: [string, string][];
 
 async function person(
   userId: string,
@@ -130,7 +132,12 @@ let chloe: Person;
 
 beforeEach(async () => {
   memory = memoryStore();
-  service = spaceService(memory.store, () => new Date(NOW));
+  reminders = [];
+  service = spaceService(
+    memory.store,
+    () => new Date(NOW),
+    (id, kind) => reminders.push([id, kind]),
+  );
   alice = await person("alice", 1, "Alice");
   bruno = await person("bruno", 2, "Bruno");
   chloe = await person("chloe", 3, "Chloe");
@@ -215,6 +222,16 @@ describe("joining", () => {
     );
     memory.addPlayer("eve", { server: "s5", playerId: 5, pseudo: "Eve", alliance: "ABC" });
     await expect(service.requestToJoin("eve", { spaceId, playerId: 5 })).rejects.toThrow("phrase secrète");
+  });
+
+  it("asks for a reminder on Discord for a new pending request only, not for one already waiting", async () => {
+    await service.requestToJoin("bruno", { spaceId, playerId: 2 });
+    await service.requestToJoin("bruno", { spaceId, playerId: 2 });
+    expect(reminders).toEqual([[spaceId, "join-requests"]]);
+    const [request] = (await memberView(alice)).requests;
+    await service.refuse("alice", { spaceId, requestId: request?.id ?? "" });
+    await service.requestToJoin("bruno", { spaceId, playerId: 2 });
+    expect(reminders).toHaveLength(2);
   });
 
   it("keeps one request per Player, cancellable, and asks again after a refusal", async () => {

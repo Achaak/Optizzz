@@ -5,6 +5,7 @@
 import { openCertificate, type Certificate, type CertificateKind } from "@optizzz/crypto/certificate";
 import { dataKeyVersion } from "@optizzz/crypto/data";
 import { serverById } from "@optizzz/game/servers";
+import type { ReminderKind } from "~/lib/spaces/reminders";
 import type {
   MemberRow,
   PlayerRef,
@@ -143,7 +144,13 @@ function actor(
 
 const adminCount = (members: MemberRow[]) => members.filter((m) => m.role === "admin").length;
 
-export function spaceService(store: SpaceStore, now: () => Date = () => new Date()) {
+/**
+ * Asks for the site's reminder on Discord (src/server/reminders/service.ts): it posts later, if an Admin switched the
+ * kind on, and never fails the action.
+ */
+type Remind = (spaceId: string, kind: ReminderKind) => void;
+
+export function spaceService(store: SpaceStore, now: () => Date = () => new Date(), remind: Remind = () => undefined) {
   async function inExistingSpace<T>(spaceId: string, work: (tx: SpaceTransaction) => Promise<T>): Promise<T> {
     if (!SPACE_ID.test(spaceId)) throw NOT_FOUND();
     return store.inSpace(spaceId, async (tx) => {
@@ -362,10 +369,13 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
       });
     },
 
-    /** « Demander à rejoindre »: one request per space and Player, for a Player of the space's alliance. */
+    /**
+     * « Demander à rejoindre »: one request per space and Player, for a Player of the space's alliance. A new pending
+     * request asks for the reminder « Nouvelle demande pour rejoindre l'espace … » (content-free).
+     */
     async requestToJoin(userId: string, input: { spaceId: string; playerId: number }) {
       if (!(await store.key(userId))) throw invalid("Choisissez d'abord la phrase secrète de votre compte.");
-      return inExistingSpace(input.spaceId, async (tx) => {
+      const asked = await inExistingSpace(input.spaceId, async (tx) => {
         const space = await tx.space();
         if (!space) throw NOT_FOUND();
         const player = await ownPlayer(userId, { server: space.server, playerId: input.playerId });
@@ -375,8 +385,11 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         if (await tx.spaceOfPlayer(player))
           throw new SpaceError("conflict", `${player.pseudo} est déjà dans un espace : quittez-le d'abord.`);
         const existing = (await tx.requests()).find((r) => samePlayer(r, player));
-        if (existing?.status !== "pending") await tx.putRequest(player, now());
+        if (existing?.status === "pending") return false;
+        await tx.putRequest(player, now());
+        return true;
       });
+      if (asked) remind(input.spaceId, "join-requests");
     },
 
     async cancelRequest(userId: string, input: { spaceId: string }) {

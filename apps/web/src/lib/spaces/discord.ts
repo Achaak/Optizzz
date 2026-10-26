@@ -1,6 +1,7 @@
 // The alliance's Discord webhook in an Admin's browser (docs/features/site-discord.md). Its address and the events
 // that go there are encrypted here with the Clé d'alliance (ADR 0005, « Discord »): the site keeps the record for the
-// members' extensions without being able to read it, and never posts to Discord itself.
+// members' extensions without being able to read it, and never posts to it (its own content-free reminders go to a
+// second webhook: ./reminders.ts).
 import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
 import { dataKeyVersion, decryptData, encryptData } from "@optizzz/crypto/data";
 import { formatDateTime } from "@optizzz/game/format/time-format";
@@ -27,6 +28,11 @@ function refusalReason(status: number): string {
   if (status === 404) return "ce webhook n'existe plus (supprimé dans Discord ?)";
   if (status === 401 || status === 403) return "l'adresse du webhook n'est pas valable";
   return `erreur ${String(status)}`;
+}
+
+/** « Discord a refusé le dernier rappel du site le 26/10 à 13 h 00 : … » (src/server/reminders/). */
+export function suspensionText(suspension: { status: number; at: Date }): string {
+  return `Discord a refusé le dernier rappel du site, le ${formatDateTime(suspension.at)} : ${refusalReason(suspension.status)}. Les rappels sont suspendus : enregistrez une nouvelle adresse.`;
 }
 
 /** « Discord a refusé le dernier message, envoyé depuis l'extension de Bruno le 26/10 à 13 h 00 : … ». */

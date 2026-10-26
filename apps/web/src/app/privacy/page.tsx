@@ -84,12 +84,22 @@ export default function PrivacyPage() {
           Discord&nbsp;: un Admin d&apos;un espace peut y enregistrer l&apos;adresse du webhook du salon Discord de
           l&apos;alliance et choisir ce qui y est annoncé (aujourd&apos;hui les convois et les floods, sans l&apos;armée
           envoyée ; rien d&apos;avance). L&apos;adresse et ce choix sont chiffrés dans son navigateur avec la Clé
-          d&apos;alliance&nbsp;: le site les garde sans pouvoir les lire, et ne poste jamais rien sur Discord.
+          d&apos;alliance&nbsp;: le site les garde sans pouvoir les lire, et ne poste jamais rien sur ce webhook.
           C&apos;est l&apos;extension du membre qui agit qui poste, juste après un Envoi, seulement pour une catégorie
           qu&apos;il envoie et une fois qu&apos;il a autorisé Discord dans son extension&nbsp;; ce qui est posté va
           alors à Discord, un service tiers choisi par l&apos;alliance. Quand Discord refuse un message,
           l&apos;extension n&apos;envoie au site que le code de la réponse&nbsp;: le site garde ce code, la date et le
           pseudo du membre, montrés aux Admins jusqu&apos;au prochain enregistrement du webhook.
+        </p>
+        <p>
+          Rappels du site sur Discord&nbsp;: un Admin peut aussi donner au site l&apos;adresse d&apos;un second webhook,
+          réservé aux rappels, et choisir lesquels partent (rien d&apos;avance). Le site y poste alors lui-même un court
+          rappel, au plus un de chaque sorte toutes les 30 minutes («&nbsp;Nouveaux floods sur l&apos;espace XYZ, à voir
+          sur Optizzz&nbsp;» et le lien vers l&apos;espace), sans pseudo, ni nombre, ni cible, ni heure. Cette
+          adresse-là, le site peut la lire&nbsp;: elle est chiffrée au repos avec une clé du site, ce qui la protège
+          d&apos;une copie volée de la base, pas de qui fait tourner le site. Si Discord dit que ce webhook
+          n&apos;existe plus, le site garde le code de la réponse et la date, et suspend les rappels jusqu&apos;à un
+          nouvel enregistrement.
         </p>
         <p>
           Depuis «&nbsp;Mon compte&nbsp;», vous pouvez retirer une extension liée, vous déconnecter de ce navigateur ou

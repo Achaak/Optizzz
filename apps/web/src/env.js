@@ -24,6 +24,11 @@ export const env = createEnv({
     BREVO_API_KEY: z.string().optional(),
     /** The sender of the emails, on a domain verified in Brevo (connexion@optizzz.fr). */
     EMAIL_FROM: z.email().optional(),
+    /**
+     * Encrypts the address of the site's Discord reminders at rest (src/server/reminders/at-rest.ts): 32 bytes in
+     * base64, `openssl rand -base64 32`. Optional: unset or malformed, the reminders stay off and the Admins read so.
+     */
+    DISCORD_REMINDERS_KEY: z.string().optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
   client: {},
@@ -37,6 +42,7 @@ export const env = createEnv({
     PORT: process.env.PORT,
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
+    DISCORD_REMINDERS_KEY: process.env.DISCORD_REMINDERS_KEY,
     NODE_ENV: process.env.NODE_ENV,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

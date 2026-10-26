@@ -3,6 +3,7 @@
 // space, with the category checked), that the newest version of the key was used, and keeps no row past its date. It
 // never reads an Envoi: the inside (Joueur, Serveur, catégorie, heure du relevé) is checked by whoever opens it.
 import { isSentCategory } from "@optizzz/game/site-links/envois";
+import type { ReminderKind } from "~/lib/spaces/reminders";
 import type { EnvoiStore, ItemInput, PlayerRef } from "./store";
 
 export class EnvoiError extends Error {
@@ -69,7 +70,13 @@ function blobKeyVersion(blob: string): number | null {
   return head.length >= 5 && head[0] === 1 ? head.readUInt32BE(1) : null;
 }
 
-export function envoiService(store: EnvoiStore, now: () => Date = () => new Date()) {
+/**
+ * Asks for the site's reminder on Discord (src/server/reminders/service.ts): it posts later, if an Admin switched the
+ * kind on, and never fails an Envoi.
+ */
+type Remind = (spaceId: string, kind: ReminderKind) => void;
+
+export function envoiService(store: EnvoiStore, now: () => Date = () => new Date(), remind: Remind = () => undefined) {
   async function ownPlayer(userId: string, player: PlayerRef) {
     const found = (await store.playersOf(userId)).find(
       (p) => p.server === player.server && p.playerId === player.playerId,
@@ -205,7 +212,9 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
         throw new EnvoiError("category-off", "« Par unité » n'est pas choisi pour ce Joueur : rien n'est gardé.");
       const newest = Math.max(0, ...space.versions.map((v) => v.version));
       if (keyVersion !== newest) throw STALE_KEY();
-      await store.writeItems(space.id, player, category, items, removed, at);
+      const added = await store.writeItems(space.id, player, category, items, removed, at);
+      // New flood rows: « Nouveaux floods sur l'espace … », content-free (docs/features/site-discord.md).
+      if (category === "floods" && added > 0) remind(space.id, "floods");
     },
 
     /**

@@ -1,13 +1,14 @@
 import "server-only";
 
 import { db } from "~/server/db";
+import { remindLater } from "~/server/reminders/service";
 import { prismaSpaceStore } from "./prisma-store";
 import { spaceService } from "./space-service";
 
 const store = prismaSpaceStore(db);
 
 /** The Alliance Spaces' rules on the site's database. */
-export const spaces = spaceService(store);
+export const spaces = spaceService(store, undefined, remindLater);
 
 /** What an invitation link shows before signing in: the space's name, tag, Admins and size. */
 export const invitationSummary = (spaceId: string) =>
