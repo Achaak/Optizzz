@@ -72,6 +72,21 @@ export interface AbsenceAlertsRow {
   revision: number;
 }
 
+/** The space's Discord webhook and its events, encrypted with its Clé d'alliance (src/lib/spaces/discord.ts). */
+export interface DiscordRow {
+  blob: string;
+  revision: number;
+  /** The last refusal of the webhook a member's extension reported, for the revision it names. */
+  refusal: (DiscordRefusal & { revision: number }) | null;
+}
+
+/** Discord's HTTP status, when, and from whose extension: nothing of the message. */
+interface DiscordRefusal {
+  status: number;
+  at: Date;
+  pseudo: string;
+}
+
 /** What one space's operations read and write, inside one transaction that holds the space. */
 export interface SpaceTransaction {
   space(): Promise<SpaceRow | null>;
@@ -97,6 +112,11 @@ export interface SpaceTransaction {
   absenceAlerts(): Promise<AbsenceAlertsRow | null>;
   /** Writes the alerts if their revision is still `expectedRevision` (0: none yet); the new revision, or null. */
   saveAbsenceAlerts(blob: string, expectedRevision: number): Promise<number | null>;
+  discord(): Promise<DiscordRow | null>;
+  /** Writes the webhook if its revision is still `expectedRevision` (0: none yet); the new revision, or null. */
+  saveDiscord(blob: string, expectedRevision: number): Promise<number | null>;
+  /** Keeps a refusal reported for `revision`, if it is still the webhook's revision. */
+  reportDiscordRefusal(revision: number, refusal: DiscordRefusal): Promise<void>;
   setRole(player: PlayerRef, role: SpaceRole): Promise<void>;
   removeMember(player: PlayerRef): Promise<void>;
   addCertificates(blobs: string[]): Promise<void>;

@@ -647,6 +647,77 @@ describe("absence alerts", () => {
   });
 });
 
+describe("the Discord webhook", () => {
+  beforeEach(async () => {
+    await create(alice);
+    await join(alice, bruno);
+    await join(alice, chloe);
+    await service.setRole("alice", { spaceId, playerId: 3, role: "delegate" });
+  });
+
+  const settings = '{"v":1,"url":"https://discord.com/api/webhooks/1/t","events":["convoys"],"urlSetAtVersion":1}';
+
+  it("is saved encrypted by an Admin alone, and shown to the Admins", async () => {
+    const blob = await encryptData(settings, await keyringOf(alice));
+    expect((await memberView(alice)).discord).toBeNull();
+    await expect(service.saveDiscord("chloe", { spaceId, blob, expectedRevision: 0 })).rejects.toThrow("Seul un Admin");
+    await expect(service.saveDiscord("bruno", { spaceId, blob, expectedRevision: 0 })).rejects.toThrow("Seul un Admin");
+    expect(await service.saveDiscord("alice", { spaceId, blob, expectedRevision: 0 })).toEqual({ revision: 1 });
+    expect((await memberView(alice)).discord).toEqual({ blob, revision: 1, refusal: null });
+    expect((await memberView(chloe)).discord).toBeNull();
+    expect((await memberView(bruno)).discord).toBeNull();
+  });
+
+  it("refuses to overwrite a save made meanwhile, or one not encrypted with the newest version", async () => {
+    const keyring = await keyringOf(alice);
+    const blob = await encryptData(settings, keyring);
+    await service.saveDiscord("alice", { spaceId, blob, expectedRevision: 0 });
+    await expect(service.saveDiscord("alice", { spaceId, blob, expectedRevision: 0 })).rejects.toThrow("rechargez");
+    await expect(service.saveDiscord("alice", { spaceId, blob: "court", expectedRevision: 1 })).rejects.toThrow(
+      SpaceError,
+    );
+    await exclude(alice, chloe);
+    // Encrypted with version 1 while the space has version 2.
+    await expect(service.saveDiscord("alice", { spaceId, blob, expectedRevision: 1 })).rejects.toThrow(
+      "Un autre Admin",
+    );
+    const newer = await encryptData(settings, await keyringOf(alice));
+    expect(await service.saveDiscord("alice", { spaceId, blob: newer, expectedRevision: 1 })).toEqual({ revision: 2 });
+  });
+
+  it("is handed to every member's extension, and to nobody else", async () => {
+    const blob = await encryptData(settings, await keyringOf(alice));
+    expect(await service.discordForExtension("bruno")).toEqual([]);
+    await service.saveDiscord("alice", { spaceId, blob, expectedRevision: 0 });
+    expect(await service.discordForExtension("bruno")).toEqual([{ spaceId, blob, revision: 1 }]);
+    const dan = await person("dan", 4, "Dan");
+    expect(await service.discordForExtension(dan.userId)).toEqual([]);
+  });
+
+  it("shows the Admins a refusal a member's extension reported, until the webhook is saved again", async () => {
+    const blob = await encryptData(settings, await keyringOf(alice));
+    await service.saveDiscord("alice", { spaceId, blob, expectedRevision: 0 });
+    await service.reportDiscordRefusal("bruno", { spaceId, revision: 1, status: 404 });
+    expect((await memberView(alice)).discord?.refusal).toEqual({ status: 404, at: new Date(NOW), pseudo: "Bruno" });
+    // A report about an older save says nothing of this one.
+    await service.reportDiscordRefusal("chloe", { spaceId, revision: 0, status: 401 });
+    expect((await memberView(alice)).discord?.refusal?.pseudo).toBe("Bruno");
+    await service.saveDiscord("alice", { spaceId, blob, expectedRevision: 1 });
+    expect((await memberView(alice)).discord?.refusal).toBeNull();
+  });
+
+  it("takes refusals only from members, and only Discord's 4xx but a rate limit", async () => {
+    const blob = await encryptData(settings, await keyringOf(alice));
+    await service.saveDiscord("alice", { spaceId, blob, expectedRevision: 0 });
+    const dan = await person("dan", 4, "Dan");
+    await expect(service.reportDiscordRefusal(dan.userId, { spaceId, revision: 1, status: 404 })).rejects.toThrow(
+      "pas membre",
+    );
+    for (const status of [200, 429, 500, 99])
+      await expect(service.reportDiscordRefusal("bruno", { spaceId, revision: 1, status })).rejects.toThrow(SpaceError);
+  });
+});
+
 describe("a Player who left the alliance", () => {
   it("is offered to leave the space, on the space's page and on /spaces", async () => {
     await create(alice);

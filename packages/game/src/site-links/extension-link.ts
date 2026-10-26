@@ -32,4 +32,9 @@ export const EXTENSION_API = {
   envoiSettings: "/api/extension/envoi-settings",
   /** POST with the token: an Envoi (encrypted items); GET `?space=…&since=…`: the relève of a space's Envois. */
   envois: "/api/extension/envois",
+  /**
+   * GET with the token: the Discord webhook of each of the account's spaces, encrypted; POST `{ spaceId, revision,
+   * status }`: Discord refused a message (docs/features/site-discord.md).
+   */
+  discord: "/api/extension/discord",
 } as const;

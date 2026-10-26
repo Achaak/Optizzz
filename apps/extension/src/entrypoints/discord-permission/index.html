@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Optizzz · Discord</title>
+  </head>
+  <body>
+    <main class="grant optizzz-panel">
+      <h1 class="optizzz-panel-title optizzz-panel-title--large">Annoncer sur le Discord de votre alliance</h1>
+      <p>
+        Un Admin de votre Espace d'alliance a relié l'espace au salon Discord de l'alliance. Pour que vos convois et vos
+        attaques y soient annoncés, le navigateur doit autoriser l'extension à écrire sur Discord.
+      </p>
+      <h2 class="optizzz-subtitle">Ce qui part vers Discord</h2>
+      <ul>
+        <li>
+          juste après un envoi à l'espace, une ligne par convoi que vous venez d'envoyer : « Messor a envoyé un convoi à
+          Lasius : 12 348 nourriture, arrivée 18 h 12 » ;
+        </li>
+        <li>
+          de même, une ligne par cible de vos attaques qui viennent de partir : « Messor a lancé 3 attaques sur Lasius,
+          arrivée 18 h 12, prise attendue 12 348 », jamais l'armée envoyée ;
+        </li>
+        <li>seulement pour les catégories que vous envoyez déjà à l'espace et qu'un Admin a choisies.</li>
+      </ul>
+      <p class="optizzz-note">
+        Rien d'autre, et jamais d'optizzz.fr : c'est votre extension qui écrit, au webhook choisi par un Admin de votre
+        alliance. Ce qui est posté sur Discord suit les règles de Discord et du salon. Vous pouvez retirer cette
+        autorisation à tout moment dans les réglages du navigateur, ou décocher la catégorie.
+      </p>
+      <p><button type="button" id="grant" class="optizzz-button-primary">Autoriser Discord</button></p>
+      <p id="result" role="status"></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

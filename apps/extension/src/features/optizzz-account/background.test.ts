@@ -60,6 +60,7 @@ let site: ReturnType<typeof fakeSite>;
 let permitted: boolean;
 let now: Date;
 let opened: number;
+let openedDiscord = 0;
 /** What reached the Envois (envois.ts has its own tests). */
 let envoiCalls: string[];
 const envois = {
@@ -90,6 +91,10 @@ const service = () =>
     permitted: () => Promise.resolve(permitted),
     openConnectPage: () => {
       opened++;
+      return Promise.resolve();
+    },
+    openDiscordPage: () => {
+      openedDiscord++;
       return Promise.resolve();
     },
     envois,
@@ -285,6 +290,13 @@ describe("who may send what", () => {
     await answer(service(), { type: "optizzz-account", action: "connect" }, "game");
     expect(opened).toBe(1);
     expect(await answer(service(), token, "link")).toEqual({ ok: true });
+  });
+
+  it("opens « Autoriser Discord » on a click in the settings only", async () => {
+    const before = openedDiscord;
+    expect(answer(service(), { type: "optizzz-account", action: "allow-discord" }, "link")).toBeNull();
+    await answer(service(), { type: "optizzz-account", action: "allow-discord" }, "page");
+    expect(openedDiscord).toBe(before + 1);
   });
 });
 

@@ -48,3 +48,18 @@ export async function decryptData(blob: string, keyring: AllianceKeyring): Promi
     throw CryptoError.of("undecryptable");
   }
 }
+
+/**
+ * The version of the Clé d'alliance a datum names in clear (bytes 1–4), without opening it, or null when it is not
+ * format 1: for the site to refuse a datum not encrypted with the newest version, and for a page to encrypt again one
+ * written before a key rotation.
+ */
+export function dataKeyVersion(blob: string): number | null {
+  let bytes: Uint8Array;
+  try {
+    bytes = fromBase64Url(blob.slice(0, 8));
+  } catch {
+    return null;
+  }
+  return bytes.length >= HEADER_LENGTH && bytes[0] === FORMAT ? readUint32(bytes, 1) : null;
+}

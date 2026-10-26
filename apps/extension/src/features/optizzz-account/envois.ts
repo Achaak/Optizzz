@@ -50,6 +50,8 @@ import { forgetLink, loadAttachedPlayers, loadCurrentPlayer, loadLink } from "@/
 import { loadSentAttacks } from "@/data/sent-attacks";
 import { pairLaunches } from "@/features/flood/attacks";
 import { siteApi, type EnvoiBody } from "./api";
+import { attacksNews, type DiscordNews } from "@optizzz/game/site-links/discord";
+import type { DiscordService, DiscordStatus } from "./discord";
 
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
@@ -105,6 +107,8 @@ export interface JoueurEnvois {
   /** What stops the Envoi now, if anything. */
   problem: string | null;
   lastSentAt: number | null;
+  /** What goes to the alliance's Discord for this Joueur, or null when the space announces nothing. */
+  discord: DiscordStatus | null;
 }
 
 type NotificationKind = "alliance-convoy" | "alliance-flood";
@@ -123,6 +127,8 @@ interface Dependencies {
   notify: (notice: { kind: NotificationKind; id: string; message: string; url: string }) => Promise<void>;
   /** A timer for the few seconds after a change (setTimeout): never a periodic send. */
   later: (ms: number, run: () => void) => void;
+  /** The alliance's Discord webhook (discord.ts): told the news right after an Envoi. */
+  discord: Pick<DiscordService, "refresh" | "announce" | "status" | "forget">;
 }
 
 /** One item of a list category, built from what the extension keeps. */
@@ -249,7 +255,7 @@ async function openRow(
   return null;
 }
 
-export function envoiService({ now, fetch, permitted, crypto, notify, later }: Dependencies) {
+export function envoiService({ now, fetch, permitted, crypto, notify, later, discord }: Dependencies) {
   let lastPageReleve = 0;
   const waiting = new Set<string>();
 
@@ -276,6 +282,7 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
     await storeSpaces({ readAt: now().getTime(), players: answer.value.players });
     for (const player of answer.value.players)
       if (player.space) await noteVersion(player.space.id, player.space.version.version);
+    if (answer.value.players.some((p) => p.space)) await discord.refresh(kept.token);
     return answer.value.players;
   }
 
@@ -295,6 +302,64 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
   async function setProblem(joueur: string, problem: string | null, retry?: ListCategory[]) {
     const state = await loadSent(joueur);
     await storeSent(joueur, { ...state, problem, ...(retry && { retry }) });
+  }
+
+  /**
+   * Right after an Envoi of a list category, Discord's news (docs/features/site-discord.md): what the Joueur did that
+   * this Envoi carries for the first time, still to come (a convoy on its way, an attack not arrived). Not on the first
+   * Envoi of the category (what was already on its way is not news), nor after a change of the Clé d'alliance (every
+   * fingerprint changes with it). Discord's answer never blocks the Envoi.
+   */
+  async function announceList(input: {
+    category: ListCategory;
+    token: string;
+    spaceId: string;
+    server: string;
+    pseudo: string;
+    previous: SentItems | undefined;
+    sent: SentItems;
+    keyVersion: number;
+    cipher: EnvoiCrypto;
+  }): Promise<void> {
+    const { previous, sent, pseudo, category } = input;
+    if (!previous || Object.values(previous).some((item) => item && item.keyVersion !== input.keyVersion)) return;
+    const at = now().getTime();
+    const fresh = Object.entries(sent).flatMap(([fingerprint, item]) =>
+      item && !previous[fingerprint] && item.at > at ? [item] : [],
+    );
+    // The item is the digest itself, or its first half when the flood has an Admins' blob (never read here).
+    const itemOf = (item: SentItem): unknown => {
+      const parsed: unknown = JSON.parse(item.digest);
+      return Array.isArray(parsed) ? parsed[0] : parsed;
+    };
+    const mine = (from: string) => sameName(from, pseudo);
+    const news: DiscordNews[] =
+      category === "convoys"
+        ? fresh.flatMap((item) => {
+            const convoy = CONVOY_ITEM.safeParse(itemOf(item));
+            if (!convoy.success || convoy.data.kind !== "transit" || !mine(convoy.data.from)) return [];
+            const { from, to, food, materials } = convoy.data;
+            return [{ kind: "convoy" as const, from, to, food, materials, at: convoy.data.at }];
+          })
+        : attacksNews(
+            fresh.flatMap((item) => {
+              const flood = FLOOD_ITEM.safeParse(itemOf(item));
+              return flood.success && mine(flood.data.from) ? [flood.data] : [];
+            }),
+          );
+    if (news.length === 0) return;
+    try {
+      await discord.announce({
+        token: input.token,
+        spaceId: input.spaceId,
+        categories: categoriesOf(await loadChoices(input.server, pseudo)),
+        crypto: input.cipher,
+        event: category,
+        news,
+      });
+    } catch (error) {
+      console.error(`[Optizzz] Discord: the ${category} could not be announced`, error);
+    }
   }
 
   /**
@@ -388,6 +453,17 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
         lastSentAt: at.getTime(),
         retry,
         problem: retry.length > 0 ? state.problem : null,
+      });
+      await announceList({
+        category,
+        token: kept.token,
+        spaceId: space.id,
+        server,
+        pseudo,
+        previous: previousState.lists[category],
+        sent,
+        keyVersion,
+        cipher,
       });
       return;
     }
@@ -617,8 +693,10 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
         const choices = await loadChoices(server, pseudo);
         const space = players.find((p) => p.server === server && sameName(p.pseudo, pseudo))?.space;
         const state = await loadSent(joueurKey(server, pseudo));
-        const sending = categoriesOf(choices).length > 0;
-        const keyMissing = space ? !(await usableKeys(space.id, space.version.version)) : false;
+        const categories = categoriesOf(choices);
+        const sending = categories.length > 0;
+        const keys = space ? await usableKeys(space.id, space.version.version) : null;
+        const keyMissing = space !== undefined && space !== null && !keys;
         return {
           server,
           pseudo,
@@ -626,16 +704,23 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later }: D
           spaceName: space?.name ?? null,
           problem: !sending ? null : !space ? NO_SPACE : keyMissing ? MISSING_KEY : state.problem,
           lastSentAt: state.lastSentAt,
+          discord: space && keys ? await discord.status({ spaceId: space.id, categories, crypto: crypto(keys) }) : null,
         };
       }),
     );
+  }
+
+  /** « Se déconnecter »: the Clé d'alliance goes, with what was read with it and the webhook it opened. */
+  async function forget(): Promise<void> {
+    await forgetKeys();
+    await discord.forget();
   }
 
   return {
     changed,
     choose,
     receiveKeys,
-    forget: forgetKeys,
+    forget,
     releve,
     incoming,
     floods,
