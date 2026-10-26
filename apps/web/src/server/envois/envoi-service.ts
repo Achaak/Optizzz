@@ -16,14 +16,20 @@ export class EnvoiError extends Error {
 }
 
 const DAY = 24 * 3600_000;
-/** Nothing stays longer, whatever an extension says: 90 days after an arrival that may be a few days ahead. */
-const LONGEST_KEPT = 100 * DAY;
 /** A relève gives back this much: a write still committing as it reads is not missed (readers merge by id). */
 const CURSOR_OVERLAP = 10_000;
 const MAX_ITEMS = 2000;
 
-/** The categories whose Envois are lists of items, and the setting that lets them go. */
-const LIST_CATEGORIES = { convoys: "convoys" } as const;
+/**
+ * The categories whose Envois are lists of items: the setting that lets them go, how long a row may stay at most
+ * whatever an extension says, and whether an item may carry a blob for the Admins only.
+ */
+const LIST_CATEGORIES = {
+  // 90 days after an arrival that may be a few days ahead.
+  convoys: { setting: "convoys", longest: 100 * DAY, detail: false },
+  // 7 days after an arrival at most 30 days ahead (the longest trip the flood plan notes), and the army sent.
+  floods: { setting: "floods", longest: 40 * DAY, detail: true },
+} as const;
 type ListCategory = keyof typeof LIST_CATEGORIES;
 
 const FINGERPRINT = /^[A-Za-z0-9_-]{22}$/;
@@ -122,6 +128,7 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
       const category = body.category;
       const keyVersion = body.keyVersion;
       if (typeof category !== "string" || !(category in LIST_CATEGORIES)) throw invalid();
+      const rules = LIST_CATEGORIES[category as ListCategory];
       if (!isPlayerId(keyVersion) || keyVersion < 1) throw invalid();
       if (!Array.isArray(body.items) || body.items.length > MAX_ITEMS) throw invalid();
       if (!Array.isArray(body.removed) || body.removed.length > MAX_ITEMS) throw invalid();
@@ -133,18 +140,21 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
       const items: ItemInput[] = [];
       for (const raw of body.items as unknown[]) {
         const item = record(raw);
-        const { fingerprint, blob, expiresAt } = item;
+        const { fingerprint, blob, detail = null, expiresAt } = item;
+        const sealed = (value: unknown) =>
+          typeof value === "string" && ALLIANCE_DATA.test(value) && blobKeyVersion(value) === keyVersion;
         if (typeof fingerprint !== "string" || !FINGERPRINT.test(fingerprint)) throw invalid();
-        if (typeof blob !== "string" || !ALLIANCE_DATA.test(blob) || blobKeyVersion(blob) !== keyVersion)
-          throw invalid();
+        if (typeof blob !== "string" || !sealed(blob)) throw invalid();
+        if (detail !== null && (!rules.detail || typeof detail !== "string" || !sealed(detail))) throw invalid();
         if (typeof expiresAt !== "number" || !Number.isFinite(expiresAt)) throw invalid();
         // Already past its date: not kept.
         if (expiresAt <= at.getTime()) continue;
         items.push({
           fingerprint,
           blob,
+          detail,
           keyVersion,
-          expiresAt: new Date(Math.min(expiresAt, at.getTime() + LONGEST_KEPT)),
+          expiresAt: new Date(Math.min(expiresAt, at.getTime() + rules.longest)),
         });
       }
 
@@ -152,7 +162,7 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
       const spaceId = await store.spaceOf(player);
       const space = spaceId ? await store.space(spaceId) : null;
       if (!space) throw new EnvoiError("not-found", "Ce Joueur n'est dans aucun Espace d'alliance.");
-      if (!(await store.settingsOf(player)).includes(LIST_CATEGORIES[category as ListCategory]))
+      if (!(await store.settingsOf(player)).includes(rules.setting))
         throw new EnvoiError("category-off", "Cette catégorie n'est pas cochée pour ce Joueur : rien n'est gardé.");
       const newest = Math.max(0, ...space.versions.map((v) => v.version));
       if (keyVersion !== newest) throw STALE_KEY();
@@ -161,14 +171,17 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
 
     /**
      * The Envois of a space, for its members only (any member, whatever they send). With `since` (a cursor from an
-     * earlier answer), only what was written after it, and the ids of the rows still there.
+     * earlier answer), only what was written after it, and the ids of the rows still there. The Admins' blobs (the
+     * army sent with a flood) go to the space's Admins only: reserved by the site, not by the encryption, since every
+     * member holds the same Clé d'alliance (docs/features/site-envois.md, « Qui voit quoi »).
      */
     async readEnvois(userId: string, input: { spaceId: string; since?: number }) {
       if (!SPACE_ID.test(input.spaceId)) throw new EnvoiError("not-found", "Cet espace n'existe pas.");
       const space = await store.space(input.spaceId);
       if (!space) throw new EnvoiError("not-found", "Cet espace n'existe pas.");
-      if (!space.members.some((m) => m.userId === userId))
-        throw new EnvoiError("forbidden", "Vous n'êtes pas membre de cet espace.");
+      const reader = space.members.find((m) => m.userId === userId);
+      if (!reader) throw new EnvoiError("forbidden", "Vous n'êtes pas membre de cet espace.");
+      const admin = reader.role === "admin";
       const at = now();
       const since = input.since !== undefined && Number.isFinite(input.since) ? new Date(input.since) : undefined;
       const rows = await store.items(space.id, at, since);
@@ -188,6 +201,7 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
           category: r.category,
           fingerprint: r.fingerprint,
           blob: r.blob,
+          detail: admin ? r.detail : null,
         })),
         live: since ? await store.liveIds(space.id, at) : null,
       };

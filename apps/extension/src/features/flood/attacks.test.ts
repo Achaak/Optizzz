@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import armeeHtml from "./__fixtures__/armee-attacks.html?raw";
 import armeeS5Html from "./__fixtures__/armee-attacks-s5.html?raw";
-import { gameAttackText, readAttackLines, readAttacksOnWay, reconcileLaunches } from "./attacks";
+import {
+  gameAttackText,
+  pairLaunches,
+  readAttackLines,
+  readAttacksOnWay,
+  readSentAttacks,
+  reconcileLaunches,
+} from "./attacks";
 
 const now = new Date(2026, 9, 8, 10, 0, 0);
 const at = (minutes: number, seconds = 0) => new Date(now.getTime() + (minutes * 60 + seconds) * 1000);
@@ -18,6 +25,19 @@ describe("readAttacksOnWay", () => {
 
   it("reads none when nothing is on its way", () => {
     expect(readAttacksOnWay(new DOMParser().parseFromString("<div id='centre'></div>", "text/html"), now)).toEqual([]);
+  });
+});
+
+describe("readSentAttacks", () => {
+  it("reads the game's number of each attack, the same as its « Annuler » link", () => {
+    const doc = new DOMParser().parseFromString(armeeS5Html, "text/html");
+    expect(readSentAttacks(doc, now)).toEqual([
+      { attackId: 34250, target: "Cible_1", arrivesAt: new Date(now.getTime() + 11_700_000) },
+      { attackId: 34251, target: "Cible_2", arrivesAt: new Date(now.getTime() + 11_703_000) },
+    ]);
+    expect(
+      readSentAttacks(new DOMParser().parseFromString(armeeHtml, "text/html"), now).map((a) => a.attackId),
+    ).toEqual([25044005, 25044006]);
   });
 });
 
@@ -96,5 +116,16 @@ describe("reconcileLaunches", () => {
       { target: "Cible_1", arrivesAt: at(30, 30) },
     ]);
     expect(result.launches.map((kept) => kept.take)).toEqual([400, 256]);
+  });
+});
+
+describe("pairLaunches", () => {
+  it("gives each attack the launch arriving nearest on the same target, if any", () => {
+    const sent = [launch("Cible_1", at(9), 400), launch("Cible_2", at(20), 320)];
+    const pairs = pairLaunches(sent, [
+      { target: "Cible_3", arrivesAt: at(9) },
+      { target: "cible_1", arrivesAt: at(9, 30) },
+    ]);
+    expect([...pairs.entries()]).toEqual([[1, 0]]);
   });
 });

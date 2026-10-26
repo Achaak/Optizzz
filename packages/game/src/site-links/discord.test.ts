@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  attacksNews,
   DISCORD_MESSAGE_MAX,
   discordLine,
   discordMessages,
@@ -114,6 +115,36 @@ describe("discordLine", () => {
     expect(
       discordLine({ kind: "convoy", from: "_x_", to: "**y**", food: 0, materials: 5, at: NOW.getTime() + 60_000 }, NOW),
     ).toBe("\\_x\\_ a envoyé un convoi à \\*\\*y\\*\\* : 5 matériaux, arrivée 13 h 37");
+  });
+});
+
+describe("attacksNews and their line", () => {
+  const at = (time: string) => new Date(`2026-10-26T${time}:00+01:00`).getTime();
+
+  it("tells the new attacks per target, their arrivals and the take they expect, never the army", () => {
+    const news = attacksNews([
+      { from: "Messor", target: "Lasius", at: at("18:40"), take: 4000 },
+      { from: "Messor", target: "Polyergus", at: at("18:20"), take: null },
+      { from: "Messor", target: "Lasius", at: at("18:12"), take: 8348 },
+    ]);
+    expect(news.map((n) => discordLine(n, NOW))).toEqual([
+      "Messor a lancé 2 attaques sur Lasius, arrivées de 18 h 12 à 18 h 40, prise attendue 12 348",
+      "Messor a lancé une attaque sur Polyergus, arrivée 18 h 20",
+    ]);
+  });
+
+  it("says one arrival when they all land together, and no take when one has none", () => {
+    const [news] = attacksNews([
+      { from: "Messor", target: "Lasius", at: at("18:12"), take: 1000 },
+      { from: "Messor", target: "Lasius", at: at("18:12"), take: null },
+      { from: "Messor", target: "Lasius", at: at("18:12"), take: 2000 },
+    ]);
+    expect(news && discordLine(news, NOW)).toBe("Messor a lancé 3 attaques sur Lasius, arrivée 18 h 12");
+  });
+
+  it("is consented by sending the floods", () => {
+    expect(eventConsented("floods", ["floods"])).toBe(true);
+    expect(eventConsented("floods", ["convoys"])).toBe(false);
   });
 });
 

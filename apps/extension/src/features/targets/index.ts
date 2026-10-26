@@ -12,6 +12,7 @@ import { isEnabled, type Toggles } from "../toggles";
 import { readStock } from "@optizzz/game/pages/resources";
 import { mountTargets, mountTargetsNotice, TARGETS_STYLE, type FloodSettings } from "./mount";
 import { readEnemyTable } from "./targets";
+import { askAllianceFloods } from "../optizzz-account/alliance-floods";
 
 type FloodColumn = { settings: FloodSettings; missing: null } | { settings: null; missing: string | null };
 
@@ -66,7 +67,7 @@ export const targets: Feature = {
     const pseudo = readLoggedInPseudo(document);
     const stock = readStock(document);
     if (!pseudo || !stock || !document.getElementById("formulairePageEnnemie")) return;
-    const [exports, levels, open, flood] = await Promise.all([
+    const [exports, levels, open, flood, allianceFloods] = await Promise.all([
       Promise.all([loadPlayersExport(location.origin), loadAlliancesExport(location.origin)]).catch(
         (error: unknown) => {
           console.error("[Optizzz] targets: loading the public exports failed", error);
@@ -76,6 +77,8 @@ export const targets: Feature = {
       loadLevelsOf(location.origin, ["attackSpeed"]).catch((error: unknown) => ({ error })),
       storage.getItem<boolean>(openKey(location.host)),
       loadFloodColumn(location.origin, toggles),
+      // The members' floods on their way, from the Envois: « déjà visée par Pseudo ».
+      isEnabled(toggles, "optizzz-account") ? askAllianceFloods(location.origin) : null,
     ]);
 
     const style = document.createElement("style");
@@ -105,6 +108,7 @@ export const targets: Feature = {
         flood: flood.settings,
         floodMissing: flood.missing,
         protectedMe: isUnderBeginnerProtection(document),
+        allianceFloods: allianceFloods?.floods ?? null,
         onOpenChange: (isOpen) => void storage.setItem(openKey(location.host), isOpen),
       },
       () => new Date(),

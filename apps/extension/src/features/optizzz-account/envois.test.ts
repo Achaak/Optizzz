@@ -7,6 +7,9 @@ import { storeConvoys, storeIncomingConvoys } from "@/data/convoys";
 import { loadKeys, storeKeys } from "@/data/envois";
 import { storeAttachedPlayers, storeCurrentPlayer, storeLink } from "@/data/optizzz-account";
 import type { DiscordService } from "./discord";
+import { armyFromKeys } from "@optizzz/game/army/units";
+import { writeLaunches } from "@/data/launches";
+import { storeSentAttacks } from "@/data/sent-attacks";
 import { ENVOI_DELAY_MS, envoiService, MISSING_KEY } from "./envois";
 
 const S5 = "https://s5.fourmizzz.fr";
@@ -52,8 +55,15 @@ function fakeSite() {
   let inSpace = true;
   let offline = false;
   const settings = new Map<number, string[]>();
-  let rows: { id: string; server: string; playerId: number; category: string; fingerprint: string; blob: string }[] =
-    [];
+  let rows: {
+    id: string;
+    server: string;
+    playerId: number;
+    category: string;
+    fingerprint: string;
+    blob: string;
+    detail?: string;
+  }[] = [];
   let nextId = 1;
   const fetch = (url: string, init: RequestInit) => {
     const { pathname, searchParams } = new URL(url);
@@ -76,7 +86,11 @@ function fakeSite() {
                     name: "ABC sur S5",
                     tag: "ABC",
                     version: { version, createdAt: NOW.toISOString(), createdByPseudo: "Messor" },
-                    members: [],
+                    members: [
+                      { playerId: 1, pseudo: "Messor", categories: settings.get(1) ?? [] },
+                      { playerId: 2, pseudo: "Lasius", categories: ["floods"] },
+                      { playerId: 3, pseudo: "Formica", categories: [] },
+                    ],
                   }
                 : null,
             },
@@ -88,21 +102,23 @@ function fakeSite() {
       return Promise.resolve(new Response(null, { status: 204 }));
     }
     if (pathname === "/api/extension/envois" && method === "POST") {
-      if (!(settings.get(1) ?? []).includes("convoys"))
+      const category = body?.category as string;
+      if (!(settings.get(1) ?? []).includes(category))
         return Promise.resolve(Response.json({ error: "category-off", message: "off" }, { status: 409 }));
       if (body?.keyVersion !== version)
         return Promise.resolve(Response.json({ error: "stale-key", message: MISSING_KEY }, { status: 409 }));
       const removed = body.removed as string[];
-      rows = rows.filter((r) => !(r.playerId === body.playerId && removed.includes(r.fingerprint)));
-      for (const item of body.items as { fingerprint: string; blob: string }[]) {
-        const known = rows.find((r) => r.playerId === body.playerId && r.fingerprint === item.fingerprint);
-        if (known) known.blob = item.blob;
+      const mine = (r: (typeof rows)[number]) => r.playerId === body.playerId && r.category === category;
+      rows = rows.filter((r) => !(mine(r) && removed.includes(r.fingerprint)));
+      for (const item of body.items as { fingerprint: string; blob: string; detail?: string }[]) {
+        const known = rows.find((r) => mine(r) && r.fingerprint === item.fingerprint);
+        if (known) Object.assign(known, { blob: item.blob, detail: item.detail });
         else
           rows.push({
             id: String(nextId++),
             server: "s5",
             playerId: body.playerId as number,
-            category: "convoys",
+            category,
             ...item,
           });
       }
@@ -154,7 +170,7 @@ describe("the Envois of the convoys", () => {
   let discord: ReturnType<typeof fakeDiscord>;
   let now: Date;
   let timers: { ms: number; run: () => void }[];
-  let notices: { id: string; message: string }[];
+  let notices: { kind: string; id: string; message: string }[];
   const service = () =>
     envoiService({
       now: () => now,
@@ -198,7 +214,7 @@ describe("the Envois of the convoys", () => {
 
   it("sends nothing while « Convois » is unchecked, even when the convoys kept change", async () => {
     await keysHanded([KEY_1]);
-    service().changed("s5.fourmizzz.fr");
+    service().changed("s5.fourmizzz.fr", "convoys");
     await flush();
     expect(site.posts()).toEqual([]);
   });
@@ -231,8 +247,8 @@ describe("the Envois of the convoys", () => {
       [{ sender: "Polyergus", food: 2, materials: 1, arrivesAt: new Date("2026-10-25T17:00:00Z") }],
       NOW,
     );
-    envois.changed("s5.fourmizzz.fr");
-    envois.changed("s5.fourmizzz.fr");
+    envois.changed("s5.fourmizzz.fr", "convoys");
+    envois.changed("s5.fourmizzz.fr", "convoys");
     expect(timers.map((t) => t.ms)).toEqual([ENVOI_DELAY_MS]);
     expect(site.posts()).toHaveLength(1);
     await flush();
@@ -259,13 +275,13 @@ describe("the Envois of the convoys", () => {
       ],
       NOW,
     );
-    envois.changed("s5.fourmizzz.fr");
+    envois.changed("s5.fourmizzz.fr", "convoys");
     await flush();
     expect(site.rows().find((r) => r.fingerprint === first?.fingerprint)?.blob).toBe(first?.blob);
 
     // The convoy arrived: gone from commerce.php.
     await storeConvoys(S5, [], NOW);
-    envois.changed("s5.fourmizzz.fr");
+    envois.changed("s5.fourmizzz.fr", "convoys");
     await flush();
     expect(site.posts().at(-1)?.body?.removed).toEqual([first?.fingerprint]);
     expect(site.rows()).toHaveLength(1);
@@ -330,7 +346,7 @@ describe("the Envois of the convoys", () => {
       [{ recipient: "Lasius", food: 0, materials: 350_000, arrivesAt: new Date("2026-10-25T16:12:00Z") }, sent],
       NOW,
     );
-    envois.changed("s5.fourmizzz.fr");
+    envois.changed("s5.fourmizzz.fr", "convoys");
     await flush();
     expect(discord.announced).toHaveLength(1);
     expect(discord.announced[0]).toMatchObject({
@@ -343,7 +359,7 @@ describe("the Envois of the convoys", () => {
       ],
     });
     // The same convoys read again: nothing new.
-    envois.changed("s5.fourmizzz.fr");
+    envois.changed("s5.fourmizzz.fr", "convoys");
     await flush();
     expect(discord.announced).toHaveLength(1);
   });
@@ -357,7 +373,7 @@ describe("the Envois of the convoys", () => {
       [{ sender: "Polyergus", food: 2, materials: 1, arrivesAt: new Date("2026-10-25T17:00:00Z") }],
       NOW,
     );
-    envois.changed("s5.fourmizzz.fr");
+    envois.changed("s5.fourmizzz.fr", "convoys");
     await flush();
     expect(discord.announced).toEqual([]);
 
@@ -370,7 +386,7 @@ describe("the Envois of the convoys", () => {
       [{ recipient: "Lasius", food: 0, materials: 350_000, arrivesAt: new Date("2026-10-25T16:12:00Z") }],
       NOW,
     );
-    envois.changed("s5.fourmizzz.fr");
+    envois.changed("s5.fourmizzz.fr", "convoys");
     await flush();
     expect(site.posts().at(-1)?.body?.keyVersion).toBe(2);
     expect(discord.announced).toEqual([]);
@@ -386,7 +402,7 @@ describe("the Envois of the convoys", () => {
 
 describe("the relève", () => {
   let site: ReturnType<typeof fakeSite>;
-  let notices: { id: string; message: string }[];
+  let notices: { kind: string; id: string; message: string }[];
   const service = (now = NOW) =>
     envoiService({
       now: () => now,
@@ -473,6 +489,7 @@ describe("the relève", () => {
     await service().releve("alarm");
     expect(notices).toEqual([
       {
+        kind: "alliance-convoy",
         id: "s5.fourmizzz.fr:alliance-convoy:c",
         message: "S5 : un convoi de Lasius vous arrive à 18 h 12",
         url: `${S5}/commerce.php`,
@@ -487,5 +504,205 @@ describe("the relève", () => {
     site.setInSpace(false);
     await service().refreshSpaces();
     expect((await service().incoming(S5)).problem).toBe("no-space");
+  });
+});
+
+describe("the Envois of the floods", () => {
+  let site: ReturnType<typeof fakeSite>;
+  let now: Date;
+  let timers: { ms: number; run: () => void }[];
+  let notices: { kind: string; id: string; message: string }[];
+  const ARRIVAL = new Date("2026-10-25T17:12:00Z");
+  const service = () =>
+    envoiService({
+      now: () => now,
+      fetch: site.fetch,
+      permitted: () => Promise.resolve(true),
+      crypto: fakeCrypto,
+      notify: (notice) => {
+        notices.push(notice);
+        return Promise.resolve();
+      },
+      later: (ms, run) => timers.push({ ms, run }),
+      discord: discord.service,
+    });
+  const flush = async () => {
+    const due = timers;
+    timers = [];
+    for (const timer of due) timer.run();
+    for (let i = 0; i < 50; i++) await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  };
+  let discord = fakeDiscord();
+  const opened = async (blob: string | undefined) =>
+    JSON.parse(await fakeCrypto([KEY_1]).decrypt(blob ?? "")) as { item: unknown; fingerprint: string };
+  const floodPosts = () => site.posts().filter((p) => p.body?.category === "floods");
+
+  beforeEach(async () => {
+    fakeBrowser.reset();
+    site = fakeSite();
+    now = NOW;
+    timers = [];
+    notices = [];
+    discord = fakeDiscord();
+    await storeLink(TOKEN, NOW);
+    await storeAttachedPlayers([{ server: "s5", pseudo: "Messor" }]);
+    await storeCurrentPlayer(S5, "Messor");
+    await storeKeys(SPACE, [KEY_1], null);
+    await storeSentAttacks(
+      S5,
+      [
+        { attackId: 34250, target: "Lasius", arrivesAt: ARRIVAL },
+        { attackId: 34251, target: "Ennemi", arrivesAt: new Date(ARRIVAL.getTime() + 2 * 3600_000) },
+      ],
+      NOW,
+    );
+    // Noted by the Plan de flood when sent: only the first one.
+    await writeLaunches(S5, [
+      {
+        targetId: 2,
+        target: "Lasius",
+        ants: 12_348,
+        take: 12_348,
+        arrivesAt: ARRIVAL,
+        army: armyFromKeys({ JSN: 12_348 }),
+      },
+    ]);
+  });
+
+  it("sends each attack on its way, the take of the Plan de flood, and its army in the Admins' blob", async () => {
+    await service().choose("s5", "Messor", { ...NO_ENVOIS, floods: true });
+    expect(site.calls.find((c) => c.path === "/api/extension/envoi-settings")?.body?.categories).toEqual(["floods"]);
+    const [post] = floodPosts();
+    const items = post?.body?.items as { fingerprint: string; blob: string; detail?: string }[];
+    expect(items).toHaveLength(2);
+    // Nothing in clear: neither the targets, nor the take, nor the army.
+    expect(JSON.stringify(items)).not.toMatch(/Lasius|Ennemi|12348|JSN/);
+    expect((await opened(items[0]?.blob)).item).toEqual({
+      from: "Messor",
+      target: "Lasius",
+      at: ARRIVAL.getTime(),
+      take: 12_348,
+    });
+    const army = await opened(items[0]?.detail);
+    expect(army.item).toEqual({ army: { JSN: 12_348 } });
+    // The army names its own row: it cannot be moved under another flood.
+    expect(army.fingerprint).toBe(items[0]?.fingerprint);
+    expect((await opened(items[1]?.blob)).item).toMatchObject({ target: "Ennemi", take: null });
+    expect(items[1]?.detail).toBeUndefined();
+    // The convoys were not checked: nothing of them left.
+    expect(site.posts().every((p) => p.body?.category === "floods")).toBe(true);
+  });
+
+  it("sends the floods a few seconds after the game's list changes, and forgets a cancelled one, not an arrived one", async () => {
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, floods: true });
+    const [lasius, ennemi] = site.rows().map((r) => r.fingerprint);
+
+    // The attack on Ennemi was cancelled; the one on Lasius arrives, and the Plan de flood drops its launch.
+    now = new Date(ARRIVAL.getTime() + 60_000);
+    await storeSentAttacks(S5, [{ attackId: 34250, target: "Lasius", arrivesAt: ARRIVAL }], NOW);
+    await writeLaunches(S5, []);
+    envois.changed("s5.fourmizzz.fr", "floods");
+    envois.changed("s5.fourmizzz.fr", "floods");
+    expect(timers.map((t) => t.ms)).toEqual([ENVOI_DELAY_MS]);
+    await flush();
+    expect(floodPosts().at(-1)?.body?.removed).toEqual([ennemi]);
+    const kept = site.rows().find((r) => r.fingerprint === lasius);
+    // Arrived, it keeps what was sent: its take and its army stay on the site for 7 days.
+    expect((await opened(kept?.blob)).item).toMatchObject({ take: 12_348 });
+    expect(kept?.detail).toBeDefined();
+
+    // Gone from the game's list after its arrival: not « removed ».
+    await storeSentAttacks(S5, [], now);
+    envois.changed("s5.fourmizzz.fr", "floods");
+    await flush();
+    expect(floodPosts().at(-1)?.body?.removed).toEqual([]);
+    expect(site.rows().map((r) => r.fingerprint)).toEqual([lasius]);
+  });
+
+  it("asks Discord to announce the attacks just launched, never their army, not on the first Envoi", async () => {
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, floods: true });
+    expect(discord.announced).toEqual([]);
+
+    const later = new Date(ARRIVAL.getTime() + 600_000);
+    await storeSentAttacks(
+      S5,
+      [
+        { attackId: 34250, target: "Lasius", arrivesAt: ARRIVAL },
+        { attackId: 34251, target: "Ennemi", arrivesAt: new Date(ARRIVAL.getTime() + 2 * 3600_000) },
+        { attackId: 34252, target: "Lasius", arrivesAt: later },
+        { attackId: 34253, target: "Lasius", arrivesAt: later },
+      ],
+      NOW,
+    );
+    envois.changed("s5.fourmizzz.fr", "floods");
+    await flush();
+    expect(discord.announced).toHaveLength(1);
+    expect(discord.announced[0]).toMatchObject({
+      spaceId: SPACE,
+      categories: ["floods"],
+      event: "floods",
+      news: [
+        {
+          kind: "attacks",
+          from: "Messor",
+          target: "Lasius",
+          count: 2,
+          firstAt: later.getTime(),
+          lastAt: later.getTime(),
+          take: null,
+        },
+      ],
+    });
+    expect(JSON.stringify(discord.announced)).not.toMatch(/JSN|army/);
+    envois.changed("s5.fourmizzz.fr", "floods");
+    await flush();
+    expect(discord.announced).toHaveLength(1);
+  });
+
+  it("shows the members' floods to the game's pages, and notifies one newly on its way to me, once", async () => {
+    const sealedFlood = (playerId: number, fingerprint: string, item: Record<string, unknown>) =>
+      fakeCrypto([KEY_1]).encrypt(
+        JSON.stringify({ v: 1, server: "s5", playerId, category: "floods", fingerprint, observedAt: 1, item }),
+      );
+    const onMe = { from: "Lasius", target: "Messor", at: ARRIVAL.getTime(), take: 12_348 };
+    site.addRow({
+      id: "1",
+      server: "s5",
+      playerId: 2,
+      category: "floods",
+      fingerprint: "f1",
+      blob: await sealedFlood(2, "f1", { ...onMe, target: "Formica", take: null }),
+    });
+    await service().releve("page");
+    expect(await service().floods(S5)).toEqual({
+      problem: null,
+      me: "Messor",
+      members: ["Messor", "Lasius", "Formica"],
+      floods: [{ from: "Lasius", target: "Formica", at: ARRIVAL.getTime(), take: null }],
+    });
+    site.addRow({
+      id: "1001",
+      server: "s5",
+      playerId: 2,
+      category: "floods",
+      fingerprint: "f2",
+      blob: await sealedFlood(2, "f2", onMe),
+    });
+    await service().releve("alarm");
+    await service().releve("alarm");
+    expect(notices).toEqual([
+      {
+        kind: "alliance-flood",
+        id: "s5.fourmizzz.fr:alliance-flood:f2",
+        message: "Lasius vous floode : arrivée aujourd'hui 18 h 12 (S5)",
+        url: `${S5}/Armee.php`,
+      },
+    ]);
+    // Arrived: no longer on its way.
+    now = new Date(ARRIVAL.getTime() + 1000);
+    expect((await service().floods(S5)).floods).toEqual([]);
   });
 });

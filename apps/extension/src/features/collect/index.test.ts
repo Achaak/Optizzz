@@ -12,6 +12,8 @@ import { storeChoices } from "@/data/envois";
 import { NO_ENVOIS } from "@optizzz/game/site-links/envois";
 import { loadConvoyHistory } from "@/data/convoy-history";
 import { loadSections } from "@/data/end-times";
+import armeeHtml from "../flood/__fixtures__/armee-attacks-s5.html?raw";
+import { loadSentAttacks } from "@/data/sent-attacks";
 import { collect } from ".";
 
 const ORIGIN = location.origin;
@@ -97,6 +99,25 @@ describe("collect", () => {
     await storeChoices("s5", "Formica", { ...NO_ENVOIS, convoys: true });
     await collect.run(ctx, { ...options, "optizzz-account": false });
     expect(await loadIncomingConvoys(S5)).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+    happyDOM.setURL(`${ORIGIN}/Reine.php`);
+  });
+
+  it("keeps the attacks on their way with the game's numbers when the player sends their floods, without a request", async () => {
+    const happyDOM = (window as unknown as { happyDOM: { setURL: (url: string) => void } }).happyDOM;
+    happyDOM.setURL("https://s5.fourmizzz.fr/Armee.php");
+    document.documentElement.innerHTML = `<body><span id="pseudo">Messor</span>${armeeHtml}</body>`;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    await collect.run(ctx, {});
+    expect(await loadSentAttacks(S5)).toBeNull();
+
+    await storeChoices("s5", "Messor", { ...NO_ENVOIS, floods: true });
+    await collect.run(ctx, {});
+    expect((await loadSentAttacks(S5))?.attacks.map((a) => [a.attackId, a.target])).toEqual([
+      [34250, "Cible_1"],
+      [34251, "Cible_2"],
+    ]);
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
     happyDOM.setURL(`${ORIGIN}/Reine.php`);

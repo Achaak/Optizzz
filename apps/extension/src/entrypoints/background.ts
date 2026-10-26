@@ -30,9 +30,10 @@ export default defineBackground(() => {
   setUpWatchlist();
   setUpOptizzzAccount({
     crypto: envoiCrypto,
-    // « Un convoi de Pseudo vous arrive à 18 h 12 »: off unless switched on, once per convoy.
-    notify: async (notice) => {
-      if ((await loadNotificationSettings())["alliance-convoy"]) await sendNotice(notice, { once: true });
+    // « Un convoi de Pseudo vous arrive à 18 h 12 », « Pseudo vous floode : arrivée aujourd'hui 18 h 12 »: off unless
+    // switched on, once each.
+    notify: async ({ kind, ...notice }) => {
+      if ((await loadNotificationSettings())[kind]) await sendNotice(notice, { once: true });
     },
   });
 

@@ -44,9 +44,13 @@ export type SpaceMessage =
   | { type: "optizzz-space"; action: "keys"; spaceId: string; keys: HandedKey[]; expiresAt: number | null }
   | { type: "optizzz-space"; action: "forget" };
 
-/** From the game's pages: one opened (the relève), and commerce.php asking for the alliance's convoys to it. */
+/**
+ * From the game's pages: one opened (the relève), commerce.php asking for the alliance's convoys to it, and Armee.php,
+ * the Plan de flood and the targets asking for the alliance's floods on their way.
+ */
 export type EnvoiMessage =
-  { type: "optizzz-envois"; action: "page-open" } | { type: "optizzz-envois"; action: "incoming"; origin: string };
+  | { type: "optizzz-envois"; action: "page-open" }
+  | { type: "optizzz-envois"; action: "incoming" | "floods"; origin: string };
 
 const record = (message: unknown): Record<string, unknown> | null =>
   typeof message === "object" && message !== null ? (message as Record<string, unknown>) : null;
@@ -83,7 +87,9 @@ function isChoices(value: unknown): value is EnvoiChoices {
 export function isEnvoiMessage(message: unknown): message is EnvoiMessage {
   const m = record(message);
   if (m?.type !== "optizzz-envois") return false;
-  return m.action === "page-open" || (m.action === "incoming" && typeof m.origin === "string");
+  return (
+    m.action === "page-open" || ((m.action === "incoming" || m.action === "floods") && typeof m.origin === "string")
+  );
 }
 
 export function isLinkMessage(message: unknown): message is LinkMessage {
@@ -106,7 +112,7 @@ export function isSpaceMessage(message: unknown): message is SpaceMessage {
   );
 }
 
-/** From a game page: the alliance's convoys on their way to its logged-in player. */
+/** From a game page: the relève, or what the alliance sent that this page shows (convoys, floods). */
 export async function askEnvois<T>(message: EnvoiMessage): Promise<T | null> {
   return browser.runtime.sendMessage<EnvoiMessage, T | null>(message);
 }

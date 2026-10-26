@@ -45,6 +45,7 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
         members: space.members.map((m) => ({
           server: m.server,
           playerId: m.playerId,
+          role: m.role,
           pseudo: m.player.pseudo,
           userId: m.player.userId,
           categories: m.player.envoiSettings?.categories ?? [],
@@ -72,9 +73,9 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
           (
             await tx.envoiItem.findMany({
               where: { ...mine, fingerprint: { in: items.map((i) => i.fingerprint) } },
-              select: { fingerprint: true, blob: true },
+              select: { fingerprint: true, blob: true, detail: true },
             })
-          ).map((r) => [r.fingerprint, r.blob]),
+          ).map((r) => [r.fingerprint, r]),
         );
         const added = items.filter((i) => !known.has(i.fingerprint));
         // Two Envois of the same Joueur at once: the second insert of a fingerprint is skipped, not an error.
@@ -84,11 +85,17 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
             skipDuplicates: true,
           });
         for (const item of items) {
-          const blob = known.get(item.fingerprint);
-          if (blob === undefined || blob === item.blob) continue;
+          const row = known.get(item.fingerprint);
+          if (!row || (row.blob === item.blob && row.detail === item.detail)) continue;
           await tx.envoiItem.updateMany({
             where: { ...mine, fingerprint: item.fingerprint },
-            data: { blob: item.blob, keyVersion: item.keyVersion, expiresAt: item.expiresAt, updatedAt: now },
+            data: {
+              blob: item.blob,
+              detail: item.detail,
+              keyVersion: item.keyVersion,
+              expiresAt: item.expiresAt,
+              updatedAt: now,
+            },
           });
         }
       });
@@ -103,6 +110,7 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
           category: true,
           fingerprint: true,
           blob: true,
+          detail: true,
           updatedAt: true,
         },
         orderBy: [{ updatedAt: "asc" }, { id: "asc" }],

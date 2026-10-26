@@ -198,4 +198,79 @@ describe("the Envois on the site", () => {
     expect(next.live).not.toContain(first.items.find((r) => r.fingerprint === fp(1))?.id);
     expect(next.cursor).toBeGreaterThan(first.cursor);
   });
+
+  describe("the floods", () => {
+    const flood = async (n: number, detail: string | null = null, ring = keyring) => ({
+      fingerprint: fp(n),
+      blob: await encryptData(`flood ${String(n)}`, ring),
+      ...(detail !== null && { detail: await encryptData(detail, ring) }),
+      expiresAt: now.getTime() + 2 * DAY,
+    });
+    const sendFloods = (who: typeof messor, items: Awaited<ReturnType<typeof flood>>[], removed: string[] = []) =>
+      service.saveEnvoi(who.userId, {
+        server: who.server,
+        playerId: who.playerId,
+        category: "floods",
+        keyVersion: 1,
+        items,
+        removed,
+      });
+
+    it("are kept only while « Floods » is checked, apart from the convoys", async () => {
+      await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["convoys"] });
+      expect((await failure(sendFloods(messor, [await flood(1)]))).code).toBe("category-off");
+      await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["floods"] });
+      await sendFloods(messor, [await flood(1)]);
+      expect(memory.rows().map((r) => [r.category, r.fingerprint])).toEqual([["floods", fp(1)]]);
+      expect((await failure(send(messor, [await item(2)]))).code).toBe("category-off");
+    });
+
+    it("hand the army sent to the space's Admins only", async () => {
+      memory.setRole(SPACE, messor, "admin");
+      for (const who of [messor, lasius])
+        await service.saveSettings(who.userId, { server: "s5", playerId: who.playerId, categories: ["floods"] });
+      const sent = await flood(1, "12 000 JSN");
+      await sendFloods(lasius, [sent, await flood(2)]);
+      const admin = await service.readEnvois(messor.userId, { spaceId: SPACE });
+      expect(admin.items.map((r) => [r.fingerprint, r.detail])).toEqual([
+        [fp(1), sent.detail],
+        [fp(2), null],
+      ]);
+      const member = await service.readEnvois(lasius.userId, { spaceId: SPACE });
+      expect(member.items.map((r) => [r.fingerprint, r.detail])).toEqual([
+        [fp(1), null],
+        [fp(2), null],
+      ]);
+      expect(JSON.stringify(member)).not.toContain(sent.detail ?? "none");
+    });
+
+    it("rewrite a flood whose army alone changed, and refuse an army under another version or for the convoys", async () => {
+      await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["floods", "convoys"] });
+      const first = await flood(1, "100 JSN");
+      await sendFloods(messor, [first]);
+      now = new Date(NOW.getTime() + 60_000);
+      const changed = { ...first, detail: await encryptData("200 JSN", keyring) };
+      await sendFloods(messor, [changed]);
+      expect(memory.rows()[0]).toMatchObject({ detail: changed.detail, updatedAt: now });
+
+      const other = await createAllianceKeyring();
+      expect(
+        (
+          await failure(
+            sendFloods(messor, [{ ...first, detail: await encryptData("x", await rotateAllianceKey(other)) }]),
+          )
+        ).code,
+      ).toBe("invalid");
+      expect((await failure(send(messor, [{ ...(await item(3)), detail: first.detail } as never]))).code).toBe(
+        "invalid",
+      );
+    });
+
+    it("never keep a flood longer than 40 days, whatever the extension says", async () => {
+      await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["floods"] });
+      await sendFloods(messor, [{ ...(await flood(1)), expiresAt: now.getTime() + 400 * DAY }]);
+      const [row] = memory.rows();
+      expect(row && row.expiresAt.getTime() - now.getTime()).toBeLessThanOrEqual(40 * DAY);
+    });
+  });
 });

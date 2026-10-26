@@ -39,6 +39,14 @@ const setup = (options: Partial<FloodContext> = {}) => {
 };
 
 describe("mountFloodPlanner", () => {
+  it("says when a member's flood is already on its way to the target, from the Envois", () => {
+    expect(setup().doc.querySelector(".optizzz-flood-aimed")).toBeNull();
+    const { doc } = setup({ aimedBy: "déjà visée par Lasius, arrivée 10 h 20" });
+    expect(doc.querySelector(".optizzz-flood-aimed")?.textContent).toBe(
+      "Déjà visée par Lasius, arrivée 10 h 20 : sa prise n'est pas comptée dans ce plan.",
+    );
+  });
+
   it("plans the flood under the game's form with my free slots and army, lodge left out", () => {
     const { doc, rows, text } = setup();
     expect(doc.getElementById("formulaireChoixArmee")?.nextElementSibling?.classList.contains("optizzz-flood")).toBe(
@@ -162,6 +170,8 @@ describe("mountFloodPlanner", () => {
       ants: 400,
       take: 400,
       arrivesAt: new Date(2026, 9, 8, 10, 30),
+      // For the Floods Envoi: the Admins of the space see the army sent.
+      army: armyFromKeys({ JSN: 400 }),
     });
   });
 

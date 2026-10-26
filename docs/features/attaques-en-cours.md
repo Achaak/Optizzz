@@ -16,6 +16,7 @@ Lire d'un coup d'œil les attaques parties, et pouvoir en coller une (Discord de
 - **Renforts** (2026-10-19) : les troupes qui rentrent d'une colonie (« Rappeler l'armée » ou « Libérer la colonie » sur `colonies.php`), que le jeu écrit « - Des renforts arrivent dans 42m 36s » sans cible, ont leur ligne « ← Renforts », avec décompte et heure d'arrivée, à leur place parmi les attaques. Avec Compte+, le jeu écrit les troupes (« Troupes en renforts : 10 Jeunes Soldates Naines. ») : « d'une colonie · 10 JSN » ; sans, « votre armée qui rentre (d'une colonie) ». « Copier » donne la phrase du jeu et sa note Compte+. Avant, un joueur de S1 ne voyait plus son armée rentrer : la ligne était repliée avec ses floods.
 - Une ligne du jeu qu'Optizzz ne lit pas reste visible, sous la liste, telle que le jeu l'écrit.
 - Rien n'est chargé : tout vient de la page.
+- Sous ce bloc, sur `Armee.php`, le Compte Optizzz ajoute l'encart « Floods en route vers l'alliance » (floods des membres d'un Espace d'alliance, `site-envois.md`).
 
 ## Code
 

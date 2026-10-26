@@ -10,9 +10,9 @@ import { z } from "zod";
 
 /**
  * The kinds of events an Admin can send to Discord, each off by default. One per Envoi category that has news to
- * tell: the convoys today; the floods (« Pseudo a lancé 3 attaques, arrivée 18 h 12 ») plug in here with their line.
+ * tell, each with its line (`discordLine`).
  */
-export const DISCORD_EVENTS = ["convoys"] as const;
+export const DISCORD_EVENTS = ["convoys", "floods"] as const;
 export type DiscordEvent = (typeof DISCORD_EVENTS)[number];
 
 /** What the space page shows for each event. */
@@ -21,10 +21,14 @@ export const DISCORD_EVENT_LABELS: Record<DiscordEvent, { label: string; example
     label: "Convois",
     example: "« Messor a envoyé un convoi à Lasius : 12 348 nourriture, arrivée 18 h 12 »",
   },
+  floods: {
+    label: "Floods",
+    example: "« Messor a lancé 3 attaques sur Lasius, arrivée 18 h 12, prise attendue 12 348 »",
+  },
 };
 
 /** The Envoi category a member must send for their extension to tell an event: their consent. */
-const EVENT_CATEGORY: Record<DiscordEvent, SentCategory> = { convoys: "convoys" };
+const EVENT_CATEGORY: Record<DiscordEvent, SentCategory> = { convoys: "convoys", floods: "floods" };
 
 export const eventConsented = (event: DiscordEvent, categories: readonly string[]): boolean =>
   categories.includes(EVENT_CATEGORY[event]);
@@ -104,14 +108,71 @@ interface ConvoyNews {
   at: number;
 }
 
-/** One piece of news, as the extension of the member who acted tells it: the floods' will join the union. */
-export type DiscordNews = ConvoyNews;
+/**
+ * The attacks the member just launched on one target: how many, their arrivals, and the take the Plan de flood
+ * expects (what every member sees in « Floods »). Never the army sent: that is the Admins'.
+ */
+interface AttacksNews {
+  kind: "attacks";
+  from: string;
+  target: string;
+  count: number;
+  /** The first and the last arrival, milliseconds since 1970. */
+  firstAt: number;
+  lastAt: number;
+  /** The expected take of them all, or null when one of them was sent without the Plan de flood. */
+  take: number | null;
+}
+
+/** One piece of news, as the extension of the member who acted tells it. */
+export type DiscordNews = ConvoyNews | AttacksNews;
+
+/** New attacks of one sender, one piece of news per target, in the order of their first arrival. */
+export function attacksNews(
+  attacks: readonly { from: string; target: string; at: number; take: number | null }[],
+): DiscordNews[] {
+  const byTarget = new Map<string, AttacksNews>();
+  for (const attack of [...attacks].sort((a, b) => a.at - b.at)) {
+    const key = attack.target.toLowerCase();
+    const known = byTarget.get(key);
+    if (!known) {
+      byTarget.set(key, {
+        kind: "attacks",
+        from: attack.from,
+        target: attack.target,
+        count: 1,
+        firstAt: attack.at,
+        lastAt: attack.at,
+        take: attack.take,
+      });
+      continue;
+    }
+    known.count += 1;
+    known.lastAt = attack.at;
+    known.take = known.take === null || attack.take === null ? null : known.take + attack.take;
+  }
+  return [...byTarget.values()];
+}
 
 /** Discord's markdown, escaped: a pseudo shows as written, never as formatting or a link. */
 export const escapeDiscord = (text: string): string => text.replace(/[\\*_~`|>[\]()#-]/g, (c) => `\\${c}`);
 
-/** « Messor a envoyé un convoi à Lasius : 12 348 nourriture, arrivée 18 h 12 », Paris time. */
+/** « Messor a lancé 3 attaques sur Lasius, arrivée 18 h 12, prise attendue 12 348 », Paris time. */
+function attacksLine(news: AttacksNews, now: Date): string {
+  const what = news.count === 1 ? "une attaque" : `${formatNumber(news.count)} attaques`;
+  const first = formatEndTimeShort(new Date(news.firstAt), now);
+  const last = formatEndTimeShort(new Date(news.lastAt), now);
+  const arrival = first === last ? `arrivée ${first}` : `arrivées de ${first} à ${last}`;
+  const take = news.take === null ? "" : `, prise attendue ${formatNumber(news.take)}`;
+  return `${escapeDiscord(news.from)} a lancé ${what} sur ${escapeDiscord(news.target)}, ${arrival}${take}`;
+}
+
+/**
+ * « Messor a envoyé un convoi à Lasius : 12 348 nourriture, arrivée 18 h 12 », or the attacks' line, Paris time and
+ * numbers as the game writes them.
+ */
 export function discordLine(news: DiscordNews, now: Date): string {
+  if (news.kind === "attacks") return attacksLine(news, now);
   const amounts = [
     ...(news.food > 0 ? [`${formatNumber(news.food)} nourriture`] : []),
     ...(news.materials > 0 || news.food === 0 ? [`${formatNumber(news.materials)} matériaux`] : []),

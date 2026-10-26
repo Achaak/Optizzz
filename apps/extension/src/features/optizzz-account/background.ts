@@ -57,7 +57,7 @@ interface Dependencies {
   /** « Autoriser Discord »: the extension's page that asks for discord.com. */
   openDiscordPage: () => Promise<unknown>;
   /** The Envois (envois.ts): the Joueurs' choices, the Clé d'alliance, the relève. */
-  envois: Pick<EnvoiService, "status" | "choose" | "forget" | "receiveKeys" | "releve" | "incoming">;
+  envois: Pick<EnvoiService, "status" | "choose" | "forget" | "receiveKeys" | "releve" | "incoming" | "floods">;
 }
 
 type Notice = AccountStatus["notice"];
@@ -232,7 +232,7 @@ export function senderKind(
 /**
  * What a message gets: the settings may ask from a page or the game; the token comes only from the link script; the
  * Members page list goes only to the space script, and the Clé d'alliance comes only from it; the game's pages ask
- * for the relève and the alliance's convoys.
+ * for the relève, the alliance's convoys and its floods.
  */
 export function answer(
   service: ReturnType<typeof accountService>,
@@ -257,9 +257,14 @@ export function answer(
   }
   if (message.type === "optizzz-envois") {
     if (from !== "game") return null;
-    return message.action === "page-open"
-      ? service.envois.releve("page").then(() => null)
-      : service.envois.incoming(message.origin);
+    switch (message.action) {
+      case "page-open":
+        return service.envois.releve("page").then(() => null);
+      case "incoming":
+        return service.envois.incoming(message.origin);
+      case "floods":
+        return service.envois.floods(message.origin);
+    }
   }
   if (message.type === "optizzz-link") {
     if (from !== "link") return null;
@@ -288,6 +293,17 @@ const RELEVE_ALARM = "optizzz-releve";
 
 /** What a change in storage.local is about: the convoys kept for a server (« convoys:s5.fourmizzz.fr »…). */
 const CONVOY_KEYS = /^(?:convoys|incomingConvoys|convoy-history):(s\d{1,2}\.fourmizzz\.fr)$/;
+/** The attacks on their way as the game listed them, and those the Plan de flood noted, for a server. */
+const FLOOD_KEYS = /^(?:sentAttacks:(s\d{1,2}\.fourmizzz\.fr)|flood:(s\d{1,2}\.fourmizzz\.fr):launches)$/;
+
+/** The list category whose Envoi a change of this storage.local key calls for, with its game's host. */
+export function changedCategory(key: string): { host: string; category: "convoys" | "floods" } | null {
+  const convoys = CONVOY_KEYS.exec(key)?.[1];
+  if (convoys) return { host: convoys, category: "convoys" };
+  const floods = FLOOD_KEYS.exec(key);
+  const host = floods?.[1] ?? floods?.[2];
+  return host ? { host, category: "floods" } : null;
+}
 
 /**
  * The account's background. `crypto` binds libsodium to a space's Clé d'alliance: the background's entrypoint passes
@@ -298,7 +314,7 @@ export function setUpOptizzzAccount({
   notify,
 }: {
   crypto: (keys: HandedKey[]) => EnvoiCrypto;
-  notify: (notice: { id: string; message: string; url: string }) => Promise<void>;
+  notify: Parameters<typeof envoiService>[0]["notify"];
 }): void {
   const permitted = () => browser.permissions.contains(SITE_PERMISSION);
   const later = (ms: number, run: () => void) => {
@@ -333,8 +349,8 @@ export function setUpOptizzzAccount({
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
     for (const key of Object.keys(changes)) {
-      const host = CONVOY_KEYS.exec(key)?.[1];
-      if (host) envois.changed(host);
+      const change = changedCategory(key);
+      if (change) envois.changed(change.host, change.category);
     }
   });
   // The relève, every 5 minutes: it reads optizzz.fr only, and nothing at all without a Clé d'alliance.

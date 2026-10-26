@@ -61,16 +61,20 @@ export default function PrivacyPage() {
         </p>
         <p>
           Les Envois : dans l&apos;extension, chaque Joueur choisit ce qui part vers son espace, tout décoché au départ
-          (aujourd&apos;hui, ses convois). Quand l&apos;accès à l&apos;espace est ouvert sur une page de l&apos;espace,
-          celle-ci remet la Clé d&apos;alliance à l&apos;extension de ce navigateur (jamais votre clé privée), qui la
-          garde aussi longtemps que votre clé ouverte et l&apos;oublie quand vous vous déconnectez. L&apos;extension
-          chiffre chaque convoi avant de l&apos;envoyer : le site garde, par convoi, quel Joueur l&apos;a envoyé, dans
-          quel espace, une empreinte tirée de la Clé d&apos;alliance (qui reconnaît le même convoi vu par ses deux
-          joueurs sans dire lesquels), la version de la clé et la date où il l&apos;efface, 90 jours après
-          l&apos;arrivée ; ni l&apos;expéditeur, ni le destinataire, ni les quantités en clair. Il garde aussi les
+          (aujourd&apos;hui, ses convois et ses floods). Quand l&apos;accès à l&apos;espace est ouvert sur une page de
+          l&apos;espace, celle-ci remet la Clé d&apos;alliance à l&apos;extension de ce navigateur (jamais votre clé
+          privée), qui la garde aussi longtemps que votre clé ouverte et l&apos;oublie quand vous vous déconnectez.
+          L&apos;extension chiffre chaque convoi avant de l&apos;envoyer : le site garde, par convoi, quel Joueur
+          l&apos;a envoyé, dans quel espace, une empreinte tirée de la Clé d&apos;alliance (qui reconnaît le même convoi
+          vu par ses deux joueurs sans dire lesquels), la version de la clé et la date où il l&apos;efface, 90 jours
+          après l&apos;arrivée ; ni l&apos;expéditeur, ni le destinataire, ni les quantités en clair. De même pour
+          chaque attaque en route (floods) : sa cible, son arrivée et, lancée avec le Plan de flood, la prise attendue
+          sont chiffrées, et le site l&apos;efface 7 jours après l&apos;arrivée. L&apos;armée envoyée avec un flood part
+          dans un second chiffré, que le site ne renvoie qu&apos;aux Admins de l&apos;espace : c&apos;est le site qui la
+          leur réserve, pas le chiffrement, puisque tous les membres ont la même Clé d&apos;alliance. Il garde aussi les
           catégories que chaque Joueur envoie, montrées aux membres de l&apos;espace. Tous les membres lisent les Envois
-          de l&apos;espace ; un non-membre, rien. Le site note qui a changé l&apos;accès à l&apos;espace et quand
-          («&nbsp;Accès changé le … par Pseudo&nbsp;»).
+          de l&apos;espace (sauf cette armée, aux Admins seuls) ; un non-membre, rien. Le site note qui a changé
+          l&apos;accès à l&apos;espace et quand («&nbsp;Accès changé le … par Pseudo&nbsp;»).
         </p>
         <p>
           Discord&nbsp;: un Admin d&apos;un espace peut y enregistrer l&apos;adresse du webhook du salon Discord de

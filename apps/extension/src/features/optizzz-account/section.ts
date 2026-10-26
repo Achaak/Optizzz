@@ -8,8 +8,8 @@ import type { JoueurEnvois } from "./envois";
 import type { AccountAction, AccountStatus } from "./messages";
 
 /**
- * The six categories of the Envois (docs/features/site-envois.md), each with a plain sentence of what leaves. Only
- * the Convois send today; the others are shown, unticked and greyed « (bientôt) », until their ticket (21, 22).
+ * The six categories of the Envois (docs/features/site-envois.md), each with a plain sentence of what leaves. The
+ * Convois and the Floods send today; the others are shown, unticked and greyed « (bientôt) », until their ticket (22).
  */
 const CATEGORIES = [
   {
@@ -19,7 +19,13 @@ const CATEGORIES = [
     sentence: "Votre TDC, vos ouvrières, la taxe et vos colonies.",
   },
   { id: "convoys", label: "Convois", ready: true, sentence: "Vos convois envoyés, reçus et en route." },
-  { id: "floods", label: "Floods", ready: false, sentence: "Vos attaques en route, avec leur cible et leur arrivée." },
+  {
+    id: "floods",
+    label: "Floods",
+    ready: true,
+    sentence:
+      "Vos attaques en route, leur cible et leur arrivée ; avec le Plan de flood, la prise attendue et l'armée envoyée (l'armée, pour les Admins seuls).",
+  },
   { id: "hunts", label: "Chasses", ready: false, sentence: "Vos chasses en cours, leur retour et leur gain." },
   { id: "army", label: "Armée", ready: false, sentence: "Rien, le nombre de vos unités, ou le détail par unité." },
   {
@@ -29,6 +35,9 @@ const CATEGORIES = [
     sentence: "Vos niveaux de constructions et de recherches, et vos chantiers.",
   },
 ] as const;
+
+/** The categories that send today, each a list of items. */
+const isList = (id: string): id is "convoys" | "floods" => id === "convoys" || id === "floods";
 
 export const accountEnabled = (toggles: Toggles) => isEnabled(toggles, "optizzz-account");
 
@@ -211,7 +220,7 @@ export function buildAccountSection(doc: Document, input: AccountSectionInput): 
       const box = doc.createElement("input");
       box.type = "checkbox";
       box.dataset.category = category.id;
-      box.checked = category.id === "convoys" && joueur.choices.convoys;
+      box.checked = category.ready && isList(category.id) && joueur.choices[category.id];
       box.disabled = !category.ready;
       box.addEventListener("change", (event) => {
         if (!event.isTrusted) {
@@ -223,7 +232,7 @@ export function buildAccountSection(doc: Document, input: AccountSectionInput): 
           action: "choose",
           server: joueur.server,
           pseudo: joueur.pseudo,
-          choices: { ...joueur.choices, convoys: box.checked },
+          choices: isList(category.id) ? { ...joueur.choices, [category.id]: box.checked } : joueur.choices,
         });
       });
       const name = doc.createElement("span");
@@ -236,7 +245,7 @@ export function buildAccountSection(doc: Document, input: AccountSectionInput): 
 
     const state = joueur.problem
       ? paragraph(joueur.problem, "optizzz-callout optizzz-callout--warning")
-      : joueur.choices.convoys && joueur.spaceName
+      : (joueur.choices.convoys || joueur.choices.floods) && joueur.spaceName
         ? paragraph(
             `Espace « ${joueur.spaceName} »${joueur.lastSentAt ? ` · dernier envoi ${formatPastTime(new Date(joueur.lastSentAt), new Date())}` : ""}.`,
             "optizzz-note",

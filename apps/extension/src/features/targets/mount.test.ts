@@ -214,6 +214,19 @@ describe("mountTargets", () => {
     expect(rows().map((cells) => cells[8])).toEqual(["libre", "libre ?"]);
   });
 
+  it("says when a member's flood is already on its way to a target, from the Envois", () => {
+    const arrival = new Date(now.getTime() + 2 * 3600_000).getTime();
+    const { rows } = setup([player("Vu", { x: 1 }), player("Export", { x: 2 })], {
+      live: [{ pseudo: "Vu", field: 1000, state: "free", master: null }],
+      allianceFloods: [
+        { from: "Lasius", target: "vu", at: arrival, take: null },
+        // My own attacks are in the game's list already.
+        { from: "Moi", target: "Export", at: arrival, take: null },
+      ],
+    });
+    expect(rows().map((cells) => cells[8])).toEqual(["libre · déjà visée par Lasius, arrivée 12 h 00", "libre ?"]);
+  });
+
   it("reminds a protected player that attacking ends the protection", () => {
     const { box } = setup([player("Cible", { x: 1 })], { protectedMe: true });
     expect(box()?.textContent).toContain("Vous êtes sous protection débutant : attaquer y met fin");

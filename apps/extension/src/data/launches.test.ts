@@ -58,6 +58,14 @@ describe("queued launches", () => {
     expect(await loadLaunches(ORIGIN, at(11))).toEqual([launch("Cible", at(12))]);
   });
 
+  it("keeps the army sent through the page change, and drops one that is not an army", async () => {
+    const army = armyFromKeys({ JSN: 90, SN: 10 });
+    queueLaunch(sessionStorage, { ...launch("Cible", at(12)), army });
+    queueLaunch(sessionStorage, { ...launch("Autre", at(12)), army: ["x"] as unknown as number[] });
+    await flushQueuedLaunches(sessionStorage, ORIGIN);
+    expect(await loadLaunches(ORIGIN, at(11))).toEqual([{ ...launch("Cible", at(12)), army }]);
+  });
+
   it("keeps the queue when storing fails", async () => {
     queueLaunch(sessionStorage, launch("Cible", at(12)));
     vi.spyOn(fakeBrowser.storage.local, "set").mockRejectedValueOnce(new Error("quota"));

@@ -3,6 +3,7 @@
 import { EXTENSION_API } from "@optizzz/game/site-links/extension-link";
 import { SITE_URL } from "@optizzz/game/site-links/site";
 import { z } from "zod";
+import type { ListCategory } from "@/data/envois";
 import type { AttachedPlayer } from "@/data/optizzz-account";
 
 const TIMEOUT_MS = 15_000;
@@ -55,13 +56,16 @@ const discordSchema = z.object({
   spaces: z.array(z.object({ spaceId: z.string(), blob: z.string(), revision: z.number().int() })),
 });
 
-/** An Envoi of a list category, as POST /api/extension/envois takes it. */
+/**
+ * An Envoi of a list category, as POST /api/extension/envois takes it; `detail` is the Admins' blob (the army sent with
+ * a flood).
+ */
 export interface EnvoiBody {
   server: string;
   playerId: number;
-  category: "convoys";
+  category: ListCategory;
   keyVersion: number;
-  items: { fingerprint: string; blob: string; expiresAt: number }[];
+  items: { fingerprint: string; blob: string; detail?: string; expiresAt: number }[];
   removed: string[];
 }
 
