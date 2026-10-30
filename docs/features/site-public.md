@@ -21,7 +21,7 @@ S1 à S5, les seuls qui publient leur export (S1 à S4 en HTTP seulement, S5 en 
 
 ### Cron
 
-Un script de `apps/web/scripts/`, lancé chaque heure par GitHub Actions, lit les exports publics et écrit dans Neon avec Prisma ; il ne télécharge une version que si elle a changé. Le plan gratuit de Neon limite à 5 Go par mois ce qui sort de la base : le cron ne relit pas l'état précédent dans la base, il retélécharge l'export précédent depuis l'API (la base seulement s'il n'est plus publié), et il demande les jours déjà gardés par un `groupBy` (le `distinct` de Prisma télécharge toutes les lignes et dédoublonne en mémoire). À la fin, il appelle une route de revalidation du site protégée par un secret : les pages sont reconstruites une fois par heure, sans requête vers la base à chaque visite. Seul le cron écrit les données des serveurs ; le site les lit. Depuis les Comptes Optizzz (ADR 0008), le site de production écrit dans le seul schéma `accounts`, avec le rôle `optizzz_app` ; les aperçus Vercel gardent le rôle en lecture seule `optizzz_read`.
+Un script de `apps/web/scripts/`, lancé chaque heure sur le VPS (ADR 0009, minuterie systemd `deploy/systemd/optizzz-ingest.timer`), lit les exports publics et écrit dans la base avec Prisma ; il ne télécharge une version que si elle a changé. Écrit quand la base était chez Neon (5 Go par mois au plus sortis de la base), le cron ne relit pas l'état précédent dans la base, il retélécharge l'export précédent depuis l'API (la base seulement s'il n'est plus publié), et il demande les jours déjà gardés par un `groupBy` (le `distinct` de Prisma télécharge toutes les lignes et dédoublonne en mémoire). À la fin, il appelle une route de revalidation du site protégée par un secret : les pages sont reconstruites une fois par heure, sans requête vers la base à chaque visite. Seul le cron écrit les données des serveurs ; le site les lit. Depuis les Comptes Optizzz (ADR 0008), le site de production écrit dans le seul schéma `accounts`, avec le rôle `optizzz_app`.
 
 ### Changements partagés avec l'extension
 
@@ -35,7 +35,7 @@ Toutes en français, à des adresses en anglais depuis le 2026-10-23 (`site-outi
 - `/s5/players` : tableau triable, recherche par pseudo, filtre par alliance, pagination côté serveur.
 - `/s5/players/[id]` : fiche (alliance, position, colonisateur, scores), courbes, Journal du joueur.
 - `/s5/alliances` et `/s5/alliances/[tag]` : membres, totaux, pactes et guerres, courbes, Journal. Le tag se lit sans tenir compte de la casse (comme `sameTag`) et redirige vers celle de l'export.
-- Mentions légales (`/legal` ; éditeur : Axel Lavoie ; hébergeur : Vercel) et Confidentialité (`/privacy` ; ni mesure d'audience, ni cookie du site hors du cookie de session posé à la connexion d'un Compte Optizzz ; publicité AdSense sans pistage depuis le 2026-10-30, `site-publicite.md`).
+- Mentions légales (`/legal` ; éditeur : Axel Lavoie ; hébergeur : Scaleway, depuis le 2026-10-30) et Confidentialité (`/privacy` ; ni mesure d'audience, ni cookie du site hors du cookie de session posé à la connexion d'un Compte Optizzz ; publicité AdSense sans pistage depuis le 2026-10-30, `site-publicite.md`).
 
 Les outils et les pages de serveur sont indexés par les moteurs de recherche ; les pages joueur et alliance sont en `noindex`.
 
@@ -50,7 +50,7 @@ Elle ne lit rien sur le site en 2a. Depuis la révision de l'ADR 0005 (2026-10-2
 ### Environnements
 
 - Local : Postgres dans Docker (`apps/web/docker-compose.yml`, port 5433 : le 5432 est souvent pris) et le script du cron lancé sur un serveur (`pnpm --filter @optizzz/web ingest -- --server s5`).
-- Mise en place de Vercel (racine `apps/web`), Neon, rôles Postgres, secrets GitHub et domaine `optizzz.fr` : `bash scripts/setup-site.sh`, un assistant pas à pas.
+- Production : un VPS Scaleway (ADR 0009) avec le site, Postgres, le cron et les sauvegardes, déployé par `.github/workflows/deploy.yml` à chaque push sur `main` ; mise en place et bascule : `bash scripts/setup-vps.sh`, un assistant pas à pas.
 
 ### Code
 
@@ -63,10 +63,10 @@ Elle ne lit rien sur le site en 2a. Depuis la révision de l'ADR 0005 (2026-10-2
 | `apps/web/src/ingest/diff.ts` (+ test)                        | Le Journal entre deux relevés d'un serveur                                          |
 | `apps/web/src/ingest/days.ts` (+ test)                        | Les jours qui manquent aux courbes (10 par passage)                                 |
 | `apps/web/src/ingest/ingest.ts`, `scripts/ingest.ts`          | Un passage du cron : téléchargement, écriture, reconstruction des pages             |
-| `.github/workflows/ingest.yml`                                | Le cron horaire (et les migrations)                                                 |
+| `deploy/ingest.sh`, `deploy/systemd/optizzz-ingest.*`         | Le cron horaire, sur le VPS (ADR 0009)                                              |
 | `apps/web/src/server/queries.ts`                              | Ce que lisent les pages                                                             |
 | `apps/web/src/app/`                                           | Les pages ; `api/revalidate` pour le cron, `api/trpc` pour la recherche de joueur   |
-| `scripts/setup-site.sh`                                       | Mise en ligne pas à pas                                                             |
+| `scripts/setup-vps.sh`, `.github/workflows/deploy.yml`        | Mise en ligne pas à pas, puis déploiement (et migrations) à chaque push sur `main`  |
 
 Vérifié en local le 2026-10-22 : S5 (1 857 joueurs) et S2 (20 559 joueurs, 29 s par passage avec 10 jours d'historique) relus, Journal noté sur un changement provoqué, pages en clair, sombre et largeur de téléphone.
 

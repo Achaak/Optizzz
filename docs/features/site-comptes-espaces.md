@@ -110,13 +110,13 @@ Tout ce qui suit vit dans le schéma Postgres `accounts`, que le site de product
 Décisions prises en codant :
 
 - **Le lien de l'e-mail mène à `/login/confirm`**, où un clic sur « Se connecter à Optizzz » consomme le jeton : un antivirus de messagerie qui ouvre les liens ne le brûle pas. Better Auth répond `INVALID_TOKEN` pour un lien inconnu, déjà servi ou passé ses 15 minutes : `/login` dit les deux à la fois.
-- **L'adresse du lien ne vient jamais de la requête** (un en-tête Host forgé enverrait le lien d'un autre vers un domaine tiers) : `src/server/site-origin.ts` la tire de `BETTER_AUTH_URL`, obligatoire en production hors aperçus ; d'un aperçu Vercel, de `VERCEL_URL` ; en dev, de `http://localhost:$PORT`. Better Auth reçoit la même adresse en `baseURL` et ne lit alors plus l'origine de la requête. Test : `src/server/auth-config.test.ts`.
+- **L'adresse du lien ne vient jamais de la requête** (un en-tête Host forgé enverrait le lien d'un autre vers un domaine tiers) : `src/server/site-origin.ts` la tire de `BETTER_AUTH_URL`, obligatoire en production ; en dev, de `http://localhost:$PORT`. Better Auth reçoit la même adresse en `baseURL` et ne lit alors plus l'origine de la requête. Test : `src/server/auth-config.test.ts`.
 - **Le site ne garde qu'une empreinte du jeton** (`storeToken: "hashed"`), ni adresse IP ni navigateur dans les sessions (crochet `databaseHooks.session.create`). Le champ `name` de Better Auth reste vide.
 - **Session** : 30 jours, prolongée au plus une fois par jour, par la question « suis-je connecté ? » que pose l'en-tête depuis le navigateur. Les pages publiques restent statiques, et sans `Set-Cookie` pour qui n'a pas de session.
 - **Supprimer son compte** demande une connexion de moins d'un jour (`freshAge` par défaut de Better Auth) : sinon « Reconnectez-vous par un nouveau lien ». Le blocage du dernier Admin d'un espace se branchera dans `src/server/account-deletion.ts` (`deletionChecks`) au ticket 16 ; tout ce qui appartient au compte part par les cascades de `User`.
 - **E-mails** : `createEmailSender` envoie par l'API transactionnelle de Brevo quand `BREVO_API_KEY` et `EMAIL_FROM` sont posées ; sinon, hors production, l'e-mail s'écrit dans la console du serveur, et en production l'envoi est refusé (un lien dans les journaux ouvrirait le compte). L'appel à Brevo n'est testé qu'avec un `fetch` simulé.
-- **Limite de demandes** : celle de Better Auth (5 par minute sur le lien magique), en mémoire, donc par instance sur Vercel.
-- **Aperçus Vercel** (rôle `optizzz_read`) : « La connexion n'est pas disponible ici. Réessayez plus tard. »
+- **Limite de demandes** : celle de Better Auth (5 par minute sur le lien magique), en mémoire, sur l'unique instance du VPS.
+- **Base injoignable ou droits manquants** : « La connexion n'est pas disponible ici. Réessayez plus tard. »
 
 | Fichier                                                                                                           | Rôle                                                              |
 | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |

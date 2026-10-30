@@ -1,4 +1,4 @@
-// The hourly cron (GitHub Actions): `pnpm ingest` reads every server's public exports; `-- --server s5` only some.
+// The hourly cron (on the VPS, deploy/ingest.sh): `pnpm ingest` reads every server's public exports; `-- --server s5` only some.
 // Once something changed, it asks the site to rebuild its pages. See docs/features/site-public.md.
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";

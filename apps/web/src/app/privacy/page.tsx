@@ -9,9 +9,9 @@ export default function PrivacyPage() {
       <section className="space-y-2">
         <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Ce que le site sait de vous</h2>
         <p>
-          Sans Compte Optizzz, le site lui-même ne pose aucun cookie et ne mesure pas l&apos;audience. Comme tout site,
-          l&apos;hébergeur (Vercel) garde un temps les journaux techniques des requêtes, adresse IP comprise, pour faire
-          fonctionner le service.
+          Sans Compte Optizzz, le site lui-même ne pose aucun cookie et ne mesure pas l&apos;audience. Le serveur du
+          site, en France chez Scaleway, ne garde pas de journal des visites : votre adresse IP sert à vous répondre,
+          sans être enregistrée (la limite des demandes de lien de connexion la garde une minute en mémoire).
         </p>
         <p>
           Ce que vous choisissez sur la carte d&apos;un serveur ou saisissez dans un outil (armées, niveaux…) reste dans
@@ -131,7 +131,8 @@ export default function PrivacyPage() {
         <p>
           Depuis «&nbsp;Mon compte&nbsp;», vous pouvez retirer une extension liée, vous déconnecter de ce navigateur ou
           partout, et supprimer votre compte : tout ce qui lui appartient (connexions, extensions liées, Joueurs, place
-          dans les espaces, clés, vérifications, Envois, Demandes) est effacé tout de suite.
+          dans les espaces, clés, vérifications, Envois, Demandes) est effacé tout de suite. Une copie reste au plus 30
+          jours dans les sauvegardes de la base (en France, chez Scaleway), puis disparaît.
         </p>
       </section>
       <section className="space-y-2">

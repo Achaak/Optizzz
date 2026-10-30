@@ -1,0 +1,10 @@
+# The database's daily backup (deploy/backup.sh). Logs: journalctl -u optizzz-backup
+[Unit]
+Description=Optizzz: back up the database
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=optizzz
+ExecStart=/opt/optizzz/backup.sh

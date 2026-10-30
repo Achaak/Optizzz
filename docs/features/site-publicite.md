@@ -22,7 +22,7 @@ Jamais dans les Espaces d'alliance, le compte, la connexion ni les pages légale
 
 ## Réglages
 
-- `NEXT_PUBLIC_ADSENSE_CLIENT` (« ca-pub-… ») et `NEXT_PUBLIC_ADSENSE_SLOT` (l'unité) dans Vercel, Production seulement. Sans eux : aucune publicité ni script de Google (dev, aperçus).
+- `NEXT_PUBLIC_ADSENSE_CLIENT` (« ca-pub-… ») et `NEXT_PUBLIC_ADSENSE_SLOT` (l'unité) en variables GitHub, passées au build de l'image du site (`.github/workflows/deploy.yml`). Sans eux : aucune publicité ni script de Google (dev).
 - `/ads.txt` est servi à partir du client (`src/app/ads.txt/route.ts`), 404 sans compte.
 - Dans AdSense : site `optizzz.fr` à faire valider, une unité « Display » responsive, cookies propriétaires désactivés.
 

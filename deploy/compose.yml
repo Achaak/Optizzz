@@ -1,0 +1,79 @@
+# The site on the VPS (docs/adr/0009-vps-scaleway.md), in /opt/optizzz next to its .env (deploy/.env.example).
+# Copied there by each deployment (.github/workflows/deploy.yml), which then runs deploy.sh.
+name: optizzz-prod
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+services:
+  db:
+    image: postgres:18.0-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: optizzz
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: optizzz
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?}
+    volumes:
+      - db:/var/lib/postgresql
+      # The site's role, created with the database (postgres/init-roles.sh); its rights are set at each deployment.
+      - ./postgres/init-roles.sh:/docker-entrypoint-initdb.d/init-roles.sh:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "optizzz", "-d", "optizzz"]
+      interval: 5s
+      retries: 10
+    <<: *logging
+
+  web:
+    image: ghcr.io/achaak/optizzz-web:${TAG:?}
+    restart: unless-stopped
+    environment:
+      # The site writes only the « accounts » schema (docs/adr/0008-comptes-schema-accounts.md).
+      DATABASE_URL: postgresql://optizzz_app:${APP_DB_PASSWORD}@db:5432/optizzz
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:?}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?}
+      BETTER_AUTH_URL: https://optizzz.fr
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      DISCORD_REMINDERS_KEY: ${DISCORD_REMINDERS_KEY:-}
+    depends_on:
+      db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/robots.txt"]
+      interval: 10s
+      retries: 6
+      start_period: 10s
+    <<: *logging
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web]
+    <<: *logging
+
+  # Migrations and the hourly ingest (ingest.sh), as the database's owner; never started by « up ».
+  tools:
+    image: ghcr.io/achaak/optizzz-tools:${TAG:?}
+    profiles: [tools]
+    environment:
+      DATABASE_URL: postgresql://optizzz:${POSTGRES_PASSWORD}@db:5432/optizzz
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+      SITE_URL: http://web:3000
+    depends_on:
+      db: { condition: service_healthy }
+    <<: *logging
+
+volumes:
+  db:
+  caddy_data:
+  caddy_config:

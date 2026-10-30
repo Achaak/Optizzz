@@ -35,7 +35,7 @@ Révision de l'ADR 0005 du 2026-10-22 : sans compte, l'extension peut lire ce qu
 | `packages/map/src/` (+ tests)                                       | Puces, filtres, noms, axes (`plotShape` : la bande des serveurs très hauts), option ECharts avec la palette de chaque app                                                                                               |
 | `packages/map/src/map-data.ts` (+ test)                             | Les colonnes de la carte servies par le site, lues par le site et l'extension                                                                                                                                           |
 | `apps/web/prisma/schema.prisma` (`MapFile`), `src/ingest/ingest.ts` | Le cron prépare le fichier de chaque serveur, déjà compressé (S4 : 1,8 Mo en gzip)                                                                                                                                      |
-| `apps/web/src/app/api/[server]/map/route.ts`                        | Le sert tel quel, avec `Access-Control-Allow-Origin: *` (une fonction Vercel répond 4,5 Mo au plus)                                                                                                                     |
+| `apps/web/src/app/api/[server]/map/route.ts`                        | Le sert tel quel, avec `Access-Control-Allow-Origin: *` (lu dans la base à chaque demande ; le navigateur le garde dix minutes)                                                                                         |
 | `apps/web/src/components/map/`                                      | La page : puces (`chip-bar`), carte (`map-chart`), tableau, état dans le fragment (`map-state`, + test, au format de `packages/game/src/site-links/`) et ce que demande l'adresse, palettes clair et sombre (`palette`) |
 | `apps/extension/src/data/site-map.ts` (+ test)                      | L'extension lit la carte du site, repli sur l'export                                                                                                                                                                    |
 
@@ -43,7 +43,7 @@ Vérifié en local le 2026-10-22 : S5 (puces, pactes, filtre, tableau depuis une
 
 Vérifié en production le 2026-10-23 (après le premier passage du cron, export de 6 h 00), aux adresses d'alors (`/sX/carte`, `/api/sX/carte`, `?p=`, `?joueur=` ; en anglais depuis, voir plus haut) :
 
-- `/api/sX/carte` pour S1 à S5 : 200, `Content-Encoding: gzip`, `Access-Control-Allow-Origin: *`, `Cache-Control: public, max-age=600` (Vercel retire `s-maxage` et `stale-while-revalidate` de la réponse, et les garde pour son cache : `x-vercel-cache: HIT` à la deuxième lecture) ; JSON valide pour `mapDataSchema`. S4 : 1,8 Mo transférés, 216 456 joueurs.
+- `/api/sX/carte` pour S1 à S5 : 200, `Content-Encoding: gzip`, `Access-Control-Allow-Origin: *`, `Cache-Control: public, max-age=600` (mesuré sur Vercel ; sur le VPS, sans CDN, chaque lecture repasse par la base) ; JSON valide pour `mapDataSchema`. S4 : 1,8 Mo transférés, 216 456 joueurs.
 - `/sX/carte` pour S1 à S5 : carte affichée sans message dans la console, en clair et en sombre, sur ordinateur et à 375 px ; S4 et S1 s'ouvrent sur une bande ; un lien `?p=…` rouvre puces, filtre, référence et vitesse ; « Voir sur la carte » des fiches joueur et alliance mène à `?joueur=…` et `?alliance=…` (tag encodé : `L%2FN` sur S1).
 
 Corrigé ensuite (vérifié en local, en production après la mise en ligne) :

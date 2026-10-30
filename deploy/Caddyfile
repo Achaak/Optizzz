@@ -1,0 +1,9 @@
+# HTTPS for optizzz.fr (Let's Encrypt certificates, renewed by Caddy). No access log: the site keeps no IP address.
+optizzz.fr {
+	encode zstd gzip
+	reverse_proxy web:3000
+}
+
+www.optizzz.fr {
+	redir https://optizzz.fr{uri} permanent
+}

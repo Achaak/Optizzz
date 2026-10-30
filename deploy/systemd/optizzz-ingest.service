@@ -1,0 +1,11 @@
+# The site's hourly ingest (deploy/ingest.sh). Logs: journalctl -u optizzz-ingest
+[Unit]
+Description=Optizzz: read the servers' public exports
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=optizzz
+ExecStart=/opt/optizzz/ingest.sh
+TimeoutStartSec=30min

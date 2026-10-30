@@ -16,8 +16,6 @@ import { lastAdminBlocker } from "~/server/spaces/space-service";
 export const ownOrigin = siteOrigin({
   nodeEnv: env.NODE_ENV,
   betterAuthUrl: env.BETTER_AUTH_URL,
-  vercelEnv: env.VERCEL_ENV,
-  vercelUrl: env.VERCEL_URL,
   port: env.PORT,
 });
 

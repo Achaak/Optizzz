@@ -1,0 +1,10 @@
+# The exports are published on the hour: read at ten past.
+[Unit]
+Description=Optizzz: hourly ingest
+
+[Timer]
+OnCalendar=*-*-* *:10:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

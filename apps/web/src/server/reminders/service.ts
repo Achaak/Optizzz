@@ -21,8 +21,6 @@ export const reminders = reminderService({
   origin: siteOrigin({
     nodeEnv: env.NODE_ENV,
     betterAuthUrl: env.BETTER_AUTH_URL,
-    vercelEnv: env.VERCEL_ENV,
-    vercelUrl: env.VERCEL_URL,
     port: env.PORT,
   }),
 });

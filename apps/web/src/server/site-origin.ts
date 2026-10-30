@@ -5,16 +5,12 @@ interface OriginSource {
   nodeEnv: "development" | "test" | "production";
   /** BETTER_AUTH_URL: required in production (https://optizzz.fr). */
   betterAuthUrl?: string;
-  /** VERCEL_ENV and VERCEL_URL, set by Vercel itself: a preview's own deployment address. */
-  vercelEnv?: string;
-  vercelUrl?: string;
   /** The dev server's port. */
   port?: string;
 }
 
-export function siteOrigin({ nodeEnv, betterAuthUrl, vercelEnv, vercelUrl, port }: OriginSource): string {
+export function siteOrigin({ nodeEnv, betterAuthUrl, port }: OriginSource): string {
   if (betterAuthUrl) return new URL(betterAuthUrl).origin;
-  if (vercelEnv === "preview" && vercelUrl) return `https://${vercelUrl}`;
   if (nodeEnv !== "production") return `http://localhost:${port ?? "3000"}`;
   throw new Error("Set BETTER_AUTH_URL: the site's address, for the magic links");
 }

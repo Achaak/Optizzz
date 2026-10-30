@@ -116,7 +116,7 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     };
     // The first pass on a server has nothing to compare with: the Journal starts at the next one. The previous
     // reading comes back from the API while it is still published: reading it from the database would count every
-    // player against Neon's network transfer, each hour.
+    // player against the database's network transfer, each hour.
     const sinceAlliances = readOf("alliances");
     const before: Reading | null = since
       ? versions.players.includes(since) && sinceAlliances && versions.alliances.includes(sinceAlliances)

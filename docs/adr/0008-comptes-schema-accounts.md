@@ -1,6 +1,6 @@
 # 0008 — Le site écrit les comptes dans un schéma `accounts`, avec son propre rôle
 
-**Date** : 2026-10-23 · **Statut** : accepté
+**Date** : 2026-10-23 · **Statut** : accepté ; depuis l'ADR 0009 (VPS Scaleway), plus d'aperçus ni de `optizzz_read`, et les droits de `optizzz_app` sont redonnés à chaque déploiement (`deploy/postgres/grants.sql`)
 
 ## Contexte
 

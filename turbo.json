@@ -12,8 +12,8 @@
         "BREVO_API_KEY",
         "EMAIL_FROM",
         "DISCORD_REMINDERS_KEY",
-        "VERCEL_ENV",
-        "VERCEL_URL"
+        "NEXT_PUBLIC_ADSENSE_CLIENT",
+        "NEXT_PUBLIC_ADSENSE_SLOT"
       ],
       "outputs": [".output/chrome-mv3/**", ".next/**", "!.next/cache/**"]
     },

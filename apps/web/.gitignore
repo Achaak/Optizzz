@@ -1,5 +1,4 @@
 /.next/
 next-env.d.ts
 /src/generated/
-/.vercel
 *.tsbuildinfo

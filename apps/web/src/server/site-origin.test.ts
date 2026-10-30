@@ -6,12 +6,6 @@ describe("siteOrigin", () => {
     expect(siteOrigin({ nodeEnv: "production", betterAuthUrl: "https://optizzz.fr/" })).toBe("https://optizzz.fr");
   });
 
-  it("uses the deployment address Vercel gives a preview, never the request", () => {
-    expect(siteOrigin({ nodeEnv: "production", vercelEnv: "preview", vercelUrl: "optizzz-git-x.vercel.app" })).toBe(
-      "https://optizzz-git-x.vercel.app",
-    );
-  });
-
   it("falls back to localhost and the dev server's port outside production", () => {
     expect(siteOrigin({ nodeEnv: "development", port: "3100" })).toBe("http://localhost:3100");
     expect(siteOrigin({ nodeEnv: "development" })).toBe("http://localhost:3000");
@@ -19,8 +13,5 @@ describe("siteOrigin", () => {
 
   it("refuses production without BETTER_AUTH_URL", () => {
     expect(() => siteOrigin({ nodeEnv: "production" })).toThrow(/BETTER_AUTH_URL/);
-    expect(() => siteOrigin({ nodeEnv: "production", vercelEnv: "production", vercelUrl: "x.vercel.app" })).toThrow(
-      /BETTER_AUTH_URL/,
-    );
   });
 });

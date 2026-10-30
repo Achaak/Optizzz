@@ -15,7 +15,15 @@ export default defineConfig({
     name: "optizzz",
     // AMO rebuilds from the sources: they include the shared packages of the monorepo.
     sourcesRoot: "../..",
-    excludeSources: ["apps/!(extension)/**", "plans/**", "scripts/**", ".claude/**", "coverage/**"],
+    excludeSources: [
+      "apps/!(extension)/**",
+      "plans/**",
+      "scripts/**",
+      "deploy/**",
+      ".dockerignore",
+      ".claude/**",
+      "coverage/**",
+    ],
   },
   manifest: ({ browser, mode }) => {
     // optizzz.fr, or a local site while developing (WXT_SITE_URL, src/utils/site-origin.ts): refused in production.

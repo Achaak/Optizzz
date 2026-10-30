@@ -1,0 +1,13 @@
+**/node_modules
+**/.next
+**/.turbo
+**/.env*
+**/*.tsbuildinfo
+apps/web/src/generated
+apps/extension
+.git
+.claude
+.scratch
+coverage
+plans
+docs
