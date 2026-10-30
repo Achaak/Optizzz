@@ -6,6 +6,7 @@
 // See docs/features/site-outils.md.
 import { formatNumber } from "@optizzz/game/format/number-format";
 import { SERVERS } from "@optizzz/game/servers";
+import { cn } from "cn";
 import { useId, useState } from "react";
 import { NumberField } from "~/components/number-field";
 import { usePlayerSearch } from "~/components/search-box";
@@ -36,7 +37,7 @@ export function ServerSelect({ value, onChange }: { value: string | null; onChan
       <select
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value || null)}
-        className="block h-8 border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+        className="block h-8 w-full max-w-80 border border-input bg-background px-2 text-sm"
       >
         <option value="">Aucun (positions seulement)</option>
         {SERVERS.map((server) => (
@@ -59,6 +60,49 @@ export function usePickedPlayer(server: string | null, end: PickedEnd | null): P
   if (server === null || id === null) return null;
   return query.isPending ? undefined : (query.data ?? null);
 }
+
+/**
+ * One choice among a few joined buttons (« Joueur | Position »), as the tools of the mockups draw it; the one chosen
+ * is filled and pressed, not told by its colour alone.
+ */
+export function ChoiceButtons<Value extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: readonly { value: Value; label: string }[];
+  value: Value;
+  onChange: (value: Value) => void;
+}) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap border bg-card">
+      {options.map((option) => {
+        const chosen = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={chosen}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "h-8 border-r px-3 text-sm whitespace-nowrap last:border-r-0",
+              chosen ? "bg-primary font-semibold text-primary-foreground" : "hover:bg-accent",
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const KINDS = [
+  { value: "player", label: "Joueur" },
+  { value: "position", label: "Position" },
+] as const;
 
 const playerLine = (player: PickedPlayer) =>
   `${player.alliance ? `${player.alliance} · ` : ""}TDC ${formatNumber(player.field)} · x ${String(player.x)}, y ${String(player.y)}`;
@@ -86,25 +130,19 @@ export function PlayerPicker({
 
   return (
     <fieldset className="min-w-0 space-y-2">
-      <legend className="text-sm font-medium">{label}</legend>
+      <legend className="mb-1 font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
+        {label}
+      </legend>
       {server && (
-        <div className="flex gap-1" role="group" aria-label={`${label} : joueur ou position`}>
-          {(["player", "position"] as const).map((kind) => (
-            <Button
-              key={kind}
-              type="button"
-              size="sm"
-              variant={shownMode === kind ? "secondary" : "ghost"}
-              aria-pressed={shownMode === kind}
-              onClick={() => {
-                setMode(kind);
-                if (value && value.kind !== kind) onChange(null, null);
-              }}
-            >
-              {kind === "player" ? "Joueur" : "Position"}
-            </Button>
-          ))}
-        </div>
+        <ChoiceButtons
+          label={`${label} : joueur ou position`}
+          options={KINDS}
+          value={shownMode}
+          onChange={(kind) => {
+            setMode(kind);
+            if (value && value.kind !== kind) onChange(null, null);
+          }}
+        />
       )}
       {shownMode === "position" ? (
         <div className="flex flex-wrap gap-3">

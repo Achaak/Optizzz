@@ -3,16 +3,16 @@
 // The two sides of the combat simulator: levels, army (by place for the defender), and an army pasted as text.
 // See docs/features/site-combat.md.
 import { readArmyText, type Counts } from "@optizzz/game/army/army-text";
-import { PLACES, type Place } from "@optizzz/game/army/battle";
+import { unitLabel } from "@optizzz/game/army/units";
+import { type Place } from "@optizzz/game/army/battle";
 import type { AttackerForm, DefenderForm } from "@optizzz/game/army/battle-form";
 
 import type { NumberFieldRules } from "@optizzz/game/format/number-field";
 import { useId, useState, type ReactNode } from "react";
 import { NumberField } from "~/components/number-field";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { AddUnit, NoUnit, UnitName, useShownUnits } from "../unit-rows";
+import { cn } from "cn";
+import { NoUnit, UnitName, useShownUnits, type Unit } from "../unit-rows";
 import { PLACE_LABELS } from "./combat-result";
 
 const LEVEL: NumberFieldRules = { min: 0, max: 1000, integer: true, allowEmpty: true };
@@ -66,7 +66,7 @@ function Levels<Key extends string>({
   onChange: (key: Key, value: number) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-2.5 border-b px-4 py-3.5">
       {fields.map((field) => (
         <label key={field.key} className="space-y-1 text-sm">
           <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
@@ -155,144 +155,263 @@ const DEFENDER_LEVELS = [
 type AttackerNumber = (typeof ATTACKER_LEVELS)[number]["key"];
 type DefenderNumber = (typeof DEFENDER_LEVELS)[number]["key"];
 
-const COUNT_CLASS = "w-28 min-w-24 text-right tabular-nums";
+const COUNT_CLASS = "h-9 w-full min-w-0 text-right tabular-nums";
+
+/**
+ * One side as the mockup draws it: its name in its colour (and its arrow, never the colour alone: ADR 0003), a note
+ * on the right, its levels, its army, and « + Unité » and « Coller l'armée du jeu » across the foot.
+ */
+function SideCard({
+  side,
+  note,
+  levels,
+  army,
+  rest,
+  onAdd,
+  paste,
+}: {
+  side: "attack" | "defense";
+  note?: ReactNode;
+  levels: ReactNode;
+  army: ReactNode;
+  rest: Unit[];
+  onAdd: (key: string) => void;
+  paste: ReactNode;
+}) {
+  const titleId = useId();
+  const pasteId = useId();
+  const [pasting, setPasting] = useState(false);
+  const attack = side === "attack";
+  return (
+    <section
+      aria-labelledby={titleId}
+      className={cn(
+        "flex min-w-0 flex-col border border-t-3 bg-card text-card-foreground",
+        attack ? "border-t-primary" : "border-t-info",
+      )}
+    >
+      <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b px-4 py-2.5">
+        <h2
+          id={titleId}
+          className={cn("font-heading text-[1.375rem] font-semibold uppercase", attack ? "text-primary" : "text-info")}
+        >
+          {attack ? "◀ Attaquant" : "Défenseur ▶"}
+        </h2>
+        {note && <span className="text-xs text-muted-foreground">{note}</span>}
+      </header>
+      {levels}
+      <div className="px-4 py-2.5">{army}</div>
+      {pasting && (
+        <div id={pasteId} className="border-t px-4 py-3">
+          {paste}
+        </div>
+      )}
+      <div className="mt-auto flex border-t">
+        {rest.length > 0 && (
+          <select
+            aria-label="Ajouter une unité"
+            value=""
+            onChange={(event) => {
+              if (event.target.value) onAdd(event.target.value);
+            }}
+            className="h-10 min-w-0 flex-1 cursor-pointer appearance-none border-r bg-transparent px-2 text-sm [text-align-last:center] hover:bg-accent"
+          >
+            <option value="">+ Unité</option>
+            {rest.map((unit) => (
+              <option key={unit.key} value={unit.key}>
+                {unitLabel(unit.key)} · {unit.name}
+              </option>
+            ))}
+          </select>
+        )}
+        <button
+          type="button"
+          aria-expanded={pasting}
+          aria-controls={pasting ? pasteId : undefined}
+          onClick={() => setPasting((open) => !open)}
+          className={cn("h-10 min-w-0 flex-1 px-2 text-sm hover:bg-accent", pasting && "bg-accent font-semibold")}
+        >
+          Coller l&apos;armée du jeu
+        </button>
+      </div>
+    </section>
+  );
+}
 
 export function AttackerSide({
   attacker,
-  mine,
+  note,
   onNumber,
   onArmy,
 }: {
   attacker: AttackerForm;
-  mine: boolean;
+  note?: ReactNode;
   onNumber: (key: AttackerNumber, value: number) => void;
   onArmy: (army: Counts) => void;
 }) {
   const units = useShownUnits((unit) => (attacker.army[unit.key] ?? 0) > 0);
   return (
-    <Card style={{ borderTop: "3px solid var(--primary)" }}>
-      <CardHeader>
-        <CardTitle className="text-primary">◀ Attaquant</CardTitle>
-        {mine && <CardDescription>Votre côté : « Mes niveaux » le remplissent.</CardDescription>}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Levels fields={ATTACKER_LEVELS} values={attacker} onChange={onNumber} />
-        {units.shown.length === 0 ? (
+    <SideCard
+      side="attack"
+      note={note}
+      levels={<Levels fields={ATTACKER_LEVELS} values={attacker} onChange={onNumber} />}
+      army={
+        units.shown.length === 0 ? (
           <NoUnit />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Unité</TableHead>
-                <TableHead className="text-right">Envoyées</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {units.shown.map((unit) => (
-                <TableRow key={unit.key}>
-                  <TableCell>
-                    <UnitName unit={unit} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <CountField
-                      label={unit.name}
-                      className={`${COUNT_CLASS} ml-auto`}
-                      rules={AMOUNT}
-                      value={attacker.army[unit.key] ?? 0}
-                      onChange={(count) => onArmy({ ...attacker.army, [unit.key]: count })}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-        <AddUnit rest={units.rest} onAdd={units.add} />
-        <Paste role="attack" onArmy={onArmy} />
-      </CardContent>
-    </Card>
+          <div className="space-y-1.5">
+            {units.shown.map((unit) => (
+              <label key={unit.key} className="grid grid-cols-[minmax(0,1fr)_7.5rem] items-center gap-2">
+                <UnitName unit={unit} />
+                <CountField
+                  label={unit.name}
+                  className={COUNT_CLASS}
+                  rules={AMOUNT}
+                  value={attacker.army[unit.key] ?? 0}
+                  onChange={(count) => onArmy({ ...attacker.army, [unit.key]: count })}
+                />
+              </label>
+            ))}
+          </div>
+        )
+      }
+      rest={units.rest}
+      onAdd={units.add}
+      paste={<Paste role="attack" onArmy={onArmy} />}
+    />
   );
 }
 
+const PLACE_IN: Record<Place, string> = {
+  field: "du Terrain de chasse",
+  nest: "de la Fourmilière",
+  lodge: "de la Loge Impériale",
+};
+
+/** « armée du Terrain de chasse », « armées du Terrain de chasse et de la Fourmilière », « armées des trois lieux ». */
+const armiesNote = (places: readonly Place[]) =>
+  places.length === 1
+    ? `armée ${PLACE_IN[places[0] ?? "field"]}`
+    : places.length === 2
+      ? `armées ${PLACE_IN[places[0] ?? "field"]} et ${PLACE_IN[places[1] ?? "nest"]}`
+      : "armées des trois lieux";
+
+/** The defender: the armies of the places the attack goes through (the hunting field first, up to the target). */
 export function DefenderSide({
   defender,
-  mine,
+  places,
+  note,
   onNumber,
   onArmy,
 }: {
   defender: DefenderForm;
-  mine: boolean;
+  places: readonly Place[];
+  note?: ReactNode;
   onNumber: (key: DefenderNumber, value: number) => void;
   onArmy: (place: Place, army: Counts) => void;
 }) {
-  const [pastePlace, setPastePlace] = useState<Place>("field");
-  const units = useShownUnits((unit) => PLACES.some((place) => (defender.armies[place][unit.key] ?? 0) > 0));
+  const [chosenPastePlace, setPastePlace] = useState<Place | null>(null);
+  const pastePlace =
+    chosenPastePlace && places.includes(chosenPastePlace) ? chosenPastePlace : (places[places.length - 1] ?? "field");
+  const units = useShownUnits((unit) => places.some((place) => (defender.armies[place][unit.key] ?? 0) > 0));
+  const several = places.length > 1;
+  // One place: « SN Soldate Naine » and its count, as the mockup draws it; several: the abbreviation, then a column a place.
+  const columns = {
+    gridTemplateColumns: several
+      ? `minmax(2.25rem, auto) repeat(${String(places.length)}, minmax(0, 1fr))`
+      : "minmax(0, 1fr) 7.5rem",
+  };
   return (
-    <Card style={{ borderTop: "3px solid var(--info)" }}>
-      <CardHeader>
-        <CardTitle className="text-info">Défenseur ▶</CardTitle>
-        {mine && <CardDescription>Votre côté : « Mes niveaux » le remplissent.</CardDescription>}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Levels fields={DEFENDER_LEVELS} values={defender} onChange={onNumber} />
-        {units.shown.length === 0 ? (
+    <SideCard
+      side="defense"
+      note={
+        <>
+          {note && <>{note} · </>}
+          {armiesNote(places)}
+        </>
+      }
+      levels={<Levels fields={DEFENDER_LEVELS} values={defender} onChange={onNumber} />}
+      army={
+        units.shown.length === 0 ? (
           <NoUnit />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Unité</TableHead>
-                {PLACES.map((place) => (
-                  <TableHead key={place} className="text-right">
+          <div role={several ? "table" : undefined} aria-label={several ? "Armée du défenseur" : undefined}>
+            {several && (
+              <div role="row" className="grid items-end gap-2 pb-1" style={columns}>
+                {/* sr-only alone would leave the grid's flow and shift the heads by a column. */}
+                <span role="columnheader">
+                  <span className="sr-only">Unité</span>
+                </span>
+                {places.map((place) => (
+                  <span
+                    key={place}
+                    role="columnheader"
+                    className="text-right font-mono text-[0.6875rem] leading-tight tracking-wider break-words text-muted-foreground uppercase"
+                  >
                     {PLACE_LABELS[place]}
-                  </TableHead>
+                  </span>
                 ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+              </div>
+            )}
+            <div className="space-y-1.5">
               {units.shown.map((unit) => (
-                <TableRow key={unit.key}>
-                  <TableCell>
+                <div
+                  key={unit.key}
+                  role={several ? "row" : undefined}
+                  className="grid items-center gap-2"
+                  style={columns}
+                >
+                  {several ? (
+                    <span role="rowheader" title={unit.name}>
+                      <strong className="font-mono">{unitLabel(unit.key)}</strong>
+                      <span className="sr-only"> {unit.name}</span>
+                    </span>
+                  ) : (
                     <UnitName unit={unit} />
-                  </TableCell>
-                  {PLACES.map((place) => (
-                    <TableCell key={place} className="text-right">
+                  )}
+                  {places.map((place) => (
+                    <span key={place} role={several ? "cell" : undefined}>
                       <CountField
                         label={`${unit.name}, ${PLACE_LABELS[place]}`}
-                        className={`${COUNT_CLASS} ml-auto`}
+                        className={COUNT_CLASS}
                         rules={AMOUNT}
                         value={defender.armies[place][unit.key] ?? 0}
                         onChange={(count) => onArmy(place, { ...defender.armies[place], [unit.key]: count })}
                       />
-                    </TableCell>
+                    </span>
                   ))}
-                </TableRow>
+                </div>
               ))}
-            </TableBody>
-          </Table>
-        )}
-        <AddUnit rest={units.rest} onAdd={units.add} />
+            </div>
+          </div>
+        )
+      }
+      rest={units.rest}
+      onAdd={units.add}
+      paste={
         <Paste
           role="defense"
           onArmy={(army) => onArmy(pastePlace, army)}
           extra={
-            <label className="flex items-center gap-2 text-sm">
-              Lieu :
-              <select
-                value={pastePlace}
-                onChange={(event) => setPastePlace(event.target.value as Place)}
-                className="h-8 border border-input bg-transparent px-2 text-sm dark:bg-input/30"
-              >
-                {PLACES.map((place) => (
-                  <option key={place} value={place}>
-                    {PLACE_LABELS[place]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            several && (
+              <label className="flex items-center gap-2 text-sm">
+                Lieu :
+                <select
+                  value={pastePlace}
+                  onChange={(event) => setPastePlace(event.target.value as Place)}
+                  className="h-8 border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+                >
+                  {places.map((place) => (
+                    <option key={place} value={place}>
+                      {PLACE_LABELS[place]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )
           }
         />
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }

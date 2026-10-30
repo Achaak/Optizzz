@@ -326,6 +326,8 @@ export interface Compared {
   /** A player's alliance. */
   alliance: string | null;
   now: number;
+  /** By TDC on the server now, 1 first, whatever the curve shown. */
+  rankNow: number;
   points: { day: Date; value: number }[];
 }
 
@@ -387,21 +389,22 @@ export async function compared(
         const player = players.find((row) => row.id === id);
         if (!player) return [];
         return [
-          (async (): Promise<Compared> => ({
-            id: String(id),
-            name: player.pseudo,
-            alliance: player.alliance,
-            now:
-              metric === "rank"
-                ? (await db.player.count({ where: { server, field: { gt: player.field } } })) + 1
-                : Math.round(PLAYER_SCORE[metric](player)),
-            points:
-              metric === "rank"
-                ? ranks.filter((row) => row.id === id).map((row) => ({ day: row.day, value: Number(row.rank) }))
-                : days
-                    .filter((row) => row.playerId === id)
-                    .map((row) => ({ day: row.day, value: Math.round(PLAYER_SCORE[metric](row)) })),
-          }))(),
+          (async (): Promise<Compared> => {
+            const rankNow = (await db.player.count({ where: { server, field: { gt: player.field } } })) + 1;
+            return {
+              id: String(id),
+              name: player.pseudo,
+              alliance: player.alliance,
+              rankNow,
+              now: metric === "rank" ? rankNow : Math.round(PLAYER_SCORE[metric](player)),
+              points:
+                metric === "rank"
+                  ? ranks.filter((row) => row.id === id).map((row) => ({ day: row.day, value: Number(row.rank) }))
+                  : days
+                      .filter((row) => row.playerId === id)
+                      .map((row) => ({ day: row.day, value: Math.round(PLAYER_SCORE[metric](row)) })),
+            };
+          })(),
         ];
       }),
     );
@@ -424,21 +427,22 @@ export async function compared(
       const alliance = alliances.find((row) => row.tag === tag);
       if (!alliance) return [];
       return [
-        (async (): Promise<Compared> => ({
-          id: tag,
-          name: alliance.tag,
-          alliance: null,
-          now:
-            metric === "rank"
-              ? (await db.alliance.count({ where: { server, totalField: { gt: alliance.totalField } } })) + 1
-              : Math.round(ALLIANCE_SCORE[metric](alliance)),
-          points:
-            metric === "rank"
-              ? ranks.filter((row) => row.tag === tag).map((row) => ({ day: row.day, value: Number(row.rank) }))
-              : days
-                  .filter((row) => row.tag === tag)
-                  .map((row) => ({ day: row.day, value: Math.round(ALLIANCE_SCORE[metric](row)) })),
-        }))(),
+        (async (): Promise<Compared> => {
+          const rankNow = (await db.alliance.count({ where: { server, totalField: { gt: alliance.totalField } } })) + 1;
+          return {
+            id: tag,
+            name: alliance.tag,
+            alliance: null,
+            rankNow,
+            now: metric === "rank" ? rankNow : Math.round(ALLIANCE_SCORE[metric](alliance)),
+            points:
+              metric === "rank"
+                ? ranks.filter((row) => row.tag === tag).map((row) => ({ day: row.day, value: Number(row.rank) }))
+                : days
+                    .filter((row) => row.tag === tag)
+                    .map((row) => ({ day: row.day, value: Math.round(ALLIANCE_SCORE[metric](row)) })),
+          };
+        })(),
       ];
     }),
   );

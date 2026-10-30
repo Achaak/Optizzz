@@ -1,6 +1,7 @@
 import { allianceSchema } from "@optizzz/game/exports";
 import { formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import { dayMonth } from "@optizzz/game/format/time-format";
+import { cn } from "cn";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -29,6 +30,11 @@ interface Props {
 }
 
 const diplomacySchema = allianceSchema.shape.diplomacy;
+
+/** « PNA », « Pacte De Non Attaque »: the pact's kind, which the alliances write as they like. */
+function isNonAggression(kind: string): boolean {
+  return /\bPNA\b|non[- ]?(agression|attaque)/i.test(kind);
+}
 
 const outline = buttonVariants({ variant: "outline", size: "lg" });
 
@@ -80,14 +86,7 @@ export default async function AlliancePage({ params }: Props) {
     <div className="space-y-6">
       <PageHeader
         kicker={`Alliance · ${server.name}`}
-        title={
-          <>
-            {alliance.tag}{" "}
-            <span className="font-sans text-2xl font-normal tracking-normal text-muted-foreground normal-case sm:text-3xl">
-              {alliance.name.trim()}
-            </span>
-          </>
-        }
+        title={alliance.name.trim() ? `${alliance.tag} · ${alliance.name.trim()}` : alliance.tag}
         actions={
           <>
             <Link href={`/${server.id}/map?alliance=${encodeURIComponent(alliance.tag)}`} className={outline}>
@@ -140,23 +139,33 @@ export default async function AlliancePage({ params }: Props) {
               {diplomacy.pacts.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   <MonoLabel className="w-20">Pactes</MonoLabel>
-                  {diplomacy.pacts.map((pact) => (
-                    <Link
-                      key={pact.tag}
-                      href={allianceHref(pact.tag)}
-                      className="bg-primary/15 px-2 py-0.5 font-mono text-xs text-primary hover:underline"
-                    >
-                      {pact.tag}
-                    </Link>
-                  ))}
+                  {diplomacy.pacts.map((pact, index) => {
+                    const kind = pact.name.trim();
+                    return (
+                      <Link
+                        // The export can list a tag twice.
+                        key={`${pact.tag}-${String(index)}`}
+                        href={allianceHref(pact.tag)}
+                        title={kind || undefined}
+                        className={cn(
+                          "max-w-full truncate px-2 py-0.5 font-mono text-xs hover:underline sm:max-w-64",
+                          // A non-aggression pact binds less: neutral, and its kind is written next to it.
+                          isNonAggression(kind) ? "bg-raised text-foreground" : "bg-accent text-primary",
+                        )}
+                      >
+                        {pact.tag}
+                        {kind && ` · ${kind}`}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
               {diplomacy.wars.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   <MonoLabel className="w-20">Guerres</MonoLabel>
-                  {diplomacy.wars.map((war) => (
+                  {diplomacy.wars.map((war, index) => (
                     <Link
-                      key={war}
+                      key={`${war}-${String(index)}`}
                       href={allianceHref(war)}
                       className="bg-info-soft px-2 py-0.5 font-mono text-xs text-info hover:underline"
                     >
@@ -182,23 +191,17 @@ export default async function AlliancePage({ params }: Props) {
           />
           {members.length > 8 && (
             <p className="mt-3 text-xs text-muted-foreground">
-              8 premiers sur {formatNumber(members.length)} · le tableau plus bas les montre tous
+              8 premiers sur {formatNumber(members.length)} · le tableau ci-dessous les montre tous
             </p>
           )}
         </Panel>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel
-          title="TDC de l'alliance"
-          aside={<span className="text-xs text-muted-foreground">cm², relevé de minuit</span>}
-        >
+        <Panel title="TDC de l'alliance">
           <ScoreChart label="TDC (cm²)" unit="cm² de TDC" points={points((day) => day.totalField)} />
         </Panel>
-        <Panel
-          title="Rang au TDC"
-          aside={<span className="text-xs text-muted-foreground">plus haut = mieux classée</span>}
-        >
+        <Panel title="Rang au TDC">
           <ScoreChart
             label="Rang"
             unit="ᵉ au TDC"
@@ -211,13 +214,7 @@ export default async function AlliancePage({ params }: Props) {
 
       <AdSlot />
 
-      <Panel
-        flush
-        title="Membres"
-        aside={<span className="text-xs text-muted-foreground">{formatNumber(members.length)} joueurs</span>}
-      >
-        <MembersTable server={server.id} members={memberRows} />
-      </Panel>
+      <MembersTable server={server.id} members={memberRows} />
 
       <Panel
         flush

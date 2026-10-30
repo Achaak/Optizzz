@@ -9,12 +9,14 @@ import { amountForDuration, huntDurationSeconds } from "@optizzz/game/hunt/diffi
 import type { RatioChoice } from "@optizzz/game/hunt/extras";
 import { freeSlots, type HuntForm } from "@optizzz/game/hunt/hunt-form";
 import { parisClockTime, ratioOptionText } from "@optizzz/game/hunt/texts";
+import { cn } from "cn";
 import { useState, type ReactNode } from "react";
 import { NumberField } from "~/components/number-field";
+import { MonoLabel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { AMOUNT, LEVEL } from "./hunt-entries";
-import { Check, Note, Segmented, SELECT_CLASS } from "./hunt-parts";
+import { AMOUNT, FIELD_CLASS, LabelledField, LEVEL, Suffix } from "./hunt-entries";
+import { Check, Segmented, SELECT_CLASS } from "./hunt-parts";
 
 const OBJECTIVES = [
   { value: "ratio", label: "Ratio", hint: "attaque / difficulté, comme le simulateur de Calystene" },
@@ -22,21 +24,30 @@ const OBJECTIVES = [
 ] as const;
 
 const DISPATCHES = [
-  { value: "mix", label: "Mêlée", hint: "le même mélange d'unités dans chaque chasse" },
-  {
-    value: "waves",
-    label: "Par vagues",
-    hint: "les unités qui peuvent encore monter ensemble dans les dernières chasses, comme le simulateur de Calystene",
-  },
+  { value: "mix", label: "Mêlée", short: "le même mélange dans chaque chasse" },
+  { value: "waves", label: "Par vagues", short: "les troupes qui montent à la fin" },
 ] as const;
 
 const DAYS = ["aujourd'hui", "demain", "après-demain"];
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
+/** A setting as the mockup draws it: its label in small mono capitals, the controls, a grey hint under them. */
+function Row({
+  label,
+  hint,
+  wide,
+  children,
+}: {
+  label: string;
+  hint?: ReactNode;
+  /** Across both columns of the grid. */
+  wide?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <div className="grid gap-1 text-sm sm:grid-cols-[11rem_1fr] sm:items-center sm:gap-3">
-      <span className="text-muted-foreground">{label}</span>
+    <div role="group" aria-label={label} className={cn("min-w-0 space-y-1", wide && "sm:col-span-2")}>
+      <MonoLabel className="block">{label}</MonoLabel>
       <div className="flex min-w-0 flex-wrap items-center gap-2">{children}</div>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -62,148 +73,170 @@ export function HuntParameters({
   const slots = huntSpeed === null ? null : freeSlots(huntSpeed, form.takenSlots);
   return (
     <div className="space-y-4">
-      <Row label="TdC à l'arrivée">
-        <NumberField
-          aria-label="TdC à l'arrivée"
-          className="w-36"
-          placeholder={form.launchField === null ? "comme au lancement" : formatNumber(form.launchField)}
-          value={form.arrivalField}
-          onCommit={(arrivalField) => onSettings({ arrivalField })}
-          rules={{ ...AMOUNT, min: 1 }}
-        />
-        <span className="text-muted-foreground">cm², quand la première chasse combat (vide : celui du lancement)</span>
-      </Row>
-
-      <Row label="Objectif">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <MonoLabel>Objectif</MonoLabel>
         <Segmented
           label="Objectif"
           value={form.objective}
           options={OBJECTIVES}
           onChange={(objective) => onSettings({ objective, huntAmount: null })}
         />
-      </Row>
-      {form.objective === "ratio" ? (
-        <Row label="Ratio">
-          <select
-            aria-label="Ratio"
-            className={`${SELECT_CLASS} w-full sm:w-auto`}
-            value={form.ratio}
-            onChange={(event) => onSettings({ ratio: Number(event.target.value), huntAmount: null })}
+      </div>
+      <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2">
+        {form.objective === "ratio" ? (
+          <LabelledField label="Ratio" className="sm:col-span-2">
+            <select
+              aria-label="Ratio"
+              className={cn(SELECT_CLASS, FIELD_CLASS, "w-full")}
+              value={form.ratio}
+              onChange={(event) => onSettings({ ratio: Number(event.target.value), huntAmount: null })}
+            >
+              {!REFERENCE_RATIOS.some((ratio) => ratio === form.ratio) && (
+                <option value={form.ratio}>{ratioOptionText(form.ratio, undefined)}</option>
+              )}
+              {REFERENCE_RATIOS.map((ratio) => (
+                <option key={ratio} value={ratio}>
+                  {ratioOptionText(
+                    ratio,
+                    ratioChoices?.find((choice) => choice.ratio === ratio),
+                  )}
+                </option>
+              ))}
+            </select>
+          </LabelledField>
+        ) : (
+          <Row label="Pertes acceptées" hint="de l'armée envoyée, en nourriture, 9 fois sur 10" wide>
+            <span className="relative block w-full sm:w-[calc(50%-0.375rem)]">
+              <NumberField
+                aria-label="Pertes acceptées, en %"
+                className={cn(FIELD_CLASS, "pr-8")}
+                value={Math.round(form.maxLossShare * 1000) / 10}
+                onCommit={(percent) => {
+                  if (percent !== null) onSettings({ maxLossShare: percent / 100, huntAmount: null });
+                }}
+                rules={{ min: 0.1, max: 20 }}
+              />
+              <Suffix>%</Suffix>
+            </span>
+          </Row>
+        )}
+        {form.objective === "ratio" && (
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            Plus le ratio est haut, moins vous perdez et moins vous chassez. Réplique 10 % : chance de « réplique »
+            selon les tables de Calystene. Pertes : unités perdues en moyenne, toutes chasses comprises.
+          </p>
+        )}
+        <Row label="TdC à l'arrivée" hint="quand la première chasse combat ; vide : celui du lancement">
+          <span className="relative block w-full">
+            <NumberField
+              aria-label="TdC à l'arrivée, en cm²"
+              className={cn(FIELD_CLASS, "pr-11")}
+              placeholder={form.launchField === null ? "comme au lancement" : formatNumber(form.launchField)}
+              value={form.arrivalField}
+              onCommit={(arrivalField) => onSettings({ arrivalField })}
+              rules={{ ...AMOUNT, min: 1 }}
+            />
+            <Suffix>cm²</Suffix>
+          </span>
+        </Row>
+
+        <LabelledField label="Chasses déjà en cours">
+          <NumberField
+            aria-label="Chasses déjà en cours"
+            className={FIELD_CLASS}
+            value={form.takenSlots}
+            onCommit={(taken) => onSettings({ takenSlots: taken ?? 0 })}
+            rules={{ ...LEVEL, allowEmpty: false }}
+          />
+        </LabelledField>
+        <Row
+          label="Nombre de chasses"
+          hint={
+            slots === null
+              ? "créneaux libres : Vitesse de chasse + 1, moins les chasses en cours"
+              : `${String(slots)} créneau${slots > 1 ? "x" : ""} libre${slots > 1 ? "s" : ""}`
+          }
+        >
+          <NumberField
+            aria-label="Nombre de chasses"
+            className={cn(FIELD_CLASS, "w-24")}
+            value={form.huntCount ?? Math.max(1, planCount)}
+            disabled={form.huntCount === null}
+            onCommit={(count) => {
+              if (count !== null) onSettings({ huntCount: count });
+            }}
+            rules={{ min: 1, max: Math.max(1, slots ?? 1), integer: true }}
+          />
+          <Check
+            checked={form.huntCount === null}
+            onChange={(auto) => onSettings({ huntCount: auto ? null : Math.max(1, planCount) })}
           >
-            {!REFERENCE_RATIOS.some((ratio) => ratio === form.ratio) && (
-              <option value={form.ratio}>{ratioOptionText(form.ratio, undefined)}</option>
-            )}
-            {REFERENCE_RATIOS.map((ratio) => (
-              <option key={ratio} value={ratio}>
-                {ratioOptionText(
-                  ratio,
-                  ratioChoices?.find((choice) => choice.ratio === ratio),
-                )}
+            Auto
+          </Check>
+        </Row>
+        <Row
+          label="TdC par chasse"
+          hint={
+            form.huntAmount !== null
+              ? "Surface choisie : l'objectif ne la limite plus, regardez le ratio et les pertes."
+              : undefined
+          }
+        >
+          <span className="relative block min-w-0 flex-1">
+            <NumberField
+              aria-label="TdC par chasse, en cm²"
+              className={cn(FIELD_CLASS, "pr-11")}
+              value={form.huntAmount ?? planAmount}
+              disabled={form.huntAmount === null}
+              onCommit={(amount) => {
+                if (amount !== null) onSettings({ huntAmount: amount });
+              }}
+              rules={{ ...AMOUNT, min: 1, allowEmpty: false }}
+            />
+            <Suffix>cm²</Suffix>
+          </span>
+          <Check
+            checked={form.huntAmount === null}
+            onChange={(auto) => onSettings({ huntAmount: auto ? null : Math.max(1, planAmount) })}
+          >
+            Auto
+          </Check>
+        </Row>
+        <Row
+          label="Répartition des unités"
+          hint={DISPATCHES.find((dispatch) => dispatch.value === form.dispatch)?.short}
+        >
+          <select
+            aria-label="Répartition des unités"
+            className={cn(SELECT_CLASS, FIELD_CLASS, "w-full")}
+            value={form.dispatch}
+            onChange={(event) => onSettings({ dispatch: event.target.value === "waves" ? "waves" : "mix" })}
+          >
+            {DISPATCHES.map((dispatch) => (
+              <option key={dispatch.value} value={dispatch.value}>
+                {dispatch.label}
               </option>
             ))}
           </select>
         </Row>
-      ) : (
-        <Row label="Pertes jusqu'à">
-          <NumberField
-            aria-label="Pertes acceptées, en %"
-            className="w-20"
-            value={Math.round(form.maxLossShare * 1000) / 10}
-            onCommit={(percent) => {
-              if (percent !== null) onSettings({ maxLossShare: percent / 100, huntAmount: null });
-            }}
-            rules={{ min: 0.1, max: 20 }}
+        {form.dispatch === "waves" && (
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            Les unités qui peuvent encore monter selon Calystene (Tueuses, Tanks, Artilleuses, Concierges, Soldates,
+            Jeunes Soldates, Soldates Naines) partent ensemble dans les dernières chasses, derrière juste assez de JSN
+            pour rentrer indemnes (simulé) ; les autres et le gros des JSN partent dans les premières. Si les vagues ne
+            font pas mieux que les unités mêlées, Optizzz garde les unités mêlées et le dit.
+          </p>
+        )}
+
+        {form.launchField !== null && huntSpeed !== null && (
+          <ReturnTarget
+            launchField={form.launchField}
+            huntSpeed={huntSpeed}
+            now={now}
+            onUse={(huntAmount) => onSettings({ huntAmount })}
           />
-          <span className="text-muted-foreground">% de l&apos;armée envoyée (en nourriture, 9 fois sur 10)</span>
-        </Row>
-      )}
-      {form.objective === "ratio" && (
-        <Note>
-          Plus le ratio est haut, moins vous perdez et moins vous chassez. Réplique 10 % : chance de « réplique » selon
-          les tables de Calystene. Pertes : unités perdues en moyenne, toutes chasses comprises.
-        </Note>
-      )}
-
-      <Row label="Chasses déjà en cours">
-        <NumberField
-          aria-label="Chasses déjà en cours"
-          className="w-20"
-          value={form.takenSlots}
-          onCommit={(taken) => onSettings({ takenSlots: taken ?? 0 })}
-          rules={{ ...LEVEL, allowEmpty: false }}
-        />
-        <span className="text-muted-foreground">
-          {slots === null
-            ? "créneaux libres : Vitesse de chasse + 1, moins celles-ci"
-            : `${String(slots)} créneau${slots > 1 ? "x" : ""} libre${slots > 1 ? "s" : ""}`}
-        </span>
-      </Row>
-      <Row label="Nombre de chasses">
-        <NumberField
-          aria-label="Nombre de chasses"
-          className="w-20"
-          value={form.huntCount ?? Math.max(1, planCount)}
-          disabled={form.huntCount === null}
-          onCommit={(count) => {
-            if (count !== null) onSettings({ huntCount: count });
-          }}
-          rules={{ min: 1, max: Math.max(1, slots ?? 1), integer: true }}
-        />
-        <Check
-          checked={form.huntCount === null}
-          onChange={(auto) => onSettings({ huntCount: auto ? null : Math.max(1, planCount) })}
-        >
-          Auto
-        </Check>
-      </Row>
-      <Row label="TdC par chasse">
-        <NumberField
-          aria-label="TdC par chasse"
-          className="w-36"
-          value={form.huntAmount ?? planAmount}
-          disabled={form.huntAmount === null}
-          onCommit={(amount) => {
-            if (amount !== null) onSettings({ huntAmount: amount });
-          }}
-          rules={{ ...AMOUNT, min: 1, allowEmpty: false }}
-        />
-        <span className="text-muted-foreground">cm²</span>
-        <Check
-          checked={form.huntAmount === null}
-          onChange={(auto) => onSettings({ huntAmount: auto ? null : Math.max(1, planAmount) })}
-        >
-          Auto
-        </Check>
-      </Row>
-      {form.huntAmount !== null && (
-        <Note>Surface choisie : l&apos;objectif ne la limite plus, regardez le ratio et les pertes.</Note>
-      )}
-
-      <Row label="Répartition">
-        <Segmented
-          label="Répartition des unités"
-          value={form.dispatch}
-          options={DISPATCHES}
-          onChange={(dispatch) => onSettings({ dispatch })}
-        />
-      </Row>
-      {form.dispatch === "waves" && (
-        <Note>
-          Les unités qui peuvent encore monter selon Calystene (Tueuses, Tanks, Artilleuses, Concierges, Soldates,
-          Jeunes Soldates, Soldates Naines) partent ensemble dans les dernières chasses, derrière juste assez de JSN
-          pour rentrer indemnes (simulé) ; les autres et le gros des JSN partent dans les premières. Si les vagues ne
-          font pas mieux que les unités mêlées, Optizzz garde les unités mêlées et le dit.
-        </Note>
-      )}
-
-      {form.launchField !== null && huntSpeed !== null && (
-        <ReturnTarget
-          launchField={form.launchField}
-          huntSpeed={huntSpeed}
-          now={now}
-          onUse={(huntAmount) => onSettings({ huntAmount })}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -226,10 +259,10 @@ function ReturnTarget({
   const amount = target ? amountForDuration(launchField, (target.getTime() - now.getTime()) / 1000, huntSpeed) : 0;
   const earliest = new Date(now.getTime() + huntDurationSeconds(launchField, 1, huntSpeed) * 1000);
   return (
-    <Row label="Retour souhaité">
+    <Row label="Retour souhaité" wide>
       <select
         aria-label="Jour du retour"
-        className={SELECT_CLASS}
+        className={cn(SELECT_CLASS, FIELD_CLASS)}
         value={day}
         onChange={(event) => setDay(Number(event.target.value))}
       >
@@ -242,17 +275,17 @@ function ReturnTarget({
       <Input
         type="time"
         aria-label="Heure du retour (heure de Paris)"
-        className="w-28"
+        className={cn(FIELD_CLASS, "w-28 font-mono")}
         value={clock}
         onChange={(event) => setClock(event.target.value)}
       />
       {target === null ? (
-        <span className="text-muted-foreground">heure de Paris, pas avant {formatEndTime(earliest, now)}</span>
+        <span className="text-sm text-muted-foreground">heure de Paris, pas avant {formatEndTime(earliest, now)}</span>
       ) : amount < 1 ? (
-        <span>⚠ trop tôt : pas avant {formatEndTime(earliest, now)}</span>
+        <span className="text-sm">⚠ trop tôt : pas avant {formatEndTime(earliest, now)}</span>
       ) : (
         <>
-          <span>
+          <span className="text-sm">
             → <strong>{formatNumber(amount)} cm²</strong> par chasse
           </span>
           <Button type="button" variant="outline" size="sm" onClick={() => onUse(amount)}>

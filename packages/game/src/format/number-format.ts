@@ -12,6 +12,7 @@ export function formatDecimal(value: number, fractionDigits = 1): string {
 }
 
 const UNITS = [
+  { size: 1e12, suffix: "T" },
   { size: 1e9, suffix: "G" },
   { size: 1e6, suffix: "M" },
   { size: 1e3, suffix: "K" },
@@ -20,7 +21,7 @@ const UNITS = [
 /** From this value on, a compact number is shortened: « 9 999 » is as short as « 10K ». */
 const COMPACT_FROM = 10_000;
 
-/** A number with three significant digits and K, M or G from 10 000 on: « 12,3K », « 1,23M », « 4,51G »; « 9 999 » below. */
+/** A number with three significant digits and K, M, G or T from 10 000 on: « 12,3K », « 1,23M », « 4,51G », « 25,9T »; « 9 999 » below. */
 export function formatCompact(value: number): string {
   const whole = Math.round(Math.abs(value));
   if (whole < COMPACT_FROM) return formatNumber(value);

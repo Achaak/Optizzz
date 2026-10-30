@@ -1,25 +1,40 @@
 // Small pieces shared by the Alliance Spaces' pages, in the site's « Campagne » style (docs/features/site-refonte.md).
 import { cn } from "cn";
+import { Panel as SitePanel } from "~/components/panel";
 
-/** A boxed part of a page. */
+/**
+ * A boxed part of a page: the site's panel, its parts spaced. `aside` on the right of its header (« nourriture +
+ * matériaux », « Voir les convois → »); `flush` for a table that runs to the panel's edges.
+ */
 export function Panel({
   title,
+  aside,
+  flush,
+  id,
   children,
   className,
 }: {
   title?: string;
+  aside?: React.ReactNode;
+  flush?: boolean;
+  id?: string;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cn("border bg-card text-sm", className)}>
-      {title && (
-        <h2 className="border-b px-4 py-2.5 font-heading text-xl font-semibold tracking-wide uppercase">{title}</h2>
-      )}
-      <div className="space-y-3 p-4">{children}</div>
-    </section>
+    <div id={id} className={cn("min-w-0 scroll-mt-4 text-sm", className)}>
+      <SitePanel title={title} aside={aside} flush={flush}>
+        <div className={flush ? "" : "space-y-3"}>{children}</div>
+      </SitePanel>
+    </div>
   );
 }
+
+/** A small mono label over a field, as the tool forms write them. */
+export const FIELD_LABEL = "block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase";
+
+/** A square field on the page's ground, as tall as a button of the mockups. */
+export const FIELD_INPUT = "h-9.5 rounded-none bg-background dark:bg-background";
 
 /**
  * A message that must be read: an error (`danger`) or a warning. Never colour alone: the text says it, the border only

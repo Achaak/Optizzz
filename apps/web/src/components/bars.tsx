@@ -13,7 +13,7 @@ export function Histogram({ bars, label }: { bars: { label: string; value: numbe
       <div role="img" aria-label={`${label}. ${described}`} className="flex h-52 items-end gap-1.5 border-b sm:gap-2">
         {bars.map((bar) => (
           <div key={bar.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
-            <span className="font-mono text-xs">{formatNumber(bar.value)}</span>
+            <span className="font-mono text-[0.625rem] whitespace-nowrap sm:text-xs">{formatNumber(bar.value)}</span>
             <div className="w-full bg-chart-1" style={{ height: `${String((bar.value / max) * 85)}%` }} />
           </div>
         ))}

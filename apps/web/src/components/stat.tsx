@@ -2,10 +2,21 @@ import type { ReactNode } from "react";
 import { MonoLabel } from "~/components/panel";
 
 /** One figure with its label: « Joueurs · 1 877 », a hint under it (« 16 % des joueurs »). */
-export function Stat({ label, value, hint }: { label: string; value: string; hint?: ReactNode }) {
+export function Stat({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint?: ReactNode;
+  /** The label in the accent: a figure that waits on the reader (never alone: the label says what). */
+  tone?: "accent";
+}) {
   return (
     <div className="min-w-0 border-b border-r px-4 py-3">
-      <MonoLabel>{label}</MonoLabel>
+      <MonoLabel className={tone === "accent" ? "text-primary" : undefined}>{label}</MonoLabel>
       <div className="truncate font-mono text-2xl">{value}</div>
       {hint && <div className="text-xs text-muted-foreground">{hint}</div>}
     </div>

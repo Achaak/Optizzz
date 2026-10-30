@@ -1,4 +1,5 @@
-import { formatNumber } from "@optizzz/game/format/number-format";
+import { cn } from "cn";
+import { formatCompact, formatNumber } from "@optizzz/game/format/number-format";
 import { dayMonth } from "@optizzz/game/format/time-format";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -12,6 +13,7 @@ import { MonoLabel, PageHeader, Panel } from "~/components/panel";
 import { CopyLinkButton } from "~/components/tools/copy-link-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import {
+  byLast,
   COMPARE_KINDS,
   COMPARE_METRICS,
   COMPARE_PERIODS,
@@ -23,6 +25,8 @@ import {
   METRIC_LABELS,
   PERIOD_LABELS,
   periodStart,
+  SHOWN_PERIODS,
+  type CompareKind,
   type CompareState,
 } from "~/lib/compare";
 import { choiceOf, serverOfPath, textOf } from "~/lib/game-server";
@@ -75,26 +79,34 @@ export default async function ComparePage({ params, searchParams }: Props) {
   const rank = state.metric === "rank";
   const rows = mergeSeries(entries).map((row) => ({ day: dayMonth(row.day), values: row.values }));
   const show = (value: number) => (rank ? ordinal(value) : formatNumber(value));
+  const brief = (value: number) => (rank ? ordinal(value) : formatCompact(value));
+  // The table puts the best first; each keeps its mark from the chart.
+  const ranked = byLast(
+    entries.map((entry, index) => ({ ...entry, index })),
+    rank,
+  );
   const noun = kind === "players" ? "joueur" : "alliance";
   const entryHref = (id: string) =>
     kind === "players" ? `/${server.id}/players/${id}` : `/${server.id}/alliances/${encodeURIComponent(id)}`;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Comparer" kicker={`Serveur ${server.name}`} actions={entries.length > 0 && <CopyLinkButton />}>
-        De 2 à {MAX_COMPARED} {kind === "players" ? "joueurs" : "alliances"} sur une même courbe, relevé de minuit.
-        L&apos;adresse garde votre choix : copiez-la pour la partager.
+      <PageHeader
+        title="Comparer"
+        actions={
+          <>
+            <KindSwitch
+              current={kind}
+              href={(choice) =>
+                choice === kind ? href({}) : compareHref(server.id, { ...state, kind: choice, ids: [] })
+              }
+            />
+            {entries.length > 0 && <CopyLinkButton />}
+          </>
+        }
+      >
+        De 2 à {MAX_COMPARED} joueurs ou alliances de {server.name} sur une même courbe. Le lien garde votre sélection.
       </PageHeader>
-
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <ChoiceLinks
-          label="Comparer des"
-          choices={COMPARE_KINDS}
-          current={kind}
-          text={(choice) => (choice === "players" ? "Joueurs" : "Alliances")}
-          href={(choice) => (choice === kind ? href({}) : compareHref(server.id, { ...state, kind: choice, ids: [] }))}
-        />
-      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         {entries.map((entry, index) => (
@@ -138,7 +150,7 @@ export default async function ComparePage({ params, searchParams }: Props) {
             />
             <ChoiceLinks
               label="Période"
-              choices={COMPARE_PERIODS}
+              choices={SHOWN_PERIODS}
               current={state.period}
               text={(choice) => PERIOD_LABELS[choice]}
               href={(choice) => href({ period: choice })}
@@ -149,7 +161,7 @@ export default async function ComparePage({ params, searchParams }: Props) {
             title={`${METRIC_LABELS[state.metric]}${rows.length > 0 ? ` · ${rows[0]?.day ?? ""} → ${rows.at(-1)?.day ?? ""}` : ""}`}
             aside={
               <span className="text-xs text-muted-foreground">
-                {rank ? "rang au TDC, 1 en haut" : "chacun a sa marque et son trait"}
+                {rank ? "rang au TDC, 1 en haut" : `chaque ${noun} a sa marque et son trait`}
               </span>
             }
           >
@@ -158,37 +170,41 @@ export default async function ComparePage({ params, searchParams }: Props) {
             ) : (
               <p className="text-sm text-muted-foreground">Pas encore assez de relevés pour une courbe.</p>
             )}
-            <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm" aria-label="Légende">
-              {entries.map((entry, index) => (
-                <li key={entry.id} className="flex items-center gap-2">
-                  <CompareKey index={index} />
-                  {entry.name}
-                </li>
-              ))}
+            <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs" aria-label="Légende">
+              {entries.map((entry, index) => {
+                const final = entry.points.at(-1)?.value;
+                return (
+                  <li key={entry.id} className="flex items-center gap-2">
+                    <CompareKey index={index} />
+                    {entry.name}
+                    {final !== undefined && ` · ${brief(final)}`}
+                  </li>
+                );
+              })}
             </ul>
           </Panel>
 
-          <Panel flush title="Chiffres">
+          <Panel flush title={rows.length > 0 ? `Au ${rows.at(-1)?.day ?? ""}` : "Chiffres"}>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="pl-4">{kind === "players" ? "Joueur" : "Alliance"}</TableHead>
                   {kind === "players" && <TableHead className="hidden sm:table-cell">Alliance</TableHead>}
-                  <TableHead className="text-right">Le {rows[0]?.day ?? "—"}</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">Le {rows[0]?.day ?? "—"}</TableHead>
                   <TableHead className="text-right">Le {rows.at(-1)?.day ?? "—"}</TableHead>
-                  <TableHead className="text-right">Écart</TableHead>
-                  <TableHead className="hidden pr-4 text-right md:table-cell">Maintenant</TableHead>
+                  <TableHead className="pr-4 text-right md:pr-2">Écart</TableHead>
+                  <TableHead className="hidden pr-4 text-right md:table-cell">Rang</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {entries.map((entry, index) => {
+                {ranked.map((entry) => {
                   const first = entry.points[0]?.value;
                   const final = entry.points.at(-1)?.value;
                   return (
                     <TableRow key={entry.id}>
                       <TableCell className="pl-4">
                         <span className="flex items-center gap-2">
-                          <CompareKey index={index} />
+                          <CompareKey index={entry.index} />
                           <Link href={entryHref(entry.id)} className="font-semibold hover:underline">
                             {entry.name}
                           </Link>
@@ -197,13 +213,15 @@ export default async function ComparePage({ params, searchParams }: Props) {
                       {kind === "players" && (
                         <TableCell className="hidden sm:table-cell">{entry.alliance ?? "—"}</TableCell>
                       )}
-                      <TableCell className="text-right font-mono">{first === undefined ? "—" : show(first)}</TableCell>
+                      <TableCell className="hidden text-right font-mono sm:table-cell">
+                        {first === undefined ? "—" : show(first)}
+                      </TableCell>
                       <TableCell className="text-right font-mono">{final === undefined ? "—" : show(final)}</TableCell>
-                      <TableCell className="text-right font-mono">
+                      <TableCell className="pr-4 text-right font-mono md:pr-2">
                         {first === undefined || final === undefined ? "—" : deltaText(first, final, rank)}
                       </TableCell>
                       <TableCell className="hidden pr-4 text-right font-mono md:table-cell">
-                        {show(entry.now)}
+                        {ordinal(entry.rankNow)}
                       </TableCell>
                     </TableRow>
                   );
@@ -212,21 +230,45 @@ export default async function ComparePage({ params, searchParams }: Props) {
             </Table>
           </Panel>
           {entries.length === 1 && (
-            <p className="text-sm text-muted-foreground">
-              Ajoutez un{kind === "players" ? "" : "e"} deuxième {noun} pour les comparer.
+            <p role="note" className="border bg-info-soft px-3.5 py-2.5 text-sm">
+              {kind === "players"
+                ? "Un seul joueur choisi : ajoutez-en un deuxième avec le champ ci-dessus pour les comparer."
+                : "Une seule alliance choisie : ajoutez-en une deuxième avec le champ ci-dessus pour les comparer."}
             </p>
           )}
         </>
       ) : (
-        <Panel>
-          <p className="text-sm text-muted-foreground">
-            Ajoutez un{kind === "players" ? "" : "e"} {noun} avec le champ ci-dessus, ou depuis sa fiche avec « Comparer
-            ».
-          </p>
-        </Panel>
+        <p role="note" className="border bg-info-soft px-3.5 py-2.5 text-sm">
+          Ajoutez un{kind === "players" ? "" : "e"} {noun} avec le champ ci-dessus, ou depuis sa fiche avec « Comparer
+          ».
+        </p>
       )}
 
       <AdSlot />
     </div>
+  );
+}
+
+/** Players or alliances, in the page's header: the same look as the other choices, without their label. */
+function KindSwitch({ current, href }: { current: CompareKind; href: (choice: CompareKind) => string }) {
+  return (
+    <nav aria-label="Comparer des" className="flex flex-wrap border bg-card">
+      {COMPARE_KINDS.map((choice, index) => (
+        <Link
+          key={choice}
+          href={href(choice)}
+          aria-current={choice === current ? "true" : undefined}
+          className={cn(
+            "px-3 py-1.5 text-sm",
+            index > 0 && "border-l",
+            choice === current
+              ? "bg-primary font-semibold text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {choice === "players" ? "Joueurs" : "Alliances"}
+        </Link>
+      ))}
+    </nav>
   );
 }

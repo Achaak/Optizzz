@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareHref, deltaText, idsOf, mergeSeries, periodStart } from "./compare";
+import { byLast, compareHref, deltaText, idsOf, mergeSeries, periodStart } from "./compare";
 
 describe("idsOf", () => {
   it("reads players' ids, without repeats or anything else", () => {
@@ -67,9 +67,9 @@ describe("mergeSeries", () => {
 });
 
 describe("deltaText", () => {
-  it("signs a score's change", () => {
-    expect(deltaText(118_040, 700_235, false)).toBe("+582 195");
-    expect(deltaText(700, 650, false)).toBe("−50");
+  it("points a score's change up or down", () => {
+    expect(deltaText(118_040, 700_235, false)).toBe("▲ 582 195");
+    expect(deltaText(700, 650, false)).toBe("▼ 50");
   });
 
   it("counts a rank's places gained upward", () => {
@@ -79,5 +79,22 @@ describe("deltaText", () => {
 
   it("says when nothing moved", () => {
     expect(deltaText(3, 3, true)).toBe("=");
+  });
+});
+
+describe("byLast", () => {
+  const entry = (name: string, values: number[]) => ({
+    name,
+    points: values.map((value, index) => ({ day: new Date(index * 86_400_000), value })),
+  });
+
+  it("puts the highest score on the last day first, those without a reading last", () => {
+    const sorted = byLast([entry("a", [1, 5]), entry("b", []), entry("c", [9, 7])], false);
+    expect(sorted.map((e) => e.name)).toEqual(["c", "a", "b"]);
+  });
+
+  it("puts the best rank first", () => {
+    const sorted = byLast([entry("a", [3]), entry("b", [1])], true);
+    expect(sorted.map((e) => e.name)).toEqual(["b", "a"]);
   });
 });

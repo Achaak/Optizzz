@@ -53,3 +53,14 @@ Le 2026-10-30, les maquettes C des fiches, de Comparer, du Journal, de l'accueil
 - **Accueil connecté** : « Bonjour », les Espaces avec leurs compteurs en lignes, une carte « Créer ou rejoindre », votre joueur (TDC, évolution, rang), les nouvelles du dernier serveur visité, les outils avec leur phrase.
 - **Espace** : onglets avec leurs compteurs, la page sur toute la largeur, une colonne de côté (alertes, invitation, Discord, réglages). Les parcours de chiffrement ne changent pas.
 - **Compte** : panneaux côte à côte, la suppression à part.
+
+### Revue page par page (2026-10-30)
+
+Chaque page a été recomparée à sa maquette, élément par élément. Ce que les maquettes montrent et que le site n'a pas est resté de côté, sans rien inventer : date de fondation d'une alliance, « Pour arriver à » et le retour du Trajet, appareils du compte, « Prochain convoi », Priorité « haute / normale », absences en vacances, bonus « Laboratoire » ou « Ouvrières » des Coûts, objectifs « Pertes acceptées » de la Chasse.
+
+- **Tableaux** : en-têtes en petites capitales mono partout (`globals.css`).
+- **Nombres abrégés** : `formatCompact` va jusqu'au T (TDC total des gros serveurs, coûts des hauts niveaux).
+- **Comparer** : le tableau finit par le rang actuel au TDC ; les lignes vont du mieux classé au moins bien classé au dernier jour.
+- **Journal** : les noms des descriptions sont en gras et les tags mènent aux fiches ; un clic sur un jour du graphique filtre la liste.
+- **Combat** : attaquant et défenseur côte à côte, seuls les lieux traversés par l'attaque ; le collage s'ouvre depuis « Coller l'armée du jeu ».
+- **Espace** : Discord et Réglages deviennent des onglets ; « Terminées » se replie.

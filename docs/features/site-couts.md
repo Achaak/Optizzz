@@ -15,7 +15,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-23 (ticket 04). 
 ## Résultat
 
 - **Total** du niveau actuel au niveau visé : nourriture, matériaux, ouvrières (seulement ce que l'élément coûte : un bâtiment ne coûte que des matériaux), écrits comme le jeu (`formatNumber`) ; durée totale, écrite comme Optizzz (`time-format`).
-- **Détail par niveau** : niveau, coût, durée, cumul du coût et de la durée.
+- **Détail par niveau** : niveau, coût, durée, cumul du coût (la durée totale est en tête du Rapport, depuis le 2026-10-30, `site-refonte.md`).
 - Durée d'un niveau avec bonus : durée hors bonus × 0,9^niveau du bonus, arrondie à la seconde **pour chaque niveau**, comme le jeu ; le total additionne les niveaux arrondis. Les paliers de durée sont ceux de la table ; une note rappelle que × 1,2 et × 1,12 ne sont pas encore vérifiés dans le jeu.
 - Le bonus suppose que son niveau ne change pas pendant les chantiers (une note le dit).
 

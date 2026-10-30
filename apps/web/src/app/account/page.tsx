@@ -1,11 +1,12 @@
-import { formatEndTime, formatPastTime } from "@optizzz/game/format/time-format";
+import { formatNumber } from "@optizzz/game/format/number-format";
+import { formatEndTime } from "@optizzz/game/format/time-format";
 import { serverById } from "@optizzz/game/servers";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LockIcon } from "~/components/icons";
-import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
+import { PageHeader, Panel } from "~/components/panel";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { shortDate } from "~/lib/short-date";
 import { auth } from "~/server/auth";
@@ -16,6 +17,13 @@ import { DeleteAccount, RemoveExtensionButton, SignOutButtons } from "./account-
 import { PassphraseSettings } from "./passphrase-settings";
 import { ResumeAfterLogin } from "./resume-after-login";
 
+/** Two panels side by side, one under the other below 860 px or so. */
+const ROW = "grid grid-cols-[repeat(auto-fit,minmax(min(420px,100%),1fr))] gap-5";
+/** Column heads in small mono capitals. */
+const HEAD =
+  "[&_th]:h-auto [&_th]:py-2 [&_th]:font-mono [&_th]:text-[0.6875rem] [&_th]:font-medium [&_th]:tracking-widest [&_th]:text-muted-foreground [&_th]:uppercase";
+const ROLE_LABEL = { admin: "Admin", delegate: "Délégué", member: "Membre" } as const;
+
 export const metadata: Metadata = { title: "Mon compte", robots: { index: false } };
 
 export default async function AccountPage() {
@@ -23,7 +31,7 @@ export default async function AccountPage() {
   const session = await auth.api.getSession({ headers: await headers(), query: { disableRefresh: true } });
   if (!session) redirect("/login");
   const now = new Date();
-  const [players, extensions, adminOf] = await Promise.all([
+  const [players, extensions, adminOf, memberships] = await Promise.all([
     db.declaredPlayer.findMany({
       where: { userId: session.user.id },
       orderBy: [{ server: "asc" }, { pseudo: "asc" }],
@@ -34,91 +42,150 @@ export default async function AccountPage() {
       orderBy: { createdAt: "asc" },
     }),
     adminMemberships(db, session.user.id),
+    db.spaceMember.findMany({
+      where: { player: { userId: session.user.id } },
+      select: {
+        role: true,
+        server: true,
+        space: { select: { id: true, name: true, _count: { select: { members: true } } } },
+      },
+      orderBy: [{ server: "asc" }, { space: { name: "asc" } }],
+    }),
   ]);
+  // Each Player's alliance today, from the public export.
+  const inExport = await db.player.findMany({
+    where: { OR: players.map((p) => ({ server: p.server, id: p.playerId })) },
+    select: { server: true, id: true, alliance: true },
+  });
+  const allianceOf = new Map(inExport.map((p) => [`${p.server}:${String(p.id)}`, p.alliance]));
   // « J'ai oublié ma phrase » warns the sole Admin of a space: nobody could send them their access again.
   const soleAdminOf = adminOf.filter((m) => m.admins === 1).map((m) => m.spaceName);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
       <ResumeAfterLogin />
-      <PageHeader title="Votre compte" kicker="Compte Optizzz">
-        Connecté avec <span className="break-all text-foreground">{session.user.email}</span> par lien magique, compte
-        créé {formatPastTime(session.user.createdAt, now)}. Optizzz ne garde aucun mot de passe.
+      <PageHeader title="Votre compte" actions={<SignOutButtons />}>
+        <p>
+          Connecté avec <span className="break-all text-foreground">{session.user.email}</span> par lien magique.
+          Optizzz ne garde aucun mot de passe.
+        </p>
+        <p className="mt-1 text-sm">
+          Sur ce navigateur, vous restez connecté jusqu&apos;à {formatEndTime(session.session.expiresAt, now)}, et 30
+          jours de plus à chaque visite. «&nbsp;Partout&nbsp;» ferme aussi vos connexions sur vos autres appareils.
+        </p>
       </PageHeader>
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <Panel flush title="Vos joueurs" aside={<span className="text-xs text-muted-foreground">un par serveur</span>}>
+      <div className={ROW}>
+        <Panel
+          flush
+          className="h-full"
+          title="Vos joueurs"
+          aside={<span className="text-xs text-muted-foreground">un par serveur</span>}
+        >
           {players.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
+            <Table className="text-[0.8125rem]">
+              <TableHeader className={HEAD}>
+                <TableRow className="hover:bg-transparent">
                   <TableHead className="pl-4">Serveur</TableHead>
                   <TableHead>Joueur</TableHead>
-                  <TableHead className="pr-4 text-right">Rattaché le</TableHead>
+                  <TableHead>Alliance</TableHead>
+                  <TableHead className="pr-4">Rattaché le</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {players.map((player) => (
-                  <TableRow key={`${player.server}:${String(player.playerId)}`}>
-                    <TableCell className="pl-4 font-mono">{serverById(player.server)?.name ?? player.server}</TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/${player.server}/players/${String(player.playerId)}`}
-                        className="font-semibold hover:underline"
-                      >
-                        {player.pseudo}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="pr-4 text-right font-mono">{shortDate(player.declaredAt, now)}</TableCell>
-                  </TableRow>
-                ))}
+                {players.map((player) => {
+                  const key = `${player.server}:${String(player.playerId)}`;
+                  const alliance = allianceOf.get(key);
+                  return (
+                    <TableRow key={key}>
+                      <TableCell className="pl-4 font-mono">
+                        {serverById(player.server)?.name ?? player.server}
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/${player.server}/players/${String(player.playerId)}`}
+                          className="font-semibold hover:underline"
+                        >
+                          {player.pseudo}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        {alliance ? (
+                          <Link
+                            href={`/${player.server}/alliances/${encodeURIComponent(alliance)}`}
+                            className="hover:underline"
+                          >
+                            {alliance}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="pr-4 font-mono">{shortDate(player.declaredAt, now)}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           ) : (
-            <p className="p-4 text-sm text-muted-foreground">Aucun Joueur rattaché.</p>
+            <p className="px-4 py-3.5 text-muted-foreground">Aucun Joueur rattaché.</p>
           )}
-          <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+          <p className="mt-auto border-t px-4 py-3 text-[0.8125rem] text-muted-foreground">
             Un Joueur se rattache depuis l&apos;extension liée, qui vous le propose quand vous jouez&nbsp;: un pseudo
             par serveur, et un seul Compte Optizzz par Joueur.
           </p>
         </Panel>
 
-        <Panel flush title="Extensions liées">
-          {extensions.length > 0 ? (
-            <ul className="divide-y text-sm">
-              {extensions.map((extension) => (
-                <li key={extension.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
-                  <span className="flex items-baseline gap-2">
-                    <MonoLabel className="text-primary">● Liée</MonoLabel>
-                    {extension.browser}, le {shortDate(extension.createdAt, now)}
-                  </span>
-                  <RemoveExtensionButton id={extension.id} browser={extension.browser} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="p-4 text-sm text-muted-foreground">Aucune extension liée.</p>
-          )}
-          <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-            Pour lier l&apos;extension Optizzz d&apos;un navigateur, cliquez «&nbsp;Connecter mon Compte Optizzz&nbsp;»
-            dans ses paramètres («&nbsp;Fonctionnalités&nbsp;»). Retirer une extension la déconnecte aussitôt.
-          </p>
+        <Panel className="h-full" title={extensions.length > 1 ? "Extensions" : "Extension"}>
+          <div className="flex flex-col gap-2.5">
+            {extensions.length > 0 ? (
+              <ul className="flex flex-col gap-2.5">
+                {extensions.map((extension) => (
+                  <li key={extension.id} className="flex flex-wrap items-center justify-between gap-2.5">
+                    <span className="flex flex-wrap items-baseline gap-2.5">
+                      <span className="bg-accent px-2 py-0.5 font-mono text-xs text-primary">● CONNECTÉE</span>
+                      {extension.browser} · depuis le {shortDate(extension.createdAt, now)}
+                    </span>
+                    <RemoveExtensionButton id={extension.id} browser={extension.browser} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Aucune extension liée.</p>
+            )}
+            <p className="text-[0.8125rem] text-muted-foreground">
+              {extensions.length > 0 ? (
+                <>
+                  L&apos;extension n&apos;envoie rien au site sans un clic de votre part&nbsp;: relevés partagés dans un
+                  Espace, Demandes, convois. La déconnecter lui retire aussitôt l&apos;accès.
+                </>
+              ) : (
+                <>
+                  Pour lier l&apos;extension Optizzz d&apos;un navigateur, cliquez «&nbsp;Connecter mon Compte
+                  Optizzz&nbsp;» dans ses paramètres («&nbsp;Fonctionnalités&nbsp;»).
+                </>
+              )}
+            </p>
+          </div>
         </Panel>
+      </div>
 
+      <div className={ROW}>
         <section id="phrase" className="scroll-mt-8">
           <Panel
+            className="h-full"
             title="Chiffrement"
             aside={
-              <MonoLabel className="inline-flex items-center gap-1.5">
-                <LockIcon width={12} height={12} />
-                Phrase de chiffrement
-              </MonoLabel>
+              <span className="inline-flex items-center gap-1.5 bg-raised px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                <LockIcon width={14} height={14} />
+                chiffré de bout en bout
+              </span>
             }
           >
-            <div className="space-y-3 text-sm">
+            <div className="flex flex-col gap-2.5">
               <p>
-                Votre <strong>phrase secrète</strong> protège votre accès aux Espaces d&apos;alliance. Optizzz ne la
-                connaît pas et ne peut pas la retrouver.
+                Votre <strong>Phrase de chiffrement</strong> ouvre vos Espaces. Elle ne quitte jamais votre
+                appareil&nbsp;; sans elle, personne, pas même Optizzz, ne lit ce qu&apos;ils contiennent.
               </p>
               <SpaceKeysProvider userId={session.user.id} email={session.user.email}>
                 <PassphraseSettings soleAdminOf={soleAdminOf} />
@@ -127,31 +194,53 @@ export default async function AccountPage() {
           </Panel>
         </section>
 
-        <div className="space-y-6">
-          <Panel title="Espaces d'alliance" aside={<PanelLink href="/spaces">Mes espaces</PanelLink>}>
-            <p className="text-sm text-muted-foreground">
-              Mettez vos données en commun avec votre alliance, sans que personne d&apos;autre puisse les lire.
+        <Panel flush className="h-full" title="Vos Espaces">
+          {memberships.length > 0 ? (
+            <Table className="text-[0.8125rem]">
+              <TableHeader className={HEAD}>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-4">Espace</TableHead>
+                  <TableHead>Serveur</TableHead>
+                  <TableHead>Rôle</TableHead>
+                  <TableHead className="pr-4 text-right">Membres</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {memberships.map((m) => (
+                  <TableRow key={m.space.id}>
+                    <TableCell className="pl-4">
+                      <Link href={`/spaces/${m.space.id}`} className="font-semibold text-primary hover:underline">
+                        {m.space.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="font-mono">{serverById(m.server)?.name ?? m.server}</TableCell>
+                    <TableCell>{ROLE_LABEL[m.role]}</TableCell>
+                    <TableCell className="pr-4 text-right font-mono">{formatNumber(m.space._count.members)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="px-4 py-3.5 text-muted-foreground">
+              Aucun espace pour l&apos;instant.{" "}
+              <Link href="/spaces" className="text-primary underline">
+                Créer ou rejoindre un Espace d&apos;alliance
+              </Link>
+              .
             </p>
-          </Panel>
-          <Panel title="Connexion">
-            <div className="space-y-3 text-sm">
-              <p className="text-muted-foreground">
-                Sur ce navigateur, vous restez connecté jusqu&apos;à {formatEndTime(session.session.expiresAt, now)}, et
-                30 jours de plus à chaque visite.
-              </p>
-              <SignOutButtons />
-            </div>
-          </Panel>
-        </div>
+          )}
+        </Panel>
       </div>
 
-      <section className="space-y-3 border border-warning-border bg-warning-soft p-4">
-        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Supprimer le compte</h2>
-        <p className="text-sm">
-          Votre e-mail, vos connexions, vos extensions liées, vos Joueurs, votre place dans vos espaces et votre phrase
-          secrète sont effacés tout de suite, sans retour possible. Un espace où vous êtes seul part avec le compte ; le
-          dernier Admin d&apos;un espace qui a d&apos;autres membres doit d&apos;abord nommer un autre Admin.
-        </p>
+      <section className="flex flex-wrap items-center justify-between gap-3 border border-warning-border bg-warning-soft px-4 py-3.5">
+        <div className="max-w-3xl">
+          <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Supprimer le compte</h2>
+          <p className="mt-0.5 text-[0.8125rem]">
+            Vos joueurs sont détachés et vous quittez vos Espaces&nbsp;; votre e-mail, vos extensions liées et votre
+            phrase secrète sont effacés. Irréversible. Un espace où vous êtes seul part avec le compte&nbsp;; le dernier
+            Admin d&apos;un espace qui a d&apos;autres membres doit d&apos;abord nommer un autre Admin.
+          </p>
+        </div>
         <DeleteAccount email={session.user.email} />
       </section>
     </div>

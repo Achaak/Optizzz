@@ -41,6 +41,12 @@ describe("formatCompact", () => {
     expect(formatCompact(4512345678)).toBe("4,51G");
   });
 
+  it("writes trillions with T, the largest unit", () => {
+    expect(formatCompact(25_944_123_456_789)).toBe("25,9T");
+    expect(formatCompact(999_999_999_999)).toBe("1T");
+    expect(formatCompact(691_752_902_764e9)).toBe("691 752 903T");
+  });
+
   it("drops useless zeros", () => {
     expect(formatCompact(10000)).toBe("10K");
     expect(formatCompact(12000)).toBe("12K");

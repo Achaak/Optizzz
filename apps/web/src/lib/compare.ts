@@ -10,6 +10,8 @@ export type ComparePeriod = "all" | "30" | "7";
 
 export const COMPARE_KINDS: readonly [CompareKind, ...CompareKind[]] = ["players", "alliances"];
 export const COMPARE_PERIODS: readonly [ComparePeriod, ...ComparePeriod[]] = ["all", "30", "7"];
+/** The periods as the page lists them, the shortest first; the whole history stays the default. */
+export const SHOWN_PERIODS: readonly ComparePeriod[] = ["7", "30", "all"];
 export const COMPARE_METRICS: readonly [CompareMetric, ...CompareMetric[]] = [
   "field",
   "rank",
@@ -88,9 +90,20 @@ export function mergeSeries(series: { points: ComparePoint[] }[]): { day: Date; 
   return [...rows.entries()].sort(([a], [b]) => a - b).map(([key, values]) => ({ day: new Date(key), values }));
 }
 
-/** From `first` to `last`: « +582 195 », « −50 »; a rank in places won (« ▲ 7 ») or lost (« ▼ 3 »). */
+/** From `first` to `last`, a gain upward: « ▲ 582 195 », « ▼ 50 »; a rank in places won (« ▲ 7 ») or lost (« ▼ 3 »). */
 export function deltaText(first: number, last: number, rank: boolean): string {
   if (first === last) return "=";
-  if (rank) return `${last < first ? "▲" : "▼"} ${formatNumber(Math.abs(first - last))}`;
-  return `${last > first ? "+" : "−"}${formatNumber(Math.abs(last - first))}`;
+  const gained = rank ? last < first : last > first;
+  return `${gained ? "▲" : "▼"} ${formatNumber(Math.abs(last - first))}`;
+}
+
+/** The compared ones' order in the table: the best on the last day first (the highest score, the smallest rank). */
+export function byLast<T extends { points: ComparePoint[] }>(entries: T[], rank: boolean): T[] {
+  const last = (entry: T) => entry.points.at(-1)?.value;
+  return [...entries].sort((a, b) => {
+    const x = last(a);
+    const y = last(b);
+    if (x === undefined || y === undefined) return x === undefined ? (y === undefined ? 0 : 1) : -1;
+    return rank ? x - y : y - x;
+  });
 }

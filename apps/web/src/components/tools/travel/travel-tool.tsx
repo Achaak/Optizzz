@@ -2,16 +2,16 @@
 
 // The travel tool: two ends (a player of a server, or a position), the sender's Attack Speed and a departure give the
 // distance, the travel time and the arrival, Paris time. See docs/features/site-trajets.md.
-import { formatEndTime, parisParts } from "@optizzz/game/format/time-format";
+import { formatEndTime, formatEndTimeShort, parisParts } from "@optizzz/game/format/time-format";
+import { distance } from "@optizzz/game/travel";
 import { useState, useSyncExternalStore } from "react";
 import { NumberField } from "~/components/number-field";
-import { Panel } from "~/components/panel";
-import { Stat } from "~/components/stat";
+import { MonoLabel, Panel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { CopyLinkButton } from "../copy-link-button";
 import { pickLevels } from "../my-levels";
-import { PlayerPicker, ServerSelect, usePickedPlayer } from "../player-picker";
+import { ChoiceButtons, PlayerPicker, ServerSelect, usePickedPlayer } from "../player-picker";
 import { InvalidLinkNote, ToolLayout, Verdict } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
 import { useToolState } from "../use-tool-state";
@@ -68,19 +68,15 @@ export function TravelTool() {
     levels.remember({ attackSpeed });
   };
 
+  const from = endPoint(state.from, fromPlayer);
+  const to = endPoint(state.to, toPlayer);
+
   const form = (
     <>
       <InvalidLinkNote shown={tool.invalidLink} />
-      <Panel title="Expéditeur et destination">
-        <div className="space-y-4">
-          <ServerSelect value={state.server} onChange={(server) => change((current) => withServer(current, server))} />
-          <PlayerPicker
-            key={`from-${String(tool.opening)}-${String(swaps)}`}
-            label="Expéditeur"
-            server={state.server}
-            value={state.from}
-            onChange={(from) => change((current) => ({ ...current, from }))}
-          />
+      <Panel
+        title="Expéditeur et destination"
+        aside={
           <Button
             type="button"
             variant="outline"
@@ -92,29 +88,49 @@ export function TravelTool() {
           >
             Inverser
           </Button>
-          <PlayerPicker
-            key={`to-${String(tool.opening)}-${String(swaps)}`}
-            label="Destination"
-            server={state.server}
-            value={state.to}
-            onChange={(to) => change((current) => ({ ...current, to }))}
-          />
-          <label className="block space-y-1 text-sm">
-            <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
-              Vitesse d&apos;attaque de l&apos;expéditeur
-            </span>
-            <NumberField
-              value={state.attackSpeed}
-              rules={{ min: 0, max: 1000, integer: true, allowEmpty: true }}
-              className="w-24"
-              onCommit={setAttackSpeed}
+        }
+      >
+        <div className="space-y-4">
+          <ServerSelect value={state.server} onChange={(server) => change((current) => withServer(current, server))} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <PlayerPicker
+              key={`from-${String(tool.opening)}-${String(swaps)}`}
+              label="Expéditeur"
+              server={state.server}
+              value={state.from}
+              onChange={(from) => change((current) => ({ ...current, from }))}
             />
-          </label>
+            <PlayerPicker
+              key={`to-${String(tool.opening)}-${String(swaps)}`}
+              label="Destination"
+              server={state.server}
+              value={state.to}
+              onChange={(to) => change((current) => ({ ...current, to }))}
+            />
+            <div className="space-y-1 text-sm">
+              <MonoLabel className="block">Distance</MonoLabel>
+              <output className="flex h-8 items-center border bg-background px-2.5 font-mono">
+                {from && to ? `${String(Math.ceil(distance(from, to)))} cases` : "—"}
+              </output>
+              <span className="block text-xs text-muted-foreground">calculée depuis les positions</span>
+            </div>
+            <label className="block space-y-1 text-sm">
+              <MonoLabel className="block">Vitesse d&apos;attaque de l&apos;expéditeur</MonoLabel>
+              <NumberField
+                value={state.attackSpeed}
+                rules={{ min: 0, max: 1000, integer: true, allowEmpty: true }}
+                onCommit={setAttackSpeed}
+              />
+            </label>
+          </div>
         </div>
       </Panel>
       <Panel title="Départ" aside={<span className="text-xs text-muted-foreground">heure de Paris</span>}>
         <Departure state={state} now={now} onChange={(departure) => change((current) => ({ ...current, departure }))} />
       </Panel>
+      <p className="border bg-info-soft px-3.5 py-2.5 text-[0.8125rem]">
+        Même temps pour une attaque et pour un convoi.
+      </p>
     </>
   );
 
@@ -134,14 +150,19 @@ export function TravelTool() {
         <Result
           state={state}
           now={now}
-          from={endPoint(state.from, fromPlayer)}
-          to={endPoint(state.to, toPlayer)}
+          from={from}
+          to={to}
           loading={fromPlayer === undefined || toPlayer === undefined}
         />
       }
     />
   );
 }
+
+const DEPARTURES = [
+  { value: "now", label: "Maintenant" },
+  { value: "fixed", label: "À une heure donnée" },
+] as const;
 
 function Departure({
   state,
@@ -154,46 +175,30 @@ function Departure({
 }) {
   const fixed = state.departure !== null;
   return (
-    <fieldset className="min-w-0 space-y-2">
-      <legend className="text-sm font-medium">Départ</legend>
-      <div className="flex gap-1" role="group" aria-label="Départ : maintenant ou à une heure donnée">
-        <Button
-          type="button"
-          size="sm"
-          variant={fixed ? "ghost" : "secondary"}
-          aria-pressed={!fixed}
-          onClick={() => onChange(null)}
-        >
-          Maintenant
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={fixed ? "secondary" : "ghost"}
-          aria-pressed={fixed}
-          onClick={() => {
-            if (!fixed) onChange(parisInputValue(now ?? new Date()));
-          }}
-        >
-          À une heure donnée
-        </Button>
-      </div>
+    <div className="space-y-4">
+      <ChoiceButtons
+        label="Départ : maintenant ou à une heure donnée"
+        options={DEPARTURES}
+        value={fixed ? "fixed" : "now"}
+        onChange={(choice) => {
+          if (choice === "now") onChange(null);
+          else if (!fixed) onChange(parisInputValue(now ?? new Date()));
+        }}
+      />
       {fixed && (
         <label className="block space-y-1 text-sm">
-          <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
-            Jour et heure, heure de Paris
-          </span>
+          <MonoLabel className="block">Départ souhaité</MonoLabel>
           <Input
             type="datetime-local"
             value={state.departure ?? ""}
-            className="w-auto"
+            className="w-full font-mono sm:w-auto"
             onChange={(event) => {
               if (event.target.value) onChange(event.target.value);
             }}
           />
         </label>
       )}
-    </fieldset>
+    </div>
   );
 }
 
@@ -219,48 +224,75 @@ function Result({
         : "Saisissez la Vitesse d'attaque de l'expéditeur.";
     return <p className="text-sm text-muted-foreground">{now ? missing : "Chargement…"}</p>;
   }
+  const fixed = state.departure !== null;
   const departure = departureTime(state.departure, now);
   const trip = travelResult({ from, to, attackSpeed: state.attackSpeed, departure, now });
+  const departureText = fixed ? formatEndTime(departure, now) : "maintenant";
+  const arrivalShort = formatEndTimeShort(trip.arrival, now);
+  const fromNow = new Date(now.getTime() + trip.seconds * 1000);
   return (
     <>
-      <Verdict title={`Arrivée ${trip.arrivalText}`}>
-        {trip.time} de trajet, {String(trip.distance)} cases · heure de Paris
+      <Verdict title={`Arrivée ${arrivalShort}`}>
+        {fixed ? `en partant ${departureText}` : "en partant maintenant"}, heure de Paris
       </Verdict>
-      <div className="grid border-t border-l sm:grid-cols-3 lg:grid-cols-1">
-        <Stat label="Distance" value={`${String(trip.distance)} cases`} />
-        <Stat label="Temps de trajet" value={trip.time} />
-        <Stat label="Arrivée, heure de Paris" value={trip.arrivalText} />
+      {/* Under the verdict, ruled blocks edge to edge, as the report of the mockups. */}
+      <div className="-mx-4 -mt-4 -mb-4">
+        <div className="grid grid-cols-2 border-b">
+          <Figure label="Temps de trajet" value={trip.time} />
+          {fixed ? (
+            <Figure label="Arrivée si vous lancez maintenant" value={formatEndTimeShort(fromNow, now)} />
+          ) : (
+            <Figure label="Distance" value={`${String(trip.distance)} cases`} />
+          )}
+        </div>
+        <Timeline
+          departure={fixed ? formatEndTimeShort(departure, now) : "maintenant"}
+          arrival={arrivalShort}
+          label={`Départ ${departureText}, arrivée ${trip.arrivalText}, après ${trip.time} de trajet`}
+        />
+        <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5 px-4 py-3 text-sm">
+          {fixed && (
+            <>
+              <dt className="text-muted-foreground">Distance</dt>
+              <dd className="text-right font-mono">{trip.distance} cases</dd>
+            </>
+          )}
+          <dt className="text-muted-foreground">Vitesse d&apos;attaque</dt>
+          <dd className="text-right font-mono">{state.attackSpeed}</dd>
+          <dt className="text-muted-foreground">Départ</dt>
+          <dd className="text-right font-mono">{departureText}</dd>
+        </dl>
       </div>
-      <Timeline departure={formatEndTime(departure, now)} arrival={trip.arrivalText} time={trip.time} />
-      <p className="text-sm text-muted-foreground">Même temps pour une attaque et pour un convoi.</p>
     </>
   );
 }
 
-/** Departure to arrival on one line, the travel time written over it. */
-function Timeline({ departure, arrival, time }: { departure: string; arrival: string; time: string }) {
+/** The trip as a bar: the departure under its start, the arrival over its end. */
+function Timeline({ departure, arrival, label }: { departure: string; arrival: string; label: string }) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-center font-mono text-xs text-primary">{time}</div>
-      <div aria-hidden className="flex items-center">
-        <span className="size-3 border-2 border-primary bg-card" />
-        <span className="h-0.5 flex-1 bg-primary" />
-        <span className="border-y-[6px] border-l-[10px] border-y-transparent border-l-primary" />
+    <figure className="border-b px-4 pt-3.5 pb-4">
+      <figcaption className="mb-2.5 font-heading text-lg tracking-wide uppercase">Frise</figcaption>
+      <div role="img" aria-label={label} className="space-y-1.5">
+        <div className="text-right">
+          <MonoLabel className="block text-primary">Arrivée</MonoLabel>
+          <div className="font-mono text-[0.9375rem]">{arrival}</div>
+        </div>
+        <div className="h-2.5 bg-primary" />
+        <div>
+          <MonoLabel className="block">Départ</MonoLabel>
+          <div className="font-mono text-[0.9375rem]">{departure}</div>
+        </div>
       </div>
-      <div className="flex justify-between gap-4 text-sm">
-        <span>
-          <span className="block font-mono text-[0.6875rem] tracking-wider text-muted-foreground uppercase">
-            Départ
-          </span>
-          {departure}
-        </span>
-        <span className="text-right">
-          <span className="block font-mono text-[0.6875rem] tracking-wider text-muted-foreground uppercase">
-            Arrivée
-          </span>
-          {arrival}
-        </span>
-      </div>
+    </figure>
+  );
+}
+
+/** One figure of the report, as `Stat` but wrapping: a long travel time (« 1J 0H 43m 37s ») stays whole. */
+function Figure({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 px-4 py-3.5 first:border-r">
+      <MonoLabel className="block">{label}</MonoLabel>
+      <div className="font-mono text-[1.375rem] leading-tight break-words">{value}</div>
     </div>
   );
 }

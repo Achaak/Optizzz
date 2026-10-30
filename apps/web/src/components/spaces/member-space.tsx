@@ -11,8 +11,8 @@ import { isSentCategory, sendsLabel } from "@optizzz/game/site-links/envois";
 import { cn } from "cn";
 import Link from "next/link";
 import { useState } from "react";
-import { LockIcon } from "~/components/icons";
-import { MonoLabel, PageHeader } from "~/components/panel";
+import { LockIcon, PlusIcon } from "~/components/icons";
+import { PageHeader } from "~/components/panel";
 import { CopyInvitation } from "~/components/spaces/copy-invitation";
 import {
   AlertDialog,
@@ -61,6 +61,12 @@ type Request = MemberView["requests"][number];
 
 const ROLE_LABEL = { admin: "Admin", delegate: "Délégué", member: "Membre" } as const;
 
+/** « vous êtes Admin », under the space's name. */
+const YOU_ARE = { admin: "Admin", delegate: "Délégué", member: "membre" } as const;
+
+/** Where « Inviter » leads: the panel with the invitation link, on the « Espace » tab. */
+const INVITE_ID = "inviter";
+
 /** « absent depuis le 24/10 à 13 h 36 », Paris time, as Optizzz writes times. */
 const absentSince = (absence: Absence) => `absent depuis le ${formatDateTime(new Date(absence.since))}`;
 
@@ -76,10 +82,14 @@ function keyChanged(member: Member, access: SpaceAccess, view: MemberView): bool
 const TABS = [
   { value: "space", label: "Espace" },
   { value: "state", label: "État" },
-  { value: "floods", label: "Floods" },
-  { value: "convoys", label: "Convois" },
   { value: "demandes", label: "Demandes" },
+  { value: "convoys", label: "Convois" },
+  { value: "floods", label: "Floods" },
+  { value: "discord", label: "Discord" },
+  { value: "settings", label: "Réglages" },
 ] as const;
+
+type Tab = (typeof TABS)[number]["value"];
 
 export function MemberSpace({ view }: { view: MemberView }) {
   const keys = useSpaceKeys();
@@ -88,7 +98,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const envois = useSpaceEnvois(view, access.keyring);
   const demandes = useSpaceDemandes(view, access.keyring, envois.items);
   const versionHidden = useKeyHandover(view, access.keyring, keys.userId);
-  const [tab, setTab] = useState<(typeof TABS)[number]["value"]>("space");
+  const [tab, setTab] = useState<Tab>("space");
   const server = serverById(view.space.server);
   const isAdmin = view.me.role === "admin";
   const canAct = isAdmin && view.me.keyStatus === "current" && access.keyring !== null && keys.pair !== null;
@@ -96,15 +106,28 @@ export function MemberSpace({ view }: { view: MemberView }) {
     view.members.find((m) => m.publicKey === publicKey && m.keyStatus === "current")?.pseudo ?? null;
 
   const pending = demandes.demandes?.filter((demande) => demande.status === "pending").length ?? 0;
-  const counts: Partial<Record<(typeof TABS)[number]["value"], number>> = {
+  const counts: Partial<Record<Tab, number>> = {
     demandes: pending,
     convoys: envois.convoys?.length ?? 0,
     floods: envois.floods?.length ?? 0,
     space: isAdmin ? view.requests.length : 0,
   };
 
+  // Discord's message is set by an Admin: the tab is theirs only.
+  const tabs = TABS.filter((entry) => entry.value !== "discord" || isAdmin);
+
+  /** « Inviter »: the « Espace » tab, scrolled to the invitation link. */
+  const invite = () => {
+    setTab("space");
+    requestAnimationFrame(() => {
+      const panel = document.getElementById(INVITE_ID);
+      panel?.scrollIntoView({ behavior: "smooth", block: "start" });
+      panel?.querySelector("button")?.focus({ preventScroll: true });
+    });
+  };
+
   const header = (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <PageHeader
         kicker={
           <>
@@ -116,18 +139,24 @@ export function MemberSpace({ view }: { view: MemberView }) {
         }
         title={<span className="break-words">{view.space.name}</span>}
         actions={
-          <MonoLabel className="inline-flex items-center gap-1.5 border px-2 py-1">
-            <LockIcon width={12} height={12} />
-            chiffré de bout en bout
-          </MonoLabel>
+          <>
+            <span className="inline-flex items-center gap-1.5 bg-raised px-2 py-0.5 font-mono text-xs text-muted-foreground">
+              <LockIcon width={14} height={14} />
+              chiffré de bout en bout · {access.keyring ? "ouvert sur cet appareil" : "fermé sur cet appareil"}
+            </span>
+            <Button variant="outline" className="h-9.5 gap-1.5 bg-card px-3" onClick={invite}>
+              <PlusIcon width={14} height={14} />
+              Inviter
+            </Button>
+          </>
         }
       >
-        Espace d&apos;alliance de {view.space.tag} sur {server?.name ?? view.space.server} ·{" "}
-        {String(view.members.length)} membre{view.members.length > 1 ? "s" : ""} · {view.me.pseudo},{" "}
-        {ROLE_LABEL[view.me.role].toLowerCase()}
+        Espace d&apos;alliance de {view.space.tag} · {server?.name ?? view.space.server} ·{" "}
+        {formatNumber(view.members.length)} membre{view.members.length > 1 ? "s" : ""} · vous êtes{" "}
+        {YOU_ARE[view.me.role]}
       </PageHeader>
-      <nav aria-label="Parties de l'espace" className="flex flex-wrap border bg-card">
-        {TABS.map((entry, index) => {
+      <nav aria-label="Parties de l'Espace" className="flex overflow-x-auto border bg-card sm:flex-wrap">
+        {tabs.map((entry, index) => {
           const current = entry.value === tab;
           const count = counts[entry.value] ?? 0;
           return (
@@ -137,7 +166,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
               aria-current={current ? "page" : undefined}
               onClick={() => setTab(entry.value)}
               className={cn(
-                "flex h-11 items-center gap-2 px-4 text-sm",
+                "flex h-11 shrink-0 items-center gap-2 px-4 text-sm whitespace-nowrap",
                 index > 0 && "border-l",
                 current
                   ? "font-semibold shadow-[inset_0_-3px_0_var(--primary)]"
@@ -146,9 +175,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
             >
               {entry.label}
               {count > 0 && (
-                <span className="bg-primary/15 px-1.5 font-mono text-[0.6875rem] text-primary">
-                  {formatNumber(count)}
-                </span>
+                <span className="bg-accent px-1.5 font-mono text-[0.6875rem] text-primary">{formatNumber(count)}</span>
               )}
             </button>
           );
@@ -197,7 +224,37 @@ export function MemberSpace({ view }: { view: MemberView }) {
           convoys={envois.convoys}
           states={envois.states}
           loading={envois.loading}
+          onShowConvoys={() => setTab("convoys")}
         />
+      </div>
+    );
+
+  if (tab === "discord")
+    return (
+      <div className="space-y-6">
+        {header}
+        <div className="max-w-3xl">
+          {access.keyring ? (
+            <DiscordPanel view={view} keyring={access.keyring} />
+          ) : (
+            <Panel title="Discord">
+              <p className="text-muted-foreground">
+                Ouvrez l&apos;accès à l&apos;espace sur cet appareil (onglet «&nbsp;Espace&nbsp;») pour régler le
+                message Discord de l&apos;alliance.
+              </p>
+            </Panel>
+          )}
+        </div>
+      </div>
+    );
+
+  if (tab === "settings")
+    return (
+      <div className="space-y-6">
+        {header}
+        <div className="max-w-3xl">
+          <SpaceSettings view={view} />
+        </div>
       </div>
     );
 
@@ -239,24 +296,21 @@ export function MemberSpace({ view }: { view: MemberView }) {
             <AlertsPanel view={view} access={access} isAdmin={isAdmin} pseudoOf={pseudoOf} absences={absences} />
           )}
 
-          <Panel title="Inviter">
+          <Panel title="Inviter" id={INVITE_ID}>
             <p className="text-muted-foreground">
               Le lien d&apos;invitation mène à cet espace&nbsp;: il ne contient aucun secret. Qui l&apos;ouvre est guidé
               jusqu&apos;à sa demande, que vous verrez ici.
             </p>
             <CopyInvitation spaceId={view.space.id} />
           </Panel>
-
-          {isAdmin && <DiscordPanel view={view} keyring={access.keyring} />}
-
-          <SpaceSettings view={view} />
         </div>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        L&apos;état des membres (production, armée, chasses, niveaux et chantiers), leurs floods, leurs convois et leurs
-        Demandes sont dans les onglets «&nbsp;État&nbsp;», «&nbsp;Floods&nbsp;», «&nbsp;Convois&nbsp;» et
-        «&nbsp;Demandes&nbsp;».
+        L&apos;état des membres (production, armée, chasses, niveaux et chantiers), leurs Demandes, leurs convois et
+        leurs floods sont dans les onglets «&nbsp;État&nbsp;», «&nbsp;Demandes&nbsp;», «&nbsp;Convois&nbsp;» et
+        «&nbsp;Floods&nbsp;»{isAdmin ? ", le message Discord dans « Discord »" : ""}, les réglages de l&apos;espace dans
+        «&nbsp;Réglages&nbsp;».
       </p>
     </div>
   );

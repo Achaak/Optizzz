@@ -45,7 +45,7 @@ export function SignOutButtons() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col items-end gap-1">
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" disabled={busy} onClick={() => void run(false)}>
           Se déconnecter
@@ -54,7 +54,6 @@ export function SignOutButtons() {
           Se déconnecter partout
         </Button>
       </div>
-      <p className="text-sm text-muted-foreground">« Partout » ferme aussi vos connexions sur vos autres appareils.</p>
       {error && (
         <p role="alert" className="text-sm">
           La déconnexion n&apos;a pas abouti. Réessayez.
@@ -64,7 +63,7 @@ export function SignOutButtons() {
   );
 }
 
-/** « Retirer » a linked extension: its token stops working at once. */
+/** « Déconnecter » (removes) a linked extension: its token stops working at once. */
 export function RemoveExtensionButton({ id, browser }: { id: string; browser: string }) {
   const [busy, setBusy] = useState(false);
   return (
@@ -72,13 +71,13 @@ export function RemoveExtensionButton({ id, browser }: { id: string; browser: st
       variant="outline"
       size="sm"
       disabled={busy}
-      aria-label={`Retirer l'extension ${browser}`}
+      aria-label={`Déconnecter l'extension ${browser}`}
       onClick={() => {
         setBusy(true);
         removeExtension(id).catch(() => setBusy(false));
       }}
     >
-      Retirer
+      Déconnecter
     </Button>
   );
 }
@@ -120,7 +119,7 @@ export function DeleteAccount({ email }: { email: string }) {
 
   return (
     <AlertDialog onOpenChange={() => setError(null)}>
-      <AlertDialogTrigger render={<Button variant="destructive" />}>Supprimer mon compte</AlertDialogTrigger>
+      <AlertDialogTrigger render={<Button variant="outline" />}>Supprimer mon compte…</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Supprimer votre Compte Optizzz ?</AlertDialogTitle>

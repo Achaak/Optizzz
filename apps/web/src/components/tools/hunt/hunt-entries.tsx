@@ -1,15 +1,17 @@
 "use client";
 
-// « Vos données »: the levels, the field and the army sent, typed or pasted. See docs/features/site-chasse.md.
+// « Vos niveaux » and « Votre armée »: the levels, the field and the army sent, typed or pasted, as the mockup draws
+// them. See docs/features/site-chasse.md.
 import { readArmyText, type Counts } from "@optizzz/game/army/army-text";
+import { unitLabel } from "@optizzz/game/army/units";
 import type { NumberFieldRules } from "@optizzz/game/format/number-field";
 import type { HuntForm } from "@optizzz/game/hunt/hunt-form";
-import { useId, useState } from "react";
+import { cn } from "cn";
+import { useId, useState, type ReactNode } from "react";
 import { NumberField } from "~/components/number-field";
+import { MonoLabel, Panel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
-import { AddUnit, NoUnit, UnitName, useShownUnits } from "../unit-rows";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { NoUnit, UnitName, useShownUnits } from "../unit-rows";
 import type { HuntLevelKey, LayingLevelKey } from "./hunt-settings";
 
 export const LEVEL: NumberFieldRules = { min: 0, max: 1000, integer: true, allowEmpty: true };
@@ -23,7 +25,7 @@ export const AMOUNT: NumberFieldRules = {
 
 const HUNT_LEVEL_LABELS: Record<HuntLevelKey, string> = {
   weapons: "Armes",
-  shield: "Bouclier Thoracique",
+  shield: "Bouclier thoracique",
   huntSpeed: "Vitesse de chasse",
   cochineal: "Étable à cochenilles",
 };
@@ -33,6 +35,44 @@ const LAYING_LEVEL_LABELS: Record<LayingLevelKey, string> = {
   solarium: "Solarium",
   laying: "Technique de ponte",
 };
+
+/** The height of the form's fields, as the mockup. */
+export const FIELD_CLASS = "h-9.5";
+
+/** « cm² », « % » inside a field, on the right (the field leaves room with `pr-…`). */
+export function Suffix({ children }: { children: ReactNode }) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 font-mono text-xs text-muted-foreground"
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A field with its label in small mono capitals above it, and a unit (« cm² », « % ») inside on the right. */
+export function LabelledField({
+  label,
+  suffix,
+  children,
+  className,
+}: {
+  label: string;
+  suffix?: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <label className={cn("block min-w-0 space-y-1", className)}>
+      <MonoLabel className="block">{label}</MonoLabel>
+      <span className="relative block">
+        {children}
+        {suffix && <Suffix>{suffix}</Suffix>}
+      </span>
+    </label>
+  );
+}
 
 function LevelField({
   label,
@@ -44,10 +84,83 @@ function LevelField({
   onChange: (value: number | null) => void;
 }) {
   return (
-    <label className="space-y-1 text-sm">
-      <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">{label}</span>
-      <NumberField aria-label={label} placeholder="à remplir" value={value} onCommit={onChange} rules={LEVEL} />
-    </label>
+    <LabelledField label={label}>
+      <NumberField
+        aria-label={label}
+        placeholder="à remplir"
+        className={FIELD_CLASS}
+        value={value}
+        onCommit={onChange}
+        rules={LEVEL}
+      />
+    </LabelledField>
+  );
+}
+
+/** « Vos niveaux »: the four levels the plan needs and the field, then the laying levels (optional). */
+export function HuntLevels({
+  form,
+  aside,
+  onLevel,
+  onLayingLevel,
+  onLaunchField,
+}: {
+  form: HuntForm;
+  /** « Reprendre mes niveaux », when the extension is linked. */
+  aside?: ReactNode;
+  onLevel: (key: HuntLevelKey, value: number | null) => void;
+  onLayingLevel: (key: LayingLevelKey, value: number | null) => void;
+  onLaunchField: (value: number | null) => void;
+}) {
+  const layingId = useId();
+  return (
+    <Panel
+      title="Vos niveaux"
+      aside={
+        <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          depuis « Mes niveaux » de l&apos;extension
+          {aside}
+        </span>
+      }
+      flush
+    >
+      <div className="grid grid-cols-2 gap-3 px-4 py-3.5">
+        {(Object.keys(HUNT_LEVEL_LABELS) as HuntLevelKey[]).map((key) => (
+          <LevelField
+            key={key}
+            label={HUNT_LEVEL_LABELS[key]}
+            value={form.levels[key]}
+            onChange={(value) => onLevel(key, value)}
+          />
+        ))}
+        <LabelledField label="Votre TDC" suffix="cm²">
+          <NumberField
+            aria-label="Votre TDC au lancement, en cm²"
+            placeholder="à remplir"
+            className={cn(FIELD_CLASS, "pr-11")}
+            value={form.launchField}
+            onCommit={onLaunchField}
+            rules={{ ...AMOUNT, min: 1 }}
+          />
+        </LabelledField>
+      </div>
+      <div role="group" aria-labelledby={layingId} className="space-y-2 border-t px-4 py-3.5">
+        <p id={layingId} className="text-sm">
+          Vitesse de ponte{" "}
+          <span className="text-muted-foreground">(facultatif) : pour voir les pertes en temps de ponte</span>
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {(Object.keys(LAYING_LEVEL_LABELS) as LayingLevelKey[]).map((key) => (
+            <LevelField
+              key={key}
+              label={LAYING_LEVEL_LABELS[key]}
+              value={form.laying[key]}
+              onChange={(value) => onLayingLevel(key, value)}
+            />
+          ))}
+        </div>
+      </div>
+    </Panel>
   );
 }
 
@@ -59,7 +172,7 @@ function Paste({ onArmy }: { onArmy: (army: Counts) => void }) {
   return (
     <div className="space-y-2">
       <label htmlFor={id} className="block text-sm text-muted-foreground">
-        Coller une armée : une liste « 2 000 JSN, 300 SN » ou les troupes d&apos;un rapport
+        Une liste « 2 000 JSN, 300 SN » ou les troupes d&apos;un rapport
       </label>
       <textarea
         id={id}
@@ -90,102 +203,73 @@ function Paste({ onArmy }: { onArmy: (army: Counts) => void }) {
   );
 }
 
-export function HuntEntries({
-  form,
-  onLevel,
-  onLayingLevel,
-  onLaunchField,
-  onArmy,
-}: {
-  form: HuntForm;
-  onLevel: (key: HuntLevelKey, value: number | null) => void;
-  onLayingLevel: (key: LayingLevelKey, value: number | null) => void;
-  onLaunchField: (value: number | null) => void;
-  onArmy: (army: Counts) => void;
-}) {
+/** « Votre armée »: one row per unit with a count, « + Unité » and « Coller l'armée du jeu » across the foot. */
+export function HuntArmy({ form, onArmy }: { form: HuntForm; onArmy: (army: Counts) => void }) {
   const units = useShownUnits((unit) => (form.army[unit.key] ?? 0) > 0);
+  const titleId = useId();
+  const pasteId = useId();
+  const [pasting, setPasting] = useState(false);
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Vos données</CardTitle>
-        <CardDescription>« Mes niveaux » remplissent les niveaux ; un niveau manquant reste à remplir.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {(Object.keys(HUNT_LEVEL_LABELS) as HuntLevelKey[]).map((key) => (
-            <LevelField
-              key={key}
-              label={HUNT_LEVEL_LABELS[key]}
-              value={form.levels[key]}
-              onChange={(value) => onLevel(key, value)}
-            />
-          ))}
-        </div>
-        <label className="block max-w-xs space-y-1 text-sm">
-          <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
-            TDC au lancement (cm²)
-          </span>
-          <NumberField
-            aria-label="TDC au lancement"
-            placeholder="à remplir"
-            value={form.launchField}
-            onCommit={onLaunchField}
-            rules={{ ...AMOUNT, min: 1 }}
-          />
-        </label>
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium">Vitesse de ponte (facultatif)</legend>
-          <p className="text-sm text-muted-foreground">
-            Avec ces trois niveaux, les pertes sont aussi données en temps de ponte.
-          </p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {(Object.keys(LAYING_LEVEL_LABELS) as LayingLevelKey[]).map((key) => (
-              <LevelField
-                key={key}
-                label={LAYING_LEVEL_LABELS[key]}
-                value={form.laying[key]}
-                onChange={(value) => onLayingLevel(key, value)}
-              />
+    <section aria-labelledby={titleId} className="flex min-w-0 flex-col border bg-card text-card-foreground">
+      <header className="border-b px-4 py-2.5">
+        <h2 id={titleId} className="font-heading text-xl font-semibold tracking-wide uppercase">
+          Votre armée
+        </h2>
+      </header>
+      <div className="px-4 py-2.5">
+        {units.shown.length === 0 ? (
+          <NoUnit />
+        ) : (
+          <div className="space-y-1.5">
+            {units.shown.map((unit) => (
+              <label key={unit.key} className="grid grid-cols-[minmax(0,1fr)_8rem] items-center gap-2">
+                <UnitName unit={unit} />
+                <NumberField
+                  aria-label={unit.name}
+                  placeholder="0"
+                  className="h-9 w-full min-w-0 text-right tabular-nums"
+                  rules={AMOUNT}
+                  value={(form.army[unit.key] ?? 0) === 0 ? null : (form.army[unit.key] ?? null)}
+                  onCommit={(count) => onArmy({ ...form.army, [unit.key]: count ?? 0 })}
+                />
+              </label>
             ))}
           </div>
-        </fieldset>
-        <div className="space-y-2">
-          <h3 className="font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">Armée envoyée</h3>
-          {units.shown.length === 0 ? (
-            <NoUnit />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Unité</TableHead>
-                  <TableHead className="text-right">Envoyées</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {units.shown.map((unit) => (
-                  <TableRow key={unit.key}>
-                    <TableCell>
-                      <UnitName unit={unit} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <NumberField
-                        aria-label={unit.name}
-                        placeholder="0"
-                        className="ml-auto w-28 min-w-28 text-right tabular-nums"
-                        rules={AMOUNT}
-                        value={(form.army[unit.key] ?? 0) === 0 ? null : (form.army[unit.key] ?? null)}
-                        onCommit={(count) => onArmy({ ...form.army, [unit.key]: count ?? 0 })}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          <AddUnit rest={units.rest} onAdd={units.add} />
+        )}
+      </div>
+      {pasting && (
+        <div id={pasteId} className="border-t px-4 py-3">
+          <Paste onArmy={onArmy} />
         </div>
-        <Paste onArmy={onArmy} />
-      </CardContent>
-    </Card>
+      )}
+      <div className="flex border-t">
+        {units.rest.length > 0 && (
+          <select
+            aria-label="Ajouter une unité"
+            value=""
+            onChange={(event) => {
+              if (event.target.value) units.add(event.target.value);
+            }}
+            className="h-10 min-w-0 flex-1 cursor-pointer appearance-none border-r bg-transparent px-2 text-sm [text-align-last:center] hover:bg-accent"
+          >
+            <option value="">+ Unité</option>
+            {units.rest.map((unit) => (
+              <option key={unit.key} value={unit.key}>
+                {unitLabel(unit.key)} · {unit.name}
+              </option>
+            ))}
+          </select>
+        )}
+        <button
+          type="button"
+          aria-expanded={pasting}
+          aria-controls={pasting ? pasteId : undefined}
+          onClick={() => setPasting((open) => !open)}
+          className={cn("h-10 min-w-0 flex-1 px-2 text-sm hover:bg-accent", pasting && "bg-accent font-semibold")}
+        >
+          Coller l&apos;armée du jeu
+        </button>
+      </div>
+    </section>
   );
 }

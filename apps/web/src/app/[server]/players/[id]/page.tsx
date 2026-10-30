@@ -29,15 +29,27 @@ interface Props {
 
 const outline = buttonVariants({ variant: "outline", size: "lg" });
 
+// The mockups' table heads: small mono capitals, like the stats' labels.
+const HEAD = "font-mono text-[0.6875rem] tracking-widest uppercase";
+
+/** The colonies' names under their count: the first three, then how many more. */
+function coloniesHint(names: string[]): string | undefined {
+  if (names.length === 0) return undefined;
+  if (names.length <= 4) return names.join(", ");
+  return `${names.slice(0, 3).join(", ")} et ${formatNumber(names.length - 3)} autres`;
+}
+
 const idOf = (text: string) => (/^\d+$/.test(text) ? Number(text) : null);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { server: segment, id } = await params;
   const server = serverOfPath(segment, `/players/${id}`);
   const playerId = idOf(id);
-  const { player } = playerId === null ? { player: null } : await playerPage(server.id, playerId);
+  const { player, journal } = playerId === null ? { player: null, journal: [] } : await playerPage(server.id, playerId);
+  // A player gone from the export keeps the name its Journal last knew.
+  const name = player?.pseudo ?? journal[0]?.name;
   // Public in the export, but a player's own page stays out of the search engines.
-  return { title: player ? `${player.pseudo} (${server.name})` : "Joueur inconnu", robots: { index: false } };
+  return { title: name ? `${name} (${server.name})` : "Joueur inconnu", robots: { index: false } };
 }
 
 export default async function PlayerPage({ params }: Props) {
@@ -126,7 +138,9 @@ export default async function PlayerPage({ params }: Props) {
             label="Rang"
             value={rank === null ? "—" : ordinal(rank)}
             hint={
-              rank === null ? undefined : (week(trendText(ranks.at(-8)?.rank, rank, true)) ?? "au TDC sur le serveur")
+              rank === null
+                ? undefined
+                : ["au TDC sur le serveur", week(trendText(ranks.at(-8)?.rank, rank, true))].filter(Boolean).join(" · ")
             }
           />
           <Stat label="Fourmilière" value={formatNumber(player.buildingScore)} />
@@ -135,27 +149,30 @@ export default async function PlayerPage({ params }: Props) {
           <Stat
             label="Colonies"
             value={formatNumber(colonies.length)}
-            hint={colonies.length > 0 ? colonies.map((colony) => colony.pseudo).join(", ") : undefined}
+            hint={coloniesHint(colonies.map((colony) => colony.pseudo))}
           />
         </StatGrid>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* A player gone from the export has no rank: its TDC curve alone, full width. */}
+      <div className={player ? "grid gap-6 lg:grid-cols-2" : "grid gap-6"}>
         <Panel title="TDC" aside={<span className="text-xs text-muted-foreground">cm², relevé de minuit</span>}>
           <ScoreChart label="TDC (cm²)" unit="cm² de TDC" points={points((day) => day.field)} />
         </Panel>
-        <Panel
-          title="Rang au TDC"
-          aside={<span className="text-xs text-muted-foreground">plus haut = mieux classé</span>}
-        >
-          <ScoreChart
-            label="Rang"
-            unit="ᵉ au TDC"
-            tone="blue"
-            reversed
-            points={ranks.map((row) => ({ day: dayMonth(row.day), value: row.rank }))}
-          />
-        </Panel>
+        {player && (
+          <Panel
+            title="Rang au TDC"
+            aside={<span className="text-xs text-muted-foreground">plus haut = mieux classé</span>}
+          >
+            <ScoreChart
+              label="Rang"
+              unit="ᵉ au TDC"
+              tone="blue"
+              reversed
+              points={ranks.map((row) => ({ day: dayMonth(row.day), value: row.rank }))}
+            />
+          </Panel>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -188,10 +205,10 @@ export default async function PlayerPage({ params }: Props) {
           {colonies.length > 0 ? (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-4">Joueur</TableHead>
-                  <TableHead>Alliance</TableHead>
-                  <TableHead className="pr-4 text-right">TDC</TableHead>
+                <TableRow className={HEAD}>
+                  <TableHead className="pl-4 text-muted-foreground">Joueur</TableHead>
+                  <TableHead className="text-muted-foreground">Alliance</TableHead>
+                  <TableHead className="pr-4 text-right text-muted-foreground">TDC</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

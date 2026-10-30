@@ -7,7 +7,7 @@ import { Histogram, ValueBars } from "~/components/bars";
 import { JournalActivityChart } from "~/components/journal-activity-chart";
 import { JournalList } from "~/components/journal-list";
 import { PageHeader, Panel, PanelLink } from "~/components/panel";
-import { ScoreChart } from "~/components/score-chart";
+import { MIN_CURVE_DAYS, ScoreChart } from "~/components/score-chart";
 import { ReadingNote, Stat, StatGrid } from "~/components/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { serverOfPath } from "~/lib/game-server";
@@ -28,13 +28,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/** « +17 depuis le 19/10 », against the day a week before the last one. */
+/** « ▲ 17 depuis le 19/10 », against the day a week before the last one: the arrow's shape tells the way. */
 function weekDelta(days: { day: Date; players: number }[]): string | undefined {
   const last = days.at(-1);
   const before = days.at(-8);
   if (!last || !before) return undefined;
   const delta = last.players - before.players;
-  return `${delta >= 0 ? "+" : "−"}${formatNumber(Math.abs(delta))} depuis le ${dayMonth(before.day)}`;
+  const since = `depuis le ${dayMonth(before.day)}`;
+  if (delta === 0) return `Stable ${since}`;
+  return `${delta > 0 ? "▲" : "▼"} ${formatNumber(Math.abs(delta))} ${since}`;
+}
+
+/** « 103,4 M » on a young server, « 25,9 T » on S1: the server's TDC short enough for its tile, as K/M/G write it. */
+function shortField(field: number): string {
+  const unit = [
+    { size: 1e12, suffix: "T" },
+    { size: 1e9, suffix: "G" },
+  ].find(({ size }) => field >= size) ?? { size: 1e6, suffix: "M" };
+  return `${formatDecimal(field / unit.size)} ${unit.suffix}`;
+}
+
+/** « 02/10 → 26/10 »: the days a curve covers. */
+function dayRange(days: { day: Date }[]): string | undefined {
+  const first = days.at(0);
+  const last = days.at(-1);
+  if (!first || !last) return undefined;
+  return `${dayMonth(first.day)} → ${dayMonth(last.day)}`;
 }
 
 export default async function ServerPage({ params }: Props) {
@@ -49,6 +68,7 @@ export default async function ServerPage({ params }: Props) {
     );
 
   const topShare = summary.topAlliances.reduce((sum, alliance) => sum + alliance.totalField, 0);
+  const journalCurve = summary.journalDays.length >= MIN_CURVE_DAYS;
   const allianceHref = (tag: string) => `/${server.id}/alliances/${encodeURIComponent(tag)}`;
 
   return (
@@ -65,17 +85,13 @@ export default async function ServerPage({ params }: Props) {
         />
         <Stat label="En vacances" value={formatNumber(summary.onHoliday)} />
         <Stat label="Bannis" value={formatNumber(summary.banned)} />
-        <Stat
-          label="TDC total"
-          value={`${formatDecimal(summary.field / 1_000_000)} M`}
-          hint={`${formatNumber(summary.field)} cm²`}
-        />
+        <Stat label="TDC total" value={shortField(summary.field)} hint={`${formatNumber(summary.field)} cm²`} />
       </StatGrid>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel
           title="Joueurs inscrits"
-          aside={<span className="font-mono text-xs text-muted-foreground">par jour</span>}
+          aside={<span className="font-mono text-xs text-muted-foreground">{dayRange(summary.playersPerDay)}</span>}
         >
           <ScoreChart
             label="Joueurs"
@@ -206,7 +222,11 @@ export default async function ServerPage({ params }: Props) {
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel
           title="Activité du Journal"
-          aside={<span className="text-xs text-muted-foreground">30 derniers jours</span>}
+          aside={journalCurve && <span className="font-mono text-xs text-muted-foreground">30 derniers jours</span>}
+          // Too few days: the day's figure fills the panel, as tall as the list beside it.
+          className={
+            journalCurve ? undefined : "flex flex-col *:last:flex *:last:flex-1 *:last:flex-col *:last:*:flex-1"
+          }
         >
           <JournalActivityChart
             points={summary.journalDays.map(({ day, ...groups }) => ({ day: dayMonth(day), ...groups }))}

@@ -1,14 +1,23 @@
 "use client";
 
-// The simple display: one choice (Prudent, Équilibré, Rapide), « Faire monter mes troupes », four key figures. As the
-// extension's launcher. See docs/features/site-chasse.md and hunt-launcher.md.
+// The simple display: one choice (Prudent, Équilibré, Rapide), « Faire monter mes troupes »; the head of the report
+// with its four key figures. As the extension's launcher. See docs/features/site-chasse.md and hunt-launcher.md.
 import { UNITS } from "@optizzz/game/army/units";
-import { formatAmount, formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
+import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
 import type { HuntForm } from "@optizzz/game/hunt/hunt-form";
 import type { Plan } from "@optizzz/game/hunt/planner";
-import { formatChance, presetOf, PRESETS, promotionCounts, splitText } from "@optizzz/game/hunt/texts";
-import { Stat } from "~/components/stat";
+import {
+  formatChance,
+  formatLosses,
+  huntsText,
+  presetOf,
+  PRESETS,
+  promotionCounts,
+  splitText,
+} from "@optizzz/game/hunt/texts";
+import { cn } from "cn";
+import { MonoLabel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { Verdict } from "../tool-page";
 import { Check, Note, Segmented, Warning } from "./hunt-parts";
@@ -16,6 +25,9 @@ import { Check, Note, Segmented, Warning } from "./hunt-parts";
 /** The army has troops that can be promoted besides young dwarves: the waves are worth offering. */
 const hasTroops = (form: HuntForm) =>
   UNITS.some((unit) => unit.key !== "JSN" && unit.promotesTo && (form.army[unit.key] ?? 0) > 0);
+
+/** « le réglage courant » → « Le réglage courant. » */
+const sentence = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}.`;
 
 export function SimpleChoice({
   form,
@@ -28,6 +40,7 @@ export function SimpleChoice({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <MonoLabel>Type de chasse</MonoLabel>
         <Segmented
           label="Type de chasse"
           value={preset}
@@ -41,12 +54,12 @@ export function SimpleChoice({
             if (chosen) onSettings({ objective: "ratio", ratio: chosen.ratio, huntAmount: null });
           }}
         />
-        <span className="text-sm text-muted-foreground">
-          {preset
-            ? PRESETS.find((p) => p.key === preset)?.hint
-            : `réglage personnalisé (${form.objective === "ratio" ? `ratio ${formatDecimal(form.ratio)}` : "rendement"})`}
-        </span>
       </div>
+      <p className="text-sm text-muted-foreground">
+        {preset
+          ? sentence(PRESETS.find((p) => p.key === preset)?.hint ?? "")
+          : `Réglage personnalisé (${form.objective === "ratio" ? `ratio ${formatDecimal(form.ratio)}` : "rendement"}).`}
+      </p>
       {hasTroops(form) && (
         <Check
           checked={form.dispatch === "waves"}
@@ -63,7 +76,10 @@ export function SimpleChoice({
   );
 }
 
-/** The four figures that matter: field won, return, losses, promotions. */
+/**
+ * The head of the report, as the mockup: the plan in a few words (« 2 chasses de 9 000 cm² ») with its losses and
+ * return, then the figures that matter: field won, units lost, promotions, duration.
+ */
 export function KeyFigures({
   plan,
   form,
@@ -76,35 +92,35 @@ export function KeyFigures({
   now: Date;
 }) {
   const lost = plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.lostUnits.mean, 0);
+  const worst = plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.lostUnits.max, 0);
   const laying = plan.hunts.reduce((sum, hunt) => sum + hunt.outcome.lossLayingSeconds.mean, 0);
   const promotions = promotionCounts(plan);
   const winChance = Math.min(1, ...plan.hunts.map((hunt) => hunt.outcome.winChance));
   const troops = hasTroops(form);
-  const count = plan.hunts.length;
+  const back = formatEndTime(new Date(now.getTime() + plan.durationSeconds * 1000), now);
+  const split = splitText(plan.hunts.map((hunt) => hunt.amount));
   return (
     <>
-      <Verdict title={`+${formatAmount(plan.totalAmount)} cm²`}>
-        En {formatNumber(count)} chasse{count > 1 ? "s" : ""}, retour{" "}
-        {formatEndTime(new Date(now.getTime() + plan.durationSeconds * 1000), now)}
-      </Verdict>
-      <div className="grid grid-cols-2 border-t border-l">
+      <div className="px-4 pt-4">
+        <Verdict title={huntsText(plan)}>
+          Pertes moyennes ≈ {formatLosses(lost)} unité{lost >= 2 ? "s" : ""} · retour {back}
+        </Verdict>
+      </div>
+      <div className="grid grid-cols-2 border-b">
         <Figure
-          label="Terrain gagné"
-          value={`+${formatAmount(plan.totalAmount)} cm²`}
-          note={splitText(plan.hunts.map((hunt) => hunt.amount))}
+          label="TdC gagné"
+          tone="primary"
+          value={`+ ${formatAmount(plan.totalAmount)}`}
+          note={plan.hunts.length > 1 ? `cm² au total (${split})` : "cm² au total"}
         />
         <Figure
-          label="Retour"
-          value={formatEndTime(new Date(now.getTime() + plan.durationSeconds * 1000), now)}
-          note={`dans ${formatDuration(plan.durationSeconds * 1000)}`}
-        />
-        <Figure
-          label="Pertes"
-          value={`≈ ${formatAmount(lost)}`}
+          label="Unités perdues"
+          tone="info"
+          value={formatLosses(lost)}
           note={
             layingSpeed === null
-              ? "unités, en moyenne"
-              : `unités, ${formatDuration(laying * layingSpeed * 1000)} de ponte`
+              ? `en moyenne ; pire tirage ${formatAmount(worst)}`
+              : `pire tirage ${formatAmount(worst)} ; ${formatDuration(laying * layingSpeed * 1000)} de ponte`
           }
         />
         {troops ? (
@@ -116,19 +132,45 @@ export function KeyFigures({
         ) : (
           <Figure label="Promotions" value={formatAmount(promotions.youngDwarves)} note="JSN → SN, en moyenne" />
         )}
+        <Figure label="Durée" value={formatDuration(plan.durationSeconds * 1000)} note={`retour ${back}`} />
       </div>
-      {winChance < 1 && (
-        <Warning danger>Chasse perdue dans {formatChance(1 - winChance)} des tirages : choisissez « Prudent ».</Warning>
-      )}
-      {form.dispatch === "waves" && plan.waves === "worse" && (
-        <Note>Vos troupes restent mêlées aux JSN : ici, les envoyer à part en ferait perdre ou monter moins.</Note>
+      {(winChance < 1 || (form.dispatch === "waves" && plan.waves === "worse")) && (
+        <div className="space-y-2 border-b px-4 py-3">
+          {winChance < 1 && (
+            <Warning danger>
+              Chasse perdue dans {formatChance(1 - winChance)} des tirages : choisissez « Prudent ».
+            </Warning>
+          )}
+          {form.dispatch === "waves" && plan.waves === "worse" && (
+            <Note>Vos troupes restent mêlées aux JSN : ici, les envoyer à part en ferait perdre ou monter moins.</Note>
+          )}
+        </div>
       )}
     </>
   );
 }
 
-function Figure({ label, value, note }: { label: string; value: string; note: string }) {
-  return <Stat label={label} value={value} hint={note} />;
+/** One figure of the report; its label in the colour of what it measures (the label says it too). */
+function Figure({
+  label,
+  value,
+  note,
+  tone,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  tone?: "primary" | "info";
+}) {
+  return (
+    <div className="min-w-0 border-b px-4 py-3.5 odd:border-r [&:nth-last-child(-n+2)]:border-b-0">
+      <MonoLabel className={cn(tone === "primary" && "text-primary", tone === "info" && "text-info")}>
+        {label}
+      </MonoLabel>
+      <div className="font-mono text-xl leading-tight break-words sm:text-[1.375rem]">{value}</div>
+      <div className="text-xs text-muted-foreground">{note}</div>
+    </div>
+  );
 }
 
 /** « Réglages avancés en cours : … », with a way to see them. */

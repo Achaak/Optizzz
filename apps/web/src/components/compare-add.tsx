@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { PlusIcon } from "~/components/icons";
 import { usePlayerSearch } from "~/components/search-box";
 import { Input } from "~/components/ui/input";
-import { compareHref, type CompareState } from "~/lib/compare";
+import { compareHref, MAX_COMPARED, type CompareState } from "~/lib/compare";
 
 /**
  * The field that adds one to the Comparer: a player picked among those whose pseudo starts with what is typed, or a
@@ -31,7 +31,9 @@ export function CompareAdd({ server, state }: { server: string; state: CompareSt
           name="ajout"
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder={players ? "Ajouter un joueur" : "Ajouter une alliance (tag)"}
+          placeholder={
+            players ? `Ajouter un joueur (${String(MAX_COMPARED)} au plus)` : "Ajouter une alliance (son tag)"
+          }
           autoComplete="off"
           aria-controls={players ? listId : undefined}
           className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"

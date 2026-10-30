@@ -1,14 +1,16 @@
-// The flood simulator's result, as the extension's « Plan de flood »: what stops the plan, then a table of the
-// attacks with a Total line, and the rules used. The plan itself is shared (@optizzz/game/site-links/flood).
-// See docs/features/site-flood.md.
+// The flood simulator's report, as the « Campagne » mockup draws it: the number of attacks and when they land, what
+// they take and what is left of the target, what stops the plan, both TDC attack after attack, then each attack.
+// The plan itself is shared (@optizzz/game/site-links/flood). See docs/features/site-flood.md.
 import { UNITS, unitLabel, type Army } from "@optizzz/game/army/units";
 import { FLOOD_MARGIN, floodBlockText } from "@optizzz/game/flood";
 import { formatNumber } from "@optizzz/game/format/number-format";
 import type { FloodField, FloodToolPlan } from "@optizzz/game/site-links/flood";
-import { Stat } from "~/components/stat";
+import { cn } from "cn";
+import { Fragment } from "react";
+import { MonoLabel } from "~/components/panel";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Verdict } from "../tool-page";
 import { FloodChart } from "./flood-chart";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 
 /** « 400 JSN », « 2 T »: each unit sent, as the game abbreviates them. */
 const armyParts = (army: Army) =>
@@ -17,19 +19,41 @@ const armyParts = (army: Army) =>
 /** « 400 JSN, 2 T ». */
 export const armyText = (army: Army) => armyParts(army).join(", ");
 
-/** An army in a table cell: a unit is never cut across two lines. */
-function ArmyCell({ army, empty = "" }: { army: Army; empty?: string }) {
+/** The report's table: 8 px between columns, 16 px at its edges, as its panel. */
+const CELL = "px-2 first:pl-4 last:pr-4";
+const HEAD = cn(
+  CELL,
+  "h-auto py-2 font-mono text-[0.6875rem] font-medium tracking-wider text-muted-foreground uppercase",
+);
+const NUMBER = cn(CELL, "py-1.5 text-right font-mono tabular-nums");
+
+/** « 400 JSN, 2 T », a unit never cut across two lines. */
+function ArmyList({ army }: { army: Army }) {
   const parts = armyParts(army);
+  return parts.map((part, i) => (
+    <Fragment key={part}>
+      <span className="whitespace-nowrap">{part}</span>
+      {i < parts.length - 1 && ", "}
+    </Fragment>
+  ));
+}
+
+/** The army an attack sends, and against a defense what it loses, under it. */
+function ArmyCell({ army, lost }: { army: Army; lost: Army | null }) {
   return (
-    <TableCell className="min-w-28 whitespace-normal">
-      {parts.length === 0
-        ? empty
-        : parts.map((part, i) => (
-            <span key={part} className="whitespace-nowrap">
-              {part}
-              {i < parts.length - 1 && ", "}
-            </span>
-          ))}
+    <TableCell className={cn(CELL, "min-w-24 py-1.5 whitespace-normal")}>
+      <ArmyList army={army} />
+      {lost && (
+        <span className="block text-xs text-muted-foreground">
+          {lost.some((count) => count > 0) ? (
+            <>
+              pertes : <ArmyList army={lost} />
+            </>
+          ) : (
+            "aucune perte"
+          )}
+        </span>
+      )}
     </TableCell>
   );
 }
@@ -52,12 +76,29 @@ function missingText(fields: FloodField[]) {
   return `Saisissez ${listText(fields.map((field) => FIELD_LABELS[field]))}.`;
 }
 
-/** What stops the plan: framed, and said in words with a sign (never by colour alone). */
-function Callout({ text }: { text: string }) {
+/**
+ * One figure of the report, its label in the colour of its line in the chart (amber mine, blue the target's): the
+ * label says what it is, the colour only ties it to the chart (ADR 0003).
+ */
+function Figure({
+  label,
+  value,
+  hint,
+  tone,
+  className,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  tone: "primary" | "info";
+  className?: string;
+}) {
   return (
-    <p role="note" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
-      ⚠ {text}
-    </p>
+    <div className={cn("min-w-0 px-4 py-3.5", className)}>
+      <MonoLabel className={cn("block", tone === "primary" ? "text-primary" : "text-info")}>{label}</MonoLabel>
+      <div className="truncate font-mono text-[1.375rem] tabular-nums">{value}</div>
+      <div className="text-xs text-muted-foreground">{hint}</div>
+    </div>
   );
 }
 
@@ -78,73 +119,78 @@ export function FloodResult({
 }) {
   if (plan.kind === "missing") return <p className="text-sm text-muted-foreground">{missingText(plan.fields)}</p>;
   const { attacks, block } = plan;
+  const first = attacks[0];
   const last = attacks.at(-1);
   const taken = attacks.reduce((sum, attack) => sum + attack.take, 0);
-  // Losses only matter against a defense: a column then, nothing otherwise.
-  const withLosses = attacks.some((attack) => attack.lost);
+  const targetBefore = first ? first.targetAfter + first.take : 0;
+  const arrival = trip ? `arrivée ${trip.arrivalText} (heure de Paris), après ${trip.time} de trajet` : null;
   return (
-    <>
-      {last ? (
-        <Verdict title={plural(attacks.length, "attaque")}>
-          +{formatNumber(taken)} cm² · {targetName} finit à {formatNumber(last.targetAfter)} cm²
-        </Verdict>
-      ) : (
-        <Verdict title="Aucune attaque">{targetName} est hors de portée.</Verdict>
-      )}
-      <div className="grid grid-cols-2 border-t border-l">
-        <Stat label="Attaques possibles" value={String(plan.slots)} />
-        {last && <Stat label="Prise totale" value={`${formatNumber(taken)} cm²`} />}
-        {trip && <Stat label="Trajet" value={trip.time} />}
-        {trip && <Stat label="Arrivée si vous lancez maintenant" value={trip.arrivalText} />}
+    // The report draws its own rules, edge to edge of its panel.
+    <div className="-m-4">
+      {/* The verdict breaks out of its panel's padding: give it back. */}
+      <div className="px-4 pt-4">
+        {first && last ? (
+          <Verdict title={plural(attacks.length, "attaque")}>
+            {targetName} finit à {formatNumber(last.targetAfter)} cm²{arrival && ` · ${arrival}`}
+          </Verdict>
+        ) : (
+          <Verdict title="Aucune attaque">{targetName} est hors de portée.</Verdict>
+        )}
       </div>
-      {trip && <p className="text-sm text-muted-foreground">Heure de Paris.</p>}
-      {block && <Callout text={floodBlockText(block, targetName, FLOOD_MARGIN)} />}
-      {last && <FloodChart attacks={attacks} targetName={targetName} />}
+      {first && last && (
+        <div className="grid grid-cols-2 border-b">
+          <Figure
+            label="Prise totale"
+            value={`+ ${formatNumber(taken)}`}
+            hint={`cm², sur ${plural(plan.slots, "attaque")} possible${plan.slots > 1 ? "s" : ""}`}
+            tone="primary"
+            className="border-r"
+          />
+          <Figure
+            label="Terrain de la cible"
+            value={`− ${formatNumber(Math.round((taken / targetBefore) * 100))} %`}
+            hint={`${formatNumber(targetBefore)} → ${formatNumber(last.targetAfter)}`}
+            tone="info"
+          />
+        </div>
+      )}
+      {block && (
+        <p role="note" className="border-b bg-warning-soft px-4 py-2.5 text-sm">
+          ⚠ {floodBlockText(block, targetName, FLOOD_MARGIN)}
+        </p>
+      )}
+      {last && (
+        <figure className="border-b">
+          <figcaption className="px-4 pt-3 font-heading text-lg font-semibold tracking-wide uppercase">
+            TDC au fil des attaques
+          </figcaption>
+          <FloodChart attacks={attacks} targetName={targetName} />
+        </figure>
+      )}
       {last && (
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>N°</TableHead>
-              <TableHead>Armée</TableHead>
-              {withLosses && <TableHead>Pertes</TableHead>}
-              <TableHead className="text-right">Prise</TableHead>
-              <TableHead className="text-right">Son TDC après</TableHead>
-              <TableHead className="text-right">Mon TDC après</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className={HEAD}>#</TableHead>
+              <TableHead className={HEAD}>Armée</TableHead>
+              <TableHead className={cn(HEAD, "text-right")}>Prise</TableHead>
+              <TableHead className={cn(HEAD, "text-right")}>Mon TDC</TableHead>
+              <TableHead className={cn(HEAD, "text-right")}>Son TDC</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {attacks.map((attack, index) => (
               <TableRow key={index}>
-                <TableCell>{index + 1}</TableCell>
-                <ArmyCell army={attack.army} />
-                {withLosses && (attack.lost ? <ArmyCell army={attack.lost} empty="aucune" /> : <TableCell />)}
-                <TableCell className="text-right tabular-nums">{formatNumber(attack.take)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatNumber(attack.targetAfter)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatNumber(attack.attackerAfter)}</TableCell>
+                <TableCell className={cn(CELL, "py-1.5")}>{index + 1}</TableCell>
+                <ArmyCell army={attack.army} lost={attack.lost} />
+                <TableCell className={NUMBER}>{formatNumber(attack.take)}</TableCell>
+                <TableCell className={NUMBER}>{formatNumber(attack.attackerAfter)}</TableCell>
+                <TableCell className={NUMBER}>{formatNumber(attack.targetAfter)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={withLosses ? 3 : 2}>Total, {plural(attacks.length, "attaque")}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatNumber(taken)} cm²</TableCell>
-              <TableCell className="text-right tabular-nums">{formatNumber(last.targetAfter)}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatNumber(last.attackerAfter)}</TableCell>
-            </TableRow>
-          </TableFooter>
         </Table>
       )}
-      <details className="text-sm text-muted-foreground">
-        <summary className="cursor-pointer">Règles utilisées (non vérifiées sur un vrai flood)</summary>
-        <p className="mt-2">
-          20 % de son TDC par attaque, 1 cm² par fourmi au plus, portée 50–300 % revérifiée à chaque arrivée, avec{" "}
-          {formatNumber(FLOOD_MARGIN * 100)} % de marge au-dessus de 50 %. Vitesse d&apos;attaque + 1 attaques en même
-          temps (comme le simulateur de flood du jeu). Sans défense, les unités les moins chères partent d&apos;abord ;
-          contre une défense, la première attaque est la plus petite armée, des plus fortes aux plus faibles, qui gagne
-          avec une riposte à 10 % au plus. Les attaques et chasses des autres joueurs peuvent changer les TDC avant
-          l&apos;arrivée.
-        </p>
-      </details>
-    </>
+    </div>
   );
 }

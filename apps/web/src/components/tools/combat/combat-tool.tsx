@@ -58,16 +58,15 @@ export function CombatTool() {
     tool.change((state) => ({ ...state, form: update(state.form) }));
 
   /** A level typed on the visitor's side becomes « Mes niveaux » (not over a link's levels). */
+  /** The visitor's side: filled from « Mes niveaux », unless a link brought other levels. */
+  const myNote = levels.linked ? "votre côté" : "depuis « Mes niveaux »";
+
   const typedLevel = (side: CombatSide, key: string, value: number) => {
     if (side === mine && isLevelOf(side, key)) levels.remember({ [key]: value });
   };
 
   return (
     <div className="space-y-4">
-      <ToolNote>
-        Règles non vérifiées sur un vrai combat entre joueurs (tutoriel officiel, Outiiil, Calystene) : à prendre comme
-        une estimation.
-      </ToolNote>
       <InvalidLinkNote shown={tool.invalidLink} />
       <ToolLayout
         actions={
@@ -96,9 +95,9 @@ export function CombatTool() {
         }
         form={
           <>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
               <Choice<Place>
-                legend="Lieu attaqué"
+                legend="Lieu"
                 value={form.target}
                 options={PLACES.map((place) => ({ value: place, label: PLACE_LABELS[place] }))}
                 onChange={(target) => changeForm((current) => ({ ...current, target }))}
@@ -114,29 +113,36 @@ export function CombatTool() {
                 }}
               />
             </div>
-            <AttackerSide
-              attacker={form.attacker}
-              mine={mine === "attack"}
-              onNumber={(key, value) => {
-                changeForm((current) => ({ ...current, attacker: { ...current.attacker, [key]: value } }));
-                typedLevel("attack", key, value);
-              }}
-              onArmy={(army) => changeForm((current) => ({ ...current, attacker: { ...current.attacker, army } }))}
-            />
-            <DefenderSide
-              defender={form.defender}
-              mine={mine === "defend"}
-              onNumber={(key, value) => {
-                changeForm((current) => ({ ...current, defender: { ...current.defender, [key]: value } }));
-                typedLevel("defend", key, value);
-              }}
-              onArmy={(place, army) =>
-                changeForm((current) => ({
-                  ...current,
-                  defender: { ...current.defender, armies: { ...current.defender.armies, [place]: army } },
-                }))
-              }
-            />
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18.75rem),1fr))] items-stretch gap-5">
+              <AttackerSide
+                attacker={form.attacker}
+                note={mine === "attack" ? myNote : undefined}
+                onNumber={(key, value) => {
+                  changeForm((current) => ({ ...current, attacker: { ...current.attacker, [key]: value } }));
+                  typedLevel("attack", key, value);
+                }}
+                onArmy={(army) => changeForm((current) => ({ ...current, attacker: { ...current.attacker, army } }))}
+              />
+              <DefenderSide
+                defender={form.defender}
+                places={PLACES.slice(0, PLACES.indexOf(form.target) + 1)}
+                note={mine === "defend" ? myNote : undefined}
+                onNumber={(key, value) => {
+                  changeForm((current) => ({ ...current, defender: { ...current.defender, [key]: value } }));
+                  typedLevel("defend", key, value);
+                }}
+                onArmy={(place, army) =>
+                  changeForm((current) => ({
+                    ...current,
+                    defender: { ...current.defender, armies: { ...current.defender.armies, [place]: army } },
+                  }))
+                }
+              />
+            </div>
+            <ToolNote>
+              Règles pas encore vérifiées sur un vrai combat entre joueurs (tutoriel officiel, Outiiil, Calystene) : à
+              prendre comme une estimation.
+            </ToolNote>
           </>
         }
         resultTitle="Rapport"

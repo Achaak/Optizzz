@@ -4,8 +4,8 @@
 // or a Délégué decides), those waiting for convoys with what remains to send, and those finished in the last 90 days.
 // A status is written in words, never told by a colour alone (ADR 0003). « Envoyer un convoi » opens the game's
 // Convoi page, which the extension fills: the player clicks « Lancer le convoi » themself.
-import { formatNumber } from "@optizzz/game/format/number-format";
-import { formatDateTime } from "@optizzz/game/format/time-format";
+import { formatCompact, formatNumber } from "@optizzz/game/format/number-format";
+import { formatDateTime, formatPastTime } from "@optizzz/game/format/time-format";
 import type { LevelKey } from "@optizzz/game/level-costs";
 import { BUILDINGS, RESEARCH } from "@optizzz/game/levels";
 import { serverById } from "@optizzz/game/servers";
@@ -19,14 +19,16 @@ import {
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import { prioriteText, type Priorite } from "@optizzz/game/site-links/priorite";
+import { cn } from "cn";
 import { useId, useState } from "react";
+import { ArrowRightIcon } from "~/components/icons";
 import { NumberField } from "~/components/number-field";
 import { Stat } from "~/components/stat";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { canDecide, groupDemandes, requesterPriorites, type OpenedDemande } from "~/lib/demandes/demandes";
 import { errorText } from "./errors";
-import { Callout, Panel } from "./parts";
+import { Callout, FIELD_INPUT, FIELD_LABEL, Panel } from "./parts";
 import type { MemberView } from "./use-space-access";
 import type { SpaceDemandes } from "./use-space-demandes";
 
@@ -45,12 +47,30 @@ function resources({ food, materials }: Resources): string {
 /** Food and materials together, the one figure a summary shows. */
 const total = ({ food, materials }: Resources) => food + materials;
 
+/** The columns' heads in small mono capitals, as the site's tables write them. */
+const HEAD_ROW =
+  "border-b-0 font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase hover:bg-transparent";
+const HEAD = "h-8 font-medium text-muted-foreground";
+const ROW = "border-t border-b-0";
+
+/** Food and materials together in mono, each one under it when both are asked. */
+function Cost({ resources: asked }: { resources: Resources }) {
+  return (
+    <>
+      <span className="font-mono">{formatNumber(total(asked))}</span>
+      {asked.food > 0 && asked.materials > 0 && (
+        <span className="block text-xs text-muted-foreground">{resources(asked)}</span>
+      )}
+    </>
+  );
+}
+
 /** How much of a Demande is received or on its way: a bar with its percentage written beside it (ADR 0003). */
 function Progress({ part, whole }: { part: number; whole: number }) {
   const percent = whole > 0 ? Math.min(100, Math.round((part / whole) * 100)) : 0;
   return (
     <div className="flex items-center justify-end gap-2">
-      <div aria-hidden className="h-2 w-20 bg-muted">
+      <div aria-hidden className="h-2 w-[90px] bg-raised">
         <div className="h-full bg-info" style={{ width: `${String(percent)}%` }} />
       </div>
       <span className="w-10 text-right font-mono text-xs">{percent} %</span>
@@ -116,6 +136,7 @@ export function DemandesPanel({
   convoys,
   states,
   loading,
+  onShowConvoys,
 }: {
   view: MemberView;
   demandes: SpaceDemandes;
@@ -125,6 +146,8 @@ export function DemandesPanel({
   convoys: readonly ConvoyItem[] | null;
   states: readonly MemberStates[] | null;
   loading: boolean;
+  /** « Voir les convois »: the space's « Convois » tab. */
+  onShowConvoys: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -182,10 +205,10 @@ export function DemandesPanel({
   const ownActions = (demande: OpenedDemande) => {
     const at = myOpen.findIndex((d) => d.id === demande.id);
     return (
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex justify-end gap-1.5">
         <Button
-          size="sm"
           variant="outline"
+          size="icon"
           disabled={busy || at <= 0}
           aria-label={`Monter ${demande.label}`}
           onClick={() => move(demande, -1)}
@@ -193,15 +216,15 @@ export function DemandesPanel({
           ↑
         </Button>
         <Button
-          size="sm"
           variant="outline"
+          size="icon"
           disabled={busy || at < 0 || at >= myOpen.length - 1}
           aria-label={`Descendre ${demande.label}`}
           onClick={() => move(demande, 1)}
         >
           ↓
         </Button>
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => void run(() => demandes.cancel(demande.id))}>
+        <Button variant="outline" disabled={busy} onClick={() => void run(() => demandes.cancel(demande.id))}>
           Annuler
         </Button>
       </div>
@@ -209,21 +232,27 @@ export function DemandesPanel({
   };
 
   const remaining = groups.active.reduce((sum, d) => sum + total(d.progress.remaining), 0);
+  const now = new Date();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <section
         aria-label="Demandes de l'espace"
         className="grid grid-cols-2 border-t border-l bg-card sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]"
       >
-        <Stat label="À valider" value={formatNumber(groups.pending.length)} hint="Demandes" />
+        <Stat
+          label="À valider"
+          value={formatNumber(groups.pending.length)}
+          hint="Demandes"
+          tone={groups.pending.length > 0 ? "accent" : undefined}
+        />
         <Stat label="Validées" value={formatNumber(groups.active.length)} hint="en cours d'envoi" />
-        <Stat label="Reste à envoyer" value={formatNumber(remaining)} hint="nourriture et matériaux" />
+        <Stat label="Reste à envoyer" value={formatCompact(remaining)} hint="nourriture et matériaux" />
         <Stat label="Terminées" value={formatNumber(groups.finished.length)} hint="ces 90 derniers jours" />
       </section>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0 space-y-6">
+      <div className="flex flex-wrap items-start gap-5">
+        <div className="flex min-w-0 flex-[999_1_40rem] flex-col gap-5">
           {error && <Callout>{error}</Callout>}
           {demandes.refused > 0 && (
             <Callout tone="warning">
@@ -235,114 +264,135 @@ export function DemandesPanel({
             </Callout>
           )}
 
-          <Panel title={`À valider (${String(groups.pending.length)})`}>
+          <Panel
+            title="À valider"
+            aside={<span className="text-xs text-muted-foreground">nourriture + matériaux</span>}
+            flush
+          >
             {groups.pending.length === 0 ? (
-              <p className="text-muted-foreground">Aucune Demande n&apos;attend d&apos;être validée.</p>
+              <p className="px-4 pt-4 text-muted-foreground">Aucune Demande n&apos;attend d&apos;être validée.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Demandeur</TableHead>
-                      <TableHead>Priorité</TableHead>
-                      <TableHead>Demande</TableHead>
-                      <TableHead>Coût</TableHead>
-                      <TableHead>Faite le</TableHead>
-                      <TableHead />
+              <Table className="text-[0.8125rem]">
+                <TableHeader>
+                  <TableRow className={HEAD_ROW}>
+                    <TableHead className={cn(HEAD, "pl-4")}>Demandeur</TableHead>
+                    <TableHead className={HEAD}>Demande</TableHead>
+                    <TableHead className={cn(HEAD, "text-right")}>Coût</TableHead>
+                    <TableHead className={HEAD}>Priorité</TableHead>
+                    <TableHead className={HEAD}>Faite le</TableHead>
+                    <TableHead className={cn(HEAD, "pr-4")}>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {groups.pending.map((d) => (
+                    <TableRow key={d.id} className={ROW}>
+                      <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
+                      <TableCell className="min-w-32 whitespace-normal">
+                        {d.label}
+                        {d.content.typed && <span className="block text-xs text-muted-foreground">coût saisi</span>}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Cost resources={d.content.cost} />
+                      </TableCell>
+                      <TableCell className="min-w-40 whitespace-normal">
+                        <PrioriteCell priorite={priorites?.get(d.playerId)} />
+                      </TableCell>
+                      <TableCell>{formatPastTime(new Date(d.createdAt), now)}</TableCell>
+                      <TableCell className="pr-4">
+                        <div className="flex justify-end gap-1.5">
+                          {mine(d) && ownActions(d)}
+                          {canDecide(view.me.role, mine(d)) && (
+                            <>
+                              <Button
+                                variant="outline"
+                                disabled={busy}
+                                onClick={() => void run(() => demandes.decide(d.id, "refused"))}
+                              >
+                                Refuser
+                              </Button>
+                              <Button
+                                className="font-semibold"
+                                disabled={busy}
+                                onClick={() => void run(() => demandes.decide(d.id, "validated"))}
+                              >
+                                Valider
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {groups.pending.map((d) => (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-semibold">{d.requester}</TableCell>
-                        <TableCell className="min-w-44 whitespace-normal">
-                          <PrioriteCell priorite={priorites?.get(d.playerId)} />
-                        </TableCell>
-                        <TableCell>
-                          {d.label}
-                          {d.content.typed && <span className="block text-xs text-muted-foreground">coût saisi</span>}
-                        </TableCell>
-                        <TableCell className="font-mono">{resources(d.content.cost)}</TableCell>
-                        <TableCell>{formatDateTime(new Date(d.createdAt))}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1.5">
-                            {mine(d) && ownActions(d)}
-                            {canDecide(view.me.role, mine(d)) && (
-                              <div className="flex flex-wrap gap-1.5">
-                                <Button
-                                  size="sm"
-                                  disabled={busy}
-                                  onClick={() => void run(() => demandes.decide(d.id, "validated"))}
-                                >
-                                  Valider
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={busy}
-                                  onClick={() => void run(() => demandes.decide(d.id, "refused"))}
-                                >
-                                  Refuser
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-            <p className="text-xs text-muted-foreground">
-              Un Admin ou un Délégué valide une Demande, jamais la sienne. Le coût vient de la table des coûts
-              d&apos;Optizzz, sauf quand le demandeur l&apos;a saisi. Elles sont classées par Priorité, comme les
-              validées.
-            </p>
+            <Notes>
+              <p>
+                Un Admin ou un Délégué valide une Demande, jamais la sienne. Le coût vient de la table des coûts
+                d&apos;Optizzz, sauf quand le demandeur l&apos;a saisi. Elles sont classées par Priorité, comme les
+                validées.
+              </p>
+            </Notes>
           </Panel>
 
-          <Panel title={`Validées (${String(groups.active.length)})`}>
+          <Panel
+            title="Validées, en cours d'envoi"
+            aside={
+              <button
+                type="button"
+                onClick={onShowConvoys}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+              >
+                Voir les convois
+                <ArrowRightIcon width={14} height={14} />
+              </button>
+            }
+            flush
+          >
             {groups.active.length === 0 ? (
-              <p className="text-muted-foreground">Aucune Demande validée en cours.</p>
+              <p className="px-4 pt-4 text-muted-foreground">Aucune Demande validée en cours.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Demandeur</TableHead>
-                      <TableHead>Priorité</TableHead>
-                      <TableHead>Demande</TableHead>
-                      <TableHead className="text-right">Reste à envoyer</TableHead>
-                      <TableHead className="text-right">Envoyé</TableHead>
-                      <TableHead>État</TableHead>
-                      <TableHead />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {groups.active.map((d) => (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-semibold">{d.requester}</TableCell>
-                        <TableCell className="min-w-44 whitespace-normal">
-                          <PrioriteCell priorite={priorites?.get(d.playerId)} />
-                        </TableCell>
-                        <TableCell>{d.label}</TableCell>
-                        <TableCell className="text-right font-mono whitespace-normal">
-                          {resources(d.progress.remaining)}
-                          <span className="block text-xs text-muted-foreground">
-                            reçu ou en route : {resources(plus(d.progress.received, d.progress.onWay))} sur{" "}
-                            {resources(d.content.cost)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Progress
-                            part={total(plus(d.progress.received, d.progress.onWay))}
-                            whole={total(d.content.cost)}
-                          />
-                        </TableCell>
-                        <TableCell className={d.status === "covered" ? "text-muted-foreground" : "font-medium"}>
-                          {STATUS_LABEL[d.status]}
-                        </TableCell>
-                        <TableCell>
+              <Table className="text-[0.8125rem]">
+                <TableHeader>
+                  <TableRow className={HEAD_ROW}>
+                    <TableHead className={cn(HEAD, "pl-4")}>Demandeur</TableHead>
+                    <TableHead className={HEAD}>Demande</TableHead>
+                    <TableHead className={HEAD}>Priorité</TableHead>
+                    <TableHead className={cn(HEAD, "text-right")}>Reste à envoyer</TableHead>
+                    <TableHead className={cn(HEAD, "text-right")}>Envoyé</TableHead>
+                    <TableHead className={HEAD}>État</TableHead>
+                    <TableHead className={cn(HEAD, "pr-4")}>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {groups.active.map((d) => (
+                    <TableRow key={d.id} className={ROW}>
+                      <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
+                      <TableCell className="min-w-32 whitespace-normal">{d.label}</TableCell>
+                      <TableCell className="min-w-40 whitespace-normal">
+                        <PrioriteCell priorite={priorites?.get(d.playerId)} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Cost resources={d.progress.remaining} />
+                        <span className="block text-xs text-muted-foreground">
+                          sur {formatNumber(total(d.content.cost))}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Progress
+                          part={total(plus(d.progress.received, d.progress.onWay))}
+                          whole={total(d.content.cost)}
+                        />
+                      </TableCell>
+                      <TableCell className={d.status === "covered" ? "text-muted-foreground" : "font-medium"}>
+                        {STATUS_LABEL[d.status]}
+                      </TableCell>
+                      <TableCell className="pr-4">
+                        <div className="flex justify-end">
                           {mine(d) ? (
                             ownActions(d)
                           ) : d.status === "validated" && origin ? (
@@ -350,60 +400,35 @@ export function DemandesPanel({
                               href={demandeConvoyLink(origin, d.id)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={buttonVariants({ variant: "outline", size: "sm" })}
+                              className={buttonVariants({ variant: "outline" })}
                             >
                               Envoyer un convoi
                             </a>
                           ) : null}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-            <PrioriteNote />
-            <p className="text-xs text-muted-foreground">
-              «&nbsp;Envoyer un convoi&nbsp;» ouvre la page Commerce du jeu, que l&apos;extension Optizzz remplit avec
-              le destinataire et le reste à envoyer&nbsp;: vérifiez, puis cliquez vous-même «&nbsp;Lancer le
-              convoi&nbsp;». Ce convoi compte alors pour la Demande, si vous envoyez vos Convois ; un convoi lancé
-              autrement ne compte que dans le Solde. Une Demande est couverte quand les convois reçus et en route
-              atteignent son coût, et close quand l&apos;extension du demandeur voit le niveau atteint ou le chantier
-              lancé.
-            </p>
+            <Notes>
+              <PrioriteNote />
+              <p>
+                «&nbsp;Envoyé&nbsp;» compte les convois reçus et en route. «&nbsp;Envoyer un convoi&nbsp;» ouvre la page
+                Commerce du jeu, que l&apos;extension Optizzz remplit avec le destinataire et le reste à envoyer&nbsp;:
+                vérifiez, puis cliquez vous-même «&nbsp;Lancer le convoi&nbsp;». Ce convoi compte alors pour la Demande,
+                si vous envoyez vos Convois ; un convoi lancé autrement ne compte que dans le Solde. Une Demande est
+                couverte quand les convois reçus et en route atteignent son coût, et close quand l&apos;extension du
+                demandeur voit le niveau atteint ou le chantier lancé.
+              </p>
+            </Notes>
           </Panel>
 
-          {groups.finished.length > 0 && (
-            <Panel title="Terminées (90 derniers jours)">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Demandeur</TableHead>
-                      <TableHead>Demande</TableHead>
-                      <TableHead>État</TableHead>
-                      <TableHead>Le</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {groups.finished.map((d) => (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-semibold">{d.requester}</TableCell>
-                        <TableCell>{d.label}</TableCell>
-                        <TableCell>
-                          {STATUS_LABEL[d.status]}
-                          {d.stored === "refused" && d.decidedByPseudo ? ` par ${d.decidedByPseudo}` : ""}
-                        </TableCell>
-                        <TableCell>{d.endedAt ? formatDateTime(new Date(d.endedAt)) : "—"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </Panel>
-          )}
+          <FinishedPanel finished={groups.finished} />
         </div>
-        <div className="min-w-0 space-y-6">
+
+        <div className="flex min-w-0 flex-[1_1_20rem] flex-col gap-5">
           <Panel title="Faire une Demande">
             {canAsk ? (
               <DemandeForm busy={busy} onMake={(content) => run(() => demandes.make(content))} />
@@ -425,6 +450,72 @@ export function DemandesPanel({
   );
 }
 
+/** The small print under a table. */
+function Notes({ children }: { children: React.ReactNode }) {
+  return <div className="space-y-2 px-4 py-3 text-xs text-muted-foreground">{children}</div>;
+}
+
+/** The ended Demandes, folded: how many and of what kind, the list on « Afficher ». */
+function FinishedPanel({ finished }: { finished: readonly OpenedDemande[] }) {
+  const [open, setOpen] = useState(false);
+  const listId = useId();
+  const byStatus = (["closed", "refused", "cancelled"] as const)
+    .map((status) => ({ status, count: finished.filter((d) => d.status === status).length }))
+    .filter(({ count }) => count > 0)
+    .map(({ status, count }) => `${formatNumber(count)} ${STATUS_LABEL[status]}${count > 1 ? "s" : ""}`);
+  return (
+    <Panel title="Terminées (90 derniers jours)" flush>
+      <p className="px-4 py-3 text-muted-foreground">
+        {finished.length === 0 ? (
+          "Aucune Demande terminée."
+        ) : (
+          <>
+            {formatNumber(finished.length)} Demande{finished.length > 1 ? "s" : ""} terminée
+            {finished.length > 1 ? "s" : ""}
+            {byStatus.length > 0 && ` · ${byStatus.join(", ")}`} ·{" "}
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={listId}
+              onClick={() => setOpen(!open)}
+              className="text-[0.8125rem] font-semibold text-primary hover:underline"
+            >
+              {open ? "Masquer" : "Afficher"}
+            </button>
+          </>
+        )}
+      </p>
+      {open && finished.length > 0 && (
+        <div id={listId} className="border-t">
+          <Table className="text-[0.8125rem]">
+            <TableHeader>
+              <TableRow className={HEAD_ROW}>
+                <TableHead className={cn(HEAD, "pl-4")}>Demandeur</TableHead>
+                <TableHead className={HEAD}>Demande</TableHead>
+                <TableHead className={HEAD}>État</TableHead>
+                <TableHead className={cn(HEAD, "pr-4")}>Le</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {finished.map((d) => (
+                <TableRow key={d.id} className={ROW}>
+                  <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
+                  <TableCell className="min-w-32 whitespace-normal">{d.label}</TableCell>
+                  <TableCell>
+                    {STATUS_LABEL[d.status]}
+                    {d.stored === "refused" && d.decidedByPseudo ? ` par ${d.decidedByPseudo}` : ""}
+                  </TableCell>
+                  <TableCell className="pr-4">{d.endedAt ? formatDateTime(new Date(d.endedAt)) : "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 const nameOf = (key: LevelKey) => [...BUILDINGS, ...RESEARCH].find((entry) => entry.key === key)?.name ?? key;
 
 /** The building or research, the levels, and the cost from the table, which the player may type over. */
@@ -441,7 +532,7 @@ function DemandeForm({
     typed: boolean;
   }) => Promise<boolean>;
 }) {
-  const ids = { element: useId(), from: useId(), to: useId(), food: useId(), materials: useId() };
+  const ids = { element: useId(), from: useId(), to: useId(), food: useId(), materials: useId(), hint: useId() };
   const [key, setKey] = useState<LevelKey>("mushroom");
   const [level, setLevel] = useState<number | null>(null);
   const [from, setFrom] = useState<number | null>(null);
@@ -463,9 +554,9 @@ function DemandeForm({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        <div className="space-y-1">
-          <label htmlFor={ids.element} className="block">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2 space-y-1">
+          <label htmlFor={ids.element} className={FIELD_LABEL}>
             Bâtiment ou recherche
           </label>
           <select
@@ -475,7 +566,7 @@ function DemandeForm({
               setKey(event.target.value as LevelKey);
               setTyped(null);
             }}
-            className="block h-8 w-full max-w-80 rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+            className={cn("block w-full border border-input px-2.5 text-sm", FIELD_INPUT)}
           >
             <optgroup label="Bâtiments">
               {BUILDINGS.map((b) => (
@@ -493,13 +584,13 @@ function DemandeForm({
             </optgroup>
           </select>
         </div>
-        <div className="space-y-1">
-          <label htmlFor={ids.to} className="block">
+        <div className="min-w-0 space-y-1">
+          <label htmlFor={ids.to} className={FIELD_LABEL}>
             Niveau visé
           </label>
           <NumberField
             id={ids.to}
-            className="w-24"
+            className={FIELD_INPUT}
             value={level}
             rules={{ ...LEVEL_RULES, min: 1 }}
             onCommit={(value) => {
@@ -508,13 +599,13 @@ function DemandeForm({
             }}
           />
         </div>
-        <div className="space-y-1">
-          <label htmlFor={ids.from} className="block">
+        <div className="min-w-0 space-y-1">
+          <label htmlFor={ids.from} className={FIELD_LABEL}>
             Niveau actuel
           </label>
           <NumberField
             id={ids.from}
-            className="w-24"
+            className={FIELD_INPUT}
             placeholder={level !== null ? String(Math.max(0, level - 1)) : ""}
             value={from}
             rules={LEVEL_RULES}
@@ -524,47 +615,51 @@ function DemandeForm({
             }}
           />
         </div>
-      </div>
-      <div className="flex flex-wrap gap-4">
-        <div className="space-y-1">
-          <label htmlFor={ids.food} className="block">
+        <div className="min-w-0 space-y-1">
+          <label htmlFor={ids.food} className={FIELD_LABEL}>
             Nourriture
           </label>
           <NumberField
             id={ids.food}
-            className="w-36"
+            aria-describedby={ids.hint}
+            className={FIELD_INPUT}
             value={cost?.food ?? null}
             rules={AMOUNT_RULES}
             onCommit={(value) => setTyped({ food: value ?? 0, materials: cost?.materials ?? 0 })}
           />
         </div>
-        <div className="space-y-1">
-          <label htmlFor={ids.materials} className="block">
+        <div className="min-w-0 space-y-1">
+          <label htmlFor={ids.materials} className={FIELD_LABEL}>
             Matériaux
           </label>
           <NumberField
             id={ids.materials}
-            className="w-36"
+            aria-describedby={ids.hint}
+            className={FIELD_INPUT}
             value={cost?.materials ?? null}
             rules={AMOUNT_RULES}
             onCommit={(value) => setTyped({ food: cost?.food ?? 0, materials: value ?? 0 })}
           />
         </div>
+        <p id={ids.hint} className="col-span-2 text-xs text-muted-foreground">
+          {!aimed
+            ? "Choisissez un niveau visé au-dessus du niveau actuel."
+            : typed
+              ? "Coût saisi par vous : il sera montré comme tel aux validateurs."
+              : `Coût de ${nameOf(key)} calculé d'après la table des coûts d'Optizzz, modifiable.`}{" "}
+          Seuls la nourriture et les matériaux se demandent&nbsp;: un convoi ne porte pas d&apos;ouvrières.
+        </p>
       </div>
-      <p className="text-muted-foreground">
-        {!aimed
-          ? "Choisissez un niveau visé au-dessus du niveau actuel."
-          : typed
-            ? "Coût saisi par vous : il sera montré comme tel aux validateurs."
-            : `Coût de ${nameOf(key)} d'après la table des coûts d'Optizzz : modifiez-le si besoin.`}{" "}
-        Seuls la nourriture et les matériaux se demandent&nbsp;: un convoi ne porte pas d&apos;ouvrières.
-      </p>
-      <div className="flex flex-wrap items-center gap-3">
-        <Button disabled={busy || !aim || !cost || cost.food + cost.materials === 0} onClick={() => void make()}>
-          Faire la Demande
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          className="h-9.5 px-3.5 font-semibold"
+          disabled={busy || !aim || !cost || cost.food + cost.materials === 0}
+          onClick={() => void make()}
+        >
+          Envoyer la Demande
         </Button>
         {typed && (
-          <Button variant="outline" disabled={busy} onClick={() => setTyped(null)}>
+          <Button variant="outline" className="h-9.5" disabled={busy} onClick={() => setTyped(null)}>
             Reprendre la table des coûts
           </Button>
         )}

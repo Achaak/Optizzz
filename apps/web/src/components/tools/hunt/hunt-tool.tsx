@@ -5,21 +5,22 @@
 // same plan, computed in a Web Worker. See docs/features/site-chasse.md.
 import { UNITS } from "@optizzz/game/army/units";
 import { emptyHuntForm, layingSpeed, missingEntries, type HuntForm } from "@optizzz/game/hunt/hunt-form";
-import { huntsText } from "@optizzz/game/hunt/texts";
 import { huntLinkFormat, type HuntToolState } from "@optizzz/game/site-links/hunt";
 import { formatAmount } from "@optizzz/game/format/number-format";
 import { useEffect, useState } from "react";
+import { Panel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { CopyLinkButton } from "../copy-link-button";
 import { InvalidLinkNote, ToolLayout } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
 import { useToolState } from "../use-tool-state";
 import { HuntDetails } from "./hunt-details";
-import { HuntEntries } from "./hunt-entries";
+import { HuntArmy, HuntLevels } from "./hunt-entries";
+import { LossBars } from "./hunt-loss-bars";
 import { HuntParameters } from "./hunt-parameters";
 import { Note, Part, Warning } from "./hunt-parts";
 import { FieldTable, HuntResult } from "./hunt-result";
-import { advancedSettings, editHunt, withLevels } from "./hunt-settings";
+import { advancedSettings, editHunt, withLevels, type HuntEdit } from "./hunt-settings";
 import { AdvancedInUse, KeyFigures, SimpleChoice } from "./hunt-simple";
 import { ColumnChoices, HuntTable, NO_COLUMNS, type ColumnKey } from "./hunt-table";
 import { useHuntPlan } from "./use-hunt-plan";
@@ -63,60 +64,50 @@ export function HuntTool() {
   const missing = missingEntries(form);
   const unitKeys = UNITS.filter((unit) => (form.army[unit.key] ?? 0) > 0).map((unit) => unit.key);
 
-  const notices = (
-    <>
+  const noHunt = input !== null && !hunt.computing && advised?.hunts.length === 0 && input.slots > 0;
+  const notices = (missing.length > 0 || input?.slots === 0 || hunt.computing || noHunt) && (
+    <div className="space-y-2 border-b px-4 py-3">
       {missing.length > 0 && <Note>Remplissez {missing.join(", ")} pour calculer les chasses.</Note>}
       {input?.slots === 0 && <Warning>Tous vos créneaux de chasse sont pris.</Warning>}
       {hunt.computing && <Note>Calcul…</Note>}
-      {input && !hunt.computing && advised?.hunts.length === 0 && input.slots > 0 && (
+      {noHunt && (
         <Warning>
           Aucune chasse possible avec ces unités et ce réglage{advanced ? "." : " : essayez « Prudent » ou « Rapide »."}
         </Warning>
       )}
-    </>
+    </div>
   );
 
-  const table = hasPlan && (
-    <HuntTable
-      plan={plan}
-      unitKeys={unitKeys}
-      columns={advanced ? columns : NO_COLUMNS}
-      now={now}
-      onEdit={(index, edit) =>
-        tool.change((state) => ({ ...state, form: { ...state.form, edited: editHunt(plan, index, edit) } }))
-      }
-    />
+  const editTable = (index: number, edit: HuntEdit) =>
+    tool.change((state) => ({ ...state, form: { ...state.form, edited: plan ? editHunt(plan, index, edit) : null } }));
+
+  /** The head of the report, in both displays: the plan in a few words, its figures, the losses by surface. */
+  const head = hasPlan && (
+    <>
+      <KeyFigures plan={plan} form={form} layingSpeed={speed} now={now} />
+      {hunt.extras && hunt.extras.curve.length > 1 && advised && (
+        <LossBars curve={hunt.extras.curve} amount={advised.hunts[0]?.amount ?? 0} />
+      )}
+    </>
   );
 
   const simple = (
     <>
-      <SimpleChoice form={form} onSettings={changeForm} />
       {notices}
-      {hasPlan && <KeyFigures plan={plan} form={form} layingSpeed={speed} now={now} />}
-      {table}
-      <AdvancedInUse settings={advancedSettings(form)} onAdvanced={() => setAdvanced(true)} />
+      {head}
+      {hasPlan && (
+        <HuntTable plan={plan} unitKeys={unitKeys} columns={NO_COLUMNS} grouped flush now={now} onEdit={editTable} />
+      )}
     </>
   );
 
   const detailed = (
     <>
-      <Part title="Paramètres de chasse">
-        <HuntParameters
-          form={form}
-          onSettings={changeForm}
-          ratioChoices={hunt.ratios}
-          planCount={advised?.hunts.length ?? 1}
-          planAmount={advised?.hunts[0]?.amount ?? 1}
-          now={now}
-        />
-      </Part>
       {notices}
+      {head}
       {hasPlan && input && (
-        <>
-          <Part
-            title="Informations sur la chasse"
-            aside={`${huntsText(plan)} · +${formatAmount(plan.totalAmount)} cm²`}
-          >
+        <div className="space-y-4 p-4">
+          <Part title="Informations sur la chasse" aside={`+${formatAmount(plan.totalAmount)} cm²`}>
             <HuntResult
               plan={plan}
               field={input.field}
@@ -133,7 +124,7 @@ export function HuntTool() {
               columns={columns}
               onColumn={(column, shown) => setColumns((current) => ({ ...current, [column]: shown }))}
             />
-            {table}
+            <HuntTable plan={plan} unitKeys={unitKeys} columns={columns} now={now} onEdit={editTable} />
             {form.edited && (
               <Button
                 type="button"
@@ -154,7 +145,7 @@ export function HuntTool() {
               onPickAmount={(huntAmount) => changeForm({ huntAmount })}
             />
           </Part>
-        </>
+        </div>
       )}
     </>
   );
@@ -163,42 +154,63 @@ export function HuntTool() {
     <div className="space-y-4">
       <InvalidLinkNote shown={tool.invalidLink} />
       <ToolLayout
-        actions={
+        actions={<CopyLinkButton />}
+        form={
           <>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              aria-pressed={advanced}
-              onClick={() => setAdvanced(!advanced)}
-            >
-              {advanced ? "Affichage simple" : "Réglages avancés"}
-            </Button>
-            <ResumeLevelsButton
-              levels={levels}
-              onResume={(mine) => changeForm((current) => withLevels(current, mine))}
+            <HuntLevels
+              form={form}
+              aside={
+                <ResumeLevelsButton
+                  levels={levels}
+                  onResume={(mine) => changeForm((current) => withLevels(current, mine))}
+                />
+              }
+              onLevel={(key, value) => {
+                changeForm((current) => ({ levels: { ...current.levels, [key]: value } }));
+                levels.remember({ [key]: value });
+              }}
+              onLayingLevel={(key, value) => {
+                changeForm((current) => ({ laying: { ...current.laying, [key]: value } }));
+                levels.remember({ [key]: value });
+              }}
+              onLaunchField={(launchField) => changeForm({ launchField })}
             />
-            <CopyLinkButton />
+            <HuntArmy form={form} onArmy={(army) => changeForm({ army })} />
+            <Panel
+              title="Paramètres de chasse"
+              aside={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  aria-pressed={advanced}
+                  onClick={() => setAdvanced(!advanced)}
+                >
+                  {advanced ? "Affichage simple" : "Réglages avancés"}
+                </Button>
+              }
+            >
+              {advanced ? (
+                <HuntParameters
+                  form={form}
+                  onSettings={changeForm}
+                  ratioChoices={hunt.ratios}
+                  planCount={advised?.hunts.length ?? 1}
+                  planAmount={advised?.hunts[0]?.amount ?? 1}
+                  now={now}
+                />
+              ) : (
+                <div className="space-y-3">
+                  <SimpleChoice form={form} onSettings={changeForm} />
+                  <AdvancedInUse settings={advancedSettings(form)} onAdvanced={() => setAdvanced(true)} />
+                </div>
+              )}
+            </Panel>
           </>
         }
-        form={
-          <HuntEntries
-            form={form}
-            onLevel={(key, value) => {
-              changeForm((current) => ({ levels: { ...current.levels, [key]: value } }));
-              levels.remember({ [key]: value });
-            }}
-            onLayingLevel={(key, value) => {
-              changeForm((current) => ({ laying: { ...current.laying, [key]: value } }));
-              levels.remember({ [key]: value });
-            }}
-            onLaunchField={(launchField) => changeForm({ launchField })}
-            onArmy={(army) => changeForm({ army })}
-          />
-        }
-        wide
-        resultTitle={advanced ? "Plan de chasse, réglages avancés" : "Plan de chasse"}
-        result={advanced ? detailed : simple}
+        wide={advanced}
+        resultTitle="Rapport"
+        result={<div className="-m-4">{advanced ? detailed : simple}</div>}
       />
     </div>
   );
