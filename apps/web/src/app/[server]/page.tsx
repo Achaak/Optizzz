@@ -2,6 +2,7 @@ import { formatDecimal, formatNumber } from "@optizzz/game/format/number-format"
 import { dayMonth, formatDateTime } from "@optizzz/game/format/time-format";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AdSlot } from "~/components/ad-slot";
 import { Histogram, ValueBars } from "~/components/bars";
 import { JournalActivityChart } from "~/components/journal-activity-chart";
 import { JournalList } from "~/components/journal-list";
@@ -127,6 +128,8 @@ export default async function ServerPage({ params }: Props) {
           />
         </Panel>
       </div>
+
+      <AdSlot />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel

@@ -4,6 +4,7 @@ import { dayMonth, formatDateTime } from "@optizzz/game/format/time-format";
 import { SERVERS } from "@optizzz/game/servers";
 import { siteToolPath } from "@optizzz/game/site-links/site";
 import Link from "next/link";
+import { AdSlot } from "~/components/ad-slot";
 import { HomeSwitch } from "~/components/home/dashboard";
 import { RememberedServer } from "~/components/home/remembered-server";
 import { MonoLabel, Panel, PanelLink } from "~/components/panel";
@@ -217,6 +218,8 @@ export default async function Home() {
       </section>
 
       <ServersTable bulletins={bulletins} />
+
+      <AdSlot />
 
       <section
         id="extension"

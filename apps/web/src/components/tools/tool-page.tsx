@@ -3,6 +3,7 @@
 import type { SiteToolId } from "@optizzz/game/site-links/site";
 import { cn } from "cn";
 import type { ReactNode } from "react";
+import { AdSlot } from "~/components/ad-slot";
 import { MonoLabel, PageHeader } from "~/components/panel";
 import { TOOLS } from "./tool-list";
 
@@ -52,6 +53,7 @@ export function ToolLayout({
           {result}
         </div>
       </section>
+      <AdSlot className="lg:col-start-2" />
     </div>
   );
 }

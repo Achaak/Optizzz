@@ -31,7 +31,20 @@ export const env = createEnv({
     DISCORD_REMINDERS_KEY: z.string().optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
-  client: {},
+  client: {
+    /**
+     * The AdSense publisher (« ca-pub-1234567890123456 ») and its responsive display unit (« 1234567890 »): both set,
+     * the public pages show ads without tracking (src/lib/ads.ts); unset (dev, previews), no ad and no Google script.
+     */
+    NEXT_PUBLIC_ADSENSE_CLIENT: z
+      .string()
+      .regex(/^ca-pub-\d{10,20}$/)
+      .optional(),
+    NEXT_PUBLIC_ADSENSE_SLOT: z
+      .string()
+      .regex(/^\d{6,20}$/)
+      .optional(),
+  },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     REVALIDATE_SECRET: process.env.REVALIDATE_SECRET,
@@ -44,6 +57,8 @@ export const env = createEnv({
     EMAIL_FROM: process.env.EMAIL_FROM,
     DISCORD_REMINDERS_KEY: process.env.DISCORD_REMINDERS_KEY,
     NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_ADSENSE_CLIENT: process.env.NEXT_PUBLIC_ADSENSE_CLIENT,
+    NEXT_PUBLIC_ADSENSE_SLOT: process.env.NEXT_PUBLIC_ADSENSE_SLOT,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,

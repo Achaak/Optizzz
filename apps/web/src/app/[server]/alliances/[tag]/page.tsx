@@ -4,6 +4,7 @@ import { dayMonth } from "@optizzz/game/format/time-format";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
+import { AdSlot } from "~/components/ad-slot";
 import { JournalList } from "~/components/journal-list";
 import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
 import { ScoreChart } from "~/components/score-chart";
@@ -116,6 +117,8 @@ export default async function AlliancePage({ params }: Props) {
           <ScoreChart label="Membres" unit="membres" points={points((day) => day.playersCount)} />
         </Panel>
       </div>
+
+      <AdSlot />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel

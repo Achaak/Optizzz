@@ -3,6 +3,7 @@ import { dayMonth } from "@optizzz/game/format/time-format";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AdSlot } from "~/components/ad-slot";
 import { JournalList } from "~/components/journal-list";
 import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
 import { ScoreChart } from "~/components/score-chart";
@@ -139,6 +140,8 @@ export default async function PlayerPage({ params }: Props) {
           <JournalList server={server.id} lines={journal} named={false} />
         </Panel>
       </div>
+
+      <AdSlot />
     </div>
   );
 }

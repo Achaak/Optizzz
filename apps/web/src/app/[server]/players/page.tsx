@@ -1,6 +1,7 @@
 import { formatNumber } from "@optizzz/game/format/number-format";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AdSlot } from "~/components/ad-slot";
 import { FilterBar, FilterField, queryHref, SortableHead } from "~/components/list-parts";
 import { Pager } from "~/components/pager";
 import { PageHeader } from "~/components/panel";
@@ -122,6 +123,7 @@ export default async function PlayersPage({ params, searchParams }: Props) {
         ) : (
           <p className="p-4 text-sm text-muted-foreground">Aucun joueur ne correspond.</p>
         )}
+        <AdSlot className="border-t px-4 pt-3" />
         <Pager path={path} query={kept} page={page} pages={Math.ceil(total / PAGE_SIZE)} />
       </div>
     </div>

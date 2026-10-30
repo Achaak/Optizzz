@@ -35,7 +35,7 @@ Toutes en français, à des adresses en anglais depuis le 2026-10-23 (`site-outi
 - `/s5/players` : tableau triable, recherche par pseudo, filtre par alliance, pagination côté serveur.
 - `/s5/players/[id]` : fiche (alliance, position, colonisateur, scores), courbes, Journal du joueur.
 - `/s5/alliances` et `/s5/alliances/[tag]` : membres, totaux, pactes et guerres, courbes, Journal. Le tag se lit sans tenir compte de la casse (comme `sameTag`) et redirige vers celle de l'export.
-- Mentions légales (`/legal` ; éditeur : Axel Lavoie ; hébergeur : Vercel) et Confidentialité (`/privacy` ; ni mesure d'audience, ni cookie hors du cookie de session posé à la connexion d'un Compte Optizzz).
+- Mentions légales (`/legal` ; éditeur : Axel Lavoie ; hébergeur : Vercel) et Confidentialité (`/privacy` ; ni mesure d'audience, ni cookie du site hors du cookie de session posé à la connexion d'un Compte Optizzz ; publicité AdSense sans pistage depuis le 2026-10-30, `site-publicite.md`).
 
 Les outils et les pages de serveur sont indexés par les moteurs de recherche ; les pages joueur et alliance sont en `noindex`.
 

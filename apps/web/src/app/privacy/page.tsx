@@ -9,7 +9,7 @@ export default function PrivacyPage() {
       <section className="space-y-2">
         <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Ce que le site sait de vous</h2>
         <p>
-          Sans Compte Optizzz, rien : pas de cookie, pas de mesure d&apos;audience ni de publicité. Comme tout site,
+          Sans Compte Optizzz, le site lui-même ne pose aucun cookie et ne mesure pas l&apos;audience. Comme tout site,
           l&apos;hébergeur (Vercel) garde un temps les journaux techniques des requêtes, adresse IP comprise, pour faire
           fonctionner le service.
         </p>
@@ -19,6 +19,22 @@ export default function PrivacyPage() {
           <code>/s5/map#p=…</code>, <code>/tools/combat#p=…</code>), une partie que le navigateur n&apos;envoie jamais
           au site. Votre dernière carte, le dernier état de chaque outil et vos niveaux («&nbsp;Mes niveaux&nbsp;») sont
           gardés dans le stockage local de votre navigateur, pour les retrouver ; le site ne les lit pas.
+        </p>
+      </section>
+      <section className="space-y-2">
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">La publicité</h2>
+        <p>
+          Les pages publiques (accueil, serveurs, outils) montrent des publicités de Google AdSense, marquées
+          «&nbsp;Publicité&nbsp;». Elles sont non personnalisées : le site dit à Google, avant tout chargement, que vous
+          ne consentez ni aux cookies publicitaires ni au ciblage, et ne vous le demande jamais. Google choisit alors
+          ses annonces sans vous suivre ni vous profiler. Comme pour toute ressource chargée depuis un autre site,
+          Google reçoit votre adresse IP et l&apos;adresse de la page ; il peut garder une trace technique contre la
+          fraude aux clics. Ses règles :{" "}
+          <a href="https://policies.google.com/technologies/ads?hl=fr" className="underline">
+            la publicité chez Google
+          </a>
+          . Les Espaces d&apos;alliance, votre compte et la connexion n&apos;ont aucune publicité, et un bloqueur de
+          publicité ne gêne en rien le site.
         </p>
       </section>
       <section className="space-y-2">
