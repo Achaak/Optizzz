@@ -33,11 +33,42 @@ export async function lastReading(server: string): Promise<Date | null> {
   return read ? versionDate(read.version) : null;
 }
 
-/** Players per server, for the home page. */
-export async function playersPerServer(): Promise<Map<string, number>> {
-  const counts = await db.player.groupBy({ by: ["server"], _count: { _all: true } });
-  return new Map(counts.map((row) => [row.server, row._count._all]));
+/** A server at a glance, for the home page; null before the cron's first pass on it. */
+export async function serverBulletin(server: string) {
+  const reading = await lastReading(server);
+  if (!reading) return null;
+  const since = new Date(reading.getTime() - 14 * 24 * 3600 * 1000);
+  const [players, alliances, colonized, perDay, journal] = await Promise.all([
+    db.player.count({ where: { server } }),
+    db.alliance.count({ where: { server } }),
+    db.player.count({ where: { server, masterId: { not: null } } }),
+    db.playerDay.groupBy({
+      by: ["day"],
+      where: { server, day: { gte: since } },
+      _count: { _all: true },
+      orderBy: { day: "asc" },
+    }),
+    // The latest of the diplomacy: what a visitor of the home page cares for first.
+    db.journalEntry.findMany({
+      where: {
+        server,
+        OR: ["war", "pact", "war-ended", "pact-ended"].map((kind) => ({ change: { path: ["kind"], equals: kind } })),
+      },
+      orderBy: { at: "desc" },
+      take: 2,
+    }),
+  ]);
+  return {
+    reading,
+    players,
+    alliances,
+    colonized,
+    playersPerDay: perDay.map((row) => ({ day: row.day, players: row._count._all })),
+    journal: journal.map(toLine),
+  };
 }
+
+export type ServerBulletin = NonNullable<Awaited<ReturnType<typeof serverBulletin>>>;
 
 export async function serverSummary(server: string) {
   const [
