@@ -65,7 +65,7 @@ Ce qu'un joueur récolte par jour, moins la taxe qu'il verse à son colonisateur
 _À éviter_ : revenu, rendement.
 
 **Solde** :
-Convois reçus moins convois envoyés par un joueur sur les 30 derniers jours, nourriture et matériaux additionnés.
+Convois reçus moins convois envoyés par un joueur sur les 30 derniers jours, nourriture et matériaux additionnés. Un convoi compte à sa livraison : en route, il ne compte pas encore.
 _À éviter_ : dette, balance.
 
 **Priorité** :

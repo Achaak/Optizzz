@@ -34,7 +34,7 @@ Toutes les 5 minutes et à l'ouverture d'une page du jeu, l'extension relève le
 - « Envoyer un convoi » depuis une Demande ouvre la page Convoi du jeu pré-remplie (destinataire, reste à envoyer, convois en route déduits) ; le joueur clique lui-même. Ce convoi est rattaché à la Demande ; un convoi lancé ailleurs ne compte que dans le Solde.
 - La Priorité classe les Demandes pour les validateurs et les donneurs ; elle ne décide de rien.
 
-Réalisé (ticket 23, sans la Priorité) : `site-demandes.md`.
+Réalisé (ticket 23, puis la Priorité au ticket 24) : `site-demandes.md`.
 
 ## Membres
 
