@@ -33,4 +33,25 @@ export const playersRouter = createTRPCRouter({
     .query(({ ctx, input }) =>
       ctx.db.player.findUnique({ where: { server_id: { server: input.server, id: input.id } }, select: PICKED }),
     ),
+
+  /** A player's card on the signed-in home: TDC, its move in a week, rank on the server; null once gone. */
+  card: publicProcedure
+    .input(z.object({ server: serverId, id: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const player = await ctx.db.player.findUnique({
+        where: { server_id: { server: input.server, id: input.id } },
+        select: PICKED,
+      });
+      if (!player) return null;
+      const [above, days] = await Promise.all([
+        ctx.db.player.count({ where: { server: input.server, field: { gt: player.field } } }),
+        ctx.db.playerDay.findMany({
+          where: { server: input.server, playerId: input.id },
+          orderBy: { day: "desc" },
+          take: 8,
+          select: { field: true },
+        }),
+      ]);
+      return { ...player, rank: above + 1, weekAgo: days.length === 8 ? days[7]?.field : undefined };
+    }),
 });

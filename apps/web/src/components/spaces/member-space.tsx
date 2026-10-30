@@ -4,12 +4,16 @@
 // members, the requests (Admins), the alerts (Admins and Délégués) and the settings. An Admin's gestures are two:
 // paste the newcomer's code, then « Donner l'accès »; sealing, signing and the trust list happen without them. The
 // same for « Exclure »: one confirmation, and the new access for the others is made without them (ticket 18).
+import { formatNumber } from "@optizzz/game/format/number-format";
 import { formatDateTime } from "@optizzz/game/format/time-format";
 import { serverById } from "@optizzz/game/servers";
 import { isSentCategory, sendsLabel } from "@optizzz/game/site-links/envois";
+import { cn } from "cn";
+import Link from "next/link";
 import { useState } from "react";
+import { LockIcon } from "~/components/icons";
+import { MonoLabel, PageHeader } from "~/components/panel";
 import { CopyInvitation } from "~/components/spaces/copy-invitation";
-import { Segmented } from "~/components/tools/hunt/hunt-parts";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -91,22 +95,70 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const pseudoOf = (publicKey: string | undefined) =>
     view.members.find((m) => m.publicKey === publicKey && m.keyStatus === "current")?.pseudo ?? null;
 
+  const pending = demandes.demandes?.filter((demande) => demande.status === "pending").length ?? 0;
+  const counts: Partial<Record<(typeof TABS)[number]["value"], number>> = {
+    demandes: pending,
+    convoys: envois.convoys?.length ?? 0,
+    floods: envois.floods?.length ?? 0,
+    space: isAdmin ? view.requests.length : 0,
+  };
+
   const header = (
-    <div className="space-y-3">
-      <div className="space-y-1">
-        <h1 className="break-words">{view.space.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          Espace d&apos;alliance de {view.space.tag} sur {server?.name ?? view.space.server} · {view.me.pseudo},{" "}
-          {ROLE_LABEL[view.me.role].toLowerCase()}
-        </p>
-      </div>
-      <Segmented label="Partie de l'espace" options={TABS} value={tab} onChange={setTab} />
+    <div className="space-y-4">
+      <PageHeader
+        kicker={
+          <>
+            <Link href="/spaces" className="hover:text-foreground hover:underline">
+              Espaces
+            </Link>{" "}
+            / {view.space.name}
+          </>
+        }
+        title={<span className="break-words">{view.space.name}</span>}
+        actions={
+          <MonoLabel className="inline-flex items-center gap-1.5 border px-2 py-1">
+            <LockIcon width={12} height={12} />
+            chiffré de bout en bout
+          </MonoLabel>
+        }
+      >
+        Espace d&apos;alliance de {view.space.tag} sur {server?.name ?? view.space.server} ·{" "}
+        {String(view.members.length)} membres · {view.me.pseudo}, {ROLE_LABEL[view.me.role].toLowerCase()}
+      </PageHeader>
+      <nav aria-label="Parties de l'espace" className="flex flex-wrap border bg-card">
+        {TABS.map((entry, index) => {
+          const current = entry.value === tab;
+          const count = counts[entry.value] ?? 0;
+          return (
+            <button
+              key={entry.value}
+              type="button"
+              aria-current={current ? "page" : undefined}
+              onClick={() => setTab(entry.value)}
+              className={cn(
+                "flex h-11 items-center gap-2 px-4 text-sm",
+                index > 0 && "border-l",
+                current
+                  ? "font-semibold shadow-[inset_0_-3px_0_var(--primary)]"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {entry.label}
+              {count > 0 && (
+                <span className="bg-primary/15 px-1.5 font-mono text-[0.6875rem] text-primary">
+                  {formatNumber(count)}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 
   if (tab === "state")
     return (
-      <div className="max-w-5xl space-y-6">
+      <div className="space-y-6">
         {header}
         <StatePanel
           states={envois.states}
@@ -122,7 +174,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
 
   if (tab === "floods")
     return (
-      <div className="max-w-3xl space-y-6">
+      <div className="space-y-6">
         {header}
         <FloodsPanel
           floods={envois.floods}
@@ -135,7 +187,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
 
   if (tab === "demandes")
     return (
-      <div className="max-w-4xl space-y-6">
+      <div className="space-y-6">
         {header}
         <DemandesPanel
           view={view}
@@ -150,7 +202,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
 
   if (tab === "convoys")
     return (
-      <div className="max-w-3xl space-y-6">
+      <div className="space-y-6">
         {header}
         <ConvoysPanel
           convoys={envois.convoys}
@@ -162,38 +214,43 @@ export function MemberSpace({ view }: { view: MemberView }) {
     );
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="space-y-6">
       {header}
 
       {view.leaveProposal && <LeaveProposal view={view} alliance={view.leaveProposal.alliance} />}
 
-      <AccessPanel
-        view={view}
-        access={access}
-        pseudoOf={pseudoOf}
-        version={envois.version}
-        versionHidden={versionHidden}
-      />
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0 space-y-6">
+          <AccessPanel
+            view={view}
+            access={access}
+            pseudoOf={pseudoOf}
+            version={envois.version}
+            versionHidden={versionHidden}
+          />
 
-      {(isAdmin || view.me.role === "delegate") && keys.pair && (
-        <AlertsPanel view={view} access={access} isAdmin={isAdmin} pseudoOf={pseudoOf} absences={absences} />
-      )}
+          {isAdmin && <RequestsPanel view={view} access={access} canAct={canAct} />}
 
-      {isAdmin && <RequestsPanel view={view} access={access} canAct={canAct} />}
+          <MembersPanel view={view} access={access} canAct={canAct} absences={absences} sends={envois.sends} />
+        </div>
+        <div className="min-w-0 space-y-6">
+          {(isAdmin || view.me.role === "delegate") && keys.pair && (
+            <AlertsPanel view={view} access={access} isAdmin={isAdmin} pseudoOf={pseudoOf} absences={absences} />
+          )}
 
-      <MembersPanel view={view} access={access} canAct={canAct} absences={absences} sends={envois.sends} />
+          <Panel title="Inviter">
+            <p className="text-muted-foreground">
+              Le lien d&apos;invitation mène à cet espace&nbsp;: il ne contient aucun secret. Qui l&apos;ouvre est guidé
+              jusqu&apos;à sa demande, que vous verrez ici.
+            </p>
+            <CopyInvitation spaceId={view.space.id} />
+          </Panel>
 
-      <Panel title="Inviter">
-        <p className="text-muted-foreground">
-          Le lien d&apos;invitation mène à cet espace&nbsp;: il ne contient aucun secret. Qui l&apos;ouvre est guidé
-          jusqu&apos;à sa demande, que vous verrez ici.
-        </p>
-        <CopyInvitation spaceId={view.space.id} />
-      </Panel>
+          {isAdmin && <DiscordPanel view={view} keyring={access.keyring} />}
 
-      {isAdmin && <DiscordPanel view={view} keyring={access.keyring} />}
-
-      <SpaceSettings view={view} />
+          <SpaceSettings view={view} />
+        </div>
+      </div>
 
       <p className="text-sm text-muted-foreground">
         L&apos;état des membres (production, armée, chasses, niveaux et chantiers), leurs floods, leurs convois et leurs

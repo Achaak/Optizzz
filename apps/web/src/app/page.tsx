@@ -102,14 +102,20 @@ function Bulletin({ id, name, bulletin }: { id: string; name: string; bulletin: 
 
 function ToolsPanel() {
   return (
-    <Panel title="Outils" aside={<PanelLink href="/tools">Tous les outils</PanelLink>}>
-      <div className="flex flex-wrap gap-2">
+    <Panel flush title="Outils" aside={<PanelLink href="/tools">Tous les outils</PanelLink>}>
+      <ul className="divide-y">
         {TOOLS.filter((tool) => tool.ready).map((tool) => (
-          <Link key={tool.id} href={siteToolPath(tool.id)} className="border px-3 py-1.5 text-sm hover:bg-accent">
-            {tool.shortTitle}
-          </Link>
+          <li key={tool.id}>
+            <Link
+              href={siteToolPath(tool.id)}
+              className="grid gap-x-4 gap-y-0.5 px-4 py-2.5 hover:bg-accent sm:grid-cols-[7rem_minmax(0,1fr)]"
+            >
+              <span className="font-heading text-lg font-semibold tracking-wide uppercase">{tool.shortTitle}</span>
+              <span className="text-sm text-muted-foreground">{tool.description}</span>
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </Panel>
   );
 }
@@ -253,6 +259,7 @@ export default async function Home() {
   return (
     <HomeSwitch
       visitor={visitor}
+      bulletin={<RememberedServer blocks={blocks} fallback={fallback} />}
       tools={
         <div className="space-y-6">
           <ToolsPanel />
