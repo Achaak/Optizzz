@@ -6,7 +6,7 @@
 // docs/features/site-comptes-espaces.md and docs/features/site-envois.md.
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
 import { serverById } from "@optizzz/game/servers";
-import { SITE_URL } from "@optizzz/game/site-links/site";
+import { SITE_ORIGIN } from "@/utils/site";
 import type { EnvoiCrypto } from "@optizzz/game/site-links/envois";
 import { STATE_CATEGORIES } from "@optizzz/game/site-links/envoi-states";
 import {
@@ -237,8 +237,8 @@ export function senderKind(
   }
   if (!sender.tab) return null;
   if (gameServerOf(url.origin)) return "game";
-  if (url.origin === SITE_URL && url.pathname === CONNECT_EXTENSION_PATH) return "link";
-  if (url.origin === SITE_URL && (url.pathname.startsWith(`${SPACES_PATH}/`) || url.pathname === ACCOUNT_PATH))
+  if (url.origin === SITE_ORIGIN && url.pathname === CONNECT_EXTENSION_PATH) return "link";
+  if (url.origin === SITE_ORIGIN && (url.pathname.startsWith(`${SPACES_PATH}/`) || url.pathname === ACCOUNT_PATH))
     return "space";
   return null;
 }

@@ -18,7 +18,7 @@ import {
 import type { ProductionReading } from "@optizzz/game/site-links/envoi-states";
 import { newestPerFingerprint, type EnvoiCrypto } from "@optizzz/game/site-links/envois";
 import { comparePriorites, prioriteOf, prioriteText, type Priorite } from "@optizzz/game/site-links/priorite";
-import { SITE_URL } from "@optizzz/game/site-links/site";
+import { SITE_ORIGIN } from "@/utils/site";
 import { SPACES_PATH, type HandedKey } from "@optizzz/game/site-links/space-bridge";
 import { loadConvoys } from "@/data/convoys";
 import { loadDemandeReleve, storeDemandeReleve, updateDemandeConvoys, type OpenedDemande } from "@/data/demandes";
@@ -215,7 +215,7 @@ export function demandeService({
       });
     return {
       problem: null,
-      spaceUrl: `${SITE_URL}${SPACES_PATH}/${space.id}`,
+      spaceUrl: `${SITE_ORIGIN}${SPACES_PATH}/${space.id}`,
       open,
       mine: views(found.demandes.filter(mine)),
       toValidate: found.demandes.filter((d) => !mine(d) && d.status === "pending").length,

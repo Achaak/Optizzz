@@ -1,7 +1,7 @@
 // « Connecter mon Compte Optizzz »: asks for optizzz.fr on the click (optional permission, ADR 0007), registers the
 // link script, then goes to the site's page « Connecter l'extension », whose script takes the token.
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
-import { SITE_URL } from "@optizzz/game/site-links/site";
+import { SITE_ORIGIN } from "@/utils/site";
 import { requestLink } from "@/data/optizzz-account";
 import { syncLinkScript } from "@/features/optizzz-account/link-script";
 import { SITE_PERMISSION } from "@/features/optizzz-account/permission";
@@ -21,7 +21,7 @@ const result = document.querySelector<HTMLElement>("#result");
 async function goToSite(): Promise<void> {
   await syncLinkScript();
   await requestLink(new Date());
-  location.assign(`${SITE_URL}${CONNECT_EXTENSION_PATH}`);
+  location.assign(`${SITE_ORIGIN}${CONNECT_EXTENSION_PATH}`);
 }
 
 // The request must come from the click itself: no await before it.

@@ -2,7 +2,7 @@
 // script only, with the token. Answers are checked with zod: they are data, never code.
 import { EXTENSION_API } from "@optizzz/game/site-links/extension-link";
 import { DEMANDE_STATUSES } from "@optizzz/game/site-links/demandes";
-import { SITE_URL } from "@optizzz/game/site-links/site";
+import { SITE_ORIGIN } from "@/utils/site";
 import { z } from "zod";
 import type { ListCategory } from "@/data/envois";
 import type { AttachedPlayer } from "@/data/optizzz-account";
@@ -109,7 +109,7 @@ async function call<T>(
 ): Promise<ApiResult<T>> {
   let response: Response;
   try {
-    response = await fetchFn(`${SITE_URL}${path}`, {
+    response = await fetchFn(`${SITE_ORIGIN}${path}`, {
       ...init,
       // The token alone: no cookie of the site goes with it.
       credentials: "omit",

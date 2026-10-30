@@ -161,6 +161,18 @@ Décisions prises en codant :
 
 Vérifié en local le 2026-10-24 (base Docker, site sur un port de dev) : liaison refusée d'une autre origine et sans session, jeton créé sans `Set-Cookie` ni en-tête CORS, le cookie de session refusé par l'API, Joueur rattaché (201, puis 200), refusé à un second compte (409), pseudo hors export (404), « Déconnecter » (204, puis 401), « Retirer » sur `/account`, suppression du compte (jetons et Joueurs effacés) ; `/account` et `/connect-extension` en clair, sombre et à 375 px. L'extension n'a pas été essayée dans un navigateur (pas de navigateur où la charger) : son parcours est couvert par les tests (`fakeBrowser`).
 
+### Lier l'extension au site local
+
+L'extension parle à `https://optizzz.fr`, sauf si `WXT_SITE_URL` donne une autre adresse au build (`apps/extension/src/utils/site-origin.ts`) : la permission facultative du manifest, les scripts posés sur `/connect-extension`, `/account` et les espaces, les appels à l'API et la lecture des positions de la carte la suivent. Un build de mode `production` (`pnpm build`, `pnpm zip`, donc les builds des stores) refuse toute autre adresse ; le http n'est accepté que pour la machine (`localhost`, `127.0.0.1`). La permission vaut pour tous les ports de l'hôte (`http://localhost/*`, un motif ne nomme pas de port), mais seul le port configuré est cru. Sur Firefox, la CSP des pages de l'extension perd alors `upgrade-insecure-requests`, qui changerait `http://localhost` en https.
+
+```bash
+cp apps/extension/.env.example apps/extension/.env.development.local   # puis décommenter WXT_SITE_URL
+pnpm dev:web   # le site, après sa base locale
+pnpm dev       # ou dev:firefox
+```
+
+Puis « Connecter mon Compte Optizzz », accorder la permission, se connecter au site par le lien affiché dans la console du serveur, et valider sur `/connect-extension`. Le Joueur rattaché doit être dans l'export lu par la base locale (`pnpm --filter @optizzz/web ingest -- --server s5`). Les liens « Ouvrir sur optizzz.fr » des outils restent vers optizzz.fr.
+
 ## Espaces d'alliance : réalisation (ticket 17)
 
 Décisions prises en codant :

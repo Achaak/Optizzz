@@ -3,11 +3,10 @@
 // disables nobody's extension. On Firefox, also the consent to send data to optizzz.fr (data_collection_permissions,
 // optional in the manifest).
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
-import { SITE_URL } from "@optizzz/game/site-links/site";
 import { ACCOUNT_PATH, SPACES_PATH } from "@optizzz/game/site-links/space-bridge";
+import { SITE_ORIGIN, SITE_ORIGIN_PATTERN } from "@/utils/site";
 
-/** As in the manifest's optional_host_permissions. */
-export const SITE_ORIGIN_PATTERN = `${SITE_URL}/*`;
+export { SITE_ORIGIN_PATTERN };
 
 /**
  * Firefox's categories for what a linked extension sends (docs/features/site-comptes-espaces.md):
@@ -36,7 +35,7 @@ export const SITE_PERMISSION = sitePermission(import.meta.env.FIREFOX);
 export const LINK_SCRIPT = {
   id: "optizzz-link",
   js: ["/optizzz-link.js"],
-  matches: [`${SITE_URL}${CONNECT_EXTENSION_PATH}`, `${SITE_URL}${CONNECT_EXTENSION_PATH}?*`],
+  matches: [`${SITE_ORIGIN}${CONNECT_EXTENSION_PATH}`, `${SITE_ORIGIN}${CONNECT_EXTENSION_PATH}?*`],
 } as const;
 
 /**
@@ -47,7 +46,7 @@ export const LINK_SCRIPT = {
 export const SPACE_SCRIPT = {
   id: "optizzz-space",
   js: ["/optizzz-space.js"],
-  matches: [`${SITE_URL}${SPACES_PATH}/*`, `${SITE_URL}${ACCOUNT_PATH}`, `${SITE_URL}${ACCOUNT_PATH}?*`],
+  matches: [`${SITE_ORIGIN}${SPACES_PATH}/*`, `${SITE_ORIGIN}${ACCOUNT_PATH}`, `${SITE_ORIGIN}${ACCOUNT_PATH}?*`],
 } as const;
 
 /** Every script the extension registers on optizzz.fr while it is granted. */

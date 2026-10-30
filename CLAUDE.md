@@ -23,6 +23,7 @@ pnpm knip           # fichiers et dépendances morts (exports inutilisés : simp
 pnpm lint:firefox   # web-ext lint sur apps/extension/.output/firefox-mv3 (après build:firefox) : ce qu'AMO refuserait
 pnpm analyze        # build Chrome + stats.html : ce que pèse chaque content script
 pnpm dev:web        # le site sur http://localhost:3000 (après la base locale ci-dessous)
+                    # extension liée au site local : WXT_SITE_URL dans apps/extension/.env.development.local
 ```
 
 Site, base locale (Postgres dans Docker, port 5433) :

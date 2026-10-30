@@ -1,7 +1,7 @@
 // The server map's positions read on the Optizzz site, much lighter than the export (S4: about 1 MB against 44 MB).
 // Public data, read without an account nor anything about the player (ADR 0005, docs/features/site-carte.md).
 import { serverById } from "@optizzz/game/servers";
-import { SITE_URL } from "@optizzz/game/site-links/site";
+import { SITE_ORIGIN } from "@/utils/site";
 import { decodeMapData, mapDataSchema } from "@optizzz/map/map-data";
 import type { AlliancesExport, PlayersExport } from "./exports";
 
@@ -18,7 +18,7 @@ export async function loadSiteMap(
   const server = serverById(new URL(origin).hostname.split(".")[0] ?? "");
   if (!server) return null;
   try {
-    const response = await fetch(`${SITE_URL}/api/${server.id}/map`, {
+    const response = await fetch(`${SITE_ORIGIN}/api/${server.id}/map`, {
       credentials: "omit",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
