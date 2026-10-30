@@ -49,7 +49,9 @@ export default async function AlliancesPage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Alliances de ${server.name}`} />
+      <PageHeader kicker={`Serveur ${server.name}`} title={`Alliances de ${server.name}`}>
+        Toutes les alliances du serveur, triables par score. Relues chaque heure depuis l&apos;export public.
+      </PageHeader>
       <div className="border bg-card">
         <FilterBar
           action={path}
@@ -76,7 +78,9 @@ export default async function AlliancesPage({ params, searchParams }: Props) {
             <TableBody>
               {alliances.map((alliance, index) => (
                 <TableRow key={alliance.tag}>
-                  <TableCell className="pl-4 font-mono text-primary">{(page - 1) * PAGE_SIZE + index + 1}</TableCell>
+                  <TableCell className="pl-4 font-mono text-primary">
+                    {String((page - 1) * PAGE_SIZE + index + 1).padStart(2, "0")}
+                  </TableCell>
                   <TableCell className="max-w-64 truncate">
                     <Link href={`${path}/${encodeURIComponent(alliance.tag)}`} className="hover:underline">
                       <strong>{alliance.tag}</strong>{" "}

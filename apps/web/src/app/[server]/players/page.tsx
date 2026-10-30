@@ -50,7 +50,9 @@ export default async function PlayersPage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Joueurs de ${server.name}`} />
+      <PageHeader kicker={`Serveur ${server.name}`} title={`Joueurs de ${server.name}`}>
+        Tous les joueurs du serveur, triables par score. Relus chaque heure depuis l&apos;export public.
+      </PageHeader>
       <div className="border bg-card">
         <FilterBar
           action={path}
@@ -81,7 +83,9 @@ export default async function PlayersPage({ params, searchParams }: Props) {
             <TableBody>
               {players.map((player, index) => (
                 <TableRow key={player.id}>
-                  <TableCell className="pl-4 font-mono text-primary">{(page - 1) * PAGE_SIZE + index + 1}</TableCell>
+                  <TableCell className="pl-4 font-mono text-primary">
+                    {String((page - 1) * PAGE_SIZE + index + 1).padStart(2, "0")}
+                  </TableCell>
                   <TableCell>
                     <Link href={`${path}/${String(player.id)}`} className="font-semibold hover:underline">
                       {player.pseudo}
