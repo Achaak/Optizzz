@@ -7,6 +7,9 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
   autoIcons: { baseIconPath: "assets/icon.svg", sizes: [128, 96, 48, 32, 16] },
   manifestVersion: 3,
+  // WXT's dev server would take 3000 first, and the site (pnpm dev:web) would land on another port than its
+  // BETTER_AUTH_URL: the link to a local site (WXT_SITE_URL) would then be refused.
+  dev: { server: { port: 3100 } },
   zip: {
     // The package is @optizzz/extension: keep the store files named optizzz-X.Y.Z-*.zip.
     name: "optizzz",
