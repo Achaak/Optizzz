@@ -5,9 +5,9 @@ export const metadata: Metadata = { title: "Confidentialité" };
 export default function PrivacyPage() {
   return (
     <article className="max-w-2xl space-y-6 text-sm leading-relaxed">
-      <h1 className="text-2xl font-semibold tracking-tight">Confidentialité</h1>
+      <h1>Confidentialité</h1>
       <section className="space-y-2">
-        <h2 className="text-base font-semibold">Ce que le site sait de vous</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Ce que le site sait de vous</h2>
         <p>
           Sans Compte Optizzz, rien : pas de cookie, pas de mesure d&apos;audience ni de publicité. Comme tout site,
           l&apos;hébergeur (Vercel) garde un temps les journaux techniques des requêtes, adresse IP comprise, pour faire
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section className="space-y-2">
-        <h2 className="text-base font-semibold">Avec un Compte Optizzz</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Avec un Compte Optizzz</h2>
         <p>
           Le compte est facultatif : les outils et les données des serveurs restent ouverts sans lui. Il ne tient
           qu&apos;à votre adresse e-mail, sans mot de passe. Le site garde cette adresse, la date de création du compte
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section className="space-y-2">
-        <h2 className="text-base font-semibold">Les joueurs affichés</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Les joueurs affichés</h2>
         <p>
           Pseudos, alliances, positions et scores viennent de l&apos;export public de Fourmizzz, relu chaque heure ; le
           site en garde un relevé par jour pour les courbes, et la liste des changements. Les pages des joueurs et des

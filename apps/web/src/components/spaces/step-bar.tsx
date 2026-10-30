@@ -22,12 +22,12 @@ export function StepBar({ current }: { current: number }) {
             key={label}
             aria-current={state === "current" ? "step" : undefined}
             className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 ring-1",
-              state === "current" ? "font-semibold ring-foreground/60" : "ring-foreground/10",
+              "flex items-center gap-2 border px-3 py-2",
+              state === "current" ? "border-primary bg-accent font-semibold" : "bg-card",
               state === "todo" && "text-muted-foreground",
             )}
           >
-            <span aria-hidden className="tabular-nums">
+            <span aria-hidden className="font-mono text-primary">
               {state === "done" ? "✓" : `${String(index + 1)}.`}
             </span>
             <span>

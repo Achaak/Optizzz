@@ -3,7 +3,6 @@
 // Small pieces of the hunt simulator's page: a choice of buttons, a part that folds, notes and warnings.
 import type { ReactNode } from "react";
 import { cn } from "cn";
-import { Button } from "~/components/ui/button";
 
 /** One choice among a few buttons; the one chosen is filled and pressed (not told by its colour alone). */
 export function Segmented<Value extends string | number>({
@@ -18,20 +17,25 @@ export function Segmented<Value extends string | number>({
   onChange: (value: Value) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-1.5">
-      {options.map((option) => (
-        <Button
-          key={option.value}
-          type="button"
-          size="sm"
-          variant={value === option.value ? "default" : "outline"}
-          aria-pressed={value === option.value}
-          title={option.hint}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </Button>
-      ))}
+    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap border bg-card">
+      {options.map((option) => {
+        const chosen = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={chosen}
+            title={option.hint}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "h-9 border-r px-3.5 text-sm last:border-r-0",
+              chosen ? "bg-primary font-semibold text-primary-foreground" : "hover:bg-accent",
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -49,15 +53,19 @@ export function Part({
   children: ReactNode;
 }) {
   return (
-    <details open={defaultOpen} className="group rounded-xl ring-1 ring-foreground/10">
-      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 px-4 py-3 font-medium select-none">
+    <details open={defaultOpen} className="group border bg-card">
+      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 px-4 py-3 font-heading text-lg font-semibold tracking-wide uppercase select-none group-open:border-b">
         <span aria-hidden className="text-muted-foreground transition-transform group-open:rotate-90">
           ›
         </span>
         {title}
-        {aside && <span className="text-sm font-normal text-muted-foreground">{aside}</span>}
+        {aside && (
+          <span className="font-sans text-sm font-normal tracking-normal text-muted-foreground normal-case">
+            {aside}
+          </span>
+        )}
       </summary>
-      <div className="space-y-3 px-4 pb-4">{children}</div>
+      <div className="space-y-3 p-4">{children}</div>
     </details>
   );
 }
@@ -70,7 +78,13 @@ export function Note({ children }: { children: ReactNode }) {
 /** Something to look at before trusting the plan; `danger` when the hunt can be lost. Always starts with « ⚠ ». */
 export function Warning({ children, danger = false }: { children: ReactNode; danger?: boolean }) {
   return (
-    <p role="status" className={cn("rounded-md border px-3 py-2 text-sm", danger && "border-destructive/50")}>
+    <p
+      role="status"
+      className={cn(
+        "border px-3 py-2 text-sm",
+        danger ? "border-destructive/60 bg-destructive/10" : "border-warning-border bg-warning-soft",
+      )}
+    >
       ⚠ {children}
     </p>
   );

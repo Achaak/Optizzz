@@ -1,4 +1,4 @@
-// Small pieces shared by the Alliance Spaces' pages, in the site's shadcn style.
+// Small pieces shared by the Alliance Spaces' pages, in the site's « Campagne » style (docs/features/site-refonte.md).
 import { cn } from "cn";
 
 /** A boxed part of a page. */
@@ -12,9 +12,11 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={cn("space-y-3 rounded-xl p-4 text-sm ring-1 ring-foreground/10", className)}>
-      {title && <h2 className="text-base font-semibold">{title}</h2>}
-      {children}
+    <section className={cn("border bg-card text-sm", className)}>
+      {title && (
+        <h2 className="border-b px-4 py-2.5 font-heading text-xl font-semibold tracking-wide uppercase">{title}</h2>
+      )}
+      <div className="space-y-3 p-4">{children}</div>
     </section>
   );
 }
@@ -34,10 +36,10 @@ export function Callout({
     <div
       role={tone === "info" ? "status" : "alert"}
       className={cn(
-        "rounded-lg border p-3 text-sm",
-        tone === "danger" && "border-destructive/50",
-        tone === "warning" && "border-foreground/30",
-        tone === "info" && "border-foreground/10 bg-muted/50",
+        "border p-3 text-sm",
+        tone === "danger" && "border-destructive/60 bg-destructive/10",
+        tone === "warning" && "border-warning-border bg-warning-soft",
+        tone === "info" && "bg-muted",
       )}
     >
       {children}

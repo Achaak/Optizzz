@@ -52,7 +52,7 @@ export function Invitation({ view }: { view: InvitationView }) {
   return (
     <div className="max-w-3xl space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight break-words">Rejoindre {space.name}</h1>
+        <h1 className="break-words">Rejoindre {space.name}</h1>
         <p className="text-sm text-muted-foreground">
           Espace d&apos;alliance de {space.tag} sur {server} · Admins&nbsp;: {space.admins.join(", ") || "aucun"} ·{" "}
           {String(space.memberCount)} membre{space.memberCount > 1 ? "s" : ""} · créé le{" "}

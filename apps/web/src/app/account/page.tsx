@@ -39,22 +39,22 @@ export default async function AccountPage() {
     <div className="max-w-2xl space-y-8">
       <ResumeAfterLogin />
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Mon compte</h1>
+        <h1>Mon compte</h1>
         <p className="text-sm text-muted-foreground">
           Compte Optizzz créé {formatPastTime(session.user.createdAt, now)}.
         </p>
       </div>
 
       <section className="space-y-2">
-        <h2 className="text-base font-semibold">Adresse e-mail</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Adresse e-mail</h2>
         <p className="text-sm break-all">{session.user.email}</p>
         <p className="text-sm text-muted-foreground">Vos liens de connexion arrivent à cette adresse.</p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Joueurs</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Joueurs</h2>
         {players.length > 0 ? (
-          <ul className="divide-y rounded-xl text-sm ring-1 ring-foreground/10">
+          <ul className="divide-y border bg-card text-sm">
             {players.map((player) => (
               <li key={`${player.server}:${String(player.playerId)}`} className="px-4 py-3">
                 <Link
@@ -79,9 +79,9 @@ export default async function AccountPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Extensions liées</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Extensions liées</h2>
         {extensions.length > 0 ? (
-          <ul className="divide-y rounded-xl text-sm ring-1 ring-foreground/10">
+          <ul className="divide-y border bg-card text-sm">
             {extensions.map((extension) => (
               <li key={extension.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
                 <span>
@@ -101,7 +101,7 @@ export default async function AccountPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Espaces d&apos;alliance</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Espaces d&apos;alliance</h2>
         <p className="text-sm text-muted-foreground">
           Mettez vos données en commun avec votre alliance, sans que personne d&apos;autre puisse les lire.{" "}
           <Link href="/spaces" className="font-medium text-foreground underline underline-offset-4">
@@ -112,7 +112,7 @@ export default async function AccountPage() {
 
       <section id="phrase" className="scroll-mt-8 space-y-3">
         <div>
-          <h2 className="text-base font-semibold">Phrase secrète de votre compte</h2>
+          <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Phrase secrète de votre compte</h2>
           <p className="text-xs text-muted-foreground">Phrase de chiffrement</p>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -124,7 +124,7 @@ export default async function AccountPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Connexion</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Connexion</h2>
         <p className="text-sm text-muted-foreground">
           Sur ce navigateur, vous restez connecté jusqu&apos;à {formatEndTime(session.session.expiresAt, now)}, et 30
           jours de plus à chaque visite.
@@ -133,7 +133,7 @@ export default async function AccountPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Supprimer le compte</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Supprimer le compte</h2>
         <p className="text-sm text-muted-foreground">
           Votre e-mail, vos connexions, vos extensions liées, vos Joueurs, votre place dans vos espaces et votre phrase
           secrète sont effacés tout de suite, sans retour possible. Un espace où vous êtes seul part avec le compte ; le

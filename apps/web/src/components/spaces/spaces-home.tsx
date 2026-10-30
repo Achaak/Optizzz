@@ -31,7 +31,7 @@ export function SpacesHome() {
   return (
     <div className="max-w-3xl space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Espaces d&apos;alliance</h1>
+        <h1>Espaces d&apos;alliance</h1>
         <p className="text-sm text-muted-foreground">
           L&apos;endroit où les membres d&apos;une alliance mettent leurs données en commun. Même Optizzz ne peut pas
           les lire.
@@ -103,7 +103,7 @@ function PlayerSpaces({ player }: { player: PlayerEntry }) {
           {player.joinable.length > 0 ? (
             <div className="space-y-2">
               <h3 className="font-medium">Espaces de {player.alliance}</h3>
-              <ul className="divide-y rounded-lg ring-1 ring-foreground/10">
+              <ul className="divide-y border bg-card">
                 {player.joinable.map((space) => (
                   <li key={space.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                     <span>
@@ -113,10 +113,7 @@ function PlayerSpaces({ player }: { player: PlayerEntry }) {
                         {space.memberCount > 1 ? "s" : ""} · créé le {shortDate(space.createdAt, now)}
                       </span>
                     </span>
-                    <Link
-                      href={`/spaces/${space.id}`}
-                      className="rounded-lg px-2.5 py-1 font-medium ring-1 ring-foreground/20 hover:bg-muted"
-                    >
+                    <Link href={`/spaces/${space.id}`} className="border px-2.5 py-1 font-medium hover:bg-accent">
                       {pending.some((r) => r.spaceId === space.id) ? "Voir ma demande" : "Demander à rejoindre"}
                     </Link>
                   </li>
@@ -172,7 +169,7 @@ function CreateSpace({ player, alliance }: { player: PlayerEntry; alliance: stri
   }
 
   return (
-    <div className="space-y-3 rounded-lg p-3 ring-1 ring-foreground/10">
+    <div className="space-y-3 border bg-card p-3">
       <h3 className="font-medium">Créer un espace pour {alliance}</h3>
       {!keys.hasKey ? (
         <>

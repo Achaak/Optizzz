@@ -94,7 +94,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const header = (
     <div className="space-y-3">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight break-words">{view.space.name}</h1>
+        <h1 className="break-words">{view.space.name}</h1>
         <p className="text-sm text-muted-foreground">
           Espace d&apos;alliance de {view.space.tag} sur {server?.name ?? view.space.server} · {view.me.pseudo},{" "}
           {ROLE_LABEL[view.me.role].toLowerCase()}
@@ -455,7 +455,7 @@ function RequestRow({
   }
 
   return (
-    <div className="space-y-3 rounded-lg p-3 ring-1 ring-foreground/10">
+    <div className="space-y-3 border bg-card p-3">
       <p>
         <strong>{request.pseudo}</strong>
         <span className="text-muted-foreground">, demande du {shortDate(request.createdAt, new Date())}</span>

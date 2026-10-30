@@ -14,7 +14,7 @@ export default async function ConnectExtensionPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Connecter l&apos;extension</h1>
+        <h1>Connecter l&apos;extension</h1>
         <p className="text-sm text-muted-foreground">
           Liée à votre Compte Optizzz, l&apos;extension pourra y rattacher vos Joueurs, sur votre clic. Sans compte lié,
           elle n&apos;envoie rien.
@@ -23,7 +23,7 @@ export default async function ConnectExtensionPage() {
       {session ? (
         <LinkStatus email={session.user.email} />
       ) : (
-        <div className="space-y-3 rounded-xl p-4 text-sm ring-1 ring-foreground/10">
+        <div className="space-y-3 border bg-card p-4 text-sm">
           <p>Connectez-vous d&apos;abord à votre Compte Optizzz, sur ce navigateur.</p>
           <p className="text-muted-foreground">
             Une fois connecté, cliquez de nouveau «&nbsp;Connecter mon Compte Optizzz&nbsp;» dans l&apos;extension.

@@ -276,7 +276,7 @@ function FilterEditor(props: {
   const all = useMemo(() => playersOf(chip, players), [chip, players]);
   const kept = all.filter((player) => passesFilter(player, chip.filter)).length;
   return (
-    <fieldset className="space-y-3 rounded-lg border p-3 text-sm">
+    <fieldset className="space-y-3 border bg-card p-3 text-sm">
       <legend className="px-1 font-medium">Filtrer {label}</legend>
       <div className="grid grid-cols-[auto_6rem_auto_6rem_auto] items-center gap-2">
         {FILTER_KEYS.map((key) => (

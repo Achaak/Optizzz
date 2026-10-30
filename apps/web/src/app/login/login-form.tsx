@@ -48,7 +48,7 @@ export function LoginForm() {
 
   if (state.step === "sent")
     return (
-      <div role="status" className="space-y-3 rounded-xl p-4 text-sm ring-1 ring-foreground/10">
+      <div role="status" className="space-y-3 border bg-card p-4 text-sm">
         <p>
           Un lien de connexion vient de partir vers <strong>{state.email}</strong>. Il vaut 15 minutes et ne sert
           qu&apos;une fois.
@@ -70,7 +70,7 @@ export function LoginForm() {
         </p>
       )}
       {error && (
-        <p role="alert" className="rounded-lg border border-destructive/40 p-3 text-sm">
+        <p role="alert" className="border border-destructive/60 bg-destructive/10 p-3 text-sm">
           {error}
         </p>
       )}

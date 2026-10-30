@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Se connecter", robots: { index: fals
 export default function ConfirmPage() {
   return (
     <div className="mx-auto max-w-sm space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Se connecter</h1>
+      <h1>Se connecter</h1>
       <Suspense>
         <ConfirmLogin />
       </Suspense>

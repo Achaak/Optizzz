@@ -10,7 +10,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-sm space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Se connecter</h1>
+        <h1>Se connecter</h1>
         <p className="text-sm text-muted-foreground">
           Recevez un lien de connexion par e-mail, sans mot de passe. Sans compte, le même lien en crée un.
         </p>

@@ -29,14 +29,14 @@ export default async function SpaceRoute({ params }: { params: Promise<{ id: str
   return (
     <div className="max-w-3xl space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight break-words">Rejoindre {space.name}</h1>
+        <h1 className="break-words">Rejoindre {space.name}</h1>
         <p className="text-sm text-muted-foreground">
           Espace d&apos;alliance de {space.tag} sur {serverById(space.server)?.name ?? space.server} · Admins&nbsp;:{" "}
           {space.admins.join(", ") || "aucun"} · créé le {shortDate(space.createdAt, new Date())}
         </p>
       </div>
       <StepBar current={0} />
-      <section className="space-y-3 rounded-xl p-4 text-sm ring-1 ring-foreground/10">
+      <section className="space-y-3 border bg-card p-4 text-sm">
         <p>
           Connectez-vous à votre Compte Optizzz, avec votre seule adresse e-mail&nbsp;: vous reviendrez ici pour la
           suite.
