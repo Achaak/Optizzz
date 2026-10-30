@@ -60,7 +60,10 @@ export function CostsTool() {
       <Panel title="Bâtiment ou recherche">
         <div className="space-y-4">
           <div className="space-y-1 text-sm">
-            <label htmlFor={ids.element} className="block">
+            <label
+              htmlFor={ids.element}
+              className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase"
+            >
               Bâtiment ou recherche
             </label>
             <select
@@ -70,7 +73,7 @@ export function CostsTool() {
                 const element = event.target.value as LevelKey;
                 change((current) => ({ ...current, element }));
               }}
-              className="block h-8 w-full max-w-80 rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+              className="block h-8 w-full max-w-80 border border-input bg-transparent px-2 text-sm dark:bg-input/30"
             >
               <optgroup label="Bâtiments">
                 {BUILDINGS.map(({ key, name }) => (
@@ -90,7 +93,10 @@ export function CostsTool() {
           </div>
           <div className="flex flex-wrap gap-4">
             <div className="space-y-1 text-sm">
-              <label htmlFor={ids.from} className="block">
+              <label
+                htmlFor={ids.from}
+                className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase"
+              >
                 Niveau actuel
               </label>
               <NumberField
@@ -103,7 +109,10 @@ export function CostsTool() {
               />
             </div>
             <div className="space-y-1 text-sm">
-              <label htmlFor={ids.to} className="block">
+              <label
+                htmlFor={ids.to}
+                className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase"
+              >
                 Niveau visé
               </label>
               <NumberField
@@ -115,7 +124,10 @@ export function CostsTool() {
               />
             </div>
             <div className="space-y-1 text-sm">
-              <label htmlFor={ids.bonus} className="block">
+              <label
+                htmlFor={ids.bonus}
+                className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase"
+              >
                 {BONUS_LABELS[bonusKey]}
               </label>
               <NumberField

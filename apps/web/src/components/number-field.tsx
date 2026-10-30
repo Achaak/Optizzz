@@ -2,6 +2,7 @@
 
 import { formatNumber } from "@optizzz/game/format/number-format";
 import { parseNumberField, type NumberFieldRules } from "@optizzz/game/format/number-field";
+import { cn } from "cn";
 import { useState, type ComponentProps } from "react";
 import { Input } from "~/components/ui/input";
 
@@ -13,6 +14,7 @@ export function NumberField({
   value,
   onCommit,
   rules,
+  className,
   ...input
 }: { value: number | null; onCommit: (value: number | null) => void; rules: NumberFieldRules } & Omit<
   ComponentProps<typeof Input>,
@@ -23,6 +25,7 @@ export function NumberField({
   return (
     <Input
       {...input}
+      className={cn("font-mono", className)}
       type="text"
       inputMode="decimal"
       value={draft ?? shown}

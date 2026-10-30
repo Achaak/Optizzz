@@ -5,13 +5,14 @@
 import { readArmyText, type Counts } from "@optizzz/game/army/army-text";
 import { PLACES, type Place } from "@optizzz/game/army/battle";
 import type { AttackerForm, DefenderForm } from "@optizzz/game/army/battle-form";
-import { UNITS } from "@optizzz/game/army/units";
+
 import type { NumberFieldRules } from "@optizzz/game/format/number-field";
 import { useId, useState, type ReactNode } from "react";
 import { NumberField } from "~/components/number-field";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { AddUnit, NoUnit, UnitName, useShownUnits } from "../unit-rows";
 import { PLACE_LABELS } from "./combat-result";
 
 const LEVEL: NumberFieldRules = { min: 0, max: 1000, integer: true, allowEmpty: true };
@@ -68,7 +69,9 @@ function Levels<Key extends string>({
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {fields.map((field) => (
         <label key={field.key} className="space-y-1 text-sm">
-          <span className="block text-muted-foreground">{field.label}</span>
+          <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
+            {field.label}
+          </span>
           <CountField
             label={field.label}
             value={values[field.key]}
@@ -105,7 +108,7 @@ export function Paste({
         rows={2}
         value={text}
         onChange={(event) => setText(event.target.value)}
-        className="w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+        className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
       />
       <div className="flex flex-wrap items-center gap-2">
         {extra}
@@ -152,7 +155,7 @@ const DEFENDER_LEVELS = [
 type AttackerNumber = (typeof ATTACKER_LEVELS)[number]["key"];
 type DefenderNumber = (typeof DEFENDER_LEVELS)[number]["key"];
 
-const COUNT_CLASS = "w-24 min-w-24 text-right tabular-nums";
+const COUNT_CLASS = "w-28 min-w-24 text-right tabular-nums";
 
 export function AttackerSide({
   attacker,
@@ -165,38 +168,46 @@ export function AttackerSide({
   onNumber: (key: AttackerNumber, value: number) => void;
   onArmy: (army: Counts) => void;
 }) {
+  const units = useShownUnits((unit) => (attacker.army[unit.key] ?? 0) > 0);
   return (
-    <Card>
+    <Card style={{ borderTop: "3px solid var(--primary)" }}>
       <CardHeader>
-        <CardTitle>Attaquant</CardTitle>
+        <CardTitle className="text-primary">◀ Attaquant</CardTitle>
         {mine && <CardDescription>Votre côté : « Mes niveaux » le remplissent.</CardDescription>}
       </CardHeader>
       <CardContent className="space-y-4">
         <Levels fields={ATTACKER_LEVELS} values={attacker} onChange={onNumber} />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Unité</TableHead>
-              <TableHead className="text-right">Envoyées</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {UNITS.map((unit) => (
-              <TableRow key={unit.key}>
-                <TableCell>{unit.name}</TableCell>
-                <TableCell className="text-right">
-                  <CountField
-                    label={unit.name}
-                    className={`${COUNT_CLASS} ml-auto`}
-                    rules={AMOUNT}
-                    value={attacker.army[unit.key] ?? 0}
-                    onChange={(count) => onArmy({ ...attacker.army, [unit.key]: count })}
-                  />
-                </TableCell>
+        {units.shown.length === 0 ? (
+          <NoUnit />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Unité</TableHead>
+                <TableHead className="text-right">Envoyées</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {units.shown.map((unit) => (
+                <TableRow key={unit.key}>
+                  <TableCell>
+                    <UnitName unit={unit} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <CountField
+                      label={unit.name}
+                      className={`${COUNT_CLASS} ml-auto`}
+                      rules={AMOUNT}
+                      value={attacker.army[unit.key] ?? 0}
+                      onChange={(count) => onArmy({ ...attacker.army, [unit.key]: count })}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+        <AddUnit rest={units.rest} onAdd={units.add} />
         <Paste role="attack" onArmy={onArmy} />
       </CardContent>
     </Card>
@@ -215,44 +226,52 @@ export function DefenderSide({
   onArmy: (place: Place, army: Counts) => void;
 }) {
   const [pastePlace, setPastePlace] = useState<Place>("field");
+  const units = useShownUnits((unit) => PLACES.some((place) => (defender.armies[place][unit.key] ?? 0) > 0));
   return (
-    <Card>
+    <Card style={{ borderTop: "3px solid var(--info)" }}>
       <CardHeader>
-        <CardTitle>Défenseur</CardTitle>
+        <CardTitle className="text-info">Défenseur ▶</CardTitle>
         {mine && <CardDescription>Votre côté : « Mes niveaux » le remplissent.</CardDescription>}
       </CardHeader>
       <CardContent className="space-y-4">
         <Levels fields={DEFENDER_LEVELS} values={defender} onChange={onNumber} />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Unité</TableHead>
-              {PLACES.map((place) => (
-                <TableHead key={place} className="text-right">
-                  {PLACE_LABELS[place]}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {UNITS.map((unit) => (
-              <TableRow key={unit.key}>
-                <TableCell>{unit.name}</TableCell>
+        {units.shown.length === 0 ? (
+          <NoUnit />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Unité</TableHead>
                 {PLACES.map((place) => (
-                  <TableCell key={place} className="text-right">
-                    <CountField
-                      label={`${unit.name}, ${PLACE_LABELS[place]}`}
-                      className={`${COUNT_CLASS} ml-auto`}
-                      rules={AMOUNT}
-                      value={defender.armies[place][unit.key] ?? 0}
-                      onChange={(count) => onArmy(place, { ...defender.armies[place], [unit.key]: count })}
-                    />
-                  </TableCell>
+                  <TableHead key={place} className="text-right">
+                    {PLACE_LABELS[place]}
+                  </TableHead>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {units.shown.map((unit) => (
+                <TableRow key={unit.key}>
+                  <TableCell>
+                    <UnitName unit={unit} />
+                  </TableCell>
+                  {PLACES.map((place) => (
+                    <TableCell key={place} className="text-right">
+                      <CountField
+                        label={`${unit.name}, ${PLACE_LABELS[place]}`}
+                        className={`${COUNT_CLASS} ml-auto`}
+                        rules={AMOUNT}
+                        value={defender.armies[place][unit.key] ?? 0}
+                        onChange={(count) => onArmy(place, { ...defender.armies[place], [unit.key]: count })}
+                      />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+        <AddUnit rest={units.rest} onAdd={units.add} />
         <Paste
           role="defense"
           onArmy={(army) => onArmy(pastePlace, army)}
@@ -262,7 +281,7 @@ export function DefenderSide({
               <select
                 value={pastePlace}
                 onChange={(event) => setPastePlace(event.target.value as Place)}
-                className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+                className="h-8 border border-input bg-transparent px-2 text-sm dark:bg-input/30"
               >
                 {PLACES.map((place) => (
                   <option key={place} value={place}>

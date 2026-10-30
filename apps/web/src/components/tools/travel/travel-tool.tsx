@@ -100,7 +100,9 @@ export function TravelTool() {
             onChange={(to) => change((current) => ({ ...current, to }))}
           />
           <label className="block space-y-1 text-sm">
-            <span className="block">Vitesse d&apos;attaque de l&apos;expéditeur</span>
+            <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
+              Vitesse d&apos;attaque de l&apos;expéditeur
+            </span>
             <NumberField
               value={state.attackSpeed}
               rules={{ min: 0, max: 1000, integer: true, allowEmpty: true }}
@@ -178,7 +180,9 @@ function Departure({
       </div>
       {fixed && (
         <label className="block space-y-1 text-sm">
-          <span className="block">Jour et heure, heure de Paris</span>
+          <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
+            Jour et heure, heure de Paris
+          </span>
           <Input
             type="datetime-local"
             value={state.departure ?? ""}

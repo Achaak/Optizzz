@@ -32,11 +32,11 @@ export interface PickedPlayer {
 export function ServerSelect({ value, onChange }: { value: string | null; onChange: (server: string | null) => void }) {
   return (
     <label className="block space-y-1 text-sm">
-      <span className="block">Serveur</span>
+      <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">Serveur</span>
       <select
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value || null)}
-        className="block h-8 rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+        className="block h-8 border border-input bg-transparent px-2 text-sm dark:bg-input/30"
       >
         <option value="">Aucun (positions seulement)</option>
         {SERVERS.map((server) => (
@@ -110,7 +110,9 @@ export function PlayerPicker({
         <div className="flex flex-wrap gap-3">
           {(["x", "y"] as const).map((axis) => (
             <label key={axis} className="space-y-1 text-sm">
-              <span className="block">{axis}</span>
+              <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
+                {axis}
+              </span>
               <NumberField
                 value={position[axis]}
                 rules={{ min: 0, integer: true, allowEmpty: true }}
@@ -175,7 +177,7 @@ function PlayerSearch({
       {results.length > 0 && (
         <ul
           id={listId}
-          className="absolute right-0 left-0 z-10 mt-1 overflow-hidden rounded-lg border bg-popover text-sm shadow-md"
+          className="absolute right-0 left-0 z-10 mt-1 overflow-hidden border bg-popover text-sm shadow-md"
         >
           {results.map((player) => (
             <li key={player.id}>
@@ -192,7 +194,7 @@ function PlayerSearch({
         </ul>
       )}
       {none && (
-        <p className="absolute right-0 left-0 z-10 mt-1 rounded-lg border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
+        <p className="absolute right-0 left-0 z-10 mt-1 border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
           Aucun joueur ne commence par « {query} ».
         </p>
       )}

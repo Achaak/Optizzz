@@ -195,3 +195,10 @@
 [data-slot="card-footer"] {
   border-radius: 0;
 }
+
+/* shadcn's inputs, as the mockups draw fields: sharp, on the page's ground, a little taller. */
+[data-slot="input"] {
+  height: 2.25rem;
+  border-radius: 0;
+  background-color: var(--background);
+}

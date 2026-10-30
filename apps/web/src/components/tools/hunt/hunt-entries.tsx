@@ -2,12 +2,12 @@
 
 // « Vos données »: the levels, the field and the army sent, typed or pasted. See docs/features/site-chasse.md.
 import { readArmyText, type Counts } from "@optizzz/game/army/army-text";
-import { UNITS } from "@optizzz/game/army/units";
 import type { NumberFieldRules } from "@optizzz/game/format/number-field";
 import type { HuntForm } from "@optizzz/game/hunt/hunt-form";
 import { useId, useState } from "react";
 import { NumberField } from "~/components/number-field";
 import { Button } from "~/components/ui/button";
+import { AddUnit, NoUnit, UnitName, useShownUnits } from "../unit-rows";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import type { HuntLevelKey, LayingLevelKey } from "./hunt-settings";
@@ -45,7 +45,7 @@ function LevelField({
 }) {
   return (
     <label className="space-y-1 text-sm">
-      <span className="block text-muted-foreground">{label}</span>
+      <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">{label}</span>
       <NumberField aria-label={label} placeholder="à remplir" value={value} onCommit={onChange} rules={LEVEL} />
     </label>
   );
@@ -66,7 +66,7 @@ function Paste({ onArmy }: { onArmy: (army: Counts) => void }) {
         rows={2}
         value={text}
         onChange={(event) => setText(event.target.value)}
-        className="w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+        className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
       />
       <Button
         type="button"
@@ -103,6 +103,7 @@ export function HuntEntries({
   onLaunchField: (value: number | null) => void;
   onArmy: (army: Counts) => void;
 }) {
+  const units = useShownUnits((unit) => (form.army[unit.key] ?? 0) > 0);
   return (
     <Card>
       <CardHeader>
@@ -121,7 +122,9 @@ export function HuntEntries({
           ))}
         </div>
         <label className="block max-w-xs space-y-1 text-sm">
-          <span className="block text-muted-foreground">TDC au lancement (cm²)</span>
+          <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
+            TDC au lancement (cm²)
+          </span>
           <NumberField
             aria-label="TDC au lancement"
             placeholder="à remplir"
@@ -147,32 +150,39 @@ export function HuntEntries({
           </div>
         </fieldset>
         <div className="space-y-2">
-          <h3 className="text-sm font-medium">Armée envoyée</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Unité</TableHead>
-                <TableHead className="text-right">Envoyées</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {UNITS.map((unit) => (
-                <TableRow key={unit.key}>
-                  <TableCell>{unit.name}</TableCell>
-                  <TableCell className="text-right">
-                    <NumberField
-                      aria-label={unit.name}
-                      placeholder="0"
-                      className="ml-auto w-28 min-w-28 text-right tabular-nums"
-                      rules={AMOUNT}
-                      value={(form.army[unit.key] ?? 0) === 0 ? null : (form.army[unit.key] ?? null)}
-                      onCommit={(count) => onArmy({ ...form.army, [unit.key]: count ?? 0 })}
-                    />
-                  </TableCell>
+          <h3 className="font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">Armée envoyée</h3>
+          {units.shown.length === 0 ? (
+            <NoUnit />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Unité</TableHead>
+                  <TableHead className="text-right">Envoyées</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {units.shown.map((unit) => (
+                  <TableRow key={unit.key}>
+                    <TableCell>
+                      <UnitName unit={unit} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <NumberField
+                        aria-label={unit.name}
+                        placeholder="0"
+                        className="ml-auto w-28 min-w-28 text-right tabular-nums"
+                        rules={AMOUNT}
+                        value={(form.army[unit.key] ?? 0) === 0 ? null : (form.army[unit.key] ?? null)}
+                        onCommit={(count) => onArmy({ ...form.army, [unit.key]: count ?? 0 })}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          <AddUnit rest={units.rest} onAdd={units.add} />
         </div>
         <Paste onArmy={onArmy} />
       </CardContent>

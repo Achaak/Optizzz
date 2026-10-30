@@ -11,6 +11,8 @@ import { CopyLinkButton } from "../copy-link-button";
 import type { MyLevelKey } from "../my-levels";
 import { InvalidLinkNote, ToolLayout, ToolNote } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
+import { MonoLabel } from "~/components/panel";
+import { Segmented } from "../hunt/hunt-parts";
 import { useToolState } from "../use-tool-state";
 import { chooseMySide, SIDE_LEVELS, withLevels } from "./combat-levels";
 import { AttackerSide, DefenderSide } from "./combat-form";
@@ -25,33 +27,20 @@ const isLevelOf = (side: CombatSide, key: string): key is MyLevelKey =>
 
 function Choice<Value extends string>({
   legend,
-  name,
   options,
   value,
   onChange,
 }: {
   legend: string;
-  name: string;
   options: readonly { value: Value; label: string }[];
   value: Value;
   onChange: (value: Value) => void;
 }) {
   return (
-    <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-      <legend className="float-left mr-2 font-medium">{legend}</legend>
-      {options.map((option) => (
-        <label key={option.value} className="flex items-center gap-1.5">
-          <input
-            type="radio"
-            name={name}
-            className="size-4 accent-primary"
-            checked={value === option.value}
-            onChange={() => onChange(option.value)}
-          />
-          {option.label}
-        </label>
-      ))}
-    </fieldset>
+    <div className="flex flex-wrap items-center gap-2">
+      <MonoLabel>{legend}</MonoLabel>
+      <Segmented label={legend} options={options} value={value} onChange={onChange} />
+    </div>
   );
 }
 
@@ -107,17 +96,15 @@ export function CombatTool() {
         }
         form={
           <>
-            <div className="space-y-3 border bg-card p-4">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <Choice<Place>
-                legend="Lieu attaqué :"
-                name="target"
+                legend="Lieu attaqué"
                 value={form.target}
                 options={PLACES.map((place) => ({ value: place, label: PLACE_LABELS[place] }))}
                 onChange={(target) => changeForm((current) => ({ ...current, target }))}
               />
               <Choice<CombatSide>
-                legend="Mes niveaux :"
-                name="mine"
+                legend="Mes niveaux"
                 value={mine}
                 options={(["attack", "defend"] as const).map((side) => ({ value: side, label: SIDE_LABELS[side] }))}
                 onChange={(side) => {

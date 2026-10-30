@@ -113,5 +113,4 @@ export function Check({
   );
 }
 
-export const SELECT_CLASS =
-  "h-8 max-w-full min-w-0 rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+export const SELECT_CLASS = "h-8 max-w-full min-w-0 border border-input bg-transparent px-2 text-sm dark:bg-input/30";

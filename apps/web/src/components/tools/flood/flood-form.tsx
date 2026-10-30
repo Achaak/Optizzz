@@ -9,6 +9,7 @@ import type { FloodToolState } from "@optizzz/game/site-links/flood";
 import { useId, useState } from "react";
 import { NumberField } from "~/components/number-field";
 import { Button } from "~/components/ui/button";
+import { AddUnit, NoUnit, UnitName, useShownUnits } from "../unit-rows";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { CountField, Paste } from "../combat/combat-form";
@@ -36,7 +37,7 @@ function Field({
 }) {
   return (
     <label className="space-y-1 text-sm">
-      <span className="block text-muted-foreground">{label}</span>
+      <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">{label}</span>
       <NumberField aria-label={label} value={value} rules={rules} onCommit={onCommit} className="tabular-nums" />
     </label>
   );
@@ -119,6 +120,7 @@ const COUNT_CLASS = "ml-auto w-28 min-w-24 text-right tabular-nums";
 
 /** The ants I send, all attacks together: by unit, or pasted. */
 export function ArmyCard({ army, onArmy }: { army: Army; onArmy: (army: number[]) => void }) {
+  const units = useShownUnits((unit) => (army[UNITS.indexOf(unit)] ?? 0) > 0);
   return (
     <Card>
       <CardHeader>
@@ -126,30 +128,40 @@ export function ArmyCard({ army, onArmy }: { army: Army; onArmy: (army: number[]
         <CardDescription>Les fourmis que vous pouvez envoyer, toutes attaques confondues.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Unité</TableHead>
-              <TableHead className="text-right">Nombre</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {UNITS.map((unit, i) => (
-              <TableRow key={unit.key}>
-                <TableCell>{unit.name}</TableCell>
-                <TableCell className="text-right">
-                  <CountField
-                    label={unit.name}
-                    className={COUNT_CLASS}
-                    rules={AMOUNT}
-                    value={army[i] ?? 0}
-                    onChange={(count) => onArmy(UNITS.map((_, j) => (j === i ? count : (army[j] ?? 0))))}
-                  />
-                </TableCell>
+        {units.shown.length === 0 ? (
+          <NoUnit />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Unité</TableHead>
+                <TableHead className="text-right">Nombre</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {units.shown.map((unit) => {
+                const i = UNITS.indexOf(unit);
+                return (
+                  <TableRow key={unit.key}>
+                    <TableCell>
+                      <UnitName unit={unit} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <CountField
+                        label={unit.name}
+                        className={COUNT_CLASS}
+                        rules={AMOUNT}
+                        value={army[i] ?? 0}
+                        onChange={(count) => onArmy(UNITS.map((_, j) => (j === i ? count : (army[j] ?? 0))))}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+        <AddUnit rest={units.rest} onAdd={units.add} />
         <Paste role="attack" onArmy={(pasted) => onArmy(countsToArmy(pasted))} />
       </CardContent>
     </Card>
@@ -196,7 +208,7 @@ export function DefenseCard({
             setText(event.target.value);
             setNothingRead(false);
           }}
-          className="w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+          className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
         />
         <Button
           type="button"
