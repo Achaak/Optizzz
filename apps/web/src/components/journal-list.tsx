@@ -1,16 +1,33 @@
 import { describeChange } from "@optizzz/game/changes";
 import { formatDateTime } from "@optizzz/game/format/time-format";
 import Link from "next/link";
+import { journalGroupOf, journalTag } from "~/lib/server-stats";
 import type { JournalLine } from "~/server/queries";
+
+// The kind's word takes its group's tone; the word itself tells the kinds apart (ADR 0003).
+const TONES = {
+  players: "text-foreground",
+  alliances: "text-muted-foreground",
+  colonies: "text-primary",
+  diplomacy: "text-info",
+};
 
 /** Journal lines, latest first; `named` adds who changed (a server's feed). */
 export function JournalList({ server, lines, named }: { server: string; lines: JournalLine[]; named: boolean }) {
   if (lines.length === 0)
-    return <p className="text-sm text-muted-foreground">Aucun changement noté depuis le premier relevé du site.</p>;
+    return <p className="p-4 text-sm text-muted-foreground">Aucun changement noté depuis le premier relevé du site.</p>;
   return (
     <ul className="divide-y text-sm">
       {lines.map((line) => (
-        <li key={line.id} className="flex flex-wrap justify-between gap-x-4 py-2">
+        <li
+          key={line.id}
+          className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 gap-y-0.5 px-4 py-2 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
+        >
+          <span
+            className={`pt-0.5 font-mono text-[0.6875rem] tracking-wider uppercase ${TONES[journalGroupOf(line.change.kind)]}`}
+          >
+            {journalTag(line.change)}
+          </span>
           <span>
             {named && (
               <>
@@ -20,7 +37,7 @@ export function JournalList({ server, lines, named }: { server: string; lines: J
                       ? `/${server}/alliances/${encodeURIComponent(line.tag ?? "")}`
                       : `/${server}/players/${String(line.playerId)}`
                   }
-                  className="font-medium hover:underline"
+                  className="font-semibold hover:underline"
                 >
                   {line.name}
                 </Link>{" "}
@@ -28,7 +45,10 @@ export function JournalList({ server, lines, named }: { server: string; lines: J
             )}
             {describeChange(line.change)}
           </span>
-          <time dateTime={line.at.toISOString()} className="text-muted-foreground">
+          <time
+            dateTime={line.at.toISOString()}
+            className="col-start-2 font-mono text-xs text-muted-foreground sm:col-start-3"
+          >
             {formatDateTime(line.at)}
           </time>
         </li>

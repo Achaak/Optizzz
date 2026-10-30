@@ -44,10 +44,12 @@ export function ServerPicker() {
   return (
     <Menu.Root>
       <Menu.Trigger
-        className={`flex shrink-0 items-center gap-2 px-3 hover:bg-accent data-popup-open:bg-accent ${onServerPage ? "bg-accent" : ""}`}
+        className={`flex shrink-0 items-center gap-1.5 px-2 hover:bg-accent sm:gap-2 sm:px-3 data-popup-open:bg-accent ${onServerPage ? "bg-accent" : ""}`}
         aria-label={server ? `Serveur ${server.name}, changer de serveur` : "Choisir un serveur"}
       >
-        <span className="font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">Serveur</span>
+        <span className="hidden font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase sm:inline">
+          Serveur
+        </span>
         <span className="font-heading text-xl font-bold text-primary">{server?.name ?? "—"}</span>
         <ChevronDownIcon />
       </Menu.Trigger>

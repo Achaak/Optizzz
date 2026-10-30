@@ -4,11 +4,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JournalList } from "~/components/journal-list";
+import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
 import { ScoreChart } from "~/components/score-chart";
-import { Stat } from "~/components/stat";
-import { Badge } from "~/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Stat, StatGrid } from "~/components/stat";
 import { serverOfPath } from "~/lib/game-server";
+import { ordinal } from "~/lib/server-stats";
 import { playerPage } from "~/server/queries";
 
 export const revalidate = 3600;
@@ -38,99 +38,106 @@ export default async function PlayerPage({ params }: Props) {
   const server = serverOfPath(segment, `/players/${id}`);
   const playerId = idOf(id);
   if (playerId === null) notFound();
-  const { player, master, colonies, days, journal } = await playerPage(server.id, playerId);
+  const { player, master, colonies, days, journal, rank, ranks } = await playerPage(server.id, playerId);
   if (!player && journal.length === 0) notFound();
   const points = (pick: (day: (typeof days)[number]) => number) =>
-    days.map((day) => ({ day: dayMonth(day.day), value: pick(day) }));
+    days.map((day) => ({ day: dayMonth(day.day), value: Math.round(pick(day)) }));
+  const states = player
+    ? [master && "Colonisé", player.onHoliday && "En vacances", player.isBanned && "Banni"].filter(Boolean)
+    : [];
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{player?.pseudo ?? journal[0]?.name}</h1>
+      <PageHeader
+        title={player?.pseudo ?? journal[0]?.name}
+        note={player ? `Serveur ${server.name} · ${String(player.x)} : ${String(player.y)}` : undefined}
+      >
         {player ? (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             {player.alliance ? (
-              <Link href={`/${server.id}/alliances/${encodeURIComponent(player.alliance)}`} className="hover:underline">
+              <Link
+                href={`/${server.id}/alliances/${encodeURIComponent(player.alliance)}`}
+                className="font-semibold text-foreground hover:underline"
+              >
                 Alliance {player.alliance}
               </Link>
             ) : (
-              <span className="text-muted-foreground">Sans alliance</span>
+              <span>Sans alliance</span>
             )}
-            <span className="text-muted-foreground">
-              · Position {player.x} : {player.y}
-            </span>
-            <Link href={`/${server.id}/map?player=${String(player.id)}`} className="underline-offset-2 hover:underline">
-              Voir sur la carte
-            </Link>
             {master && (
-              <Badge variant="secondary">
-                <Link href={`/${server.id}/players/${String(master.id)}`}>Colonisé par {master.pseudo}</Link>
-              </Badge>
+              <span>
+                Colonisé par{" "}
+                <Link href={`/${server.id}/players/${String(master.id)}`} className="text-foreground hover:underline">
+                  {master.pseudo}
+                </Link>
+              </span>
             )}
-            {player.onHoliday && <Badge variant="outline">En vacances</Badge>}
-            {player.isBanned && <Badge variant="destructive">Banni</Badge>}
+            {states.length > 0 && <MonoLabel className="text-primary">{states.join(" · ")}</MonoLabel>}
+            <PanelLink href={`/${server.id}/map?player=${String(player.id)}`}>Voir sur la carte</PanelLink>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Ce joueur n&apos;est plus dans l&apos;export du serveur.</p>
+          <p className="text-sm">Ce joueur n&apos;est plus dans l&apos;export du serveur.</p>
         )}
-      </header>
+      </PageHeader>
 
       {player && (
-        <section aria-label="Scores" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="TDC (cm²)" value={formatNumber(player.field)} />
+        <StatGrid label="Scores">
+          <Stat label="TDC" value={formatNumber(player.field)} hint="cm²" />
+          <Stat label="Rang" value={rank === null ? "—" : ordinal(rank)} hint="au TDC sur le serveur" />
           <Stat label="Fourmilière" value={formatNumber(player.buildingScore)} />
           <Stat label="Technologie" value={formatNumber(player.technologyScore)} />
           <Stat label="Combat" value={formatNumber(player.trophyScore)} />
-        </section>
+          <Stat label="Colonies" value={formatNumber(colonies.length)} />
+        </StatGrid>
       )}
 
       {colonies.length > 0 && (
-        <p className="text-sm">
-          Colonies :{" "}
-          {colonies.map((colony, index) => (
-            <span key={colony.id}>
-              {index > 0 && ", "}
-              <Link href={`/${server.id}/players/${String(colony.id)}`} className="hover:underline">
-                {colony.pseudo}
-              </Link>
-            </span>
-          ))}
-        </p>
+        <Panel title="Colonies">
+          <ul className="flex flex-wrap gap-2 text-sm">
+            {colonies.map((colony) => (
+              <li key={colony.id}>
+                <Link
+                  href={`/${server.id}/players/${String(colony.id)}`}
+                  className="inline-block border px-2 py-1 hover:bg-accent"
+                >
+                  {colony.pseudo}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>TDC, jour après jour</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScoreChart label="TDC" points={points((day) => day.field)} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Fourmilière, jour après jour</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScoreChart label="Fourmilière" points={points((day) => day.buildingScore)} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Technologie, jour après jour</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScoreChart label="Technologie" points={points((day) => day.technologyScore)} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Changements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <JournalList server={server.id} lines={journal} named={false} />
-          </CardContent>
-        </Card>
+        <Panel title="TDC">
+          <ScoreChart label="TDC (cm²)" unit="cm² de TDC" points={points((day) => day.field)} />
+        </Panel>
+        <Panel title="Rang au TDC" aside={<span className="text-xs text-muted-foreground">1 en haut</span>}>
+          <ScoreChart
+            label="Rang"
+            unit="ᵉ au TDC"
+            tone="blue"
+            reversed
+            points={ranks.map((row) => ({ day: dayMonth(row.day), value: row.rank }))}
+          />
+        </Panel>
+        <Panel title="Fourmilière">
+          <ScoreChart label="Fourmilière" unit="en Fourmilière" points={points((day) => day.buildingScore)} />
+        </Panel>
+        <Panel title="Technologie">
+          <ScoreChart
+            label="Technologie"
+            unit="en Technologie"
+            tone="blue"
+            points={points((day) => day.technologyScore)}
+          />
+        </Panel>
+        <Panel title="Combat">
+          <ScoreChart label="Combat" unit="en Combat" points={points((day) => day.trophyScore)} />
+        </Panel>
+        <Panel flush title="Changements">
+          <JournalList server={server.id} lines={journal} named={false} />
+        </Panel>
       </div>
     </div>
   );
