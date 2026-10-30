@@ -81,7 +81,7 @@ export function KeyFigures({
   const troops = hasTroops(form);
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 border-t border-l">
         <Figure
           label="Terrain gagné"
           value={`+${formatAmount(plan.totalAmount)} cm²`}
@@ -122,12 +122,7 @@ export function KeyFigures({
 }
 
 function Figure({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="space-y-1">
-      <Stat label={label} value={value} />
-      <p className="px-1 text-xs text-muted-foreground">{note}</p>
-    </div>
-  );
+  return <Stat label={label} value={value} hint={note} />;
 }
 
 /** « Réglages avancés en cours : … », with a way to see them. */

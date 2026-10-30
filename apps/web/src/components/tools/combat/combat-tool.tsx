@@ -9,7 +9,7 @@ import { combatLinkFormat, type CombatSide, type CombatToolState } from "@optizz
 import { Button } from "~/components/ui/button";
 import { CopyLinkButton } from "../copy-link-button";
 import type { MyLevelKey } from "../my-levels";
-import { InvalidLinkNote, ToolLayout } from "../tool-page";
+import { InvalidLinkNote, ToolLayout, ToolNote } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
 import { useToolState } from "../use-tool-state";
 import { chooseMySide, SIDE_LEVELS, withLevels } from "./combat-levels";
@@ -75,10 +75,10 @@ export function CombatTool() {
 
   return (
     <div className="space-y-4">
-      <p role="note" className="rounded-md border px-3 py-2 text-sm">
-        ⚠ Règles non vérifiées sur un vrai combat entre joueurs (tutoriel officiel, Outiiil, Calystene) : à prendre
-        comme une estimation.
-      </p>
+      <ToolNote>
+        Règles non vérifiées sur un vrai combat entre joueurs (tutoriel officiel, Outiiil, Calystene) : à prendre comme
+        une estimation.
+      </ToolNote>
       <InvalidLinkNote shown={tool.invalidLink} />
       <ToolLayout
         actions={
@@ -94,7 +94,7 @@ export function CombatTool() {
                 }))
               }
             >
-              Échanger les côtés
+              Échanger
             </Button>
             <ResumeLevelsButton
               levels={levels}
@@ -107,7 +107,7 @@ export function CombatTool() {
         }
         form={
           <>
-            <div className="space-y-3 rounded-xl px-1">
+            <div className="space-y-3 border bg-card p-4">
               <Choice<Place>
                 legend="Lieu attaqué :"
                 name="target"
@@ -152,12 +152,8 @@ export function CombatTool() {
             />
           </>
         }
-        result={
-          <>
-            <h2 className="text-lg font-semibold">Résultat</h2>
-            <CombatResult form={form} />
-          </>
-        }
+        resultTitle="Rapport"
+        result={<CombatResult form={form} />}
       />
     </div>
   );

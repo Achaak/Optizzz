@@ -8,6 +8,7 @@ import { LEVEL_BASES, type LevelKey } from "@optizzz/game/level-costs";
 import { BUILDINGS, RESEARCH } from "@optizzz/game/levels";
 import { useId } from "react";
 import { NumberField } from "~/components/number-field";
+import { Panel } from "~/components/panel";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { CopyLinkButton } from "../copy-link-button";
@@ -15,6 +16,7 @@ import { pickLevels } from "../my-levels";
 import { InvalidLinkNote, ToolLayout } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
 import { useToolState } from "../use-tool-state";
+import { CostsChart } from "./costs-chart";
 import { costsFormat, EMPTY_COSTS, MAX_LEVEL, type CostsState } from "./costs-state";
 import { bonusKeyOf, costedResources, developmentPlan, type DevelopmentPlan, type Resource } from "./development";
 
@@ -137,7 +139,7 @@ export function CostsTool() {
   const result = plan ? (
     <Total plan={plan} resources={resources} element={state.element} from={from} to={state.to ?? 0} />
   ) : (
-    <p className="rounded-md border px-3 py-2 text-sm">Saisissez un niveau visé au-dessus du niveau actuel.</p>
+    <p className="text-sm text-muted-foreground">Saisissez un niveau visé au-dessus du niveau actuel.</p>
   );
 
   return (
@@ -145,11 +147,11 @@ export function CostsTool() {
       <ToolLayout
         actions={
           <>
-            <CopyLinkButton />
             <ResumeLevelsButton
               levels={levels}
               onResume={(mine) => change((current) => ({ ...current, ...pickLevels(mine, BONUS_KEYS) }))}
             />
+            <CopyLinkButton />
           </>
         }
         form={form}
@@ -207,10 +209,10 @@ function Total({
 function Detail({ plan, resources }: { plan: DevelopmentPlan; resources: Resource[] }) {
   const span = resources.length + 1;
   return (
-    <section aria-labelledby="costs-detail" className="space-y-2">
-      <h2 id="costs-detail" className="text-lg font-semibold">
-        Détail par niveau
-      </h2>
+    <Panel flush title="Détail par niveau" labelledBy="costs-detail">
+      <div className="border-b p-4">
+        <CostsChart plan={plan} resources={resources} labels={RESOURCE_LABELS} />
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -251,7 +253,7 @@ function Detail({ plan, resources }: { plan: DevelopmentPlan; resources: Resourc
           ))}
         </TableBody>
       </Table>
-    </section>
+    </Panel>
   );
 }
 

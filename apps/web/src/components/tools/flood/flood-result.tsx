@@ -6,6 +6,7 @@ import { FLOOD_MARGIN, floodBlockText } from "@optizzz/game/flood";
 import { formatNumber } from "@optizzz/game/format/number-format";
 import type { FloodField, FloodToolPlan } from "@optizzz/game/site-links/flood";
 import { Stat } from "~/components/stat";
+import { FloodChart } from "./flood-chart";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 
 /** « 400 JSN », « 2 T »: each unit sent, as the game abbreviates them. */
@@ -53,7 +54,7 @@ function missingText(fields: FloodField[]) {
 /** What stops the plan: framed, and said in words with a sign (never by colour alone). */
 function Callout({ text }: { text: string }) {
   return (
-    <p role="note" className="rounded-md border border-foreground/40 px-3 py-2 text-sm">
+    <p role="note" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
       ⚠ {text}
     </p>
   );
@@ -82,7 +83,7 @@ export function FloodResult({
   const withLosses = attacks.some((attack) => attack.lost);
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 border-t border-l">
         <Stat label="Attaques possibles" value={String(plan.slots)} />
         {last && <Stat label="Prise totale" value={`${formatNumber(taken)} cm²`} />}
         {trip && <Stat label="Trajet" value={trip.time} />}
@@ -90,6 +91,7 @@ export function FloodResult({
       </div>
       {trip && <p className="text-sm text-muted-foreground">Heure de Paris.</p>}
       {block && <Callout text={floodBlockText(block, targetName, FLOOD_MARGIN)} />}
+      {last && <FloodChart attacks={attacks} targetName={targetName} />}
       {last && (
         <Table>
           <TableHeader>

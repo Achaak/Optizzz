@@ -196,14 +196,9 @@ export function HuntTool() {
             onArmy={(army) => changeForm({ army })}
           />
         }
-        result={
-          <>
-            <h2 className="text-lg font-semibold">
-              {advanced ? "Plan de chasse, réglages avancés" : "Plan de chasse"}
-            </h2>
-            {advanced ? detailed : simple}
-          </>
-        }
+        wide
+        resultTitle={advanced ? "Plan de chasse, réglages avancés" : "Plan de chasse"}
+        result={advanced ? detailed : simple}
       />
     </div>
   );

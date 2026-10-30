@@ -1,8 +1,9 @@
 // The template of a tool page: title and description from the list (rendered on the server, indexed), then the
-// tool's form and result. On a phone, the result comes under the form. See docs/features/site-outils.md.
+// tool's form and its result. See docs/features/site-outils.md and docs/features/site-refonte.md.
 import type { SiteToolId } from "@optizzz/game/site-links/site";
-import Link from "next/link";
+import { cn } from "cn";
 import type { ReactNode } from "react";
+import { MonoLabel, PageHeader } from "~/components/panel";
 import { TOOLS } from "./tool-list";
 
 /** A tool's page: `children` is its client component, laid out with `ToolLayout`. */
@@ -10,32 +11,57 @@ export function ToolPage({ tool, children }: { tool: SiteToolId; children: React
   const entry = TOOLS.find((candidate) => candidate.id === tool);
   return (
     <div className="space-y-6">
-      <header className="max-w-3xl space-y-2">
-        <Link href="/tools" className="text-sm text-muted-foreground hover:text-foreground">
-          Outils
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">{entry?.title}</h1>
-        <p className="text-muted-foreground">{entry?.description}</p>
-      </header>
+      <PageHeader title={entry?.title}>{entry?.description}</PageHeader>
       {children}
     </div>
   );
 }
 
-/** Form and result side by side on a wide screen, the result under the form on a phone. */
-export function ToolLayout({ form, result, actions }: { form: ReactNode; result: ReactNode; actions?: ReactNode }) {
+/**
+ * The form on the left, the result beside it in its own panel, kept in sight while the form scrolls (« Copier le
+ * lien » and the other `actions` in its header); on a phone, the result comes under the form. A result with tables
+ * takes half the width (`wide`).
+ */
+export function ToolLayout({
+  form,
+  result,
+  actions,
+  resultTitle = "Résultat",
+  wide,
+}: {
+  form: ReactNode;
+  result: ReactNode;
+  actions?: ReactNode;
+  resultTitle?: string;
+  wide?: boolean;
+}) {
   return (
-    <div className="space-y-4">
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <section aria-label="Saisie" className="min-w-0 space-y-4">
-          {form}
-        </section>
-        <section aria-label="Résultat" aria-live="polite" className="min-w-0 space-y-4">
+    <div className={cn("grid items-start gap-6", wide ? "lg:grid-cols-2" : "lg:grid-cols-[minmax(0,1fr)_26rem]")}>
+      <section aria-label="Saisie" className="min-w-0 space-y-4">
+        {form}
+      </section>
+      <section
+        aria-label={resultTitle}
+        className="min-w-0 border bg-card lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
+      >
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2 lg:sticky lg:top-0 lg:z-10 lg:bg-card">
+          <MonoLabel>{resultTitle}</MonoLabel>
+          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        </header>
+        <div aria-live="polite" className="space-y-4 p-4">
           {result}
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
+  );
+}
+
+/** A warning above a tool: rules not checked, a figure to take with care. */
+export function ToolNote({ children }: { children: ReactNode }) {
+  return (
+    <p role="note" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
+      {children}
+    </p>
   );
 }
 
@@ -43,7 +69,7 @@ export function ToolLayout({ form, result, actions }: { form: ReactNode; result:
 export function InvalidLinkNote({ shown }: { shown: boolean }) {
   if (!shown) return null;
   return (
-    <p role="status" className="rounded-md border px-3 py-2 text-sm">
+    <p role="status" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
       Ce lien n&apos;est pas valide : l&apos;outil s&apos;ouvre vide.
     </p>
   );

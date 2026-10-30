@@ -2,7 +2,7 @@
 
 // The travel tool: two ends (a player of a server, or a position), the sender's Attack Speed and a departure give the
 // distance, the travel time and the arrival, Paris time. See docs/features/site-trajets.md.
-import { parisParts } from "@optizzz/game/format/time-format";
+import { formatEndTime, parisParts } from "@optizzz/game/format/time-format";
 import { useState, useSyncExternalStore } from "react";
 import { NumberField } from "~/components/number-field";
 import { Stat } from "~/components/stat";
@@ -113,11 +113,11 @@ export function TravelTool() {
     <ToolLayout
       actions={
         <>
-          <CopyLinkButton />
           <ResumeLevelsButton
             levels={levels}
             onResume={(mine) => change((current) => ({ ...current, attackSpeed: mine.attackSpeed ?? null }))}
           />
+          <CopyLinkButton />
         </>
       }
       form={form}
@@ -212,12 +212,41 @@ function Result({
   const trip = travelResult({ from, to, attackSpeed: state.attackSpeed, departure, now });
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+      <div className="grid border-t border-l sm:grid-cols-3 lg:grid-cols-1">
         <Stat label="Distance" value={`${String(trip.distance)} cases`} />
         <Stat label="Temps de trajet" value={trip.time} />
         <Stat label="Arrivée, heure de Paris" value={trip.arrivalText} />
       </div>
+      <Timeline departure={formatEndTime(departure, now)} arrival={trip.arrivalText} time={trip.time} />
       <p className="text-sm text-muted-foreground">Même temps pour une attaque et pour un convoi.</p>
     </>
+  );
+}
+
+/** Departure to arrival on one line, the travel time written over it. */
+function Timeline({ departure, arrival, time }: { departure: string; arrival: string; time: string }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex justify-center font-mono text-xs text-primary">{time}</div>
+      <div aria-hidden className="flex items-center">
+        <span className="size-3 border-2 border-primary bg-card" />
+        <span className="h-0.5 flex-1 bg-primary" />
+        <span className="border-y-[6px] border-l-[10px] border-y-transparent border-l-primary" />
+      </div>
+      <div className="flex justify-between gap-4 text-sm">
+        <span>
+          <span className="block font-mono text-[0.6875rem] tracking-wider text-muted-foreground uppercase">
+            Départ
+          </span>
+          {departure}
+        </span>
+        <span className="text-right">
+          <span className="block font-mono text-[0.6875rem] tracking-wider text-muted-foreground uppercase">
+            Arrivée
+          </span>
+          {arrival}
+        </span>
+      </div>
+    </div>
   );
 }

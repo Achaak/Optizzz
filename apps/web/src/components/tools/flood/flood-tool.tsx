@@ -112,7 +112,6 @@ export function FloodTool() {
     <ToolLayout
       actions={
         <>
-          <CopyLinkButton />
           <ResumeLevelsButton
             levels={levels}
             onResume={(mine) =>
@@ -124,15 +123,12 @@ export function FloodTool() {
               }))
             }
           />
+          <CopyLinkButton />
         </>
       }
       form={form}
-      result={
-        <>
-          <h2 className="text-lg font-semibold">Plan de flood</h2>
-          <FloodResult plan={floodToolPlan(state)} targetName={target?.pseudo ?? "La cible"} trip={trip} />
-        </>
-      }
+      resultTitle="Plan de flood"
+      result={<FloodResult plan={floodToolPlan(state)} targetName={target?.pseudo ?? "La cible"} trip={trip} />}
     />
   );
 }

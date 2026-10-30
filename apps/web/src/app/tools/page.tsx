@@ -2,9 +2,8 @@ import { siteToolPath } from "@optizzz/game/site-links/site";
 import { SERVERS } from "@optizzz/game/servers";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MonoLabel, PageHeader, PanelLink } from "~/components/panel";
 import { TOOLS } from "~/components/tools/tool-list";
-import { Badge } from "~/components/ui/badge";
-import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Outils",
@@ -15,60 +14,47 @@ export const metadata: Metadata = {
 
 export default function ToolsPage() {
   return (
-    <div className="space-y-8">
-      <section className="max-w-2xl space-y-3">
-        <h1 className="text-3xl font-semibold tracking-tight">Outils</h1>
-        <p className="text-muted-foreground">
-          Calculer sans quitter le navigateur, et partager le résultat par un lien : ce que vous saisissez reste dans
-          l&apos;adresse de la page, jamais envoyé au site.
-        </p>
-      </section>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {TOOLS.map((tool) => (
-          <li key={tool.id}>
-            {tool.ready ? (
-              <Link href={siteToolPath(tool.id)} className="block h-full rounded-xl focus-visible:outline-2">
-                <Card className="h-full transition-colors hover:border-primary">
-                  <CardHeader>
-                    <CardTitle>{tool.title}</CardTitle>
-                    <CardDescription>{tool.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-            ) : (
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex flex-wrap items-center gap-2">
-                    {tool.title}
-                    <Badge variant="outline">Bientôt</Badge>
-                  </CardTitle>
-                  <CardDescription>{tool.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            )}
+    <div className="space-y-6">
+      <PageHeader title="Outils">
+        Calculer sans quitter le navigateur, et partager le résultat par un lien : ce que vous saisissez reste dans
+        l&apos;adresse de la page, jamais envoyé au site.
+      </PageHeader>
+      <ul className="grid border-t border-l bg-card sm:grid-cols-2 lg:grid-cols-3">
+        {TOOLS.map((tool, index) => (
+          <li key={tool.id} className="flex flex-col gap-2 border-r border-b p-5">
+            <MonoLabel className="text-primary">{String(index + 1).padStart(2, "0")}</MonoLabel>
+            <h2 className="font-heading text-2xl font-bold uppercase">
+              {tool.ready ? (
+                <Link href={siteToolPath(tool.id)} className="hover:text-primary">
+                  {tool.title}
+                </Link>
+              ) : (
+                tool.title
+              )}
+            </h2>
+            <p className="text-sm text-muted-foreground">{tool.description}</p>
+            <div className="mt-auto pt-2">
+              {tool.ready ? <PanelLink href={siteToolPath(tool.id)}>Ouvrir</PanelLink> : <MonoLabel>Bientôt</MonoLabel>}
+            </div>
           </li>
         ))}
-        <li>
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Carte du serveur</CardTitle>
-              <CardDescription>
-                Situer des joueurs et des alliances sur tout un serveur, avec distances et trajets. Choisissez le
-                serveur :
-              </CardDescription>
-              <nav aria-label="Carte du serveur" className="flex flex-wrap gap-1 pt-1 text-sm">
-                {SERVERS.map((server) => (
-                  <Link
-                    key={server.id}
-                    href={`/${server.id}/map`}
-                    className="rounded-md border px-2 py-1 hover:bg-muted"
-                  >
-                    {server.name}
-                  </Link>
-                ))}
-              </nav>
-            </CardHeader>
-          </Card>
+        <li className="flex flex-col gap-2 border-r border-b p-5">
+          <MonoLabel className="text-primary">{String(TOOLS.length + 1).padStart(2, "0")}</MonoLabel>
+          <h2 className="font-heading text-2xl font-bold uppercase">Carte du serveur</h2>
+          <p className="text-sm text-muted-foreground">
+            Situer des joueurs et des alliances sur tout un serveur, avec distances et trajets.
+          </p>
+          <nav aria-label="Carte du serveur" className="mt-auto flex flex-wrap gap-1.5 pt-2">
+            {SERVERS.map((server) => (
+              <Link
+                key={server.id}
+                href={`/${server.id}/map`}
+                className="border px-2.5 py-1 font-heading text-lg font-bold hover:bg-accent"
+              >
+                {server.name}
+              </Link>
+            ))}
+          </nav>
         </li>
       </ul>
     </div>
