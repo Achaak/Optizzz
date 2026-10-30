@@ -1,6 +1,5 @@
 import { formatNumber } from "@optizzz/game/format/number-format";
 import { dayMonth } from "@optizzz/game/format/time-format";
-import { cn } from "cn";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -8,7 +7,9 @@ import { AdSlot } from "~/components/ad-slot";
 import { CompareAdd } from "~/components/compare-add";
 import { CompareChart, CompareKey } from "~/components/compare-chart";
 import { CloseIcon } from "~/components/icons";
+import { ChoiceLinks } from "~/components/list-parts";
 import { MonoLabel, PageHeader, Panel } from "~/components/panel";
+import { CopyLinkButton } from "~/components/tools/copy-link-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import {
   COMPARE_KINDS,
@@ -37,45 +38,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const server = serverOfPath((await params).server, "/compare");
   // Players' curves, like their own pages: out of the search engines.
   return { title: `Comparer sur ${server.name}`, robots: { index: false } };
-}
-
-/** A row of links of which one is current: a choice that stays in the address. */
-function Choices<T extends string>({
-  label,
-  choices,
-  current,
-  text,
-  href,
-}: {
-  label: string;
-  choices: readonly T[];
-  current: T;
-  text: (choice: T) => string;
-  href: (choice: T) => string;
-}) {
-  return (
-    <nav aria-label={label} className="flex flex-wrap items-center gap-2">
-      <MonoLabel>{label}</MonoLabel>
-      <div className="flex flex-wrap border bg-card">
-        {choices.map((choice, index) => (
-          <Link
-            key={choice}
-            href={href(choice)}
-            aria-current={choice === current ? "true" : undefined}
-            className={cn(
-              "px-3 py-1.5 text-sm",
-              index > 0 && "border-l",
-              choice === current
-                ? "bg-primary font-semibold text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {text(choice)}
-          </Link>
-        ))}
-      </div>
-    </nav>
-  );
 }
 
 export default async function ComparePage({ params, searchParams }: Props) {
@@ -119,13 +81,13 @@ export default async function ComparePage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Comparer" note={`Serveur ${server.name}`}>
+      <PageHeader title="Comparer" kicker={`Serveur ${server.name}`} actions={entries.length > 0 && <CopyLinkButton />}>
         De 2 à {MAX_COMPARED} {kind === "players" ? "joueurs" : "alliances"} sur une même courbe, relevé de minuit.
         L&apos;adresse garde votre choix : copiez-la pour la partager.
       </PageHeader>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Choices
+        <ChoiceLinks
           label="Comparer des"
           choices={COMPARE_KINDS}
           current={kind}
@@ -167,14 +129,14 @@ export default async function ComparePage({ params, searchParams }: Props) {
       {entries.length > 0 ? (
         <>
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Choices
+            <ChoiceLinks
               label="Courbe"
               choices={COMPARE_METRICS}
               current={state.metric}
               text={(choice) => METRIC_LABELS[choice]}
               href={(choice) => href({ metric: choice })}
             />
-            <Choices
+            <ChoiceLinks
               label="Période"
               choices={COMPARE_PERIODS}
               current={state.period}

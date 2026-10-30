@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { AdSlot } from "~/components/ad-slot";
 import { JournalActivityChart } from "~/components/journal-activity-chart";
 import { JournalList } from "~/components/journal-list";
-import { FilterBar, FilterField } from "~/components/list-parts";
+import { ChoiceLinks, FilterBar, FilterField, queryHref } from "~/components/list-parts";
 import { MonoLabel, PageHeader, Panel } from "~/components/panel";
 import { Pager } from "~/components/pager";
 import { Stat } from "~/components/stat";
@@ -90,21 +90,17 @@ export default async function JournalPage({ params, searchParams }: Props) {
       </div>
 
       <div className="border bg-card">
+        <div className="border-b px-4 py-3">
+          <ChoiceLinks
+            label="Voir"
+            choices={["all", ...JOURNAL_GROUPS.map((entry) => entry.id)] as const}
+            current={group ?? "all"}
+            text={(choice) => JOURNAL_GROUPS.find((entry) => entry.id === choice)?.label ?? "Tout"}
+            href={(choice) => queryHref(path, { ...kept, groupe: choice === "all" ? "" : choice })}
+          />
+        </div>
         <FilterBar action={path} count={total === 0 ? "Aucun changement" : plural(total, "changement", "changements")}>
-          <FilterField label="Voir">
-            <select
-              name="groupe"
-              defaultValue={group ?? ""}
-              className="h-9 border bg-background px-2 text-sm text-foreground"
-            >
-              <option value="">Tout</option>
-              {JOURNAL_GROUPS.map((entry) => (
-                <option key={entry.id} value={entry.id}>
-                  {entry.label}
-                </option>
-              ))}
-            </select>
-          </FilterField>
+          {group && <input type="hidden" name="groupe" value={group} />}
           <FilterField label="Joueur ou alliance">
             <Input name="q" defaultValue={q} placeholder="Une partie du nom" className="h-9 w-48" />
           </FilterField>

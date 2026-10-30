@@ -74,3 +74,42 @@ export function FilterField({ label, children }: { label: string; children: Reac
     </label>
   );
 }
+
+/** A row of links of which one is current: a choice that stays in the address. */
+export function ChoiceLinks<T extends string>({
+  label,
+  choices,
+  current,
+  text,
+  href,
+}: {
+  label: string;
+  choices: readonly T[];
+  current: T;
+  text: (choice: T) => string;
+  href: (choice: T) => string;
+}) {
+  return (
+    <nav aria-label={label} className="flex flex-wrap items-center gap-2">
+      <MonoLabel>{label}</MonoLabel>
+      <div className="flex flex-wrap border bg-card">
+        {choices.map((choice, index) => (
+          <Link
+            key={choice}
+            href={href(choice)}
+            aria-current={choice === current ? "true" : undefined}
+            className={cn(
+              "px-3 py-1.5 text-sm",
+              index > 0 && "border-l",
+              choice === current
+                ? "bg-primary font-semibold text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {text(choice)}
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
