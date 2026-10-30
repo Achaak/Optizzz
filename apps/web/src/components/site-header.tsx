@@ -1,34 +1,37 @@
-import { SERVERS } from "@optizzz/game/servers";
 import Image from "next/image";
 import Link from "next/link";
 import { AccountLink } from "~/components/account-link";
+import { MainNav, MobileMenu } from "~/components/main-nav";
 import { SearchBox } from "~/components/search-box";
+import { ServerPicker } from "~/components/server-picker";
+import { ThemeToggle } from "~/components/theme-toggle";
 
 export function SiteHeader() {
   return (
-    <header className="border-b">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+    <header className="border-b bg-card">
+      <div className="mx-auto flex h-14 max-w-7xl items-stretch px-4">
+        <Link
+          href="/"
+          className="mr-1 flex shrink-0 items-center gap-2.5 border-r pr-4 font-heading text-2xl font-bold tracking-wider uppercase"
+        >
           <Image src="/logo.svg" alt="" width={28} height={28} />
-          Optizzz
+          <span className="hidden sm:inline">Optizzz</span>
+          <span className="sr-only sm:hidden">Optizzz, accueil</span>
         </Link>
-        <nav aria-label="Site" className="flex flex-wrap items-center gap-1 text-sm">
-          <Link href="/tools" className="rounded-md px-2 py-1 font-medium hover:bg-muted">
-            Outils
-          </Link>
-          <span aria-hidden className="mx-1 h-4 border-l" />
-          {SERVERS.map((server) => (
-            <Link key={server.id} href={`/${server.id}`} className="rounded-md px-2 py-1 hover:bg-muted">
-              {server.name}
-            </Link>
-          ))}
-        </nav>
-        <div className="ml-auto flex w-full items-center gap-2 sm:w-auto">
-          <div className="min-w-0 flex-1 sm:w-64 sm:flex-none">
-            <SearchBox />
-          </div>
-          <AccountLink />
+        <ServerPicker />
+        <MainNav />
+        <div className="flex-1" />
+        <div className="mr-2 hidden w-60 items-center md:flex">
+          <SearchBox />
         </div>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <AccountLink />
+          <MobileMenu />
+        </div>
+      </div>
+      <div className="px-4 pb-3 md:hidden">
+        <SearchBox />
       </div>
     </header>
   );
@@ -37,8 +40,8 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="mt-16 border-t">
-      <div className="mx-auto flex max-w-6xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-muted-foreground">
-        <span>Données : export public de Fourmizzz, relu chaque heure.</span>
+      <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-x-6 gap-y-2 px-4 py-6 font-mono text-xs text-muted-foreground">
+        <span>Données : export public de Fourmizzz, relu chaque heure</span>
         <Link href="/legal" className="hover:text-foreground">
           Mentions légales
         </Link>

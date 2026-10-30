@@ -13,7 +13,11 @@ export function AccountLink() {
   return (
     <Link
       href={signedIn ? "/account" : "/login"}
-      className="shrink-0 rounded-md px-2 py-1 text-sm font-medium whitespace-nowrap hover:bg-muted"
+      className={
+        signedIn
+          ? "flex h-9 shrink-0 items-center px-3 text-sm font-medium whitespace-nowrap hover:bg-accent"
+          : "flex h-9 shrink-0 items-center bg-primary px-3 text-sm font-semibold whitespace-nowrap text-primary-foreground hover:bg-primary/85"
+      }
     >
       {signedIn ? "Mon compte" : "Se connecter"}
     </Link>

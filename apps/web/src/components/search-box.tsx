@@ -28,7 +28,7 @@ export function SearchBox() {
   const { query, results, none } = usePlayerSearch(text);
 
   return (
-    <div className="relative w-full max-w-64">
+    <div className="relative w-full">
       <Input
         type="search"
         value={text}
@@ -40,17 +40,17 @@ export function SearchBox() {
       {results.length > 0 && (
         <ul
           id={listId}
-          className="absolute right-0 left-0 z-10 mt-1 overflow-hidden rounded-lg border bg-popover text-sm shadow-md"
+          className="absolute right-0 left-0 z-50 mt-1 overflow-hidden border bg-popover text-sm shadow-lg"
         >
           {results.map((player) => (
             <li key={`${player.server}:${String(player.id)}`}>
               <Link
                 href={`/${player.server}/players/${String(player.id)}`}
-                className="flex justify-between gap-3 px-3 py-2 hover:bg-muted"
+                className="flex justify-between gap-3 px-3 py-2 hover:bg-accent"
                 onClick={() => setText("")}
               >
                 <span>{player.pseudo}</span>
-                <span className="text-muted-foreground">
+                <span className="font-mono text-xs text-muted-foreground">
                   {player.server.toUpperCase()}
                   {player.alliance ? ` · ${player.alliance}` : ""}
                 </span>
@@ -60,7 +60,7 @@ export function SearchBox() {
         </ul>
       )}
       {none && (
-        <p className="absolute right-0 left-0 z-10 mt-1 rounded-lg border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
+        <p className="absolute right-0 left-0 z-50 mt-1 border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-lg">
           Aucun joueur ne commence par « {query} ».
         </p>
       )}

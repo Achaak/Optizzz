@@ -41,7 +41,7 @@ Les outils et les pages de serveur sont indexés par les moteurs de recherche ; 
 
 ### Look
 
-shadcn/ui, neutre, en clair et sombre selon le système, avec un accent tiré du logo (brun `#5b3a1e`, crème `#f6efd9`), à vérifier en simulant protanopie et deutéranopie (ADR 0003). Courbes avec les charts de shadcn (Recharts). La carte de 2b, trop lourde pour Recharts (20 000 joueurs sur S2), se décidera dans son cadrage, sans doute ECharts pour elle seule.
+Revu le 2026-10-30 (`site-refonte.md`) : direction « Campagne », sombre d'abord avec un bouton système/clair/sombre, titres condensés, chiffres en police à chasse fixe, ambre et bleu vérifiés en simulant protanopie et deutéranopie (ADR 0003), sur une base shadcn/ui. Courbes avec les charts de shadcn (Recharts). La carte de 2b, trop lourde pour Recharts (20 000 joueurs sur S2), se décidera dans son cadrage, sans doute ECharts pour elle seule.
 
 ### L'extension en 2a
 

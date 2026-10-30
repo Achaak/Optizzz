@@ -1,6 +1,6 @@
 import { SERVERS, serverById } from "@optizzz/game/servers";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SectionNav } from "~/components/section-nav";
 
 export function generateStaticParams() {
   return SERVERS.map((server) => ({ server: server.id }));
@@ -23,19 +23,9 @@ export default async function ServerLayout({
     { href: `/${server.id}/map`, label: "Carte" },
   ];
   return (
-    <div className="space-y-6">
-      <nav
-        aria-label={`Serveur ${server.name}`}
-        className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b pb-3"
-      >
-        <span className="text-2xl font-semibold tracking-tight">{server.name}</span>
-        {links.map((link) => (
-          <Link key={link.href} href={link.href} className="text-sm text-muted-foreground hover:text-foreground">
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+    <>
+      <SectionNav label={`Serveur ${server.name}`} links={links} />
       {children}
-    </div>
+    </>
   );
 }

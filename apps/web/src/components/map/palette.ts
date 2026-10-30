@@ -1,7 +1,7 @@
 "use client";
 
 import type { MapPalette } from "@optizzz/map/palette";
-import { useSyncExternalStore } from "react";
+import { useDarkTheme } from "~/lib/theme";
 
 // ECharts draws on a canvas: one palette per colour scheme. Checked by simulating protanopia and deuteranopia
 // (docs/adr/0003-daltonisme.md, 2026-10-22): two neighbouring colours, and the first three together, stay at least
@@ -29,20 +29,7 @@ const DARK: MapPalette = {
   enemies: ["#ff5a4f", "#ffd6c0", "#a82808", "#ffa070"],
 };
 
-const DARK_QUERY = "(prefers-color-scheme: dark)";
-
-const subscribe = (onChange: () => void) => {
-  const query = window.matchMedia(DARK_QUERY);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-};
-
-/** The map's palette for the system's colour scheme, following it when it changes. */
+/** The map's palette for the page's colour scheme, following it when it changes. */
 export function useMapPalette(): MapPalette {
-  const dark = useSyncExternalStore(
-    subscribe,
-    () => window.matchMedia(DARK_QUERY).matches,
-    () => false,
-  );
-  return dark ? DARK : LIGHT;
+  return useDarkTheme() ? DARK : LIGHT;
 }
