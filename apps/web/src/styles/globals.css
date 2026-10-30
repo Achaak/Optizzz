@@ -55,7 +55,8 @@
 }
 
 /* Direction « Campagne » (docs/features/site-refonte.md): amber accent from the logo's brown, blue as the second
-   series, both kept apart under protanopia and deuteranopia (ADR 0003). Sharp corners. */
+   series. Checked by simulating protanopia and deuteranopia (ADR 0003, 2026-10-30): any two of chart-1 to chart-5
+   stay at least 14 apart (OKLab ×100, aim 8), and away from the card. Sharp corners. */
 :root {
   --background: #f4f1ea;
   --foreground: #1d1812;
@@ -84,7 +85,7 @@
   --chart-2: #245f8f;
   --chart-3: #d9a35b;
   --chart-4: #7fb2e5;
-  --chart-5: #5d5244;
+  --chart-5: #3b342c;
   --radius: 0.125rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #1d1812;
@@ -125,7 +126,7 @@
   --chart-2: #79b0dd;
   --chart-3: #a8763a;
   --chart-4: #3f78a8;
-  --chart-5: #b3a48c;
+  --chart-5: #e8dcc6;
   --sidebar: #1f1a15;
   --sidebar-foreground: #f1e8d6;
   --sidebar-primary: #e2a65a;

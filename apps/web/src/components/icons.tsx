@@ -33,13 +33,6 @@ export const ArrowRightIcon = (props: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
-export const SearchIcon = (props: SVGProps<SVGSVGElement>) => (
-  <Icon {...props}>
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3.5-3.5" />
-  </Icon>
-);
-
 export const MenuIcon = (props: SVGProps<SVGSVGElement>) => (
   <Icon {...props}>
     <path d="M4 7h16M4 12h16M4 17h16" />
