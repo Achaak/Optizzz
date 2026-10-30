@@ -1,5 +1,5 @@
 import { sealDemande, type DemandeContent } from "@optizzz/game/site-links/demandes";
-import { NO_ENVOIS, type EnvoiCrypto } from "@optizzz/game/site-links/envois";
+import { NO_ENVOIS, sealEnvoi, type EnvoiCategory, type EnvoiCrypto } from "@optizzz/game/site-links/envois";
 import { ALLIANCE_KEYS, type HandedKey } from "@optizzz/game/site-links/space-bridge";
 import { beforeEach, describe, expect, it } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
@@ -37,6 +37,14 @@ function fakeSite() {
   const posts: { path: string; body: Record<string, unknown> }[] = [];
   const demandes: { id: string; server: string; playerId: number; status: string; rank: number; blob: string }[] = [];
   const settings: string[] = [];
+  const envois: {
+    id: string;
+    server: string;
+    playerId: number;
+    category: string;
+    fingerprint: string;
+    blob: string;
+  }[] = [];
   const fetch = (url: string, init: RequestInit) => {
     const { pathname } = new URL(url);
     const body = typeof init.body === "string" ? (JSON.parse(init.body) as Record<string, unknown>) : null;
@@ -58,6 +66,7 @@ function fakeSite() {
                 members: [
                   { playerId: 1, pseudo: "Messor", categories: settings },
                   { playerId: 2, pseudo: "Lasius", categories: ["production", "convoys"] },
+                  { playerId: 3, pseudo: "Atta", categories: ["production", "convoys"] },
                 ],
               },
             },
@@ -70,7 +79,7 @@ function fakeSite() {
     }
     if (pathname === "/api/extension/envois" && body) return Promise.resolve(new Response(null, { status: 204 }));
     if (pathname === "/api/extension/envois")
-      return Promise.resolve(Response.json({ cursor: NOW.getTime(), items: [], live: null }));
+      return Promise.resolve(Response.json({ cursor: NOW.getTime(), items: envois, live: null }));
     if (pathname === "/api/extension/demandes" && body) {
       const closed = demandes.filter((d) => (body.close as string[]).includes(d.id) && d.playerId === body.playerId);
       for (const d of closed) d.status = "closed";
@@ -97,8 +106,37 @@ function fakeSite() {
       rank: demandes.length,
       blob: await sealDemande({ id, server: "s5", playerId, content: demande }, fakeCrypto()),
     });
-  return { fetch, posts, demandes, add };
+  /** A member's Envoi, sealed as their extension sends it. */
+  const envoi = async (playerId: number, category: EnvoiCategory, item: unknown) => {
+    const fingerprint = `fp-${String(envois.length)}`;
+    const envelope = { server: "s5", playerId, category, fingerprint, observedAt: NOW.getTime(), item };
+    envois.push({
+      id: fingerprint,
+      server: "s5",
+      playerId,
+      category,
+      fingerprint,
+      blob: await sealEnvoi(envelope, fakeCrypto()),
+    });
+  };
+  return { fetch, posts, demandes, add, envoi };
 }
+
+/** (2 000 + 3 000) × 48 + 10 000 = 250 000 a day. */
+const productionOf = (pseudo: string) => ({
+  pseudo,
+  reading: {
+    huntingField: 10_000,
+    workers: 6_000,
+    foodWorkers: 2_000,
+    materialWorkers: 3_000,
+    mushroomPerDay: 10_000,
+    taxRate: 0,
+    master: null,
+    colonies: [],
+  },
+  previous: null,
+});
 
 describe("the Demandes in the game", () => {
   let site: ReturnType<typeof fakeSite>;
@@ -149,6 +187,29 @@ describe("the Demandes in the game", () => {
       mine: [{ id: MINE, label: "Laboratoire niveau 9" }],
       toValidate: 1,
       attaches: false,
+    });
+  });
+
+  it("ranks the others' validated Demandes by their requester's Priorité, as the site does", async () => {
+    const ATTA = "6f1c2d3e-4b5a-4c7d-8e9f-000000000004";
+    await site.add(ATTA, 3, "validated", content("dome", 4, 20_000));
+    // Lasius received 4 600 000 in a day's time: 18,4 days of their 250 000. Atta received nothing.
+    await site.envoi(2, "convoys", {
+      kind: "delivered",
+      from: "Messor",
+      to: "Lasius",
+      food: 0,
+      materials: 4_600_000,
+      at: NOW.getTime() - 24 * HOUR,
+    });
+    await site.envoi(2, "production", productionOf("Lasius"));
+    await site.envoi(3, "production", productionOf("Atta"));
+    await service().releve("page");
+    expect(await service().demandes(S5)).toMatchObject({
+      open: [
+        { id: ATTA, requester: "Atta", priorite: "0 jour" },
+        { id: MUSHROOM, requester: "Lasius", priorite: "18,4 jours" },
+      ],
     });
   });
 

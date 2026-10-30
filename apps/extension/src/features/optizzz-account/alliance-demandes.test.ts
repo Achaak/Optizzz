@@ -16,6 +16,7 @@ const answer = (extra: Partial<Extract<DemandesAnswer, { problem: null }>> = {})
       cost: { food: 0, materials: 120_000 },
       remaining: { food: 0, materials: 40_000 },
       onWay: { food: 0, materials: 80_000 },
+      priorite: "2,5 jours",
     },
     {
       id: "covered",
@@ -25,6 +26,7 @@ const answer = (extra: Partial<Extract<DemandesAnswer, { problem: null }>> = {})
       cost: { food: 0, materials: 14_000 },
       remaining: { food: 0, materials: 0 },
       onWay: { food: 0, materials: 14_000 },
+      priorite: "Priorité inconnue",
     },
   ],
   mine: [],
@@ -42,8 +44,15 @@ describe("the alliance's Demandes on commerce.php", () => {
       [...tr.querySelectorAll("td")].map((td) => td.textContent),
     );
     expect(rows).toEqual([
-      ["Lasius", "Champignonnière niveau 12", "40 000 matériaux (80 000 en route)", "validée", "Envoyer un convoi"],
-      ["Formica", "Dôme niveau 3", "rien (14 000 en route)", "couverte", ""],
+      [
+        "Lasius",
+        "2,5 jours",
+        "Champignonnière niveau 12",
+        "40 000 matériaux (80 000 en route)",
+        "validée",
+        "Envoyer un convoi",
+      ],
+      ["Formica", "Priorité inconnue", "Dôme niveau 3", "rien (14 000 en route)", "couverte", ""],
     ]);
     panel?.querySelector("button")?.click();
     expect(sent).toEqual([ID]);

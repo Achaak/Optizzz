@@ -137,7 +137,14 @@ export function MemberSpace({ view }: { view: MemberView }) {
     return (
       <div className="max-w-4xl space-y-6">
         {header}
-        <DemandesPanel view={view} demandes={demandes} sends={envois.sends} loading={envois.loading} />
+        <DemandesPanel
+          view={view}
+          demandes={demandes}
+          sends={envois.sends}
+          convoys={envois.convoys}
+          states={envois.states}
+          loading={envois.loading}
+        />
       </div>
     );
 

@@ -15,7 +15,9 @@ import {
   type ShownLevels,
   type ShownStatus,
 } from "@optizzz/game/site-links/demandes";
-import type { EnvoiCrypto } from "@optizzz/game/site-links/envois";
+import type { ProductionReading } from "@optizzz/game/site-links/envoi-states";
+import { newestPerFingerprint, type EnvoiCrypto } from "@optizzz/game/site-links/envois";
+import { comparePriorites, prioriteOf, prioriteText, type Priorite } from "@optizzz/game/site-links/priorite";
 import { SITE_URL } from "@optizzz/game/site-links/site";
 import { SPACES_PATH, type HandedKey } from "@optizzz/game/site-links/space-bridge";
 import { loadConvoys } from "@/data/convoys";
@@ -61,8 +63,11 @@ export type DemandesAnswer =
       problem: null;
       /** The space's page on optizzz.fr. */
       spaceUrl: string;
-      /** The others' validated Demandes, each requester's in their order. */
-      open: DemandeView[];
+      /**
+       * The others' validated Demandes by their requester's Priorité, each requester's in their order; `priorite` as
+       * the site writes it (« 18,4 jours », « Priorité inconnue »).
+       */
+      open: (DemandeView & { priorite: string })[];
       /** The Joueur's own open Demandes. */
       mine: DemandeView[];
       /** Demandes to validate: those of the others, served to an Admin or a Délégué only. */
@@ -141,7 +146,25 @@ export function demandeService({
       r?.category === "demande-convoys" ? [r.item] : [],
     );
     const demandes = Object.values(releveRows.rows).flatMap((d) => (d ? [d] : []));
-    return { problem: null, server, pseudo, player, space: player.space, demandes, attached };
+    const rows = newestPerFingerprint(Object.values(envois?.rows ?? {}).flatMap((r) => (r ? [r] : [])));
+    const convoys = rows.flatMap((r) => (r.category === "convoys" ? [r.item] : []));
+    const productions = rows.flatMap((r) =>
+      r.category === "production" ? [{ playerId: r.playerId, reading: r.item.reading as ProductionReading }] : [],
+    );
+    return { problem: null, server, pseudo, player, space: player.space, demandes, attached, convoys, productions };
+  }
+
+  /** Each requester's Priorité, as the space page works it out (apps/web/src/lib/demandes/demandes.ts). */
+  function priorites(found: Extract<Awaited<ReturnType<typeof read>>, { problem: null }>): Map<number, Priorite> {
+    return new Map(
+      found.space.members.map((member) => {
+        const production = member.categories.includes("production")
+          ? (found.productions.find((p) => p.playerId === member.playerId)?.reading ?? null)
+          : null;
+        const convoys = member.categories.includes("convoys") ? found.convoys : null;
+        return [member.playerId, prioriteOf({ player: member.pseudo, convoys, production, now: now() })];
+      }),
+    );
   }
 
   function view(
@@ -166,7 +189,10 @@ export function demandeService({
 
   const ordered = (a: OpenedDemande, b: OpenedDemande) => a.playerId - b.playerId || a.rank - b.rank;
 
-  /** commerce.php: the others' validated Demandes with what remains to send, the Joueur's own, and those to validate. */
+  /**
+   * commerce.php: the others' validated Demandes with what remains to send, by their requester's Priorité (the lowest
+   * first, the unknown last, each requester's in their order), the Joueur's own, and those to validate.
+   */
   async function demandes(origin: string): Promise<DemandesAnswer> {
     const found = await read(origin);
     if (found.problem !== null) return { problem: found.problem };
@@ -177,10 +203,20 @@ export function demandeService({
         const shown = view(space, d, attached);
         return shown ? [shown] : [];
       });
+    const ranks = priorites(found);
+    const UNKNOWN = prioriteOf({ player: "", convoys: null, production: null, now: now() });
+    const prioriteOfRequester = (d: OpenedDemande) => ranks.get(d.playerId) ?? UNKNOWN;
+    const open = found.demandes
+      .filter((d) => !mine(d) && d.status === "validated")
+      .sort((a, b) => comparePriorites(prioriteOfRequester(a), prioriteOfRequester(b)) || ordered(a, b))
+      .flatMap((d) => {
+        const shown = view(space, d, attached);
+        return shown ? [{ ...shown, priorite: prioriteText(prioriteOfRequester(d)) }] : [];
+      });
     return {
       problem: null,
       spaceUrl: `${SITE_URL}${SPACES_PATH}/${space.id}`,
-      open: views(found.demandes.filter((d) => !mine(d) && d.status === "validated")),
+      open,
       mine: views(found.demandes.filter(mine)),
       toValidate: found.demandes.filter((d) => !mine(d) && d.status === "pending").length,
       attaches: (await loadChoices(found.server, found.pseudo)).convoys,

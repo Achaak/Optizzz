@@ -76,7 +76,7 @@ export function allianceDemandesPanel(
   } else {
     const table = el(doc, "table", "optizzz-table optizzz-table--dense");
     const head = el(doc, "tr");
-    for (const text of ["Demandeur", "Demande", "Reste à envoyer", "État", ""]) {
+    for (const text of ["Demandeur", "Priorité", "Demande", "Reste à envoyer", "État", ""]) {
       const th = el(doc, "th", undefined, text);
       th.scope = "col";
       head.append(th);
@@ -103,6 +103,7 @@ export function allianceDemandesPanel(
       }
       row.append(
         who,
+        el(doc, "td", undefined, demande.priorite),
         el(doc, "td", undefined, demande.label),
         el(doc, "td", undefined, remainingText(demande)),
         status,
@@ -129,7 +130,7 @@ export function allianceDemandesPanel(
       doc,
       "p",
       "optizzz-note",
-      "Le reste à envoyer déduit les convois déjà partis pour la Demande, d'après la dernière relève d'optizzz.fr. « Envoyer un convoi » remplit le formulaire ci-dessus : c'est vous qui le lancez.",
+      "Classées par Priorité, la plus basse d'abord : combien de jours de sa propre production le demandeur a déjà reçus sur 30 jours (le détail est sur optizzz.fr). Le reste à envoyer déduit les convois déjà partis pour la Demande, d'après la dernière relève d'optizzz.fr. « Envoyer un convoi » remplit le formulaire ci-dessus : c'est vous qui le lancez.",
     ),
   );
   return panel;

@@ -15,7 +15,10 @@ import {
   type DemandeStatus,
   type ShownStatus,
 } from "@optizzz/game/site-links/demandes";
+import type { MemberStates } from "@optizzz/game/sharing/shared-state";
+import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import { openEnvoi } from "@optizzz/game/site-links/envois";
+import { comparePriorites, prioriteOf, type Priorite } from "@optizzz/game/site-links/priorite";
 import { envoiCrypto } from "~/lib/envois/convoys";
 
 /** A Demande as the site serves it: its content still encrypted. */
@@ -121,11 +124,48 @@ export function canDecide(role: "admin" | "delegate" | "member", mine: boolean):
 }
 
 /**
- * The tab's three lists: to validate; validated (waiting for convoys or covered); finished (closed, cancelled,
- * refused: kept 90 days). Each requester's together, in their order, the oldest requester first.
+ * Each requester's Priorité, from the Envois opened on this page (never on the site): their convoys, counted once each
+ * as `openConvoys` gives them, and their Production state. A requester who does not send their Convois has no Solde
+ * told (only what the others report would count), one who does not send Production no Production.
  */
-export function groupDemandes(demandes: readonly OpenedDemande[]) {
-  const sorted = [...demandes].sort((a, b) => a.playerId - b.playerId || a.rank - b.rank);
+export function requesterPriorites(
+  requesters: readonly { playerId: number; pseudo: string }[],
+  envois: {
+    convoys: readonly ConvoyItem[];
+    states: readonly MemberStates[];
+    sends: readonly { playerId: number; categories: readonly string[] }[];
+  },
+  now: Date,
+): Map<number, Priorite> {
+  const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+  return new Map(
+    requesters.map(({ playerId, pseudo }) => {
+      const categories = envois.sends.find((s) => s.playerId === playerId)?.categories ?? [];
+      const production = categories.includes("production")
+        ? (envois.states.find((s) => same(s.latest.pseudo, pseudo) && s.latest.production)?.latest.production ?? null)
+        : null;
+      const convoys = categories.includes("convoys") ? envois.convoys : null;
+      return [playerId, prioriteOf({ player: pseudo, convoys, production, now })];
+    }),
+  );
+}
+
+const UNKNOWN: Priorite = { kind: "unknown", solde: null, production: null, missing: ["production", "convoys"] };
+
+/**
+ * The tab's three lists: to validate; validated (waiting for convoys or covered); finished (closed, cancelled,
+ * refused: kept 90 days). The open ones by their requester's Priorité, the lowest first and the unknown last; each
+ * requester's together, in their order; the oldest requester first among equal Priorités.
+ */
+export function groupDemandes(
+  demandes: readonly OpenedDemande[],
+  priorites: ReadonlyMap<number, Priorite> = new Map(),
+) {
+  const prioriteOfRequester = (d: OpenedDemande) => priorites.get(d.playerId) ?? UNKNOWN;
+  const sorted = [...demandes].sort(
+    (a, b) =>
+      comparePriorites(prioriteOfRequester(a), prioriteOfRequester(b)) || a.playerId - b.playerId || a.rank - b.rank,
+  );
   return {
     pending: sorted.filter((d) => d.stored === "pending"),
     active: sorted.filter((d) => d.stored === "validated"),

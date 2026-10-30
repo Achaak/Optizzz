@@ -16,11 +16,14 @@ import {
   tableCost,
   type Resources,
 } from "@optizzz/game/site-links/demandes";
+import type { MemberStates } from "@optizzz/game/sharing/shared-state";
+import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
+import { prioriteText, type Priorite } from "@optizzz/game/site-links/priorite";
 import { useId, useState } from "react";
 import { NumberField } from "~/components/number-field";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { canDecide, groupDemandes, type OpenedDemande } from "~/lib/demandes/demandes";
+import { canDecide, groupDemandes, requesterPriorites, type OpenedDemande } from "~/lib/demandes/demandes";
 import { errorText } from "./errors";
 import { Callout, Panel } from "./parts";
 import type { MemberView } from "./use-space-access";
@@ -43,16 +46,67 @@ const plus = (a: Resources, b: Resources): Resources => ({
   materials: a.materials + b.materials,
 });
 
+/** What the Priorité comes from, or what it misses: « Solde 4 600 000 · Production 250 000 / jour ». */
+function prioriteDetail(priorite: Priorite): string {
+  const solde = (value: number) => `Solde ${formatNumber(value)}`;
+  const production = (value: number, atLeast = false) =>
+    `Production ${atLeast ? "≥ " : ""}${formatNumber(value)} / jour`;
+  switch (priorite.kind) {
+    case "known":
+      return `${solde(priorite.solde)} · ${production(priorite.production, priorite.atLeast)}`;
+    case "no-production":
+      return `${solde(priorite.solde)} · ${production(0)}`;
+    default:
+      return [
+        priorite.solde === null ? "Convois non envoyés" : solde(priorite.solde),
+        priorite.missing.includes("production")
+          ? priorite.production === null
+            ? "Production non envoyée"
+            : `Production inconnue (colonies non lues)`
+          : production(priorite.production ?? 0),
+      ].join(" · ");
+  }
+}
+
+/** The requester's Priorité in days, with its Solde and Production; « … » while the Envois are being opened. */
+function PrioriteCell({ priorite }: { priorite: Priorite | undefined }) {
+  if (!priorite) return <span className="text-muted-foreground">…</span>;
+  return (
+    <>
+      <span className={priorite.kind === "known" ? "font-medium tabular-nums" : "text-muted-foreground"}>
+        {prioriteText(priorite)}
+      </span>
+      <span className="block text-xs text-muted-foreground tabular-nums">{prioriteDetail(priorite)}</span>
+    </>
+  );
+}
+
+function PrioriteNote() {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Les Demandes sont classées par Priorité, la plus basse d&apos;abord&nbsp;: le Solde du demandeur (convois reçus
+      moins envoyés sur les 30 derniers jours, nourriture et matériaux additionnés) divisé par sa Production (colonies
+      comprises), soit combien de jours de sa propre production il a déjà reçus. Une Priorité inconnue passe en dernier.
+      C&apos;est un classement, pas une décision&nbsp;: rien n&apos;est validé ni refusé tout seul.
+    </p>
+  );
+}
+
 export function DemandesPanel({
   view,
   demandes,
   sends,
+  convoys,
+  states,
   loading,
 }: {
   view: MemberView;
   demandes: SpaceDemandes;
   /** What each member sends: making a Demande asks for Production and Convois. */
   sends: readonly { playerId: number; categories: string[] }[];
+  /** The alliance's convoys and states, opened on this page (null until then): the requesters' Priorité. */
+  convoys: readonly ConvoyItem[] | null;
+  states: readonly MemberStates[] | null;
   loading: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +124,13 @@ export function DemandesPanel({
     );
 
   const mine = (d: OpenedDemande) => d.playerId === view.me.playerId;
-  const groups = groupDemandes(demandes.demandes);
+  // Worked out here, from the Envois this page opened: the site never sees an amount.
+  const requesters = [...new Map(demandes.demandes.map((d) => [d.playerId, d.requester]))].map(
+    ([playerId, pseudo]) => ({ playerId, pseudo }),
+  );
+  const priorites =
+    convoys && states ? requesterPriorites(requesters, { convoys, states, sends }, new Date()) : undefined;
+  const groups = groupDemandes(demandes.demandes, priorites);
   const myOpen = [...groups.pending, ...groups.active].filter(mine).sort((a, b) => a.rank - b.rank);
   const origin = serverById(view.space.server)?.origin ?? null;
   const categories = sends.find((s) => s.playerId === view.me.playerId)?.categories ?? [];
@@ -169,6 +229,7 @@ export function DemandesPanel({
               <TableHeader>
                 <TableRow>
                   <TableHead>Demandeur</TableHead>
+                  <TableHead>Priorité</TableHead>
                   <TableHead>Demande</TableHead>
                   <TableHead>Coût</TableHead>
                   <TableHead>Faite le</TableHead>
@@ -179,6 +240,9 @@ export function DemandesPanel({
                 {groups.pending.map((d) => (
                   <TableRow key={d.id}>
                     <TableCell>{d.requester}</TableCell>
+                    <TableCell className="min-w-44 whitespace-normal">
+                      <PrioriteCell priorite={priorites?.get(d.playerId)} />
+                    </TableCell>
                     <TableCell>
                       {d.label}
                       {d.content.typed && <span className="block text-xs text-muted-foreground">coût saisi</span>}
@@ -217,7 +281,7 @@ export function DemandesPanel({
         )}
         <p className="text-xs text-muted-foreground">
           Un Admin ou un Délégué valide une Demande, jamais la sienne. Le coût vient de la table des coûts
-          d&apos;Optizzz, sauf quand le demandeur l&apos;a saisi.
+          d&apos;Optizzz, sauf quand le demandeur l&apos;a saisi. Elles sont classées par Priorité, comme les validées.
         </p>
       </Panel>
 
@@ -230,6 +294,7 @@ export function DemandesPanel({
               <TableHeader>
                 <TableRow>
                   <TableHead>Demandeur</TableHead>
+                  <TableHead>Priorité</TableHead>
                   <TableHead>Demande</TableHead>
                   <TableHead>Reste à envoyer</TableHead>
                   <TableHead>État</TableHead>
@@ -240,6 +305,9 @@ export function DemandesPanel({
                 {groups.active.map((d) => (
                   <TableRow key={d.id}>
                     <TableCell>{d.requester}</TableCell>
+                    <TableCell className="min-w-44 whitespace-normal">
+                      <PrioriteCell priorite={priorites?.get(d.playerId)} />
+                    </TableCell>
                     <TableCell>{d.label}</TableCell>
                     <TableCell className="tabular-nums whitespace-normal">
                       {resources(d.progress.remaining)}
@@ -271,6 +339,7 @@ export function DemandesPanel({
             </Table>
           </div>
         )}
+        <PrioriteNote />
         <p className="text-xs text-muted-foreground">
           «&nbsp;Envoyer un convoi&nbsp;» ouvre la page Commerce du jeu, que l&apos;extension Optizzz remplit avec le
           destinataire et le reste à envoyer&nbsp;: vérifiez, puis cliquez vous-même «&nbsp;Lancer le convoi&nbsp;». Ce
