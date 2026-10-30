@@ -11,6 +11,8 @@ import { shortDate } from "~/lib/short-date";
 import { newSpace } from "~/lib/spaces/access";
 import { withVerified } from "~/lib/spaces/trust-store";
 import type { SpacesOverview } from "~/server/spaces/space-service";
+import { LockIcon } from "~/components/icons";
+import { MonoLabel, PageHeader } from "~/components/panel";
 import { api } from "~/trpc/react";
 import { errorText } from "./errors";
 import { PassphraseSetup, PassphraseUnlock } from "./passphrase-forms";
@@ -29,14 +31,20 @@ export function SpacesHome() {
   const { players, extensionLinked } = overview.data;
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="space-y-1">
-        <h1>Espaces d&apos;alliance</h1>
-        <p className="text-sm text-muted-foreground">
-          L&apos;endroit où les membres d&apos;une alliance mettent leurs données en commun. Même Optizzz ne peut pas
-          les lire.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        kicker="Compte Optizzz"
+        title="Espaces d'alliance"
+        actions={
+          <MonoLabel className="inline-flex items-center gap-1.5 border px-2 py-1">
+            <LockIcon width={12} height={12} />
+            chiffré de bout en bout
+          </MonoLabel>
+        }
+      >
+        L&apos;endroit où les membres d&apos;une alliance mettent leurs données en commun. Même Optizzz ne peut pas les
+        lire.
+      </PageHeader>
       {players.length === 0 ? (
         <Panel title="Rattacher votre Joueur">
           {extensionLinked ? (
@@ -52,7 +60,11 @@ export function SpacesHome() {
           )}
         </Panel>
       ) : (
-        players.map((player) => <PlayerSpaces key={`${player.server}:${String(player.playerId)}`} player={player} />)
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          {players.map((player) => (
+            <PlayerSpaces key={`${player.server}:${String(player.playerId)}`} player={player} />
+          ))}
+        </div>
       )}
     </div>
   );

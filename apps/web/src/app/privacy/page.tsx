@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { PageHeader } from "~/components/panel";
 
 export const metadata: Metadata = { title: "Confidentialité" };
 
 export default function PrivacyPage() {
   return (
-    <article className="max-w-2xl space-y-6 text-sm leading-relaxed">
-      <h1>Confidentialité</h1>
+    <article className="max-w-3xl space-y-6 text-sm leading-relaxed [&>section]:border-b [&>section]:pb-6">
+      <PageHeader kicker="Optizzz" title="Confidentialité" />
       <section className="space-y-2">
         <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Ce que le site sait de vous</h2>
         <p>

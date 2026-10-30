@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
+import { PageHeader } from "~/components/panel";
 import { auth } from "~/server/auth";
 import { LinkStatus } from "./link-status";
 
@@ -13,13 +14,10 @@ export default async function ConnectExtensionPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
-      <div className="space-y-2">
-        <h1>Connecter l&apos;extension</h1>
-        <p className="text-sm text-muted-foreground">
-          Liée à votre Compte Optizzz, l&apos;extension pourra y rattacher vos Joueurs, sur votre clic. Sans compte lié,
-          elle n&apos;envoie rien.
-        </p>
-      </div>
+      <PageHeader kicker="Compte Optizzz" title="Connecter l'extension">
+        Liée à votre Compte Optizzz, l&apos;extension pourra y rattacher vos Joueurs, sur votre clic. Sans compte lié,
+        elle n&apos;envoie rien.
+      </PageHeader>
       {session ? (
         <LinkStatus email={session.user.email} />
       ) : (

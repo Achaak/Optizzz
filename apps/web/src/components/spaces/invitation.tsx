@@ -10,6 +10,7 @@ import { Button } from "~/components/ui/button";
 import { shortDate } from "~/lib/short-date";
 import { spaceTrustOf } from "~/lib/spaces/trust-store";
 import type { SpaceView } from "~/server/spaces/space-service";
+import { PageHeader } from "~/components/panel";
 import { api } from "~/trpc/react";
 import { AdminExchange } from "./admin-exchange";
 import { errorText } from "./errors";
@@ -51,14 +52,11 @@ export function Invitation({ view }: { view: InvitationView }) {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div className="space-y-1">
-        <h1 className="break-words">Rejoindre {space.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          Espace d&apos;alliance de {space.tag} sur {server} · Admins&nbsp;: {space.admins.join(", ") || "aucun"} ·{" "}
-          {String(space.memberCount)} membre{space.memberCount > 1 ? "s" : ""} · créé le{" "}
-          {shortDate(space.createdAt, new Date())}
-        </p>
-      </div>
+      <PageHeader kicker="Invitation" title={<span className="break-words">Rejoindre {space.name}</span>}>
+        Espace d&apos;alliance de {space.tag} sur {server} · Admins&nbsp;: {space.admins.join(", ") || "aucun"} ·{" "}
+        {String(space.memberCount)} membre{space.memberCount > 1 ? "s" : ""} · créé le{" "}
+        {shortDate(space.createdAt, new Date())}
+      </PageHeader>
       <StepBar current={step} />
       {error && <Callout>{error}</Callout>}
 
