@@ -123,7 +123,8 @@ export function MemberSpace({ view }: { view: MemberView }) {
         }
       >
         Espace d&apos;alliance de {view.space.tag} sur {server?.name ?? view.space.server} ·{" "}
-        {String(view.members.length)} membres · {view.me.pseudo}, {ROLE_LABEL[view.me.role].toLowerCase()}
+        {String(view.members.length)} membre{view.members.length > 1 ? "s" : ""} · {view.me.pseudo},{" "}
+        {ROLE_LABEL[view.me.role].toLowerCase()}
       </PageHeader>
       <nav aria-label="Parties de l'espace" className="flex flex-wrap border bg-card">
         {TABS.map((entry, index) => {
