@@ -212,7 +212,11 @@ export default async function ServerPage({ params }: Props) {
             points={summary.journalDays.map(({ day, ...groups }) => ({ day: dayMonth(day), ...groups }))}
           />
         </Panel>
-        <Panel flush title="Derniers changements">
+        <Panel
+          flush
+          title="Derniers changements"
+          aside={<PanelLink href={`/${server.id}/journal`}>Tout le Journal</PanelLink>}
+        >
           <JournalList server={server.id} lines={summary.journal.slice(0, 10)} named />
         </Panel>
       </div>

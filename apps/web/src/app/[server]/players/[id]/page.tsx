@@ -75,6 +75,7 @@ export default async function PlayerPage({ params }: Props) {
             )}
             {states.length > 0 && <MonoLabel className="text-primary">{states.join(" · ")}</MonoLabel>}
             <PanelLink href={`/${server.id}/map?player=${String(player.id)}`}>Voir sur la carte</PanelLink>
+            <PanelLink href={`/${server.id}/compare?ids=${String(player.id)}`}>Comparer</PanelLink>
           </div>
         ) : (
           <p className="text-sm">Ce joueur n&apos;est plus dans l&apos;export du serveur.</p>

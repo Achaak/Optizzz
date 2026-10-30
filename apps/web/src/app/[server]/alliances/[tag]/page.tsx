@@ -61,7 +61,14 @@ export default async function AlliancePage({ params }: Props) {
         }
         note={`Serveur ${server.name}`}
       >
-        <PanelLink href={`/${server.id}/map?alliance=${encodeURIComponent(alliance.tag)}`}>Voir sur la carte</PanelLink>
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          <PanelLink href={`/${server.id}/map?alliance=${encodeURIComponent(alliance.tag)}`}>
+            Voir sur la carte
+          </PanelLink>
+          <PanelLink href={`/${server.id}/compare?type=alliances&ids=${encodeURIComponent(alliance.tag)}`}>
+            Comparer
+          </PanelLink>
+        </div>
       </PageHeader>
 
       <StatGrid label="Totaux">

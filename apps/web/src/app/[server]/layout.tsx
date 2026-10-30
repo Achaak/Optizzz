@@ -21,6 +21,8 @@ export default async function ServerLayout({
     { href: `/${server.id}/players`, label: "Joueurs" },
     { href: `/${server.id}/alliances`, label: "Alliances" },
     { href: `/${server.id}/map`, label: "Carte" },
+    { href: `/${server.id}/journal`, label: "Journal" },
+    { href: `/${server.id}/compare`, label: "Comparer" },
   ];
   return (
     <>

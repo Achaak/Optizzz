@@ -3,7 +3,8 @@ import "server-only";
 import type { Change } from "@optizzz/game/changes";
 import { versionDate } from "@optizzz/game/export-versions";
 import type { JournalEntry, Prisma } from "~/generated/prisma/client";
-import { bracketRange, FIELD_BRACKETS, journalGroupOf, type JournalGroup } from "~/lib/server-stats";
+import type { CompareKind, CompareMetric } from "~/lib/compare";
+import { bracketRange, FIELD_BRACKETS, journalGroupOf, kindsOf, type JournalGroup } from "~/lib/server-stats";
 import { db } from "~/server/db";
 
 export const PAGE_SIZE = 50;
@@ -26,6 +27,11 @@ const toLine = (row: JournalEntry): JournalLine => ({
   at: row.at,
   change: row.change as Change,
 });
+
+// An alliance's arrivals and departures already show as its players' Changes: the server's feeds leave them out.
+const NOT_MEMBERSHIP: Prisma.JournalEntryWhereInput = {
+  NOT: [{ change: { path: ["kind"], equals: "joined" } }, { change: { path: ["kind"], equals: "left" } }],
+};
 
 /** The date of the export the pages show, null before the first pass of the cron. */
 export async function lastReading(server: string): Promise<Date | null> {
@@ -100,12 +106,8 @@ export async function serverSummary(server: string) {
       _sum: { field: true },
       orderBy: { day: "asc" },
     }),
-    // The server's feed: arrivals and departures in an alliance already show as the players' Changes.
     db.journalEntry.findMany({
-      where: {
-        server,
-        NOT: [{ change: { path: ["kind"], equals: "joined" } }, { change: { path: ["kind"], equals: "left" } }],
-      },
+      where: { server, ...NOT_MEMBERSHIP },
       orderBy: { at: "desc" },
       take: 20,
     }),
@@ -131,12 +133,13 @@ export async function serverSummary(server: string) {
 /** One Paris day of the Journal, its Changes counted by group. */
 export type JournalDay = { day: Date } & Record<JournalGroup, number>;
 
-/** The Journal's last 30 Paris days, oldest first; a day without a Change is missing. */
-async function journalPerDay(server: string): Promise<JournalDay[]> {
+/** The Journal's last 30 Paris days, oldest first; a day without a Change is missing. Alliances' arrivals and
+ * departures left out, as in the feeds. */
+export async function journalPerDay(server: string): Promise<JournalDay[]> {
   const rows = await db.$queryRaw<{ day: Date; kind: string | null; count: bigint }[]>`
     SELECT ((at AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Paris')::date AS day, change->>'kind' AS kind, count(*) AS count
     FROM "JournalEntry"
-    WHERE server = ${server} AND at > now() - interval '30 days'
+    WHERE server = ${server} AND at > now() - interval '30 days' AND change->>'kind' NOT IN ('joined', 'left')
     GROUP BY 1, 2
     ORDER BY 1`;
   const days = new Map<number, JournalDay>();
@@ -147,6 +150,32 @@ async function journalPerDay(server: string): Promise<JournalDay[]> {
     days.set(key, day);
   }
   return [...days.values()];
+}
+
+/** A page of the server's Journal, latest first: of one group of Changes, about a name, on a Paris day. */
+export async function journalPage(
+  server: string,
+  { group, q, day, page }: { group: JournalGroup | null; q: string; day: { gte: Date; lt: Date } | null; page: number },
+) {
+  const where: Prisma.JournalEntryWhereInput = {
+    server,
+    AND: [
+      NOT_MEMBERSHIP,
+      ...(group ? [{ OR: kindsOf(group).map((kind) => ({ change: { path: ["kind"], equals: kind } })) }] : []),
+      ...(q ? [{ name: { contains: q, mode: "insensitive" as const } }] : []),
+      ...(day ? [{ at: day }] : []),
+    ],
+  };
+  const [total, lines] = await Promise.all([
+    db.journalEntry.count({ where }),
+    db.journalEntry.findMany({
+      where,
+      orderBy: [{ at: "desc" }, { id: "asc" }],
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  return { total, lines: lines.map(toLine) };
 }
 
 export type PlayerSort = "field" | "building" | "technology" | "trophy" | "pseudo";
@@ -269,4 +298,140 @@ export async function alliancePage(server: string, tag: string, field: number) {
     rank: above + 1,
     ranks: ranks.map((row) => ({ day: row.day, rank: Number(row.rank) })),
   };
+}
+
+/** One player or alliance on the Comparer page: its curve of `metric`, and the figure of now. */
+export interface Compared {
+  id: string;
+  name: string;
+  /** A player's alliance. */
+  alliance: string | null;
+  now: number;
+  points: { day: Date; value: number }[];
+}
+
+const PLAYER_SCORE: Record<
+  Exclude<CompareMetric, "rank">,
+  (row: { field: number; buildingScore: number; technologyScore: number; trophyScore: number }) => number
+> = {
+  field: (row) => row.field,
+  building: (row) => row.buildingScore,
+  technology: (row) => row.technologyScore,
+  trophy: (row) => row.trophyScore,
+};
+
+const ALLIANCE_SCORE: Record<
+  Exclude<CompareMetric, "rank">,
+  (row: {
+    totalField: number;
+    totalBuildingScore: number;
+    totalTechnologyScore: number;
+    totalTrophyScore: number;
+  }) => number
+> = {
+  field: (row) => row.totalField,
+  building: (row) => row.totalBuildingScore,
+  technology: (row) => row.totalTechnologyScore,
+  trophy: (row) => row.totalTrophyScore,
+};
+
+/** The players (ids) or alliances (tags) still in the export, in the order of `ids`, from `since` on. */
+export async function compared(
+  server: string,
+  kind: CompareKind,
+  ids: string[],
+  metric: CompareMetric,
+  since: Date | null,
+): Promise<Compared[]> {
+  if (ids.length === 0) return [];
+  const after = since ? { gte: since } : undefined;
+  if (kind === "players") {
+    const playerIds = ids.map(Number);
+    const [players, days, ranks] = await Promise.all([
+      db.player.findMany({ where: { server, id: { in: playerIds } } }),
+      metric === "rank"
+        ? []
+        : db.playerDay.findMany({
+            where: { server, playerId: { in: playerIds }, day: after },
+            orderBy: { day: "asc" },
+          }),
+      metric === "rank"
+        ? db.$queryRaw<{ id: number; day: Date; rank: bigint }[]>`
+            SELECT d."playerId" AS id, d.day, (SELECT count(*) FROM "PlayerDay" o WHERE o.server = d.server AND o.day = d.day AND o.field > d.field) + 1 AS rank
+            FROM "PlayerDay" d
+            WHERE d.server = ${server} AND d."playerId" = ANY(${playerIds}) AND d.day >= ${since ?? new Date(0)}
+            ORDER BY d.day`
+        : [],
+    ]);
+    return Promise.all(
+      playerIds.flatMap((id) => {
+        const player = players.find((row) => row.id === id);
+        if (!player) return [];
+        return [
+          (async (): Promise<Compared> => ({
+            id: String(id),
+            name: player.pseudo,
+            alliance: player.alliance,
+            now:
+              metric === "rank"
+                ? (await db.player.count({ where: { server, field: { gt: player.field } } })) + 1
+                : Math.round(PLAYER_SCORE[metric](player)),
+            points:
+              metric === "rank"
+                ? ranks.filter((row) => row.id === id).map((row) => ({ day: row.day, value: Number(row.rank) }))
+                : days
+                    .filter((row) => row.playerId === id)
+                    .map((row) => ({ day: row.day, value: Math.round(PLAYER_SCORE[metric](row)) })),
+          }))(),
+        ];
+      }),
+    );
+  }
+  const [alliances, days, ranks] = await Promise.all([
+    db.alliance.findMany({ where: { server, tag: { in: ids } } }),
+    metric === "rank"
+      ? []
+      : db.allianceDay.findMany({ where: { server, tag: { in: ids }, day: after }, orderBy: { day: "asc" } }),
+    metric === "rank"
+      ? db.$queryRaw<{ tag: string; day: Date; rank: bigint }[]>`
+          SELECT d.tag, d.day, (SELECT count(*) FROM "AllianceDay" o WHERE o.server = d.server AND o.day = d.day AND o."totalField" > d."totalField") + 1 AS rank
+          FROM "AllianceDay" d
+          WHERE d.server = ${server} AND d.tag = ANY(${ids}) AND d.day >= ${since ?? new Date(0)}
+          ORDER BY d.day`
+      : [],
+  ]);
+  return Promise.all(
+    ids.flatMap((tag) => {
+      const alliance = alliances.find((row) => row.tag === tag);
+      if (!alliance) return [];
+      return [
+        (async (): Promise<Compared> => ({
+          id: tag,
+          name: alliance.tag,
+          alliance: null,
+          now:
+            metric === "rank"
+              ? (await db.alliance.count({ where: { server, totalField: { gt: alliance.totalField } } })) + 1
+              : Math.round(ALLIANCE_SCORE[metric](alliance)),
+          points:
+            metric === "rank"
+              ? ranks.filter((row) => row.tag === tag).map((row) => ({ day: row.day, value: Number(row.rank) }))
+              : days
+                  .filter((row) => row.tag === tag)
+                  .map((row) => ({ day: row.day, value: Math.round(ALLIANCE_SCORE[metric](row)) })),
+        }))(),
+      ];
+    }),
+  );
+}
+
+/** The player of that pseudo, any case: what the Comparer adds from a typed name. */
+export function findPlayerByPseudo(server: string, pseudo: string) {
+  return db.player.findFirst({ where: { server, pseudo: { equals: pseudo, mode: "insensitive" } } });
+}
+
+/** The day of the latest nightly reading of the server, for the Comparer's periods. */
+export async function lastDay(server: string): Promise<Date | null> {
+  const last = await db.playerDay.findFirst({ where: { server }, orderBy: { day: "desc" }, select: { day: true } });
+  return last?.day ?? null;
 }

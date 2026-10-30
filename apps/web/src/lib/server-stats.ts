@@ -1,6 +1,7 @@
 // What the server pages draw from the stored exports: TDC brackets, kinds of Changes. Pure, for the tests.
 import type { Change } from "@optizzz/game/changes";
 import { formatNumber } from "@optizzz/game/format/number-format";
+import { fromParisParts } from "@optizzz/game/format/time-format";
 
 /** A bracket of TDC (cm²): from `min` included to the next bracket's `min`. */
 export interface FieldBracket {
@@ -56,6 +57,34 @@ const GROUP_OF: Record<Change["kind"], JournalGroup> = {
 /** The group of a kind of Change; an unknown kind (a newer cron) counts with the players. */
 export const journalGroupOf = (kind: string): JournalGroup =>
   kind in GROUP_OF ? GROUP_OF[kind as Change["kind"]] : "players";
+
+/** The kinds of Change of a group, for a query. */
+export const kindsOf = (group: JournalGroup): Change["kind"][] =>
+  (Object.keys(GROUP_OF) as Change["kind"][]).filter((kind) => GROUP_OF[kind] === group);
+
+/** A group from the query, null for all of them. */
+export const journalGroupFrom = (value: string | string[] | undefined): JournalGroup | null =>
+  JOURNAL_GROUPS.find((group) => group.id === value)?.id ?? null;
+
+/** The Paris day « 2026-10-26 » (a date field's value) as instants, null when it is not a day. */
+export function parisDayRange(text: string): { gte: Date; lt: Date } | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (!match) return null;
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+  const next = new Date(Date.UTC(year, month - 1, day + 1));
+  return {
+    gte: fromParisParts({ year, month, day, hours: 0, minutes: 0 }),
+    lt: fromParisParts({
+      year: next.getUTCFullYear(),
+      month: next.getUTCMonth() + 1,
+      day: next.getUTCDate(),
+      hours: 0,
+      minutes: 0,
+    }),
+  };
+}
 
 const TAG_OF: Record<Change["kind"], string> = {
   new: "Arrivée",

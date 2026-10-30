@@ -35,9 +35,10 @@ Toutes en français, à des adresses en anglais depuis le 2026-10-23 (`site-outi
 - `/s5/players` : tableau triable, recherche par pseudo, filtre par alliance, pagination côté serveur.
 - `/s5/players/[id]` : fiche (alliance, position, colonisateur, scores), courbes, Journal du joueur.
 - `/s5/alliances` et `/s5/alliances/[tag]` : membres, totaux, pactes et guerres, courbes, Journal. Le tag se lit sans tenir compte de la casse (comme `sameTag`) et redirige vers celle de l'export.
+- `/s5/journal` et `/s5/compare` (2026-10-30, `site-refonte.md`) : tout le Journal du serveur, filtrable ; 2 à 5 joueurs ou alliances sur une même courbe.
 - Mentions légales (`/legal` ; éditeur : Axel Lavoie ; hébergeur : Scaleway, depuis le 2026-10-30) et Confidentialité (`/privacy` ; ni mesure d'audience, ni cookie du site hors du cookie de session posé à la connexion d'un Compte Optizzz ; publicité AdSense sans pistage depuis le 2026-10-30, `site-publicite.md`).
 
-Les outils et les pages de serveur sont indexés par les moteurs de recherche ; les pages joueur et alliance sont en `noindex`.
+Les outils et les pages de serveur sont indexés par les moteurs de recherche ; les pages joueur et alliance, et Comparer, sont en `noindex`.
 
 ### Look
 

@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { bracketRange, FIELD_BRACKETS, journalGroupOf, journalTag, ordinal, percentOf } from "./server-stats";
+import {
+  bracketRange,
+  FIELD_BRACKETS,
+  journalGroupFrom,
+  journalGroupOf,
+  journalTag,
+  kindsOf,
+  ordinal,
+  parisDayRange,
+  percentOf,
+} from "./server-stats";
 
 describe("bracketRange", () => {
   it("runs from a bracket's floor to the next one's", () => {
@@ -48,5 +58,34 @@ describe("ordinal", () => {
     expect(ordinal(1)).toBe("1ᵉʳ");
     expect(ordinal(2)).toBe("2ᵉ");
     expect(ordinal(1204)).toBe("1 204ᵉ");
+  });
+});
+
+describe("kindsOf", () => {
+  it("lists a group's kinds of Change", () => {
+    expect(kindsOf("diplomacy")).toEqual(["war", "war-ended", "pact", "pact-ended"]);
+    expect(kindsOf("colonies")).toEqual(["colonized", "freed"]);
+  });
+});
+
+describe("journalGroupFrom", () => {
+  it("reads a group, or none for anything else", () => {
+    expect(journalGroupFrom("colonies")).toBe("colonies");
+    expect(journalGroupFrom("all")).toBeNull();
+    expect(journalGroupFrom(undefined)).toBeNull();
+  });
+});
+
+describe("parisDayRange", () => {
+  it("runs from a Paris midnight to the next, 25 hours on the day the clocks go back", () => {
+    expect(parisDayRange("2026-10-25")).toEqual({
+      gte: new Date("2026-10-24T22:00:00Z"),
+      lt: new Date("2026-10-25T23:00:00Z"),
+    });
+  });
+
+  it("refuses what is not a day", () => {
+    expect(parisDayRange("2026-02-30")).toBeNull();
+    expect(parisDayRange("26/10")).toBeNull();
   });
 });

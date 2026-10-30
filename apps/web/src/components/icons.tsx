@@ -65,3 +65,15 @@ export const LinkIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
   </Icon>
 );
+
+export const PlusIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+
+export const CloseIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Icon>
+);

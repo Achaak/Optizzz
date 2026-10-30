@@ -12,8 +12,19 @@ const TONES = {
   diplomacy: "text-info",
 };
 
-/** Journal lines, latest first; `named` adds who changed (a server's feed). */
-export function JournalList({ server, lines, named }: { server: string; lines: JournalLine[]; named: boolean }) {
+/** Journal lines, latest first; `named` adds who changed (a server's feed), `timed={false}` drops the time (lines
+ * under a heading that gives it). */
+export function JournalList({
+  server,
+  lines,
+  named,
+  timed = true,
+}: {
+  server: string;
+  lines: JournalLine[];
+  named: boolean;
+  timed?: boolean;
+}) {
   if (lines.length === 0)
     return <p className="p-4 text-sm text-muted-foreground">Aucun changement noté depuis le premier relevé du site.</p>;
   return (
@@ -45,12 +56,14 @@ export function JournalList({ server, lines, named }: { server: string; lines: J
             )}
             {describeChange(line.change)}
           </span>
-          <time
-            dateTime={line.at.toISOString()}
-            className="col-start-2 font-mono text-xs text-muted-foreground sm:col-start-3"
-          >
-            {formatDateTime(line.at)}
-          </time>
+          {timed && (
+            <time
+              dateTime={line.at.toISOString()}
+              className="col-start-2 font-mono text-xs text-muted-foreground sm:col-start-3"
+            >
+              {formatDateTime(line.at)}
+            </time>
+          )}
         </li>
       ))}
     </ul>

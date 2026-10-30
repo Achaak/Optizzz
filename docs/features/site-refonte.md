@@ -20,7 +20,7 @@ Le site prolonge l'extension. Trois rôles, dans cet ordre sur l'accueil :
 ## Navigation
 
 - En-tête : logo, **sélecteur de serveur** (mémorisé), Outils, Espaces, recherche de joueur, thème, compte.
-- Sous l'en-tête, la barre de la section : celle du serveur (Vue d'ensemble, Joueurs, Alliances, Carte) ou celle des outils.
+- Sous l'en-tête, la barre de la section : celle du serveur (Vue d'ensemble, Joueurs, Alliances, Carte, Journal, Comparer) ou celle des outils.
 - Sur téléphone, un menu regroupe le tout.
 
 ## Pages
@@ -38,6 +38,7 @@ Courbes et barres avec Recharts (shadcn), sauf la carte (ECharts).
 - **Alliance** : TDC de chaque membre, rang au fil des jours.
 - **Joueur** : TDC et trois scores, rang au fil des jours.
 - **Combat** : pertes par unité en barres en miroir (ambre contre bleu hachuré). **Flood** : TDC de l'attaquant et de la cible au fil des attaques. **Chasse** : pertes selon la taille de la chasse, si le worker le permet sans ralentir. **Coûts** : coût cumulé niveau par niveau. **Trajet** : frise de temps.
-- **Comparer** (plus tard, en option) : 2 à 5 joueurs ou alliances sur une même courbe.
+- **Comparer** (ajoutée le 2026-10-30, `/s5/compare`) : 2 à 5 joueurs ou alliances sur une même courbe (TDC, rang, Fourmilière, Technologie, Combat ; tout, 30 ou 7 jours). Chacun a sa couleur, sa marque (rond, carré, triangle, losange, croix) et son trait (plein, tirets, pointillés…). Le choix tient dans l'adresse (`?type=alliances&ids=4O4,C6P&courbe=rank&periode=30`) ; on ajoute un joueur parmi ceux dont le pseudo commence par ce qui est tapé, une alliance par son tag ; les fiches ont un lien « Comparer ». Hors des moteurs de recherche, comme les fiches.
+- **Journal** (ajouté le 2026-10-30, `/s5/journal`) : les changements par jour (30 jours), ceux du dernier jour par groupe, puis la liste par relevé, filtrée par groupe, par nom et par jour de Paris (`?groupe=diplomacy&q=evo&jour=2026-10-26`), 50 par page. Comme le fil de la vue d'ensemble, il laisse de côté les arrivées et départs d'une alliance, déjà notés chez ses joueurs ; les changements par jour aussi, désormais.
 
 Sous 3 jours de relevés, un graphique laisse place à une note et à la valeur du jour. Une série se distingue toujours par autre chose que sa couleur (motif, forme, étiquette).
