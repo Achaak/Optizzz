@@ -59,15 +59,36 @@ export function MonoLabel({ children, className }: { children: ReactNode; classN
   );
 }
 
-/** The page's title over a rule, with a note on the right (« Export du 26/10 · 9 h 00 »). */
-export function PageHeader({ title, note, children }: { title: ReactNode; note?: ReactNode; children?: ReactNode }) {
+/**
+ * The page's title over a rule: a `kicker` above it (« Joueur · S5 »), a line under it, and on the right a note
+ * (« Export du 26/10 · 9 h 00 ») or the page's `actions` (« Comparer », « Copier le lien »).
+ */
+export function PageHeader({
+  title,
+  kicker,
+  note,
+  actions,
+  children,
+}: {
+  title: ReactNode;
+  kicker?: ReactNode;
+  note?: ReactNode;
+  actions?: ReactNode;
+  children?: ReactNode;
+}) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b pb-3">
+    <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b pb-3">
       <div className="min-w-0 space-y-2">
+        {kicker && <MonoLabel className="block">{kicker}</MonoLabel>}
         <h1>{title}</h1>
         {children && <div className="max-w-3xl text-muted-foreground">{children}</div>}
       </div>
-      {note && <MonoLabel>{note}</MonoLabel>}
+      {(note ?? actions) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {note && <MonoLabel>{note}</MonoLabel>}
+          {actions}
+        </div>
+      )}
     </header>
   );
 }

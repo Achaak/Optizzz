@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { MonoLabel } from "~/components/panel";
 
 export interface SectionLink {
   href: string;
@@ -20,7 +21,8 @@ export function SectionNav({ label, links }: { label: string; links: SectionLink
     .sort((a, b) => b.href.length - a.href.length)[0];
   return (
     <nav aria-label={label} className="relative left-1/2 -mt-8 mb-8 w-screen -translate-x-1/2 border-b bg-card">
-      <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4">
+      <div className="mx-auto flex max-w-7xl items-stretch gap-1 overflow-x-auto px-4">
+        <MonoLabel className="mr-2 hidden shrink-0 items-center border-r pr-4 sm:flex">{label}</MonoLabel>
         {links.map((link) => {
           const active = link === current;
           return (

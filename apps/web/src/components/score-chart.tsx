@@ -23,6 +23,7 @@ export function ScoreChart({
   unit,
   tone = "amber",
   reversed,
+  small,
 }: {
   points: ScorePoint[];
   label: string;
@@ -30,6 +31,8 @@ export function ScoreChart({
   tone?: keyof typeof TONES;
   /** A rank: 1 at the top. */
   reversed?: boolean;
+  /** A third of a row: a lower chart. */
+  small?: boolean;
 }) {
   const last = points.at(-1);
   if (points.length < MIN_CURVE_DAYS)
@@ -37,7 +40,7 @@ export function ScoreChart({
   const config: ChartConfig = { value: { label, color: TONES[tone] } };
   const id = `fill-${tone}`;
   return (
-    <ChartContainer config={config} className="aspect-auto h-56 w-full">
+    <ChartContainer config={config} className={`aspect-auto w-full ${small ? "h-36" : "h-56"}`}>
       <AreaChart data={points} margin={{ left: 4, right: 8, top: 8 }} accessibilityLayer>
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
@@ -54,7 +57,7 @@ export function ScoreChart({
           reversed={reversed}
           allowDecimals={false}
           tickFormatter={(value: number) => formatCompact(value)}
-          domain={["auto", "auto"]}
+          domain={reversed ? [1, "dataMax"] : ["auto", "auto"]}
           className="font-mono"
         />
         <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatNumber(Number(value))} />} />

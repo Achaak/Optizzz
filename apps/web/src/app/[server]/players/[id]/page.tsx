@@ -4,12 +4,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdSlot } from "~/components/ad-slot";
+import { PlusIcon } from "~/components/icons";
 import { JournalList } from "~/components/journal-list";
 import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
 import { ScoreChart } from "~/components/score-chart";
 import { Stat, StatGrid } from "~/components/stat";
+import { CopyLinkButton } from "~/components/tools/copy-link-button";
+import { buttonVariants } from "~/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { serverOfPath } from "~/lib/game-server";
-import { ordinal } from "~/lib/server-stats";
+import { ordinal, trendText } from "~/lib/server-stats";
 import { playerPage } from "~/server/queries";
 
 export const revalidate = 3600;
@@ -22,6 +26,8 @@ export function generateStaticParams() {
 interface Props {
   params: Promise<{ server: string; id: string }>;
 }
+
+const outline = buttonVariants({ variant: "outline", size: "lg" });
 
 const idOf = (text: string) => (/^\d+$/.test(text) ? Number(text) : null);
 
@@ -46,75 +52,102 @@ export default async function PlayerPage({ params }: Props) {
   const states = player
     ? [master && "Colonisé", player.onHoliday && "En vacances", player.isBanned && "Banni"].filter(Boolean)
     : [];
+  const week = (text: string | undefined) => (text ? `${text} en 7 jours` : undefined);
+  const weekBefore = days.at(-8);
 
   return (
     <div className="space-y-6">
       <PageHeader
+        kicker={`Joueur · ${server.name}`}
         title={player?.pseudo ?? journal[0]?.name}
-        note={player ? `Serveur ${server.name} · ${String(player.x)} : ${String(player.y)}` : undefined}
+        actions={
+          player && (
+            <>
+              <Link href={`/${server.id}/map?player=${String(player.id)}`} className={outline}>
+                Voir sur la carte
+              </Link>
+              <Link href={`/${server.id}/compare?ids=${String(player.id)}`} className={outline}>
+                <PlusIcon />
+                Comparer
+              </Link>
+              <CopyLinkButton />
+            </>
+          )
+        }
       >
         {player ? (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             {player.alliance ? (
-              <Link
-                href={`/${server.id}/alliances/${encodeURIComponent(player.alliance)}`}
-                className="font-semibold text-foreground hover:underline"
-              >
-                Alliance {player.alliance}
-              </Link>
+              <span>
+                Membre de{" "}
+                <Link
+                  href={`/${server.id}/alliances/${encodeURIComponent(player.alliance)}`}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  {player.alliance}
+                </Link>
+              </span>
             ) : (
               <span>Sans alliance</span>
             )}
-            {master && (
+            <span aria-hidden>·</span>
+            <span>
+              position {String(player.x)} : {String(player.y)}
+            </span>
+            <span aria-hidden>·</span>
+            {master ? (
               <span>
-                Colonisé par{" "}
-                <Link href={`/${server.id}/players/${String(master.id)}`} className="text-foreground hover:underline">
+                colonisé par{" "}
+                <Link
+                  href={`/${server.id}/players/${String(master.id)}`}
+                  className="font-semibold text-foreground hover:underline"
+                >
                   {master.pseudo}
                 </Link>
               </span>
+            ) : (
+              <span>libre (personne ne le colonise)</span>
             )}
-            {states.length > 0 && <MonoLabel className="text-primary">{states.join(" · ")}</MonoLabel>}
-            <PanelLink href={`/${server.id}/map?player=${String(player.id)}`}>Voir sur la carte</PanelLink>
-            <PanelLink href={`/${server.id}/compare?ids=${String(player.id)}`}>Comparer</PanelLink>
-          </div>
+            {states.length > 0 && <MonoLabel className="ml-2 text-primary">{states.join(" · ")}</MonoLabel>}
+          </p>
         ) : (
-          <p className="text-sm">Ce joueur n&apos;est plus dans l&apos;export du serveur.</p>
+          <p>Ce joueur n&apos;est plus dans l&apos;export du serveur.</p>
         )}
       </PageHeader>
 
       {player && (
         <StatGrid label="Scores">
-          <Stat label="TDC" value={formatNumber(player.field)} hint="cm²" />
-          <Stat label="Rang" value={rank === null ? "—" : ordinal(rank)} hint="au TDC sur le serveur" />
+          <Stat
+            label="TDC"
+            value={formatNumber(player.field)}
+            hint={`cm²${weekBefore ? ` · ${week(trendText(weekBefore.field, player.field)) ?? ""}` : ""}`}
+          />
+          <Stat
+            label="Rang"
+            value={rank === null ? "—" : ordinal(rank)}
+            hint={
+              rank === null ? undefined : (week(trendText(ranks.at(-8)?.rank, rank, true)) ?? "au TDC sur le serveur")
+            }
+          />
           <Stat label="Fourmilière" value={formatNumber(player.buildingScore)} />
           <Stat label="Technologie" value={formatNumber(player.technologyScore)} />
           <Stat label="Combat" value={formatNumber(player.trophyScore)} />
-          <Stat label="Colonies" value={formatNumber(colonies.length)} />
+          <Stat
+            label="Colonies"
+            value={formatNumber(colonies.length)}
+            hint={colonies.length > 0 ? colonies.map((colony) => colony.pseudo).join(", ") : undefined}
+          />
         </StatGrid>
       )}
 
-      {colonies.length > 0 && (
-        <Panel title="Colonies">
-          <ul className="flex flex-wrap gap-2 text-sm">
-            {colonies.map((colony) => (
-              <li key={colony.id}>
-                <Link
-                  href={`/${server.id}/players/${String(colony.id)}`}
-                  className="inline-block border px-2 py-1 hover:bg-accent"
-                >
-                  {colony.pseudo}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Panel>
-      )}
-
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="TDC">
+        <Panel title="TDC" aside={<span className="text-xs text-muted-foreground">cm², relevé de minuit</span>}>
           <ScoreChart label="TDC (cm²)" unit="cm² de TDC" points={points((day) => day.field)} />
         </Panel>
-        <Panel title="Rang au TDC" aside={<span className="text-xs text-muted-foreground">1 en haut</span>}>
+        <Panel
+          title="Rang au TDC"
+          aside={<span className="text-xs text-muted-foreground">plus haut = mieux classé</span>}
+        >
           <ScoreChart
             label="Rang"
             unit="ᵉ au TDC"
@@ -123,11 +156,15 @@ export default async function PlayerPage({ params }: Props) {
             points={ranks.map((row) => ({ day: dayMonth(row.day), value: row.rank }))}
           />
         </Panel>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-3">
         <Panel title="Fourmilière">
-          <ScoreChart label="Fourmilière" unit="en Fourmilière" points={points((day) => day.buildingScore)} />
+          <ScoreChart small label="Fourmilière" unit="en Fourmilière" points={points((day) => day.buildingScore)} />
         </Panel>
         <Panel title="Technologie">
           <ScoreChart
+            small
             label="Technologie"
             unit="en Technologie"
             tone="blue"
@@ -135,10 +172,48 @@ export default async function PlayerPage({ params }: Props) {
           />
         </Panel>
         <Panel title="Combat">
-          <ScoreChart label="Combat" unit="en Combat" points={points((day) => day.trophyScore)} />
+          <ScoreChart small label="Combat" unit="en Combat" points={points((day) => day.trophyScore)} />
         </Panel>
-        <Panel flush title="Changements">
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel
+          flush
+          title={`Journal de ${player?.pseudo ?? journal[0]?.name ?? ""}`}
+          aside={<PanelLink href={`/${server.id}/journal`}>Tout le Journal du serveur</PanelLink>}
+        >
           <JournalList server={server.id} lines={journal} named={false} />
+        </Panel>
+        <Panel flush title="Colonies">
+          {colonies.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="pl-4">Joueur</TableHead>
+                  <TableHead>Alliance</TableHead>
+                  <TableHead className="pr-4 text-right">TDC</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {colonies.map((colony) => (
+                  <TableRow key={colony.id}>
+                    <TableCell className="pl-4">
+                      <Link
+                        href={`/${server.id}/players/${String(colony.id)}`}
+                        className="font-semibold hover:underline"
+                      >
+                        {colony.pseudo}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{colony.alliance ?? "—"}</TableCell>
+                    <TableCell className="pr-4 text-right font-mono">{formatNumber(colony.field)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="p-4 text-sm text-muted-foreground">Aucune colonie.</p>
+          )}
         </Panel>
       </div>
 

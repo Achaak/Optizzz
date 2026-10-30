@@ -279,7 +279,7 @@ export function findAlliance(server: string, tag: string) {
 
 /** `field` is the alliance's TDC now, for its rank among the server's alliances. */
 export async function alliancePage(server: string, tag: string, field: number) {
-  const [members, days, journal, ranks, above] = await Promise.all([
+  const [members, days, journal, ranks, above, serverField] = await Promise.all([
     db.player.findMany({ where: { server, alliance: tag }, orderBy: { field: "desc" } }),
     db.allianceDay.findMany({ where: { server, tag }, orderBy: { day: "asc" } }),
     db.journalEntry.findMany({ where: { server, tag }, orderBy: { at: "desc" }, take: 100 }),
@@ -289,13 +289,32 @@ export async function alliancePage(server: string, tag: string, field: number) {
       WHERE d.server = ${server} AND d.tag = ${tag}
       ORDER BY d.day`,
     db.alliance.count({ where: { server, totalField: { gt: field } } }),
+    db.player.aggregate({ where: { server }, _sum: { field: true } }),
+  ]);
+  // A week before the last reading: each member's TDC then, for « 7 jours ».
+  const weekBefore = days.at(-8)?.day;
+  const masterIds = [...new Set(members.flatMap((member) => (member.masterId === null ? [] : [member.masterId])))];
+  const [before, masters] = await Promise.all([
+    weekBefore
+      ? db.playerDay.findMany({
+          where: { server, day: weekBefore, playerId: { in: members.map((member) => member.id) } },
+          select: { playerId: true, field: true },
+        })
+      : [],
+    db.player.findMany({ where: { server, id: { in: masterIds } }, select: { id: true, pseudo: true } }),
   ]);
   return {
     members,
+    /** Each member's TDC a week before the last reading, by id; missing for a newcomer. */
+    weekAgo: new Map(before.map((row) => [row.playerId, row.field])),
+    /** The pseudo of each master of a member, by id. */
+    masters: new Map(masters.map((row) => [row.id, row.pseudo])),
     days,
     journal: journal.map(toLine),
     /** By TDC among the server's alliances, 1 first. */
     rank: above + 1,
+    /** The TDC of the whole server, for the alliance's share. */
+    serverField: serverField._sum.field ?? 0,
     ranks: ranks.map((row) => ({ day: row.day, rank: Number(row.rank) })),
   };
 }

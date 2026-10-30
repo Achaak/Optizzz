@@ -17,7 +17,7 @@ export function StatGrid({ label, children }: { label: string; children: ReactNo
   return (
     <section
       aria-label={label}
-      className="grid grid-cols-2 overflow-hidden border-t border-l bg-card sm:grid-cols-3 lg:grid-cols-6"
+      className="grid grid-cols-2 overflow-hidden border-t border-l bg-card sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]"
     >
       {children}
     </section>

@@ -38,8 +38,8 @@ export interface BarRow {
   text: string;
 }
 
-/** Horizontal bars, the value written at the end of each: read as text, links kept. */
-export function ValueBars({ rows }: { rows: BarRow[] }) {
+/** Horizontal bars, the value written at the end of each: read as text, links kept. Blue unless `tone="amber"`. */
+export function ValueBars({ rows, tone = "blue" }: { rows: BarRow[]; tone?: "amber" | "blue" }) {
   const max = Math.max(Number.MIN_VALUE, ...rows.map((row) => row.value));
   return (
     <div className="grid grid-cols-[minmax(3.5rem,max-content)_minmax(0,1fr)_max-content] items-center gap-x-3 gap-y-2 text-sm">
@@ -52,7 +52,11 @@ export function ValueBars({ rows }: { rows: BarRow[] }) {
           ) : (
             <span className="truncate font-semibold">{row.label}</span>
           )}
-          <div aria-hidden className="h-3.5 bg-chart-2" style={{ width: `${String((row.value / max) * 100)}%` }} />
+          <div
+            aria-hidden
+            className={`h-3.5 ${tone === "amber" ? "bg-chart-1" : "bg-chart-2"}`}
+            style={{ width: `${String((row.value / max) * 100)}%` }}
+          />
           <span className="text-right font-mono">{row.text}</span>
         </div>
       ))}

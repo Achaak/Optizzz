@@ -1,17 +1,21 @@
 import { allianceSchema } from "@optizzz/game/exports";
-import { formatNumber } from "@optizzz/game/format/number-format";
+import { formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import { dayMonth } from "@optizzz/game/format/time-format";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { AdSlot } from "~/components/ad-slot";
+import { ValueBars } from "~/components/bars";
+import { PlusIcon } from "~/components/icons";
 import { JournalList } from "~/components/journal-list";
+import { MembersTable, type MemberRow } from "~/components/members-table";
 import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
 import { ScoreChart } from "~/components/score-chart";
 import { Stat, StatGrid } from "~/components/stat";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { CopyLinkButton } from "~/components/tools/copy-link-button";
+import { buttonVariants } from "~/components/ui/button";
 import { serverOfPath } from "~/lib/game-server";
-import { ordinal, percentOf } from "~/lib/server-stats";
+import { ordinal, percentOf, trendText } from "~/lib/server-stats";
 import { alliancePage, findAlliance } from "~/server/queries";
 
 export const revalidate = 3600;
@@ -25,6 +29,8 @@ interface Props {
 }
 
 const diplomacySchema = allianceSchema.shape.diplomacy;
+
+const outline = buttonVariants({ variant: "outline", size: "lg" });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { server: segment, tag } = await params;
@@ -41,16 +47,39 @@ export default async function AlliancePage({ params }: Props) {
   if (!alliance) notFound();
   // The export's own case for the tag: « /s5/alliances/abc » goes to « …/ABC ».
   if (alliance.tag !== tag) permanentRedirect(`/${server.id}/alliances/${encodeURIComponent(alliance.tag)}`);
-  const { members, days, journal, rank, ranks } = await alliancePage(server.id, alliance.tag, alliance.totalField);
+  const { members, days, journal, rank, ranks, weekAgo, masters, serverField } = await alliancePage(
+    server.id,
+    alliance.tag,
+    alliance.totalField,
+  );
   const diplomacy = diplomacySchema.parse(alliance.diplomacy);
   const points = (pick: (day: (typeof days)[number]) => number) =>
     days.map((day) => ({ day: dayMonth(day.day), value: Math.round(pick(day)) }));
   const allianceHref = (other: string) => `/${server.id}/alliances/${encodeURIComponent(other)}`;
-  const topField = members[0]?.field ?? 0;
+  const weekBefore = days.at(-8);
+  const week = (text: string | undefined) => (text ? `${text} en 7 jours` : undefined);
+  const colonized = members.filter((member) => member.masterId !== null).length;
+  const memberRows: MemberRow[] = members.map((member) => {
+    const before = weekAgo.get(member.id);
+    const masterPseudo = member.masterId === null ? undefined : masters.get(member.masterId);
+    return {
+      id: member.id,
+      pseudo: member.pseudo,
+      x: member.x,
+      y: member.y,
+      field: member.field,
+      building: member.buildingScore,
+      technology: member.technologyScore,
+      trophy: member.trophyScore,
+      week: trendText(before, member.field),
+      master: member.masterId !== null && masterPseudo ? { id: member.masterId, pseudo: masterPseudo } : null,
+    };
+  });
 
   return (
     <div className="space-y-6">
       <PageHeader
+        kicker={`Alliance · ${server.name}`}
         title={
           <>
             {alliance.tag}{" "}
@@ -59,59 +88,117 @@ export default async function AlliancePage({ params }: Props) {
             </span>
           </>
         }
-        note={`Serveur ${server.name}`}
+        actions={
+          <>
+            <Link href={`/${server.id}/map?alliance=${encodeURIComponent(alliance.tag)}`} className={outline}>
+              Voir sur la carte
+            </Link>
+            <Link
+              href={`/${server.id}/compare?type=alliances&ids=${encodeURIComponent(alliance.tag)}`}
+              className={outline}
+            >
+              <PlusIcon />
+              Comparer
+            </Link>
+            <CopyLinkButton />
+          </>
+        }
       >
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <PanelLink href={`/${server.id}/map?alliance=${encodeURIComponent(alliance.tag)}`}>
-            Voir sur la carte
-          </PanelLink>
-          <PanelLink href={`/${server.id}/compare?type=alliances&ids=${encodeURIComponent(alliance.tag)}`}>
-            Comparer
-          </PanelLink>
-        </div>
+        {formatNumber(alliance.playersCount)} membres · {ordinal(rank)} alliance au TDC
       </PageHeader>
 
-      <StatGrid label="Totaux">
-        <Stat label="Membres" value={formatNumber(alliance.playersCount)} />
-        <Stat label="TDC" value={formatNumber(alliance.totalField)} hint="cm²" />
-        <Stat label="Rang" value={ordinal(rank)} hint="au TDC sur le serveur" />
-        <Stat label="Fourmilière" value={formatNumber(alliance.totalBuildingScore)} />
-        <Stat label="Technologie" value={formatNumber(alliance.totalTechnologyScore)} />
-        <Stat label="Combat" value={formatNumber(alliance.totalTrophyScore)} />
+      <StatGrid label="Chiffres de l'alliance">
+        <Stat
+          label="TDC"
+          value={formatNumber(alliance.totalField)}
+          hint={`cm² · ${formatDecimal(percentOf(alliance.totalField, serverField))} % du serveur`}
+        />
+        <Stat
+          label="Rang"
+          value={ordinal(rank)}
+          hint={week(trendText(ranks.at(-8)?.rank, rank, true)) ?? "au TDC sur le serveur"}
+        />
+        <Stat
+          label="Membres"
+          value={formatNumber(alliance.playersCount)}
+          hint={week(trendText(weekBefore?.playersCount, alliance.playersCount))}
+        />
+        <Stat
+          label="TDC moyen"
+          value={formatNumber(alliance.playersCount > 0 ? Math.round(alliance.totalField / alliance.playersCount) : 0)}
+          hint="par membre"
+        />
+        <Stat label="Colonisés" value={formatNumber(colonized)} hint="membres sous colonie" />
       </StatGrid>
 
-      {(diplomacy.pacts.length > 0 || diplomacy.wars.length > 0) && (
+      <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Diplomatie">
-          <div className="space-y-3 text-sm">
-            {diplomacy.pacts.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <MonoLabel className="w-16 text-primary">Pactes</MonoLabel>
-                {diplomacy.pacts.map((pact) => (
-                  <Link key={pact.tag} href={allianceHref(pact.tag)} className="border px-2 py-1 hover:bg-accent">
-                    <strong>{pact.tag}</strong> <span className="text-muted-foreground">· {pact.name.trim()}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-            {diplomacy.wars.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <MonoLabel className="w-16 text-info">Guerres</MonoLabel>
-                {diplomacy.wars.map((war) => (
-                  <Link key={war} href={allianceHref(war)} className="border border-info/50 px-2 py-1 hover:bg-accent">
-                    <strong>{war}</strong>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {diplomacy.pacts.length === 0 && diplomacy.wars.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Ni pacte ni guerre dans l&apos;export.</p>
+          ) : (
+            <div className="space-y-3 text-sm">
+              {diplomacy.pacts.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <MonoLabel className="w-20">Pactes</MonoLabel>
+                  {diplomacy.pacts.map((pact) => (
+                    <Link
+                      key={pact.tag}
+                      href={allianceHref(pact.tag)}
+                      className="bg-primary/15 px-2 py-0.5 font-mono text-xs text-primary hover:underline"
+                    >
+                      {pact.tag}
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {diplomacy.wars.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <MonoLabel className="w-20">Guerres</MonoLabel>
+                  {diplomacy.wars.map((war) => (
+                    <Link
+                      key={war}
+                      href={allianceHref(war)}
+                      className="bg-info-soft px-2 py-0.5 font-mono text-xs text-info hover:underline"
+                    >
+                      <span aria-hidden>⚔ </span>
+                      {war}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </Panel>
-      )}
+        <Panel title="TDC de chaque membre" aside={<span className="text-xs text-muted-foreground">cm²</span>}>
+          <ValueBars
+            tone="amber"
+            rows={members.slice(0, 8).map((member) => ({
+              key: String(member.id),
+              label: member.pseudo,
+              href: `/${server.id}/players/${String(member.id)}`,
+              value: member.field,
+              text: formatNumber(member.field),
+            }))}
+          />
+          {members.length > 8 && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              8 premiers sur {formatNumber(members.length)} · le tableau plus bas les montre tous
+            </p>
+          )}
+        </Panel>
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Panel title="TDC">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel
+          title="TDC de l'alliance"
+          aside={<span className="text-xs text-muted-foreground">cm², relevé de minuit</span>}
+        >
           <ScoreChart label="TDC (cm²)" unit="cm² de TDC" points={points((day) => day.totalField)} />
         </Panel>
-        <Panel title="Rang au TDC" aside={<span className="text-xs text-muted-foreground">1 en haut</span>}>
+        <Panel
+          title="Rang au TDC"
+          aside={<span className="text-xs text-muted-foreground">plus haut = mieux classée</span>}
+        >
           <ScoreChart
             label="Rang"
             unit="ᵉ au TDC"
@@ -120,63 +207,27 @@ export default async function AlliancePage({ params }: Props) {
             points={ranks.map((row) => ({ day: dayMonth(row.day), value: row.rank }))}
           />
         </Panel>
-        <Panel title="Membres">
-          <ScoreChart label="Membres" unit="membres" points={points((day) => day.playersCount)} />
-        </Panel>
       </div>
 
       <AdSlot />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel
-          flush
-          title="Membres"
-          aside={<span className="text-xs text-muted-foreground">la barre : part du TDC de l&apos;alliance</span>}
-        >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12 pl-4">#</TableHead>
-                <TableHead>Joueur</TableHead>
-                <TableHead className="hidden sm:table-cell">Grade</TableHead>
-                <TableHead className="pr-4 text-right">TDC</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.map((member, index) => (
-                <TableRow key={member.id}>
-                  <TableCell className="pl-4 font-mono text-primary">{index + 1}</TableCell>
-                  <TableCell>
-                    <Link href={`/${server.id}/players/${String(member.id)}`} className="font-semibold hover:underline">
-                      {member.pseudo}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="hidden max-w-40 truncate text-muted-foreground sm:table-cell">
-                    {member.grade ?? "—"}
-                  </TableCell>
-                  <TableCell className="pr-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <div className="hidden h-2 w-24 sm:block" aria-hidden>
-                        <div
-                          className="ml-auto h-full bg-chart-1"
-                          style={{ width: `${String(topField > 0 ? (member.field / topField) * 100 : 0)}%` }}
-                        />
-                      </div>
-                      <span className="w-20 font-mono">{formatNumber(member.field)}</span>
-                      <span className="hidden w-12 font-mono text-xs text-muted-foreground md:inline">
-                        {String(Math.round(percentOf(member.field, alliance.totalField)))} %
-                      </span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Panel>
-        <Panel flush title="Changements">
-          <JournalList server={server.id} lines={journal} named={false} />
-        </Panel>
-      </div>
+      <Panel
+        flush
+        title="Membres"
+        aside={<span className="text-xs text-muted-foreground">{formatNumber(members.length)} joueurs</span>}
+      >
+        <MembersTable server={server.id} members={memberRows} />
+      </Panel>
+
+      <Panel
+        flush
+        title={`Journal de ${alliance.tag}`}
+        aside={
+          <PanelLink href={`/${server.id}/journal?q=${encodeURIComponent(alliance.tag)}`}>Tout le Journal</PanelLink>
+        }
+      >
+        <JournalList server={server.id} lines={journal.slice(0, 20)} named={false} />
+      </Panel>
     </div>
   );
 }

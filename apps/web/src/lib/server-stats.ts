@@ -113,3 +113,15 @@ export const percentOf = (part: number, whole: number): number =>
 
 /** « 1ᵉʳ », « 2ᵉ », « 1 204ᵉ »: a rank as French writes it. */
 export const ordinal = (rank: number): string => `${formatNumber(rank)}${rank === 1 ? "ᵉʳ" : "ᵉ"}`;
+
+/**
+ * How a figure moved from `before` to `now`, upward or downward in words and arrows (never colour alone):
+ * « ▲ 41 210 », « ▼ 3 », « = ». A rank moves up as it gets smaller. Nothing when there is no `before`.
+ */
+export function trendText(before: number | undefined, now: number, rank = false): string | undefined {
+  if (before === undefined) return undefined;
+  const delta = Math.round(now - before);
+  if (delta === 0) return "=";
+  const up = rank ? delta < 0 : delta > 0;
+  return `${up ? "▲" : "▼"} ${formatNumber(Math.abs(delta))}`;
+}

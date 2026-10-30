@@ -9,6 +9,7 @@ import {
   ordinal,
   parisDayRange,
   percentOf,
+  trendText,
 } from "./server-stats";
 
 describe("bracketRange", () => {
@@ -87,5 +88,22 @@ describe("parisDayRange", () => {
   it("refuses what is not a day", () => {
     expect(parisDayRange("2026-02-30")).toBeNull();
     expect(parisDayRange("26/10")).toBeNull();
+  });
+});
+
+describe("trendText", () => {
+  it("points up or down with the change", () => {
+    expect(trendText(659_025, 700_235)).toBe("▲ 41 210");
+    expect(trendText(32, 29)).toBe("▼ 3");
+  });
+
+  it("points a rank up as it gets smaller", () => {
+    expect(trendText(3, 2, true)).toBe("▲ 1");
+    expect(trendText(2, 5, true)).toBe("▼ 3");
+  });
+
+  it("says nothing without a figure to compare with", () => {
+    expect(trendText(undefined, 10)).toBeUndefined();
+    expect(trendText(10, 10)).toBe("=");
   });
 });
