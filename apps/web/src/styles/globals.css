@@ -154,8 +154,44 @@
   h1 {
     @apply font-heading text-4xl leading-none font-bold tracking-wide uppercase sm:text-5xl;
   }
-  /* shadcn's card titles, untouched in components/ui: the condensed capitals of the direction. */
-  [data-slot="card-title"] {
-    @apply font-heading text-lg tracking-wide uppercase;
-  }
+}
+
+/*
+ * shadcn's cards, untouched in components/ui, drawn as the direction's panels (components/panel.tsx): sharp corners, a
+ * thin border, the header over a rule with its title in condensed capitals and its description beside it. Outside
+ * any layer, so that they win over the cards' own utilities.
+ */
+[data-slot="card"] {
+  gap: 0;
+  padding-block: 0;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+[data-slot="card-header"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+[data-slot="card-title"] {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+[data-slot="card-description"] {
+  font-size: 0.75rem;
+}
+[data-slot="card-content"] {
+  padding: 1rem;
+}
+[data-slot="card-footer"] {
+  border-radius: 0;
 }

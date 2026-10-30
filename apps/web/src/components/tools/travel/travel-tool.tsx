@@ -5,13 +5,14 @@
 import { formatEndTime, parisParts } from "@optizzz/game/format/time-format";
 import { useState, useSyncExternalStore } from "react";
 import { NumberField } from "~/components/number-field";
+import { Panel } from "~/components/panel";
 import { Stat } from "~/components/stat";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { CopyLinkButton } from "../copy-link-button";
 import { pickLevels } from "../my-levels";
 import { PlayerPicker, ServerSelect, usePickedPlayer } from "../player-picker";
-import { InvalidLinkNote, ToolLayout } from "../tool-page";
+import { InvalidLinkNote, ToolLayout, Verdict } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
 import { useToolState } from "../use-tool-state";
 import { departureTime, endPoint, travelResult } from "./travel-result";
@@ -70,42 +71,48 @@ export function TravelTool() {
   const form = (
     <>
       <InvalidLinkNote shown={tool.invalidLink} />
-      <ServerSelect value={state.server} onChange={(server) => change((current) => withServer(current, server))} />
-      <PlayerPicker
-        key={`from-${String(tool.opening)}-${String(swaps)}`}
-        label="Expéditeur"
-        server={state.server}
-        value={state.from}
-        onChange={(from) => change((current) => ({ ...current, from }))}
-      />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => {
-          change(swapEnds);
-          setSwaps((count) => count + 1);
-        }}
-      >
-        Inverser
-      </Button>
-      <PlayerPicker
-        key={`to-${String(tool.opening)}-${String(swaps)}`}
-        label="Destination"
-        server={state.server}
-        value={state.to}
-        onChange={(to) => change((current) => ({ ...current, to }))}
-      />
-      <label className="block space-y-1 text-sm">
-        <span className="block">Vitesse d&apos;attaque de l&apos;expéditeur</span>
-        <NumberField
-          value={state.attackSpeed}
-          rules={{ min: 0, max: 1000, integer: true, allowEmpty: true }}
-          className="w-24"
-          onCommit={setAttackSpeed}
-        />
-      </label>
-      <Departure state={state} now={now} onChange={(departure) => change((current) => ({ ...current, departure }))} />
+      <Panel title="Expéditeur et destination">
+        <div className="space-y-4">
+          <ServerSelect value={state.server} onChange={(server) => change((current) => withServer(current, server))} />
+          <PlayerPicker
+            key={`from-${String(tool.opening)}-${String(swaps)}`}
+            label="Expéditeur"
+            server={state.server}
+            value={state.from}
+            onChange={(from) => change((current) => ({ ...current, from }))}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              change(swapEnds);
+              setSwaps((count) => count + 1);
+            }}
+          >
+            Inverser
+          </Button>
+          <PlayerPicker
+            key={`to-${String(tool.opening)}-${String(swaps)}`}
+            label="Destination"
+            server={state.server}
+            value={state.to}
+            onChange={(to) => change((current) => ({ ...current, to }))}
+          />
+          <label className="block space-y-1 text-sm">
+            <span className="block">Vitesse d&apos;attaque de l&apos;expéditeur</span>
+            <NumberField
+              value={state.attackSpeed}
+              rules={{ min: 0, max: 1000, integer: true, allowEmpty: true }}
+              className="w-24"
+              onCommit={setAttackSpeed}
+            />
+          </label>
+        </div>
+      </Panel>
+      <Panel title="Départ" aside={<span className="text-xs text-muted-foreground">heure de Paris</span>}>
+        <Departure state={state} now={now} onChange={(departure) => change((current) => ({ ...current, departure }))} />
+      </Panel>
     </>
   );
 
@@ -212,6 +219,9 @@ function Result({
   const trip = travelResult({ from, to, attackSpeed: state.attackSpeed, departure, now });
   return (
     <>
+      <Verdict title={`Arrivée ${trip.arrivalText}`}>
+        {trip.time} de trajet, {String(trip.distance)} cases · heure de Paris
+      </Verdict>
       <div className="grid border-t border-l sm:grid-cols-3 lg:grid-cols-1">
         <Stat label="Distance" value={`${String(trip.distance)} cases`} />
         <Stat label="Temps de trajet" value={trip.time} />

@@ -58,6 +58,16 @@ export function ToolLayout({
   );
 }
 
+/** The result in a few words, at the head of the report: « 6 attaques », its detail in a line under it. */
+export function Verdict({ title, children }: { title: ReactNode; children?: ReactNode }) {
+  return (
+    <div className="-mx-4 -mt-4 border-b px-4 py-4">
+      <p className="font-heading text-4xl leading-none font-bold tracking-wide uppercase">{title}</p>
+      {children && <p className="mt-1.5 text-sm text-muted-foreground">{children}</p>}
+    </div>
+  );
+}
+
 /** A warning above a tool: rules not checked, a figure to take with care. */
 export function ToolNote({ children }: { children: ReactNode }) {
   return (

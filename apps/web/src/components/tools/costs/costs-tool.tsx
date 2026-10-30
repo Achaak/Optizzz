@@ -9,11 +9,11 @@ import { BUILDINGS, RESEARCH } from "@optizzz/game/levels";
 import { useId } from "react";
 import { NumberField } from "~/components/number-field";
 import { Panel } from "~/components/panel";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Stat } from "~/components/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { CopyLinkButton } from "../copy-link-button";
 import { pickLevels } from "../my-levels";
-import { InvalidLinkNote, ToolLayout } from "../tool-page";
+import { InvalidLinkNote, ToolLayout, Verdict } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
 import { useToolState } from "../use-tool-state";
 import { CostsChart } from "./costs-chart";
@@ -55,85 +55,90 @@ export function CostsTool() {
   const resources = costedResources(state.element);
 
   const form = (
-    <div className="space-y-4">
+    <>
       <InvalidLinkNote shown={tool.invalidLink} />
-      <div className="space-y-1 text-sm">
-        <label htmlFor={ids.element} className="block">
-          Bâtiment ou recherche
-        </label>
-        <select
-          id={ids.element}
-          value={state.element}
-          onChange={(event) => {
-            const element = event.target.value as LevelKey;
-            change((current) => ({ ...current, element }));
-          }}
-          className="block h-8 w-full max-w-80 rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30"
-        >
-          <optgroup label="Bâtiments">
-            {BUILDINGS.map(({ key, name }) => (
-              <option key={key} value={key}>
-                {name}
-              </option>
-            ))}
-          </optgroup>
-          <optgroup label="Recherches">
-            {RESEARCH.map(({ key, name }) => (
-              <option key={key} value={key}>
-                {name}
-              </option>
-            ))}
-          </optgroup>
-        </select>
-      </div>
-      <div className="flex flex-wrap gap-4">
-        <div className="space-y-1 text-sm">
-          <label htmlFor={ids.from} className="block">
-            Niveau actuel
-          </label>
-          <NumberField
-            id={ids.from}
-            className="w-24"
-            placeholder="0"
-            value={state.from}
-            rules={LEVEL_RULES}
-            onCommit={(value) => change((current) => ({ ...current, from: value }))}
-          />
+      <Panel title="Bâtiment ou recherche">
+        <div className="space-y-4">
+          <div className="space-y-1 text-sm">
+            <label htmlFor={ids.element} className="block">
+              Bâtiment ou recherche
+            </label>
+            <select
+              id={ids.element}
+              value={state.element}
+              onChange={(event) => {
+                const element = event.target.value as LevelKey;
+                change((current) => ({ ...current, element }));
+              }}
+              className="block h-8 w-full max-w-80 rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+            >
+              <optgroup label="Bâtiments">
+                {BUILDINGS.map(({ key, name }) => (
+                  <option key={key} value={key}>
+                    {name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Recherches">
+                {RESEARCH.map(({ key, name }) => (
+                  <option key={key} value={key}>
+                    {name}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <div className="space-y-1 text-sm">
+              <label htmlFor={ids.from} className="block">
+                Niveau actuel
+              </label>
+              <NumberField
+                id={ids.from}
+                className="w-24"
+                placeholder="0"
+                value={state.from}
+                rules={LEVEL_RULES}
+                onCommit={(value) => change((current) => ({ ...current, from: value }))}
+              />
+            </div>
+            <div className="space-y-1 text-sm">
+              <label htmlFor={ids.to} className="block">
+                Niveau visé
+              </label>
+              <NumberField
+                id={ids.to}
+                className="w-24"
+                value={state.to}
+                rules={LEVEL_RULES}
+                onCommit={(value) => change((current) => ({ ...current, to: value }))}
+              />
+            </div>
+            <div className="space-y-1 text-sm">
+              <label htmlFor={ids.bonus} className="block">
+                {BONUS_LABELS[bonusKey]}
+              </label>
+              <NumberField
+                id={ids.bonus}
+                className="w-24"
+                placeholder="0"
+                value={state[bonusKey]}
+                rules={LEVEL_RULES}
+                aria-describedby={`${ids.bonus}-hint`}
+                onCommit={(value) => {
+                  levels.remember({ [bonusKey]: value });
+                  change((current) => ({ ...current, [bonusKey]: value }));
+                }}
+              />
+            </div>
+          </div>
+          <p id={`${ids.bonus}-hint`} className="text-sm text-muted-foreground">
+            {BONUS_PHRASES[bonusKey]} ôte 10 % à la durée ; votre niveau est supposé ne pas changer pendant les
+            chantiers.
+          </p>
         </div>
-        <div className="space-y-1 text-sm">
-          <label htmlFor={ids.to} className="block">
-            Niveau visé
-          </label>
-          <NumberField
-            id={ids.to}
-            className="w-24"
-            value={state.to}
-            rules={LEVEL_RULES}
-            onCommit={(value) => change((current) => ({ ...current, to: value }))}
-          />
-        </div>
-        <div className="space-y-1 text-sm">
-          <label htmlFor={ids.bonus} className="block">
-            {BONUS_LABELS[bonusKey]}
-          </label>
-          <NumberField
-            id={ids.bonus}
-            className="w-24"
-            placeholder="0"
-            value={state[bonusKey]}
-            rules={LEVEL_RULES}
-            aria-describedby={`${ids.bonus}-hint`}
-            onCommit={(value) => {
-              levels.remember({ [bonusKey]: value });
-              change((current) => ({ ...current, [bonusKey]: value }));
-            }}
-          />
-        </div>
-      </div>
-      <p id={`${ids.bonus}-hint`} className="text-sm text-muted-foreground">
-        {BONUS_PHRASES[bonusKey]} ôte 10 % à la durée ; votre niveau est supposé ne pas changer pendant les chantiers.
-      </p>
-    </div>
+      </Panel>
+    </>
   );
 
   const result = plan ? (
@@ -177,32 +182,31 @@ function Total({
 }) {
   // × 1.2 and × 1.12 come from Toolzzz and have not been seen in the game yet (docs/research/couts-des-niveaux.md).
   const unchecked = LEVEL_BASES[element].slowdowns.find(({ growth }) => growth < 1.3);
+  const levels = to - from;
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {nameOf(element)} : du niveau {from} au niveau {to}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
-          {resources.map((resource) => (
-            <div key={resource} className="contents">
-              <dt className="text-muted-foreground">{RESOURCE_LABELS[resource]}</dt>
-              <dd className="font-medium tabular-nums">{formatNumber(plan.total.cost[resource])}</dd>
-            </div>
-          ))}
-          <dt className="text-muted-foreground">Durée</dt>
-          <dd className="font-medium tabular-nums">{duration(plan.total.seconds)}</dd>
-        </dl>
-        {unchecked && to >= unchecked.from && (
-          <p className="text-sm text-muted-foreground">
-            À partir du niveau {unchecked.from}, la croissance des durées (reprise de Toolzzz) n’a pas encore été
-            vérifiée dans le jeu.
-          </p>
-        )}
-      </CardContent>
-    </Card>
+    <>
+      <Verdict title={`${String(levels)} niveau${levels > 1 ? "x" : ""}`}>
+        {nameOf(element)} : du niveau {from} au niveau {to}, {duration(plan.total.seconds)} de chantier
+      </Verdict>
+      <div className="grid border-t border-l">
+        {resources.map((resource) => (
+          <Stat key={resource} label={RESOURCE_LABELS[resource]} value={formatNumber(plan.total.cost[resource])} />
+        ))}
+        <Stat label="Durée" value={duration(plan.total.seconds)} />
+      </div>
+      <figure className="m-0 space-y-2">
+        <figcaption className="font-heading text-lg font-semibold tracking-wide uppercase">
+          Coût cumulé, niveau par niveau
+        </figcaption>
+        <CostsChart plan={plan} resources={resources} labels={RESOURCE_LABELS} />
+      </figure>
+      {unchecked && to >= unchecked.from && (
+        <p className="text-sm text-muted-foreground">
+          À partir du niveau {unchecked.from}, la croissance des durées (reprise de Toolzzz) n’a pas encore été vérifiée
+          dans le jeu.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -210,9 +214,6 @@ function Detail({ plan, resources }: { plan: DevelopmentPlan; resources: Resourc
   const span = resources.length + 1;
   return (
     <Panel flush title="Détail par niveau" labelledBy="costs-detail">
-      <div className="border-b p-4">
-        <CostsChart plan={plan} resources={resources} labels={RESOURCE_LABELS} />
-      </div>
       <Table>
         <TableHeader>
           <TableRow>

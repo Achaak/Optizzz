@@ -6,6 +6,7 @@ import { FLOOD_MARGIN, floodBlockText } from "@optizzz/game/flood";
 import { formatNumber } from "@optizzz/game/format/number-format";
 import type { FloodField, FloodToolPlan } from "@optizzz/game/site-links/flood";
 import { Stat } from "~/components/stat";
+import { Verdict } from "../tool-page";
 import { FloodChart } from "./flood-chart";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 
@@ -83,6 +84,13 @@ export function FloodResult({
   const withLosses = attacks.some((attack) => attack.lost);
   return (
     <>
+      {last ? (
+        <Verdict title={plural(attacks.length, "attaque")}>
+          +{formatNumber(taken)} cm² · {targetName} finit à {formatNumber(last.targetAfter)} cm²
+        </Verdict>
+      ) : (
+        <Verdict title="Aucune attaque">{targetName} est hors de portée.</Verdict>
+      )}
       <div className="grid grid-cols-2 border-t border-l">
         <Stat label="Attaques possibles" value={String(plan.slots)} />
         {last && <Stat label="Prise totale" value={`${formatNumber(taken)} cm²`} />}

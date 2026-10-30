@@ -3,13 +3,14 @@
 // The simple display: one choice (Prudent, Équilibré, Rapide), « Faire monter mes troupes », four key figures. As the
 // extension's launcher. See docs/features/site-chasse.md and hunt-launcher.md.
 import { UNITS } from "@optizzz/game/army/units";
-import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
+import { formatAmount, formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
 import type { HuntForm } from "@optizzz/game/hunt/hunt-form";
 import type { Plan } from "@optizzz/game/hunt/planner";
 import { formatChance, presetOf, PRESETS, promotionCounts, splitText } from "@optizzz/game/hunt/texts";
 import { Stat } from "~/components/stat";
 import { Button } from "~/components/ui/button";
+import { Verdict } from "../tool-page";
 import { Check, Note, Segmented, Warning } from "./hunt-parts";
 
 /** The army has troops that can be promoted besides young dwarves: the waves are worth offering. */
@@ -79,8 +80,13 @@ export function KeyFigures({
   const promotions = promotionCounts(plan);
   const winChance = Math.min(1, ...plan.hunts.map((hunt) => hunt.outcome.winChance));
   const troops = hasTroops(form);
+  const count = plan.hunts.length;
   return (
     <>
+      <Verdict title={`+${formatAmount(plan.totalAmount)} cm²`}>
+        En {formatNumber(count)} chasse{count > 1 ? "s" : ""}, retour{" "}
+        {formatEndTime(new Date(now.getTime() + plan.durationSeconds * 1000), now)}
+      </Verdict>
       <div className="grid grid-cols-2 border-t border-l">
         <Figure
           label="Terrain gagné"
