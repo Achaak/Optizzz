@@ -8,7 +8,7 @@ L'ADR 0006 mettait le site sur Vercel, sa base sur Neon et le cron horaire sur G
 
 ## Décision
 
-- **Une instance Scaleway à Paris** (Ubuntu 24.04, DEV1-S ou plus) porte tout : le site Next.js, Postgres 18, le cron horaire et la sauvegarde de nuit. Les fichiers sont dans `deploy/`, copiés dans `/opt/optizzz`.
+- **Une instance Scaleway à Amsterdam** (zone AMS-1 : DEV1-S en rupture à Paris le 2026-10-31 ; Ubuntu 24.04, DEV1-S ou plus, x86 : les images ne sont construites qu'en amd64) porte tout : le site Next.js, Postgres 18, le cron horaire et la sauvegarde de nuit. Les fichiers sont dans `deploy/`, copiés dans `/opt/optizzz`.
 - **Docker Compose et Caddy** (`deploy/compose.yml`, `deploy/Caddyfile`) : Caddy sert `optizzz.fr` en HTTPS (certificats Let's Encrypt) et redirige `www`. Pas de journal des accès : le site ne garde aucune adresse IP.
 - **Images construites par GitHub Actions** (`apps/web/Dockerfile`, `.github/workflows/deploy.yml`) et poussées sur GHCR (`ghcr.io/achaak/optizzz-web` et `optizzz-tools`, publiques), étiquetées par le commit. Le VPS ne compile rien : il télécharge. Next.js en `output: "standalone"`.
 - **Le build prérend sur une base vide** (comme la CI) ; une fois en ligne, `deploy.sh` appelle `/api/revalidate` : les pages se refont à la visite suivante.
@@ -29,5 +29,5 @@ L'ADR 0006 mettait le site sur Vercel, sa base sur Neon et le cron horaire sur G
 - `DISCORD_REMINDERS_KEY` et `BETTER_AUTH_SECRET` doivent rester les mêmes d'un hébergement à l'autre : la première chiffre les webhooks enregistrés, la seconde signe les sessions.
 - Un échec du cron ne prévient plus par e-mail comme GitHub Actions : `journalctl -u optizzz-ingest` sur le VPS.
 - Les mises à jour de sécurité d'Ubuntu sont automatiques (`unattended-upgrades`) ; celles des images (Postgres, Caddy, Node) passent par une nouvelle étiquette dans `deploy/compose.yml` ou `apps/web/Dockerfile`.
-- Mentions légales, Confidentialité, `PRIVACY.md` et `docs/store/fiche.md` nomment Scaleway, en France, à la place de Vercel.
+- Mentions légales, Confidentialité, `PRIVACY.md` et `docs/store/fiche.md` nomment Scaleway (le site à Amsterdam, les sauvegardes à Paris) à la place de Vercel.
 - Lancer le cron à la main sur un serveur : `ssh optizzz@<VPS> /opt/optizzz/ingest.sh --server s5`.

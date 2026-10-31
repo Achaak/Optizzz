@@ -21,8 +21,8 @@ export default function LegalPage() {
       <section className="space-y-2">
         <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Hébergeur</h2>
         <p>
-          Scaleway SAS, 8 rue de la Ville l&apos;Évêque, 75008 Paris, France. Le site et sa base de données sont en
-          France.
+          Scaleway SAS, 8 rue de la Ville l&apos;Évêque, 75008 Paris, France. Le site et sa base de données sont à
+          Amsterdam (Pays-Bas), dans l&apos;Union européenne ; leurs sauvegardes, à Paris.
         </p>
       </section>
       <section className="space-y-2">

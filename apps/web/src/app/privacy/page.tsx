@@ -11,8 +11,9 @@ export default function PrivacyPage() {
         <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Ce que le site sait de vous</h2>
         <p>
           Sans Compte Optizzz, le site lui-même ne pose aucun cookie et ne mesure pas l&apos;audience. Le serveur du
-          site, en France chez Scaleway, ne garde pas de journal des visites : votre adresse IP sert à vous répondre,
-          sans être enregistrée (la limite des demandes de lien de connexion la garde une minute en mémoire).
+          site, à Amsterdam chez Scaleway (Union européenne), ne garde pas de journal des visites : votre adresse IP
+          sert à vous répondre, sans être enregistrée (la limite des demandes de lien de connexion la garde une minute
+          en mémoire).
         </p>
         <p>
           Ce que vous choisissez sur la carte d&apos;un serveur ou saisissez dans un outil (armées, niveaux…) reste dans
