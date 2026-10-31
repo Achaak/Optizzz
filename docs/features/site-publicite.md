@@ -22,16 +22,16 @@ Jamais dans les Espaces d'alliance, le compte, la connexion ni les pages légale
 
 ## Réglages
 
-- `NEXT_PUBLIC_ADSENSE_CLIENT` (« ca-pub-… ») et `NEXT_PUBLIC_ADSENSE_SLOT` (l'unité) en variables GitHub, passées au build de l'image du site (`.github/workflows/deploy.yml`). Sans eux : aucune publicité ni script de Google (dev).
+- `NEXT_PUBLIC_ADSENSE_CLIENT` (« ca-pub-… ») et `NEXT_PUBLIC_ADSENSE_SLOT` (l'unité) en variables GitHub, passées au build de l'image du site (`.github/workflows/deploy.yml`). Le compte seul pose de quoi faire valider le site (script, balise `google-adsense-account`, `ads.txt`) ; les emplacements attendent aussi l'unité. Sans compte : aucun script de Google (dev).
 - `/ads.txt` est servi à partir du client (`src/app/ads.txt/route.ts`), 404 sans compte.
 - Dans AdSense : site `optizzz.fr` à faire valider, une unité « Display » responsive, cookies propriétaires désactivés.
 
 ## Fichiers
 
-| Fichier                               | Rôle                                                     |
-| ------------------------------------- | -------------------------------------------------------- |
-| `apps/web/src/lib/ads.ts` (+ test)    | Consentement refusé, ligne d'ads.txt                     |
-| `apps/web/src/lib/ads-config.ts`      | Le compte AdSense, lu dans l'environnement               |
-| `apps/web/src/components/ad-slot.tsx` | Un emplacement, rien sans compte                         |
-| `apps/web/src/app/layout.tsx`         | Le consentement puis le script d'AdSense, avec un compte |
-| `apps/web/src/app/privacy/page.tsx`   | Ce que le visiteur doit savoir                           |
+| Fichier                               | Rôle                                                 |
+| ------------------------------------- | ---------------------------------------------------- |
+| `apps/web/src/lib/ads.ts` (+ test)    | Consentement refusé, ligne d'ads.txt                 |
+| `apps/web/src/lib/ads-config.ts`      | Le compte AdSense, lu dans l'environnement           |
+| `apps/web/src/components/ad-slot.tsx` | Un emplacement, rien sans compte                     |
+| `apps/web/src/app/layout.tsx`         | Consentement, balise de validation, script d'AdSense |
+| `apps/web/src/app/privacy/page.tsx`   | Ce que le visiteur doit savoir                       |
