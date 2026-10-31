@@ -69,6 +69,8 @@ services:
       DATABASE_URL: postgresql://optizzz:${POSTGRES_PASSWORD}@db:5432/optizzz
       REVALIDATE_SECRET: ${REVALIDATE_SECRET}
       SITE_URL: http://web:3000
+      # S4 (216 000 players) needs more than Node's default heap on a 2 GB instance; the swap absorbs the peak.
+      NODE_OPTIONS: --max-old-space-size=2048
     depends_on:
       db: { condition: service_healthy }
     <<: *logging

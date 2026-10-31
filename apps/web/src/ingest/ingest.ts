@@ -187,7 +187,8 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
             update: { version: latest[kind] },
           });
       },
-      { timeout: 120_000 },
+      // S4's 216 000 players take about three minutes on the VPS's two cores; the site reads the old rows meanwhile.
+      { timeout: 600_000 },
     );
     report.updated = true;
     report.changes = notes.length;
