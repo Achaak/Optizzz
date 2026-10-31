@@ -5,13 +5,14 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 tag="${1:?usage: deploy.sh <tag>}"
-# The tag stays in .env: the hourly ingest (ingest.sh) runs the same version as the site.
+compose() { docker compose --profile tools "$@"; }
+
+# Downloaded before .env names them: until then, the hourly ingest (ingest.sh) keeps the images it has.
+TAG="$tag" compose pull --quiet web tools
+# The tag stays in .env: the hourly ingest runs the same version as the site.
 { grep -v '^TAG=' .env || true; echo "TAG=$tag"; } >.env.new
 cat .env.new >.env && rm .env.new
 
-compose() { docker compose --profile tools "$@"; }
-
-compose pull --quiet web tools
 compose up -d --wait db
 compose run --rm tools pnpm db:deploy
 compose exec -T db psql -U optizzz -d optizzz -v ON_ERROR_STOP=1 --quiet <postgres/grants.sql
@@ -22,5 +23,8 @@ compose run --rm --no-deps tools sh -c \
   'wget -qO- --header "authorization: Bearer $REVALIDATE_SECRET" --post-data "" "$SITE_URL/api/revalidate"'
 echo
 
+# The previous versions' images (2.4 GB for tools): the disk holds only a few of them.
+docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/achaak/optizzz-' | grep -v ":$tag\$" |
+  xargs -r docker rmi >/dev/null || true
 docker image prune -f >/dev/null
 echo "Optizzz $tag is online."
