@@ -89,21 +89,23 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
   const readOf = (kind: ExportKind) => reads.find((read) => read.kind === kind)?.version;
 
   const report: PassReport = { updated: false, changes: 0, days: 0 };
+  // Kept for the current state, its map and the nightly export of the same version; a night read only once is not
+  // kept (`keep: false`): ten of S4's (216 000 players each) would not fit in the VPS's memory.
   const downloaded = new Map<string, Player[] | Alliance[]>();
-  const players = async (version: string) => {
+  const players = async (version: string, keep = true) => {
     const key = `players:${version}`;
     const cached = downloaded.get(key) as Player[] | undefined;
     if (cached) return cached;
     const fresh = await playersOf(server.origin, version);
-    downloaded.set(key, fresh);
+    if (keep) downloaded.set(key, fresh);
     return fresh;
   };
-  const alliances = async (version: string) => {
+  const alliances = async (version: string, keep = true) => {
     const key = `alliances:${version}`;
     const cached = downloaded.get(key) as Alliance[] | undefined;
     if (cached) return cached;
     const fresh = await alliancesOf(server.origin, version);
-    downloaded.set(key, fresh);
+    if (keep) downloaded.set(key, fresh);
     return fresh;
   };
 
@@ -215,7 +217,7 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     now,
     DAYS_PER_PASS,
   )) {
-    const rows = (await players(version)).map((player) => ({
+    const rows = (await players(version, false)).map((player) => ({
       server: server.id,
       playerId: player.id,
       day: dayColumn(day),
@@ -236,7 +238,7 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     now,
     DAYS_PER_PASS,
   )) {
-    const rows = (await alliances(version)).map((alliance) => ({
+    const rows = (await alliances(version, false)).map((alliance) => ({
       server: server.id,
       tag: alliance.tag,
       day: dayColumn(day),
