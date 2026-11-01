@@ -163,6 +163,36 @@ Décisions prises en codant, sur le circuit des tickets 20 et 21 :
 
 Vérifié en local le 2026-10-26 (base Docker `optizzz_t22`) : règles et magasin du site sur Postgres (un état par Joueur, effacé au décochage, unités aux Admins seuls) ; l'onglet « État » rendu avec des états de démonstration (page temporaire, retirée), en clair, sombre et à 375 px. Pas essayé : la vraie extension dans un navigateur et le jeu (collect, relectures, vue « Partage » couverts par les tests seulement).
 
+## Statistiques des convois
+
+Décidé lors d'une session de cadrage (`/grill-me`) le 2026-11-01, d'après la maquette « C · Espace d'alliance · Convois (stats) » du canevas « Optizzz — maquettes du site », et réalisé le même jour.
+
+- **Où** : l'onglet « Convois » de l'Espace a un choix « Statistiques | Liste » (la liste est l'onglet d'avant), Statistiques par défaut. La vue, la période et le membre tiennent dans l'adresse (`?vue=liste`, `?periode=7`, `?membre=Noctis`). L'onglet porte le nombre de convois en route quand l'accès est ouvert sur l'appareil, rien sinon.
+- **Ce qui compte** : les convois **livrés**, à l'heure de leur livraison, une fois par empreinte, comme le Solde (`soldeOf`). Un convoi en route ne compte pas dans le livré (son arrivée lue dans une messagerie compte à sa place) ; il a sa tuile et son encart.
+- **Périodes** : 7, **30** (par défaut, comme la Priorité) ou 90 jours, comptés jusqu'à maintenant. Une période qui commence avant le plus vieux convoi connu le dit : « Convois connus depuis le 12/10 : avant, il peut en manquer. »
+- **Qui est membre** : les membres actuels de l'Espace. « Entre membres », « Flux principaux » et « Hors alliance » en dépendent ; un ancien membre compte hors alliance (dit sous « Hors alliance »).
+- **Couverture** : un encadré « 14 membres sur 18 envoient leurs convois » nomme ceux qui n'envoient pas « Convois » (d'après ce que chaque membre envoie aujourd'hui) : on ne compte que ce qu'ils échangent avec ceux qui l'envoient. Il disparaît quand tous envoient. Ces membres sont marqués « partiel » dans « Par membre ».
+- **Tuiles** : livré (nourriture et matériaux), convois livrés (et moyenne par jour), en route (quantité, arrivée du prochain), part entre membres, et « environ » ce qui est allé aux Demandes (convois rattachés, `demande-convoys`, dont l'arrivée est passée : relevés en route, d'où l'« environ »).
+- **Livré par jour** : barres empilées par jour de Paris (par semaine sur 90 jours), matériaux en ambre plein, nourriture en bleu hachuré, légende écrite (ADR 0003) ; le détail au survol. Sous 3 jours de convois, une note à la place, comme les autres graphiques (`site-refonte.md`).
+- **Par membre** : Membre · Livré · Reçu · Solde · Convois · Dernier. Le **Solde est reçu − livré**, comme la Priorité, en barre centrée sur zéro avec son signe écrit. Trié par livré, triable par chaque en-tête ; les membres sans convoi sur la période derrière « Afficher (7) » ; sur téléphone, Convois et Dernier masqués.
+- **En route** : les 3 prochains convois de l'alliance, lien vers la liste.
+- **Flux principaux** : les 8 plus gros échanges entre deux membres (nourriture + matériaux livrés), un sens par ligne (A → B et B → A à part), avec le nombre de convois.
+- **Hors alliance** : « Vers d'autres joueurs » et « Depuis d'autres joueurs », le total puis les 3 plus gros avec leur alliance actuelle (« Gargantua [C6P] ») et « N autres ». L'alliance vient de la liste publique joueur → alliance du serveur (export), chargée entière et la même pour tous : **demander au site l'alliance de quelques pseudos lui apprendrait avec qui l'alliance échange**. Sans cette liste, les pseudos seuls.
+- **Un membre choisi** : les tuiles deviennent les siennes (livré, reçu, Solde, convois, en route vers lui ou de lui), le graphique montre son livré et son reçu côte à côte, « Par membre » devient « Avec qui » (chaque joueur avec qui il a échangé, membre ou non : livré à, reçu de, Solde), flux et hors alliance se limitent à ses convois.
+- **Copier pour Discord** : un bloc Markdown dans le presse-papiers, rien n'est envoyé : « **Convois 4O4 · 30 jours** (du 02/10 au 01/11) », « Livré : 38,4 M (14,1 M nourriture · 24,3 M matériaux) · 412 convois », une ligne par membre triée par livré (« Noctis : livré 7,8 M · reçu 1,1 M · solde −6,7 M »), puis « (Grop, Lasius… n'envoient pas leurs convois) ». Il suit le membre choisi.
+- **Calcul** : dans le navigateur seulement, à partir des convois déjà ouverts pour l'onglet ; fonctions pures dans `apps/web/src/lib/envois/convoy-stats.ts` (+ test). Le site n'apprend rien de plus.
+- **Où l'on rattache aux Demandes** : `openDemandes` rend aussi les convois rattachés qu'il ouvre déjà ; « Pour les Demandes » les reprend, sans rien déchiffrer de plus.
+
+| Fichier                                                                          | Rôle                                                                                           |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `apps/web/src/lib/envois/convoy-stats.ts` (+ test)                               | Tuiles, jours ou semaines, par membre ou « Avec qui », flux, hors alliance, texte pour Discord |
+| `apps/web/src/lib/envois/convoy-view.ts` (+ test)                                | Vue, période et membre lus et écrits dans l'adresse                                            |
+| `apps/web/src/components/spaces/convoys-panel.tsx`                               | Onglet « Convois » : barre de choix, Statistiques ou Liste, copie                              |
+| `apps/web/src/components/spaces/convoy-stats-view.tsx`, `convoy-stats-chart.tsx` | Vue « Statistiques », graphique Recharts                                                       |
+| `apps/web/src/components/spaces/use-server-alliances.ts`                         | Alliance de chaque joueur, d'après la carte publique du serveur                                |
+
+Vérifié en local le 2026-11-01 avec une page de démonstration temporaire (convois inventés, retirée) : alliance entière, un membre choisi, 7, 30 et 90 jours (« Convois connus depuis le … »), la liste, l'adresse qui suit les choix ; l'alliance des autres joueurs lue dans la carte locale ; en clair, sombre et à 375 px. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte, ni le collage dans Discord.
+
 ## Tickets
 
 20 (le circuit et les Convois), 21 (Floods et « floods sur nous »), 22 (Chasses, Armée, Niveaux, Production, Partage fusionné), puis les Demandes (23, 24) et Discord (25, 26).

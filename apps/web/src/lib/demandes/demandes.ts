@@ -79,14 +79,17 @@ async function attachedConvoys(rows: readonly EnvoiRowInput[], keyring: Alliance
   return opened.filter((convoy) => convoy !== null);
 }
 
-/** The Demandes that open, each named after its requester among the members (« un ancien membre » otherwise). */
+/**
+ * The Demandes that open, each named after its requester among the members (« un ancien membre » otherwise), and the
+ * convoys attached to them (for the Convois statistics).
+ */
 export async function openDemandes(
   demandes: readonly ServedDemande[],
   envois: readonly EnvoiRowInput[],
   keyring: AllianceKeyring,
   members: readonly { playerId: number; pseudo: string }[],
   now: Date,
-): Promise<{ demandes: OpenedDemande[]; refused: number }> {
+): Promise<{ demandes: OpenedDemande[]; refused: number; convoys: DemandeConvoy[] }> {
   const crypto = envoiCrypto(keyring);
   const convoys = await attachedConvoys(envois, keyring);
   let refused = 0;
@@ -112,7 +115,7 @@ export async function openDemandes(
       }
     }),
   );
-  return { demandes: opened.filter((d) => d !== null), refused };
+  return { demandes: opened.filter((d) => d !== null), refused, convoys };
 }
 
 /**

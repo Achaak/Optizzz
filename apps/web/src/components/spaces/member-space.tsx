@@ -10,7 +10,8 @@ import { serverById } from "@optizzz/game/servers";
 import { isSentCategory, sendsLabel } from "@optizzz/game/site-links/envois";
 import { cn } from "cn";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { LockIcon, PlusIcon } from "~/components/icons";
 import { PageHeader } from "~/components/panel";
 import { CopyInvitation } from "~/components/spaces/copy-invitation";
@@ -27,6 +28,7 @@ import { Button } from "~/components/ui/button";
 import { shortDate } from "~/lib/short-date";
 import type { Absence } from "~/lib/spaces/absences";
 import { certify, excludeMember, grantAccess, withdrawAdmin } from "~/lib/spaces/access";
+import { CONVOYS_TAB } from "~/lib/envois/convoy-view";
 import { askExtensionForMembers } from "~/lib/spaces/extension-bridge";
 import { checkMembersList, membersCheckMessage } from "~/lib/spaces/members-check";
 import {
@@ -98,7 +100,12 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const envois = useSpaceEnvois(view, access.keyring);
   const demandes = useSpaceDemandes(view, access.keyring, envois.items);
   const versionHidden = useKeyHandover(view, access.keyring, keys.userId);
-  const [tab, setTab] = useState<Tab>("space");
+  // A link to the Convois tab (`?onglet=convois`) opens on it; the other tabs leave the address bare.
+  const params = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => (params.get("onglet") === CONVOYS_TAB ? "convoys" : "space"));
+  useEffect(() => {
+    if (tab !== "convoys" && window.location.search) window.history.replaceState(null, "", window.location.pathname);
+  }, [tab]);
   const server = serverById(view.space.server);
   const isAdmin = view.me.role === "admin";
   const canAct = isAdmin && view.me.keyStatus === "current" && access.keyring !== null && keys.pair !== null;
@@ -108,7 +115,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const pending = demandes.demandes?.filter((demande) => demande.status === "pending").length ?? 0;
   const counts: Partial<Record<Tab, number>> = {
     demandes: pending,
-    convoys: envois.convoys?.length ?? 0,
+    convoys: envois.convoys?.filter((c) => c.kind === "transit" && c.at > new Date().getTime()).length ?? 0,
     floods: envois.floods?.length ?? 0,
     space: isAdmin ? view.requests.length : 0,
   };
@@ -266,6 +273,10 @@ export function MemberSpace({ view }: { view: MemberView }) {
           convoys={envois.convoys}
           refused={envois.refused.convoys}
           members={view.members}
+          sends={envois.sends}
+          demandeConvoys={demandes.convoys}
+          server={view.space.server}
+          tag={view.space.tag}
           loading={envois.loading || (access.keyring !== null && envois.convoys === null)}
         />
       </div>

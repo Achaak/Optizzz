@@ -84,3 +84,10 @@ export const LockIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M8 11V7a4 4 0 0 1 8 0v4" />
   </Icon>
 );
+
+export const CopyIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <rect x="9" y="9" width="11" height="11" />
+    <path d="M5 15V5h10" />
+  </Icon>
+);

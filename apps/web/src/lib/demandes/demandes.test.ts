@@ -83,7 +83,7 @@ describe("the Demandes on a space page", () => {
   it("counts a Demande that does not open, or names another row, and leaves it out", async () => {
     const demande = await served(2, "pending", 0);
     const opened = await openDemandes([{ ...demande, playerId: 1 }], [], keyring, members, NOW);
-    expect(opened).toEqual({ demandes: [], refused: 1 });
+    expect(opened).toEqual({ demandes: [], refused: 1, convoys: [] });
   });
 
   it("groups them: to validate, waiting for convoys or covered, then finished, each requester's in their order", async () => {

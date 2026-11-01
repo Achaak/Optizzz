@@ -4,7 +4,7 @@
 // open, opened here with the Clé d'alliance, each with what the convoys attached to it cover (from the Envois). Making
 // one seals it here; deciding, cancelling and ordering change only what the site keeps in clear.
 import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
-import type { DemandeContent } from "@optizzz/game/site-links/demandes";
+import type { DemandeContent, DemandeConvoy } from "@optizzz/game/site-links/demandes";
 import { useEffect, useState } from "react";
 import { newDemande, openDemandes, type OpenedDemande } from "~/lib/demandes/demandes";
 import { api } from "~/trpc/react";
@@ -25,7 +25,11 @@ export function useSpaceDemandes(view: MemberView, keyring: AllianceKeyring | nu
   const decide = api.demandes.decide.useMutation({ onSuccess: refresh });
   const cancel = api.demandes.cancel.useMutation({ onSuccess: refresh });
   const reorder = api.demandes.reorder.useMutation({ onSettled: refresh });
-  const [opened, setOpened] = useState<{ demandes: OpenedDemande[]; refused: number } | null>(null);
+  const [opened, setOpened] = useState<{
+    demandes: OpenedDemande[];
+    refused: number;
+    convoys: DemandeConvoy[];
+  } | null>(null);
   const data = query.data;
 
   useEffect(() => {
@@ -48,6 +52,8 @@ export function useSpaceDemandes(view: MemberView, keyring: AllianceKeyring | nu
     error: query.error,
     demandes: keyring ? (opened?.demandes ?? null) : null,
     refused: opened?.refused ?? 0,
+    /** The convoys attached to a Demande, for the Convois statistics. */
+    convoys: keyring ? (opened?.convoys ?? null) : null,
     /** Seals a new Demande for the member's Joueur, and hands it to the site. */
     async make(content: DemandeContent) {
       if (!keyring) throw new Error("No Clé d'alliance");
