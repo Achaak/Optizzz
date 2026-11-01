@@ -6,6 +6,8 @@
 // docs/features/site-comptes-espaces.md and docs/features/site-envois.md.
 import { CONNECT_EXTENSION_PATH } from "@optizzz/game/site-links/extension-link";
 import { serverById } from "@optizzz/game/servers";
+import { chainRolesText } from "@optizzz/game/site-links/chain-roles";
+import { readChainSettings } from "@/features/tdc-chain/settings";
 import { SITE_ORIGIN } from "@/utils/site";
 import type { EnvoiCrypto } from "@optizzz/game/site-links/envois";
 import { STATE_CATEGORIES } from "@optizzz/game/site-links/envoi-states";
@@ -13,6 +15,7 @@ import {
   ACCOUNT_PATH,
   ALLIANCE_KEYS,
   SPACES_PATH,
+  type ChainRolesBridgeAnswer,
   type HandedKey,
   type MembersAnswer,
 } from "@optizzz/game/site-links/space-bridge";
@@ -69,6 +72,7 @@ interface Dependencies {
     | "floods"
     | "states"
     | "demandes"
+    | "chainRoles"
     | "prepareConvoy"
     | "levelsSeen"
   >;
@@ -178,6 +182,17 @@ export function accountService({ now, fetch, permitted, openConnectPage, openDis
     };
   }
 
+  /**
+   * « Reprendre les rôles de votre extension » (docs/features/site-chaine.md): the roles set in this server's chain, as
+   * the text of the space's record, for the page in this browser only; none while the chain only proposes them.
+   */
+  async function localChainRoles(serverId: string, spaceId: string): Promise<ChainRolesBridgeAnswer> {
+    const server = serverById(serverId);
+    if (!(await loadLink()) || !(await permitted()) || server?.id !== serverId) return { status: "unlinked" };
+    const { roles, keep } = await readChainSettings(new URL(server.origin).host);
+    return { status: "linked", record: roles && chainRolesText({ roles, keep }, spaceId) };
+  }
+
   /** The link script asks whether it may take a token: only after « Connecter mon Compte Optizzz ». */
   async function linkStart(): Promise<{ ok: boolean }> {
     return { ok: (await permitted()) && (await isLinkRequested(now())) };
@@ -211,6 +226,7 @@ export function accountService({ now, fetch, permitted, openConnectPage, openDis
     linkStart,
     linkToken,
     members,
+    localChainRoles,
     connect: openConnectPage,
     allowDiscord: openDiscordPage,
   };
@@ -258,6 +274,8 @@ export function answer(
     switch (message.action) {
       case "members":
         return service.members(message.server);
+      case "chain-roles":
+        return service.localChainRoles(message.server, message.spaceId);
       case "keys":
         return service.envois.receiveKeys({
           type: ALLIANCE_KEYS,
@@ -282,6 +300,8 @@ export function answer(
         return service.envois.states(message.origin);
       case "demandes":
         return service.envois.demandes(message.origin);
+      case "chain-roles":
+        return service.envois.chainRoles(message.origin);
       case "demande-convoy":
         return service.envois.prepareConvoy(message.origin, message.id, message.stock);
       case "levels-seen":

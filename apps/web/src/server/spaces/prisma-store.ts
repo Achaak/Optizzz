@@ -191,6 +191,25 @@ function transaction(tx: Prisma.TransactionClient, spaceId: string): SpaceTransa
         },
       });
     },
+    async chainRoles() {
+      const row = await tx.spaceChainRoles.findUnique({ where: { spaceId } });
+      return row && { blob: row.blob, revision: row.revision, savedAt: row.savedAt, savedBy: row.savedByPseudo };
+    },
+    async saveChainRoles(blob, expectedRevision, saved) {
+      const data = { blob, savedAt: saved.at, savedByPseudo: saved.by };
+      if (expectedRevision === 0) {
+        const created = await tx.spaceChainRoles.createMany({
+          data: [{ spaceId, revision: 1, ...data }],
+          skipDuplicates: true,
+        });
+        return created.count === 1 ? 1 : null;
+      }
+      const { count } = await tx.spaceChainRoles.updateMany({
+        where: { spaceId, revision: expectedRevision },
+        data: { ...data, revision: { increment: 1 } },
+      });
+      return count === 1 ? expectedRevision + 1 : null;
+    },
     async setRole(player, role) {
       await tx.spaceMember.update({ where: memberKey(spaceId, player), data: { role } });
     },

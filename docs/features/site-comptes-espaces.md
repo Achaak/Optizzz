@@ -55,6 +55,7 @@ En-tête : « Se connecter », ou « Mon compte » une fois connecté. Les pages
   - Membres : pseudo, rôle, membre depuis, état de la clé (« à jour », « à renvoyer ») ;
   - Demandes à rejoindre (Admins) ;
   - Alertes (Admins et Délégués) ;
+  - Chaîne : les rôles de la Chaîne de TDC, réglés par les Admins et Délégués (`site-chaine.md`) ;
   - Réglages : nom, « Quitter », et pour un Admin « Supprimer l'espace », en tapant son nom (tout est effacé, chiffré compris) ;
   - une note : les Envois arrivent à l'étape suivante (depuis le ticket 20 : onglet « Convois », ce que chaque membre envoie, « Accès changé le … par Pseudo (version N) », `site-envois.md`).
 - **Départs** (ticket 18) : un membre absent de la page Membres du jeu est signalé chez les Admins et Délégués dès la première lecture où il manque, avec « absent depuis le … » ; l'alerte s'efface s'il revient. Rien n'est retiré tout seul. Exclure est un clic d'Admin : l'accès est coupé, une nouvelle version de la Clé d'alliance est générée et scellée pour les membres restants ; les anciennes versions restent pour relire les anciennes données.

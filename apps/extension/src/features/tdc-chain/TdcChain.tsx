@@ -25,9 +25,13 @@ import {
   roleLabel,
   rungs,
   type Role,
-} from "./roles";
+} from "@optizzz/game/tdc-chain/roles";
 import { defaultFirstArrival, schedule } from "./schedule";
 import { readChainSettings, writeChainSettings } from "./settings";
+import { effectiveChain } from "./site-roles";
+import { useSiteChainRoles } from "./use-site-chain-roles";
+import { SITE_URL } from "@optizzz/game/site-links/site";
+import { SPACES_PATH } from "@optizzz/game/site-links/space-bridge";
 import { attackSlots } from "@optizzz/game/attack";
 import { distance, travelTime } from "@optizzz/game/travel";
 import { formatAmount, formatNumber } from "@optizzz/game/format/number-format";
@@ -87,6 +91,10 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
   const [mapSettings, setMapSettings] = useState<MapSettings | null>(null);
   const [myAttackSpeed, setMyAttackSpeed] = useState<number | null>(null);
   const [settings, updateSettings] = useStoredSettings(host, readChainSettings, writeChainSettings);
+  // The space's roles, set on optizzz.fr, when the extension can open them: they prevail, read-only here.
+  const siteRoles = useSiteChainRoles(origin);
+  const effective = useMemo(() => settings && effectiveChain(settings, siteRoles ?? null), [settings, siteRoles]);
+  const fromSite = effective?.fromSite ?? false;
   const [mode, setMode] = useState<"chain" | "transfer">("chain");
   const [transfer, setTransfer] = useState<{ from: number | null; to: number | null; amount: number | null }>({
     from: null,
@@ -152,9 +160,9 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
   );
 
   const fields = useMemo(() => members.map((m) => ({ id: m.id, field: m.huntingField })), [members]);
-  const storedRoles = settings?.roles;
+  const storedRoles = effective?.roles;
   const roles = useMemo(() => chainRoles(fields, storedRoles ?? null), [fields, storedRoles]);
-  const storedKeep = settings?.keep;
+  const storedKeep = effective?.keep;
   const keep = useMemo(
     () => new Map(Object.entries(storedKeep ?? {}).map(([id, field]) => [Number(id), field])),
     [storedKeep],
@@ -292,22 +300,35 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
 
       <section>
         <h3 className="optizzz-subtitle">Rôles</h3>
-        <div className="optizzz-toolbar">
-          <button
-            type="button"
-            onClick={() => updateSettings((s) => ({ ...s, roles: Object.fromEntries(proposeRoles(fields, MARGIN)) }))}
-            title="Les plus gros en greniers, puis un échelon par portée de l'échelon du dessus, les plus petits en chasseurs"
-          >
-            Proposer des rôles
-          </button>
-          {!settings.roles && (
-            <span className="optizzz-note">Rôles proposés d'après le TDC : modifiez-les ou gardez-les.</span>
-          )}
-        </div>
+        {fromSite && effective?.spaceId ? (
+          <p className="optizzz-callout">
+            Les rôles de votre alliance, réglés sur optizzz.fr par ses Admins et Délégués, avec le TDC à garder des
+            chasseurs.{" "}
+            <a href={`${SITE_URL}${SPACES_PATH}/${effective.spaceId}?onglet=chaine`} target="_blank" rel="noreferrer">
+              Modifier sur optizzz.fr
+            </a>
+          </p>
+        ) : (
+          <div className="optizzz-toolbar">
+            <button
+              type="button"
+              onClick={() => updateSettings((s) => ({ ...s, roles: Object.fromEntries(proposeRoles(fields, MARGIN)) }))}
+              title="Les plus gros en greniers, puis un échelon par portée de l'échelon du dessus, les plus petits en chasseurs"
+            >
+              Proposer des rôles
+            </button>
+            {!settings.roles && (
+              <span className="optizzz-note">Rôles proposés d'après le TDC : modifiez-les ou gardez-les.</span>
+            )}
+          </div>
+        )}
+        {effective?.note && <p className="optizzz-callout">{effective.note}</p>}
         {unassigned.length > 0 && (
           <p className="optizzz-callout optizzz-callout--warning">
             {unassigned.length === 1 ? "1 membre n'a" : `${String(unassigned.length)} membres n'ont`} pas encore de rôle
-            ({unassigned.map((m) => m.pseudo).join(", ")}) : hors chaîne tant que vous ne le choisissez pas.
+            ({unassigned.map((m) => m.pseudo).join(", ")}) : hors chaîne tant que{" "}
+            {fromSite ? "les Admins ou les Délégués ne le choisissent pas sur optizzz.fr" : "vous ne le choisissez pas"}
+            .
           </p>
         )}
         <div className="optizzz-scroll">
@@ -343,6 +364,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                         <select
                           value={roleKey(role)}
                           aria-label={`Rôle de ${m.pseudo}`}
+                          disabled={fromSite}
                           onChange={(e) => setRole(m.id, parseRoleValue(e.target.value))}
                         >
                           {roleOptions.map((option) => (
@@ -361,6 +383,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                             className="keep"
                             placeholder="—"
                             aria-label={`TDC à garder par ${m.pseudo}`}
+                            disabled={fromSite}
                             value={keep.get(m.id) ?? null}
                             onCommit={(field) => {
                               setKeep(m.id, field);
@@ -384,6 +407,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
         <RoleSharing
           members={members}
           roles={roles}
+          readOnly={fromSite}
           onImport={(imported) =>
             updateSettings((s) => ({
               ...s,
@@ -656,10 +680,13 @@ function PlanSummary({ transfers, pseudo }: { transfers: Transfer[]; pseudo: (id
 function RoleSharing({
   members,
   roles,
+  readOnly,
   onImport,
 }: {
   members: Member[];
   roles: ReadonlyMap<number, Role>;
+  /** The space's roles prevail: they are copied, never imported here. */
+  readOnly: boolean;
   onImport: (roles: Map<number, Role>) => void;
 }) {
   const [text, setText] = useState("");
@@ -702,9 +729,11 @@ function RoleSharing({
         <button type="button" onClick={() => void handleExport()}>
           Exporter
         </button>{" "}
-        <button type="button" onClick={handleImport} disabled={!text.trim()}>
-          Importer
-        </button>
+        {!readOnly && (
+          <button type="button" onClick={handleImport} disabled={!text.trim()}>
+            Importer
+          </button>
+        )}
       </div>
       {message && <p className="optizzz-note">{message}</p>}
     </details>

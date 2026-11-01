@@ -3,15 +3,21 @@
 // (@optizzz/game/site-links/space-bridge.ts):
 // - the requests for the last list of the game's Members page, which « Donner l'accès » checks and the departure
 //   alerts compare in an Admin's or Délégué's browser; the reply goes back to the page's origin alone;
+// - the roles of the extension's own chain, for « Reprendre les rôles de votre extension » (site-chaine.md);
 // - the Clé d'alliance the space page hands over once its access is open (never the private key), and
 //   « Se déconnecter », for the background to keep or forget it (docs/features/site-envois.md).
 import {
+  CHAIN_ROLES_REPLY,
   isAllianceKeysMessage,
+  isChainRolesAnswer,
+  isChainRolesRequest,
   isForgetKeysMessage,
   isMembersAnswer,
   isMembersRequest,
   MEMBERS_REPLY,
   SPACE_BRIDGE_ATTRIBUTE,
+  type ChainRolesBridgeAnswer,
+  type ChainRolesReply,
   type MembersAnswer,
   type MembersReply,
 } from "@optizzz/game/site-links/space-bridge";
@@ -46,6 +52,19 @@ export function runSpacePage({ win, send }: SpacePageDependencies): () => void {
     }
     if (isForgetKeysMessage(data)) {
       forward({ type: "optizzz-space", action: "forget" });
+      return;
+    }
+    if (isChainRolesRequest(data)) {
+      const { id, server, spaceId } = data;
+      send({ type: "optizzz-space", action: "chain-roles", server, spaceId })
+        .catch(() => null)
+        .then((reply) => {
+          const answer: ChainRolesBridgeAnswer = isChainRolesAnswer(reply) ? reply : { status: "unlinked" };
+          win.postMessage({ type: CHAIN_ROLES_REPLY, id, answer } satisfies ChainRolesReply, win.location.origin);
+        })
+        .catch((error: unknown) => {
+          console.error("[Optizzz] the chain's roles could not be handed to the page", error);
+        });
       return;
     }
     if (!isMembersRequest(data)) return;

@@ -1,7 +1,9 @@
+import { chainRolesText, type ChainRolesRecord } from "@optizzz/game/site-links/chain-roles";
 import { NO_ENVOIS, type EnvoiCrypto } from "@optizzz/game/site-links/envois";
 import { ALLIANCE_KEYS, type HandedKey } from "@optizzz/game/site-links/space-bridge";
 import { beforeEach, describe, expect, it } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
+import { loadChainRoles } from "@/data/chain-roles";
 import { keepConvoyMessages } from "@/data/convoy-history";
 import { storeConvoys, storeIncomingConvoys } from "@/data/convoys";
 import { loadKeys, storeKeys } from "@/data/envois";
@@ -66,6 +68,7 @@ function fakeSite() {
     detail?: string;
   }[] = [];
   let nextId = 1;
+  let chainRoles: { spaceId: string; blob: string; revision: number }[] = [];
   const fetch = (url: string, init: RequestInit) => {
     const { pathname, searchParams } = new URL(url);
     const method = init.method ?? "GET";
@@ -98,6 +101,7 @@ function fakeSite() {
           ],
         }),
       );
+    if (pathname === "/api/extension/chain-roles") return Promise.resolve(Response.json({ spaces: chainRoles }));
     if (pathname === "/api/extension/envoi-settings") {
       settings.set(body?.playerId as number, body?.categories as string[]);
       return Promise.resolve(new Response(null, { status: 204 }));
@@ -146,6 +150,7 @@ function fakeSite() {
     setVersion: (v: number) => (version = v),
     setInSpace: (v: boolean) => (inSpace = v),
     setOffline: (v: boolean) => (offline = v),
+    setChainRoles: (rows: typeof chainRoles) => (chainRoles = rows),
   };
 }
 
@@ -498,6 +503,46 @@ describe("the relève", () => {
         url: `${S5}/commerce.php`,
       },
     ]);
+  });
+
+  it("takes up the chain's roles of the space, opened for the game's pages, and forgets them with the key", async () => {
+    const record: ChainRolesRecord = { roles: { "1": { kind: "granary" } }, keep: { "2": 1_500 } };
+    const blob = await fakeCrypto([KEY_1]).encrypt(chainRolesText(record, SPACE));
+    site.setChainRoles([{ spaceId: SPACE, blob, revision: 3 }]);
+    expect((await service().chainRoles(S5)).problem).toBe("no-space");
+    await service().releve("page");
+    // Without the Clé d'alliance, nothing is read.
+    expect(site.calls.some((c) => c.path === "/api/extension/chain-roles")).toBe(false);
+    expect((await service().chainRoles(S5)).problem).toBe("none");
+
+    await storeKeys(SPACE, [KEY_1], null);
+    await service().releve("alarm");
+    expect(await service().chainRoles(S5)).toEqual({ problem: null, record, spaceId: SPACE });
+
+    // Encrypted with a version not held (after an exclusion): the local roles stay, with a note.
+    site.setChainRoles([
+      { spaceId: SPACE, blob: await fakeCrypto([KEY_2]).encrypt(chainRolesText(record, SPACE)), revision: 4 },
+    ]);
+    await service().releve("alarm");
+    expect((await service().chainRoles(S5)).problem).toBe("no-key");
+
+    // Roles of another space, filed by the site under this one: refused.
+    site.setChainRoles([
+      { spaceId: SPACE, blob: await fakeCrypto([KEY_1]).encrypt(chainRolesText(record, "other")), revision: 5 },
+    ]);
+    await service().releve("alarm");
+    expect((await service().chainRoles(S5)).problem).toBe("no-key");
+
+    site.setChainRoles([]);
+    await service().releve("alarm");
+    expect((await service().chainRoles(S5)).problem).toBe("none");
+
+    site.setChainRoles([{ spaceId: SPACE, blob, revision: 6 }]);
+    await service().releve("alarm");
+    await service().forget();
+    // « Se déconnecter » forgets the spaces too: the chain is the player's again.
+    expect(await loadChainRoles(SPACE)).toBeNull();
+    expect((await service().chainRoles(S5)).problem).toBe("no-space");
   });
 
   it("tells the game's page why it shows nothing", async () => {

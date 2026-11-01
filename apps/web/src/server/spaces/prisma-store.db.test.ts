@@ -395,4 +395,19 @@ describe.skipIf(!url)("member departures on Postgres", () => {
     await service.saveDiscord(a.userId, { spaceId, blob: blob(4), expectedRevision: 2 });
     expect((await member(a.userId)).discord?.refusal).toBeNull();
   });
+  it("keeps the chain's roles with a revision and who saved them, for every member's extension", async () => {
+    // Encrypted data naming version 2, the space's newest: the site reads no more than that.
+    const blob = (fill: number) => toBase64Url(new Uint8Array([1, 0, 0, 0, 2, ...new Array<number>(45).fill(fill)]));
+    expect(await service.saveChainRoles(a.userId, { spaceId, blob: blob(1), expectedRevision: 0 })).toEqual({
+      revision: 1,
+    });
+    const results = await Promise.allSettled([
+      service.saveChainRoles(a.userId, { spaceId, blob: blob(2), expectedRevision: 1 }),
+      service.saveChainRoles(b.userId, { spaceId, blob: blob(3), expectedRevision: 1 }),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual(["fulfilled", "rejected"]);
+    const saved = (await member(a.userId)).chainRoles;
+    expect(saved).toMatchObject({ revision: 2 });
+    expect(await service.chainRolesForExtension(b.userId)).toEqual([{ spaceId, blob: saved?.blob, revision: 2 }]);
+  });
 });

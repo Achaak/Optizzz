@@ -1,5 +1,5 @@
 import { rolesTopDown, type MemberBubble } from "@/features/tdc-chain/role-styles";
-import { roleKey, roleLabel } from "@/features/tdc-chain/roles";
+import { roleKey, roleLabel } from "@optizzz/game/tdc-chain/roles";
 import { formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
 import type { MemberTrip } from "./trips";

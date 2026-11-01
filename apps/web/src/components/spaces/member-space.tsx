@@ -43,6 +43,7 @@ import { withCertificates, withVerified } from "~/lib/spaces/trust-store";
 import { api } from "~/trpc/react";
 import { AdminExchange } from "./admin-exchange";
 import { CodeExchange } from "./code-exchange";
+import { ChainPanel } from "./chain-panel";
 import { ConvoysPanel } from "./convoys-panel";
 import { DemandesPanel } from "./demandes-panel";
 import { DiscordPanel } from "./discord-panel";
@@ -82,12 +83,16 @@ function keyChanged(member: Member, access: SpaceAccess, view: MemberView): bool
   return view.me.role === "admin" && !access.trusted.members.includes(member.publicKey);
 }
 
+/** `?onglet=chaine`: the extension's « Modifier sur optizzz.fr » opens the Chaîne tab. */
+const CHAIN_TAB = "chaine";
+
 const TABS = [
   { value: "space", label: "Espace" },
   { value: "state", label: "État" },
   { value: "demandes", label: "Demandes" },
   { value: "convoys", label: "Convois" },
   { value: "floods", label: "Floods" },
+  { value: "chain", label: "Chaîne" },
   { value: "discord", label: "Discord" },
   { value: "settings", label: "Réglages" },
 ] as const;
@@ -105,6 +110,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const params = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
     const asked = params.get("onglet");
+    if (asked === CHAIN_TAB) return "chain";
     return asked === CONVOYS_TAB ? "convoys" : asked === FLOODS_TAB ? "floods" : "space";
   });
   useEffect(() => {
@@ -245,6 +251,14 @@ export function MemberSpace({ view }: { view: MemberView }) {
       </div>
     );
 
+  if (tab === "chain")
+    return (
+      <div className="space-y-6">
+        {header}
+        <ChainPanel view={view} keyring={access.keyring} />
+      </div>
+    );
+
   if (tab === "discord")
     return (
       <div className="space-y-6">
@@ -329,7 +343,8 @@ export function MemberSpace({ view }: { view: MemberView }) {
       <p className="text-sm text-muted-foreground">
         L&apos;état des membres (production, armée, chasses, niveaux et chantiers), leurs Demandes, leurs convois et
         leurs floods sont dans les onglets «&nbsp;État&nbsp;», «&nbsp;Demandes&nbsp;», «&nbsp;Convois&nbsp;» et
-        «&nbsp;Floods&nbsp;»{isAdmin ? ", le message Discord dans « Discord »" : ""}, les réglages de l&apos;espace dans
+        «&nbsp;Floods&nbsp;», les rôles de la chaîne de TDC dans «&nbsp;Chaîne&nbsp;»
+        {isAdmin ? ", le message Discord dans « Discord »" : ""}, les réglages de l&apos;espace dans
         «&nbsp;Réglages&nbsp;».
       </p>
     </div>

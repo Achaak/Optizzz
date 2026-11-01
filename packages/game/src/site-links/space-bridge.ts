@@ -77,6 +77,55 @@ export function isMembersReply(value: unknown): value is MembersReply {
   return m?.type === MEMBERS_REPLY && typeof m.id === "string" && isMembersAnswer(m.answer);
 }
 
+// « Reprendre les rôles de votre extension » (docs/features/site-chaine.md): while a space has no chain roles yet, an
+// Admin's or Délégué's page asks the linked extension for the roles set in its own chain, for the space's server. The
+// record comes as the text it is encrypted from (site-links/chain-roles.ts, for that space), so the page reads it with
+// the same checks.
+export const CHAIN_ROLES_REQUEST = "optizzz:chain-roles-request";
+export const CHAIN_ROLES_REPLY = "optizzz:chain-roles-reply";
+
+export interface ChainRolesRequest {
+  type: typeof CHAIN_ROLES_REQUEST;
+  id: string;
+  server: string;
+  spaceId: string;
+}
+
+/** `record`: null when the chain has no roles set (only proposed from the fields). */
+export type ChainRolesBridgeAnswer = { status: "unlinked" } | { status: "linked"; record: string | null };
+
+export interface ChainRolesReply {
+  type: typeof CHAIN_ROLES_REPLY;
+  id: string;
+  answer: ChainRolesBridgeAnswer;
+}
+
+export function isChainRolesRequest(value: unknown): value is ChainRolesRequest {
+  const m = record(value);
+  return (
+    m?.type === CHAIN_ROLES_REQUEST &&
+    typeof m.id === "string" &&
+    m.id.length > 0 &&
+    m.id.length <= 64 &&
+    typeof m.server === "string" &&
+    /^s\d{1,2}$/.test(m.server) &&
+    typeof m.spaceId === "string" &&
+    m.spaceId.length > 0 &&
+    m.spaceId.length <= 64
+  );
+}
+
+export function isChainRolesAnswer(value: unknown): value is ChainRolesBridgeAnswer {
+  const m = record(value);
+  if (m?.status === "unlinked") return true;
+  return m?.status === "linked" && (m.record === null || typeof m.record === "string");
+}
+
+export function isChainRolesReply(value: unknown): value is ChainRolesReply {
+  const m = record(value);
+  return m?.type === CHAIN_ROLES_REPLY && typeof m.id === "string" && isChainRolesAnswer(m.answer);
+}
+
 // The Clé d'alliance for the Envois (docs/features/site-envois.md, « La Clé d'alliance dans l'extension »): when the
 // access opens on a space page, the page hands the extension every version it holds (never the private key), for as
 // long as the site keeps its own: the browser's session (`expiresAt` null), or the 30 days of « Se souvenir sur cet

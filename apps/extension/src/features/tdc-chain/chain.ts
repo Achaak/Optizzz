@@ -1,6 +1,6 @@
 // Who can take hunting field from whom, and in which order: see docs/features/chaine-tdc.md.
 import { inRange, maxTake, takeAtLimit } from "@optizzz/game/attack";
-import { rungs, type Role } from "./roles";
+import { rungs, type Role } from "@optizzz/game/tdc-chain/roles";
 
 /** Attacker by target: what a won attack takes, or null when out of range with the margin (or the same member). */
 export function takeMatrix(members: readonly { field: number }[], margin: number): (number | null)[][] {

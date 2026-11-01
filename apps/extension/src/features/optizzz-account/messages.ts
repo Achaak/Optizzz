@@ -43,7 +43,9 @@ export type LinkMessage =
 export type SpaceMessage =
   | { type: "optizzz-space"; action: "members"; server: string }
   | { type: "optizzz-space"; action: "keys"; spaceId: string; keys: HandedKey[]; expiresAt: number | null }
-  | { type: "optizzz-space"; action: "forget" };
+  | { type: "optizzz-space"; action: "forget" }
+  /** « Reprendre les rôles de votre extension »: the roles set in the chain, for a space of this server. */
+  | { type: "optizzz-space"; action: "chain-roles"; server: string; spaceId: string };
 
 /**
  * From the game's pages: one opened (the relève), commerce.php asking for the alliance's convoys to it, and Armee.php,
@@ -51,7 +53,7 @@ export type SpaceMessage =
  */
 export type EnvoiMessage =
   | { type: "optizzz-envois"; action: "page-open" }
-  | { type: "optizzz-envois"; action: "incoming" | "floods" | "states" | "demandes"; origin: string }
+  | { type: "optizzz-envois"; action: "incoming" | "floods" | "states" | "demandes" | "chain-roles"; origin: string }
   /** « Envoyer un convoi » on a Demande: what to fill commerce.php's form with, within the player's stock. */
   | { type: "optizzz-envois"; action: "demande-convoy"; origin: string; id: string; stock: Resources | null }
   /** construction.php or laboratoire.php: the levels and works it shows, to close the Joueur's Demandes reached. */
@@ -121,6 +123,7 @@ export function isEnvoiMessage(message: unknown): message is EnvoiMessage {
     case "floods":
     case "states":
     case "demandes":
+    case "chain-roles":
       return true;
     case "demande-convoy":
       return isDemandeId(m.id) && isStock(m.stock);
@@ -142,6 +145,7 @@ export function isSpaceMessage(message: unknown): message is SpaceMessage {
   if (m?.type !== "optizzz-space") return false;
   if (m.action === "members") return typeof m.server === "string";
   if (m.action === "forget") return true;
+  if (m.action === "chain-roles") return typeof m.server === "string" && typeof m.spaceId === "string";
   return (
     m.action === "keys" &&
     typeof m.spaceId === "string" &&

@@ -1,6 +1,6 @@
 import { storage } from "wxt/utils/storage";
 import type { RoleStyles } from "./role-styles";
-import type { Role } from "./roles";
+import type { Role } from "@optizzz/game/tdc-chain/roles";
 
 /** The chain, stored per server in the browser; keyed by player id. */
 export interface ChainSettings {

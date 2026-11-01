@@ -4,6 +4,10 @@ import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
 import { toBase64Url } from "@optizzz/crypto/encoding";
 import {
   ALLIANCE_KEYS,
+  CHAIN_ROLES_REQUEST,
+  isChainRolesReply,
+  type ChainRolesBridgeAnswer,
+  type ChainRolesRequest,
   FORGET_KEYS,
   isMembersReply,
   MEMBERS_REQUEST,
@@ -70,5 +74,35 @@ export function askExtensionForMembers(server: string, timeoutMs = TIMEOUT_MS): 
     const timer = setTimeout(() => done(null), ready ? timeoutMs : timeoutMs / 2);
     window.addEventListener("message", listener);
     window.postMessage({ type: MEMBERS_REQUEST, id, server } satisfies MembersRequest, window.location.origin);
+  });
+}
+
+/**
+ * « Reprendre les rôles de votre extension » (docs/features/site-chaine.md): the roles set in the linked extension's
+ * chain for this server, as the text of the space's record. Null when no extension answers.
+ */
+export function askExtensionForChainRoles(
+  server: string,
+  spaceId: string,
+  timeoutMs = TIMEOUT_MS,
+): Promise<ChainRolesBridgeAnswer | null> {
+  const id = crypto.randomUUID();
+  return new Promise((resolve) => {
+    const done = (answer: ChainRolesBridgeAnswer | null) => {
+      window.removeEventListener("message", listener);
+      clearTimeout(timer);
+      resolve(answer);
+    };
+    const listener = (event: MessageEvent) => {
+      if (event.source !== window || event.origin !== window.location.origin) return;
+      if (isChainRolesReply(event.data) && event.data.id === id) done(event.data.answer);
+    };
+    const ready = document.documentElement.hasAttribute(SPACE_BRIDGE_ATTRIBUTE);
+    const timer = setTimeout(() => done(null), ready ? timeoutMs : timeoutMs / 2);
+    window.addEventListener("message", listener);
+    window.postMessage(
+      { type: CHAIN_ROLES_REQUEST, id, server, spaceId } satisfies ChainRolesRequest,
+      window.location.origin,
+    );
   });
 }

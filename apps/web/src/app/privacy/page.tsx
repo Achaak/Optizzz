@@ -110,6 +110,12 @@ export default function PrivacyPage() {
           effacée 90 jours après.
         </p>
         <p>
+          Rôles de la Chaîne de TDC&nbsp;: les Admins et les Délégués d&apos;un espace y règlent qui est grenier,
+          passeur ou chasseur, et ce que chaque chasseur garde. Ces rôles sont chiffrés dans leur navigateur avec la Clé
+          d&apos;alliance&nbsp;: le site les garde sans pouvoir les lire, avec en clair le pseudo de qui les a
+          enregistrés et la date. L&apos;extension de chaque membre les relève, chiffrés, et les ouvre elle-même.
+        </p>
+        <p>
           Discord&nbsp;: un Admin d&apos;un espace peut y enregistrer l&apos;adresse du webhook du salon Discord de
           l&apos;alliance et choisir ce qui y est annoncé (aujourd&apos;hui les convois et les floods, sans l&apos;armée
           envoyée ; rien d&apos;avance). L&apos;adresse et ce choix sont chiffrés dans son navigateur avec la Clé

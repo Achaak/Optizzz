@@ -87,6 +87,17 @@ interface DiscordRefusal {
   pseudo: string;
 }
 
+/**
+ * The TDC chain's roles of the space, encrypted with its Clé d'alliance (src/lib/spaces/chain-roles.ts); who saved
+ * them and when, in clear, for « Enregistrés … par Pseudo ».
+ */
+export interface ChainRolesRow {
+  blob: string;
+  revision: number;
+  savedAt: Date;
+  savedBy: string;
+}
+
 /** What one space's operations read and write, inside one transaction that holds the space. */
 export interface SpaceTransaction {
   space(): Promise<SpaceRow | null>;
@@ -117,6 +128,9 @@ export interface SpaceTransaction {
   saveDiscord(blob: string, expectedRevision: number): Promise<number | null>;
   /** Keeps a refusal reported for `revision`, if it is still the webhook's revision. */
   reportDiscordRefusal(revision: number, refusal: DiscordRefusal): Promise<void>;
+  chainRoles(): Promise<ChainRolesRow | null>;
+  /** Writes the roles if their revision is still `expectedRevision` (0: none yet); the new revision, or null. */
+  saveChainRoles(blob: string, expectedRevision: number, saved: { at: Date; by: string }): Promise<number | null>;
   setRole(player: PlayerRef, role: SpaceRole): Promise<void>;
   removeMember(player: PlayerRef): Promise<void>;
   addCertificates(blobs: string[]): Promise<void>;

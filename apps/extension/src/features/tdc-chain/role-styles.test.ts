@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CHART_COLORS } from "@/theme";
 import { bubbleOf, memberBubbles, rolesTopDown, styleOf } from "./role-styles";
-import type { Role } from "./roles";
+import type { Role } from "@optizzz/game/tdc-chain/roles";
 
 const granary: Role = { kind: "granary" };
 const hunter: Role = { kind: "hunter" };

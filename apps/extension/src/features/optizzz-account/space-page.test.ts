@@ -1,6 +1,8 @@
 import {
   ALLIANCE_KEYS,
   FORGET_KEYS,
+  CHAIN_ROLES_REPLY,
+  CHAIN_ROLES_REQUEST,
   MEMBERS_REPLY,
   MEMBERS_REQUEST,
   SPACE_BRIDGE_ATTRIBUTE,
@@ -80,5 +82,17 @@ describe("the space script on an Alliance Space page", () => {
         window.location.origin,
       );
     });
+  });
+
+  it("hands the page the roles of the extension's own chain, for « Reprendre les rôles de votre extension »", async () => {
+    const { send, posted } = start({ status: "linked", record: '{"v":1}' });
+    request({ data: { type: CHAIN_ROLES_REQUEST, id: "r2", server: "s5", spaceId: "abc" } });
+    await vi.waitFor(() => {
+      expect(posted).toHaveBeenCalledWith(
+        { type: CHAIN_ROLES_REPLY, id: "r2", answer: { status: "linked", record: '{"v":1}' } },
+        window.location.origin,
+      );
+    });
+    expect(send).toHaveBeenCalledWith({ type: "optizzz-space", action: "chain-roles", server: "s5", spaceId: "abc" });
   });
 });

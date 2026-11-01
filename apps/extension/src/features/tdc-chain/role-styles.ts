@@ -1,6 +1,6 @@
 // Colour and size of each chain role's bubble on the alliance map, chosen in the chain. See docs/features/chaine-tdc.md.
 import { CHART_COLORS } from "@/theme";
-import { chainRoles, roleKey, type Role } from "./roles";
+import { chainRoles, roleKey, type Role } from "@optizzz/game/tdc-chain/roles";
 
 export type BubbleSize = "small" | "medium" | "large";
 

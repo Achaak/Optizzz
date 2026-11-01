@@ -279,7 +279,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         const me = members.find((m) => m.userId === userId);
         if (me) {
           const isAdmin = me.role === "admin";
-          const [requests, certificates, sealed, absenceAlerts, alliance, discord] = await Promise.all([
+          const [requests, certificates, sealed, absenceAlerts, alliance, discord, chainRoles] = await Promise.all([
             isAdmin ? tx.requests() : Promise.resolve([]),
             tx.certificates(),
             // Still the older versions while a newer one waits to be sent: older data stays readable.
@@ -287,6 +287,7 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
             me.role === "member" ? Promise.resolve(null) : tx.absenceAlerts(),
             store.exportAlliance(me),
             isAdmin ? tx.discord() : Promise.resolve(null),
+            tx.chainRoles(),
           ]);
           return {
             kind: "member" as const,
@@ -338,6 +339,8 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
                   ? { status: discord.refusal.status, at: discord.refusal.at, pseudo: discord.refusal.pseudo }
                   : null,
             },
+            /** Every member: the chain's roles encrypted with the Clé d'alliance (src/lib/spaces/chain-roles.ts). */
+            chainRoles,
           };
         }
         const [key, linked, players, requests] = await Promise.all([
@@ -629,6 +632,38 @@ export function spaceService(store: SpaceStore, now: () => Date = () => new Date
         spaceIds.map((spaceId) =>
           inExistingSpace(spaceId, async (tx) => {
             const row = await tx.discord();
+            return row && { spaceId, blob: row.blob, revision: row.revision };
+          }),
+        ),
+      );
+      return rows.filter((row) => row !== null);
+    },
+
+    /**
+     * The TDC chain's roles (docs/features/site-chaine.md), encrypted in an Admin's or a Délégué's browser with the
+     * newest version of the Clé d'alliance: written if the revision is still the one they read (0 when there is none
+     * yet), with who saved them and when.
+     */
+    async saveChainRoles(userId: string, input: { spaceId: string; blob: string; expectedRevision: number }) {
+      if (!ALLIANCE_DATA.test(input.blob) || !Number.isInteger(input.expectedRevision) || input.expectedRevision < 0)
+        throw invalid();
+      return inExistingSpace(input.spaceId, async (tx) => {
+        const versions = await tx.versions();
+        const me = actor(await tx.members(), versions, userId, { admin: false, alerts: true });
+        if (dataKeyVersion(input.blob) !== Math.max(0, ...versions)) throw KEY_CHANGED();
+        const revision = await tx.saveChainRoles(input.blob, input.expectedRevision, { at: now(), by: me.pseudo });
+        if (revision === null) throw RELOAD();
+        return { revision };
+      });
+    },
+
+    /** For the extension of every member: the chain's roles of each of the account's spaces that has some, encrypted. */
+    async chainRolesForExtension(userId: string) {
+      const spaceIds = [...new Set((await store.membershipsOf(userId)).map((m) => m.spaceId))];
+      const rows = await Promise.all(
+        spaceIds.map((spaceId) =>
+          inExistingSpace(spaceId, async (tx) => {
+            const row = await tx.chainRoles();
             return row && { spaceId, blob: row.blob, revision: row.revision };
           }),
         ),

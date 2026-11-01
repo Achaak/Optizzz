@@ -1,12 +1,14 @@
 // The Alliance Spaces for the signed-in account (src/server/spaces/space-service.ts holds the rules). The site only
 // ever receives what browsers sealed and signed: public keys, locked private keys, sealed Clés d'alliance, certificates,
-// the encrypted trust list, and the absence alerts and the Discord webhook encrypted with the Clé d'alliance. Apart
-// from them, the reminders' webhook, which the site reads to post content-free reminders (ADR 0005, « Discord »).
+// the encrypted trust list, and the absence alerts, the Discord webhook and the chain's roles encrypted with the Clé
+// d'alliance. Apart from them, the reminders' webhook, which the site reads to post content-free reminders (ADR 0005,
+// « Discord »).
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { SpaceError } from "~/server/spaces/space-service";
 import { reminders } from "~/server/reminders/service";
+import { allianceRoster } from "~/server/queries";
 import { spaces } from "~/server/spaces/service";
 
 const CODES = {
@@ -108,6 +110,17 @@ export const spacesRouter = createTRPCRouter({
   saveDiscord: protectedProcedure
     .input(spaceId.extend({ blob: text(200_000), expectedRevision: z.number().int() }))
     .mutation(({ ctx, input }) => run(() => spaces.saveDiscord(ctx.userId, input))),
+  /** The alliance's members from the export (public data), for the space's members: the chain's roster. */
+  chainRoster: protectedProcedure.input(spaceId).query(({ ctx, input }) =>
+    run(async () => {
+      const view = await spaces.view(ctx.userId, input.spaceId);
+      if (view.kind !== "member") throw new TRPCError({ code: "FORBIDDEN" });
+      return allianceRoster(view.space.server, view.space.tag);
+    }),
+  ),
+  saveChainRoles: protectedProcedure
+    .input(spaceId.extend({ blob: text(200_000), expectedRevision: z.number().int() }))
+    .mutation(({ ctx, input }) => run(() => spaces.saveChainRoles(ctx.userId, input))),
   /** The site's own reminders on Discord (src/server/reminders/): a second webhook, which the site reads. Admins. */
   reminders: protectedProcedure
     .input(spaceId)

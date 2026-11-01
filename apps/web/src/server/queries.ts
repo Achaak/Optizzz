@@ -277,6 +277,15 @@ export function findAlliance(server: string, tag: string) {
   return db.alliance.findFirst({ where: { server, tag: { equals: tag, mode: "insensitive" } } });
 }
 
+/** The alliance's members as the latest export shows them, for the chain's roles of a space (site-chaine.md). */
+export function allianceRoster(server: string, tag: string) {
+  return db.player.findMany({
+    where: { server, alliance: { equals: tag, mode: "insensitive" } },
+    select: { id: true, pseudo: true, field: true, onHoliday: true, isBanned: true },
+    orderBy: { field: "desc" },
+  });
+}
+
 /** `field` is the alliance's TDC now, for its rank among the server's alliances. */
 export async function alliancePage(server: string, tag: string, field: number) {
   const [members, days, journal, ranks, above, serverField] = await Promise.all([

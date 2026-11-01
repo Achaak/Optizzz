@@ -11,8 +11,10 @@ import { refreshLevels } from "@/data/levels";
 import { NumberField } from "@/utils/NumberField";
 import { useStoredSettings } from "@/utils/useStoredSettings";
 import { memberBubbles, rolesTopDown, type MemberBubble } from "@/features/tdc-chain/role-styles";
-import { roleKey, roleLabel } from "@/features/tdc-chain/roles";
+import { roleKey, roleLabel } from "@optizzz/game/tdc-chain/roles";
 import { readChainSettings, watchChainSettings, type ChainSettings } from "@/features/tdc-chain/settings";
+import { effectiveChain } from "@/features/tdc-chain/site-roles";
+import { useSiteChainRoles } from "@/features/tdc-chain/use-site-chain-roles";
 
 /** One bubble per role in use, from the granaries down. */
 function legend(bubbles: ReadonlyMap<number, MemberBubble>): MemberBubble[] {
@@ -45,6 +47,12 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
   const [settings, updateSettings] = useStoredSettings(host, readSettings, writeSettings);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [chainSettings, setChainSettings] = useState<ChainSettings | null>(null);
+  // The space's roles, set on optizzz.fr, prevail over the chain's when the extension can open them.
+  const siteRoles = useSiteChainRoles(origin);
+  const chainRolesShown = useMemo(
+    () => chainSettings && effectiveChain(chainSettings, siteRoles ?? null).roles,
+    [chainSettings, siteRoles],
+  );
 
   useEffect(() => {
     if (!chain) return;
@@ -83,8 +91,8 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
 
   const showRoles = chain && settings?.showRoles === true;
   const bubbles = useMemo(
-    () => (showRoles && chainSettings ? memberBubbles(members, chainSettings.roles, chainSettings.styles) : null),
-    [showRoles, chainSettings, members],
+    () => (showRoles && chainSettings ? memberBubbles(members, chainRolesShown ?? null, chainSettings.styles) : null),
+    [showRoles, chainSettings, chainRolesShown, members],
   );
 
   const shared = useSharedAttackSpeeds(origin, allianceTag, members, sharing);
@@ -195,7 +203,7 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
           {bubbles && (
             <span className="optizzz-note">
               Couleurs et tailles réglables dans <a href="#chaine">Chaîne</a>
-              {!chainSettings?.roles && " ; rôles proposés d'après le TDC tant qu'ils n'y sont pas choisis"}.
+              {!chainRolesShown && " ; rôles proposés d'après le TDC tant qu'ils n'y sont pas choisis"}.
             </span>
           )}
         </div>

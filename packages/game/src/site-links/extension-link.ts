@@ -37,6 +37,8 @@ export const EXTENSION_API = {
    * status }`: Discord refused a message (docs/features/site-discord.md).
    */
   discord: "/api/extension/discord",
+  /** GET with the token: the chain's roles of each of the account's spaces, encrypted (docs/features/site-chaine.md). */
+  chainRoles: "/api/extension/chain-roles",
   /**
    * GET with the token, `?space=…&since=…`: the relève of a space's Demandes; POST `{ server, playerId, close }`: the
    * Demandes the Joueur's game shows reached (docs/features/site-demandes.md).

@@ -2,6 +2,9 @@ import { loadPlayersExport } from "@/data/exports";
 import { loadLevelsOf, unknownLevelsHint } from "@/data/levels";
 import { readLoggedInPseudo, readMembersHuntingField } from "@optizzz/game/pages/alliance";
 import { readChainSettings, watchChainSettings, type ChainSettings } from "@/features/tdc-chain/settings";
+import { effectiveChain } from "@/features/tdc-chain/site-roles";
+import { followSiteChainRoles } from "@/features/tdc-chain/site-roles-source";
+import type { ChainRolesAnswer } from "@/features/optizzz-account/envois";
 import type { Feature } from "../feature";
 import { isEnabled } from "../toggles";
 import {
@@ -49,6 +52,8 @@ export const membersColumns: Feature = {
           : { byPseudo: null, missing: exportMissing };
 
     let chain: ChainSettings | null = chainSettings;
+    // The space's roles, set on optizzz.fr, prevail over the chain's when the extension can open them.
+    let site: ChainRolesAnswer | null = null;
     const style = document.createElement("style");
     style.textContent = MEMBERS_COLUMNS_STYLE;
     document.head.append(style);
@@ -58,7 +63,10 @@ export const membersColumns: Feature = {
       if (document.querySelector(`#tabMembresAlliance .${COLUMN_CLASS}`)) return;
       const roles =
         chain && playersExport
-          ? rolesOfMembers(playersExport.players, myPseudo, readMembersHuntingField(document), chain)
+          ? rolesOfMembers(playersExport.players, myPseudo, readMembersHuntingField(document), {
+              roles: effectiveChain(chain, site).roles,
+              styles: chain.styles,
+            })
           : undefined;
       addMembersColumns(document, { myPseudo, trips, roles }, new Date());
     };
@@ -74,6 +82,12 @@ export const membersColumns: Feature = {
         apply();
       });
       ctx.onInvalidated(unwatch);
+      const unfollow = followSiteChainRoles(location.origin, (answer) => {
+        site = answer;
+        removeMembersColumns(document);
+        apply();
+      });
+      ctx.onInvalidated(unfollow);
     }
   },
 };

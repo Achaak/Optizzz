@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bridge, planChain, planTransfer, takeMatrix } from "./chain";
-import type { Role } from "./roles";
+import type { Role } from "@optizzz/game/tdc-chain/roles";
 
 describe("takeMatrix", () => {
   it("gives, attacker by target, 20 % of the target's field when it is from 50 % (included) to 300 % (excluded)", () => {

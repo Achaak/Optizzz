@@ -1,3 +1,5 @@
+import { chainRolesFrom } from "@optizzz/game/site-links/chain-roles";
+import { writeChainSettings } from "@/features/tdc-chain/settings";
 import { beforeEach, describe, expect, it } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 import {
@@ -86,6 +88,7 @@ const envois = {
   floods: () => Promise.resolve({ problem: null, me: "Messor", members: [], floods: [] }),
   states: () => Promise.resolve({ problem: null, tag: "ABC", rows: [] }),
   demandes: () => Promise.resolve({ problem: "no-space" as const }),
+  chainRoles: () => Promise.resolve({ problem: "none" as const }),
   prepareConvoy: () => {
     envoiCalls.push("prepare");
     return Promise.resolve({ ok: false as const, message: "non" });
@@ -375,6 +378,12 @@ describe("the Clé d'alliance and the game's pages", () => {
     expect(changedStates("convoys:s5.fourmizzz.fr")).toBeNull();
   });
 
+  it("answers the chain's roles for the game's pages only", async () => {
+    const ask = { type: "optizzz-envois", action: "chain-roles", origin: S5 } as const;
+    expect(answer(service(), ask, "space")).toBeNull();
+    expect(await answer(service(), ask, "game")).toEqual({ problem: "none" });
+  });
+
   it("answers the alliance's floods for the game's pages only", async () => {
     const ask = { type: "optizzz-envois", action: "floods", origin: S5 } as const;
     expect(answer(service(), ask, "space")).toBeNull();
@@ -389,6 +398,33 @@ describe("the Clé d'alliance and the game's pages", () => {
       problem: null,
       convoys: [],
     });
+  });
+});
+
+describe("the chain's own roles for « Reprendre les rôles de votre extension »", () => {
+  const SPACE = "0b9d6f0e-3c4a-4f5e-9a7b-1c2d3e4f5a6b";
+  const ask = { type: "optizzz-space", action: "chain-roles", server: "s5", spaceId: SPACE } as const;
+
+  it("go only to the space script while linked, as the text of the space's record", async () => {
+    await writeChainSettings("s5.fourmizzz.fr", {
+      roles: { "7": { kind: "granary" } },
+      keep: { "8": 100 },
+      styles: {},
+    });
+    expect(answer(service(), ask, "game")).toBeNull();
+    expect(await answer(service(), ask, "space")).toEqual({ status: "unlinked" });
+    await storeLink(TOKEN, NOW);
+    const reply = (await answer(service(), ask, "space")) as { status: string; record: string };
+    expect(chainRolesFrom(JSON.parse(reply.record), SPACE)).toEqual({
+      roles: { "7": { kind: "granary" } },
+      keep: { "8": 100 },
+    });
+    expect(site.calls).toEqual([]);
+  });
+
+  it("are none while the chain only proposes roles from the fields", async () => {
+    await storeLink(TOKEN, NOW);
+    expect(await answer(service(), ask, "space")).toEqual({ status: "linked", record: null });
   });
 });
 

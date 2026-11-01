@@ -284,6 +284,7 @@ model Space {
   absenceAlerts SpaceAbsenceAlerts?
   envois        EnvoiItem[]
   discord       SpaceDiscord?
+  chainRoles    SpaceChainRoles?
   demandes      Demande[]
   reminders     SpaceReminders?
   remindersSent SpaceReminderSent[]
@@ -385,6 +386,21 @@ model SpaceDiscord {
   space           Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
   @@map("space_discord")
+  @@schema("accounts")
+}
+
+/// The TDC chain's roles of the space (docs/features/site-chaine.md): who is a granary, a passer or a hunter, and the
+/// field each hunter keeps, encrypted with the Clé d'alliance in an Admin's or a Délégué's browser; the site cannot
+/// read them. The revision grows at each write; who saved them and when stay in clear for « Enregistrés … par Pseudo ».
+model SpaceChainRoles {
+  spaceId       String   @id
+  blob          String
+  revision      Int
+  savedAt       DateTime
+  savedByPseudo String
+  space         Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@map("space_chain_roles")
   @@schema("accounts")
 }
 

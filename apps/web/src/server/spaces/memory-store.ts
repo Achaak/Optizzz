@@ -2,6 +2,7 @@
 // It follows the Prisma store (prisma-store.ts): one space per Player, cascades, « clé à renvoyer » on a reset.
 import type {
   AbsenceAlertsRow,
+  ChainRolesRow,
   DiscordRow,
   KeyRow,
   MemberRow,
@@ -43,6 +44,7 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
   const versions = new Map<string, Set<number>>();
   const absences = new Map<string, AbsenceAlertsRow>();
   const discord = new Map<string, DiscordRow>();
+  const chainRoles = new Map<string, ChainRolesRow>();
   let nextRequest = 1;
 
   const same = (a: PlayerRef, b: PlayerRef) => a.server === b.server && a.playerId === b.playerId;
@@ -145,6 +147,13 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
       if (row?.revision === revision) row.refusal = { ...refusal, revision };
       return Promise.resolve();
     },
+    chainRoles: () => Promise.resolve(chainRoles.get(spaceId) ?? null),
+    saveChainRoles: (blob, expected, saved) => {
+      const revision = chainRoles.get(spaceId)?.revision ?? 0;
+      if (revision !== expected) return Promise.resolve(null);
+      chainRoles.set(spaceId, { blob, revision: revision + 1, savedAt: saved.at, savedBy: saved.by });
+      return Promise.resolve(revision + 1);
+    },
     setRole: (player, role) => {
       const member = members.find((m) => m.spaceId === spaceId && same(m, player));
       if (member) member.role = role;
@@ -193,6 +202,7 @@ export function memoryStore(now: () => Date = () => new Date("2026-10-25T10:00:0
       versions.delete(spaceId);
       absences.delete(spaceId);
       discord.delete(spaceId);
+      chainRoles.delete(spaceId);
       return Promise.resolve();
     },
   });

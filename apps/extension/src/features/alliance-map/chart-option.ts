@@ -4,7 +4,7 @@ import { levelOf, type KnownLevels } from "./neighbor-table";
 import { kNearestLinks, membersByDistance } from "./neighbors";
 import { distance, travelTime } from "@optizzz/game/travel";
 import { SHAPE_SYMBOLS, type MemberBubble } from "@/features/tdc-chain/role-styles";
-import { roleLabel } from "@/features/tdc-chain/roles";
+import { roleLabel } from "@optizzz/game/tdc-chain/roles";
 import { CHART_COLORS } from "@/theme";
 import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration } from "@optizzz/game/format/time-format";

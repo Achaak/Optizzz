@@ -8,6 +8,7 @@
 // never after a game read made for the site (docs/research/reglement.md). The relève reads optizzz.fr only, every 5
 // minutes and when a game page opens, when the extension is linked, the Joueur in a space and the key held.
 import { armyToKeys } from "@optizzz/game/army/units";
+import { chainRolesFrom, type ChainRolesRecord } from "@optizzz/game/site-links/chain-roles";
 import { serverById } from "@optizzz/game/servers";
 import { formatEndTime, formatEndTimeShort } from "@optizzz/game/format/time-format";
 import { CONVOY_ITEM, convoyEnvoiItems, convoysToward, type ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
@@ -35,6 +36,7 @@ import {
 } from "@optizzz/game/site-links/envois";
 import type { AllianceKeysMessage, HandedKey } from "@optizzz/game/site-links/space-bridge";
 import { loadAllianceMembers } from "@/data/alliance-members";
+import { forgetChainRoles, loadChainRoles, storeChainRoles } from "@/data/chain-roles";
 import { CONVOY_HISTORY_KEPT, loadConvoyHistory } from "@/data/convoy-history";
 import { loadConvoys, loadIncomingConvoys } from "@/data/convoys";
 import {
@@ -108,6 +110,15 @@ export interface IncomingAnswer {
 }
 
 /** The alliance's floods still on their way, for Armee.php, the Plan de flood and the targets. */
+/**
+ * The chain's roles for a game page (docs/features/site-chaine.md): those of the logged-in Joueur's space, opened, or
+ * why there are none: `none` (no space, or a space without roles: the chain stays the player's), `no-key` (the space
+ * has roles this extension cannot open: the local roles stay, with a note).
+ */
+export type ChainRolesAnswer =
+  | { problem: "unlinked" | "no-space" | "none" | "no-key"; record?: undefined }
+  | { problem: null; record: ChainRolesRecord; spaceId: string };
+
 export interface FloodsAnswer {
   problem: ReadProblem;
   /** The game's logged-in Joueur. */
@@ -751,6 +762,13 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     if (previous) await notifyNew(added, me);
   }
 
+  /** The chain's roles of the account's spaces, kept encrypted (docs/features/site-chaine.md). */
+  async function releveChainRoles(token: string): Promise<void> {
+    const answer = await siteApi(token, fetch).chainRoles();
+    if (answer.ok) await storeChainRoles(answer.value.spaces);
+    else if (answer.unlinked) await unlinked();
+  }
+
   /**
    * The relève: every 5 minutes (`alarm`) and when a game page opens (`page`, which also reads the spaces again and
    * sends what could not leave). Only optizzz.fr is read, never the game.
@@ -770,12 +788,15 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     const bySpace = new Map<string, SpacePlayer[]>();
     for (const player of players ?? [])
       if (player.space) bySpace.set(player.space.id, [...(bySpace.get(player.space.id) ?? []), player]);
+    let opened = false;
     for (const [spaceId, members] of bySpace) {
       const keys = await loadKeys(spaceId, now());
       if (!keys) continue;
+      opened = true;
       await releveSpace(kept.token, spaceId, keys, members);
       await demandes.releve(kept.token, spaceId, keys);
     }
+    if (opened) await releveChainRoles(kept.token);
   }
 
   /** The game's logged-in Joueur on a server, their space and the rows of the last relève, or why there are none. */
@@ -854,6 +875,29 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     };
   }
 
+  /** The chain's roles of the logged-in Joueur's space, opened with the Clé d'alliance held. */
+  async function chainRoles(origin: string): Promise<ChainRolesAnswer> {
+    const server = serverOfHost(new URL(origin).host);
+    const pseudo = await loadCurrentPlayer(origin);
+    if (!server || !pseudo || !(await link())) return { problem: "unlinked" };
+    const player = (await loadSpaces())?.players.find((p) => p.server === server && sameName(p.pseudo, pseudo));
+    if (!player?.space) return { problem: "no-space" };
+    const kept = await loadChainRoles(player.space.id);
+    if (!kept) return { problem: "none" };
+    const keys = await usableKeys(player.space.id, player.space.version.version);
+    if (!keys) return { problem: "no-key" };
+    try {
+      return {
+        problem: null,
+        record: chainRolesFrom(JSON.parse(await crypto(keys).decrypt(kept.blob)), player.space.id),
+        spaceId: player.space.id,
+      };
+    } catch {
+      // A version not held, or the roles of another space filed under this one.
+      return { problem: "no-key" };
+    }
+  }
+
   /** Each attached Joueur's Envois, for « Compte Optizzz ». */
   async function status(): Promise<JoueurEnvois[]> {
     const attached = await loadAttachedPlayers();
@@ -883,11 +927,13 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
   /** « Se déconnecter »: the Clé d'alliance goes, with what was read with it and the webhook it opened. */
   async function forget(): Promise<void> {
     await forgetKeys();
+    await forgetChainRoles();
     await discord.forget();
   }
 
   return {
     changed,
+    chainRoles,
     choose,
     receiveKeys,
     forget,

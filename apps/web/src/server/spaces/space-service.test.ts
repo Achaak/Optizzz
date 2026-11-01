@@ -735,6 +735,58 @@ describe("the Discord webhook", () => {
   });
 });
 
+describe("the chain's roles", () => {
+  beforeEach(async () => {
+    await create(alice);
+    await join(alice, bruno);
+    await join(alice, chloe);
+    await service.setRole("alice", { spaceId, playerId: 3, role: "delegate" });
+  });
+
+  const roles = '{"v":1,"spaceId":"x","roles":{"1":"granary"},"keep":{}}';
+
+  it("are saved encrypted by an Admin or a Délégué, and shown to every member with who saved them", async () => {
+    const blob = await encryptData(roles, await keyringOf(alice));
+    expect((await memberView(bruno)).chainRoles).toBeNull();
+    await expect(service.saveChainRoles("bruno", { spaceId, blob, expectedRevision: 0 })).rejects.toThrow(
+      "Admin ou un Délégué",
+    );
+    expect(await service.saveChainRoles("chloe", { spaceId, blob, expectedRevision: 0 })).toEqual({ revision: 1 });
+    const saved = { blob, revision: 1, savedAt: new Date(NOW), savedBy: "Chloe" };
+    expect((await memberView(bruno)).chainRoles).toEqual(saved);
+    expect((await memberView(alice)).chainRoles).toEqual(saved);
+  });
+
+  it("refuse to overwrite a save made meanwhile, or one not encrypted with the newest version", async () => {
+    const blob = await encryptData(roles, await keyringOf(alice));
+    await service.saveChainRoles("alice", { spaceId, blob, expectedRevision: 0 });
+    await expect(service.saveChainRoles("chloe", { spaceId, blob, expectedRevision: 0 })).rejects.toThrow("rechargez");
+    await expect(service.saveChainRoles("alice", { spaceId, blob: "court", expectedRevision: 1 })).rejects.toThrow(
+      SpaceError,
+    );
+    await exclude(alice, chloe);
+    await expect(service.saveChainRoles("alice", { spaceId, blob, expectedRevision: 1 })).rejects.toThrow(
+      "Un autre Admin",
+    );
+  });
+
+  it("are handed to every member's extension, and to nobody else", async () => {
+    const blob = await encryptData(roles, await keyringOf(alice));
+    expect(await service.chainRolesForExtension("bruno")).toEqual([]);
+    await service.saveChainRoles("alice", { spaceId, blob, expectedRevision: 0 });
+    expect(await service.chainRolesForExtension("bruno")).toEqual([{ spaceId, blob, revision: 1 }]);
+    const dan = await person("dan", 4, "Dan");
+    expect(await service.chainRolesForExtension(dan.userId)).toEqual([]);
+  });
+
+  it("go with the space when it is deleted", async () => {
+    const blob = await encryptData(roles, await keyringOf(alice));
+    await service.saveChainRoles("alice", { spaceId, blob, expectedRevision: 0 });
+    await service.deleteSpace("alice", { spaceId, name: (await memberView(alice)).space.name });
+    expect(await service.chainRolesForExtension("bruno")).toEqual([]);
+  });
+});
+
 describe("a Player who left the alliance", () => {
   it("is offered to leave the space, on the space's page and on /spaces", async () => {
     await create(alice);
