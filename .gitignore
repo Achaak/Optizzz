@@ -9,3 +9,7 @@ stats.html
 !.env.example
 coverage
 .turbo
+
+# Local scratch and agent worktrees
+.scratch/
+.claude/worktrees/
