@@ -1,6 +1,6 @@
 // Who can take hunting field from whom, and in which order: see docs/features/chaine-tdc.md.
-import { inRange, maxTake, takeAtLimit } from "@optizzz/game/attack";
-import { rungs, type Role } from "@optizzz/game/tdc-chain/roles";
+import { inRange, maxTake, takeAtLimit } from "../attack";
+import { rungs, type Role } from "./roles";
 
 /** Attacker by target: what a won attack takes, or null when out of range with the margin (or the same member). */
 export function takeMatrix(members: readonly { field: number }[], margin: number): (number | null)[][] {
@@ -16,6 +16,8 @@ export interface ChainMember {
   field: number;
   /** Attacks it can have under way at once: Attack Speed + 1. */
   slots: number;
+  /** Its army, when known: no attack takes more cm² than it sends ants. */
+  ants?: number;
 }
 
 /** One attack of the plan: `attackerId` takes `take` cm² from `targetId`. */
@@ -38,7 +40,7 @@ export interface Transfer {
   moved: number;
 }
 
-type State = Map<number, { field: number; slots: number }>;
+type State = Map<number, { field: number; slots: number; ants?: number }>;
 
 const cloneState = (state: State): State => new Map([...state].map(([id, entry]) => [id, { ...entry }]));
 
@@ -53,7 +55,7 @@ function link(state: State, attackerId: number, targetId: number, amount: number
   const hits: Hit[] = [];
   let left = amount;
   while (left > 0 && attacker.slots > 0 && inRange(attacker.field, target.field, margin)) {
-    let take = Math.min(maxTake(target.field), left);
+    let take = Math.min(maxTake(target.field), left, attacker.ants ?? Infinity);
     let last = false;
     if (take < left && !inRange(attacker.field + take, target.field - take, margin)) {
       const limit = takeAtLimit(attacker.field, target.field, margin);
@@ -141,7 +143,7 @@ function bestTransfer(state: State, path: number[], amount: number, margin: numb
 }
 
 const toState = (members: readonly ChainMember[]): State =>
-  new Map(members.map(({ id, field, slots }) => [id, { field, slots }]));
+  new Map(members.map(({ id, field, slots, ants }) => [id, { field, slots, ants }]));
 
 /**
  * Where the chain breaks. `range`: nobody `below` reaches can be attacked by `above`; `attacks`: the fields would

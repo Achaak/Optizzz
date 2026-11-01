@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bridge, planChain, planTransfer, takeMatrix } from "./chain";
-import type { Role } from "@optizzz/game/tdc-chain/roles";
+import type { Role } from "./roles";
 
 describe("takeMatrix", () => {
   it("gives, attacker by target, 20 % of the target's field when it is from 50 % (included) to 300 % (excluded)", () => {
@@ -29,6 +29,15 @@ function transfer(...args: Parameters<typeof planTransfer>) {
 }
 
 describe("planTransfer", () => {
+  it("never takes more in one attack than the attacker's ants, when known", () => {
+    const plan = transfer(
+      [member(1, 1000), { ...member(2, 1000), ants: 120 }],
+      { from: 1, to: 2, amount: 300 },
+      MARGIN,
+    );
+    expect(plan.hits.map((hit) => hit.take)).toEqual([120, 120, 60]);
+  });
+
   it("takes what is asked in one attack when 20 % of the target is enough", () => {
     const plan = transfer([member(1, 600), member(2, 1000)], { from: 1, to: 2, amount: 100 }, MARGIN);
     expect(plan).toMatchObject({

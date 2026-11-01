@@ -51,8 +51,8 @@ Faire passer du TDC entre membres d'une alliance : qui peut prendre à qui, et l
 | Fichier                                                           | Rôle                                                                          |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `packages/game/src/tdc-chain/roles.ts` (+ test)                   | Rôles, proposition d'après le TDC, partage texte, échelons                    |
-| `apps/extension/src/features/tdc-chain/chain.ts` (+ test)         | Qui peut prendre à qui, transfert, plan de la chaîne, chaîne cassée           |
-| `apps/extension/src/features/tdc-chain/schedule.ts` (+ test)      | Départs et arrivées, première arrivée par défaut                              |
+| `packages/game/src/tdc-chain/chain.ts` (+ test)                   | Qui peut prendre à qui, transfert, plan de la chaîne, chaîne cassée           |
+| `packages/game/src/tdc-chain/schedule.ts` (+ test)                | Départs et arrivées, première arrivée par défaut                              |
 | `apps/extension/src/features/tdc-chain/plan-text.ts` (+ test)     | Texte « Copier le plan »                                                      |
 | `apps/extension/src/features/tdc-chain/settings.ts`               | Rôles, TDC à garder et couleurs mémorisés ; suivi par la Carte                |
 | `apps/extension/src/features/tdc-chain/role-styles.ts` (+ test)   | Couleur et taille de bulle par rôle, bulles des membres pour la Carte         |

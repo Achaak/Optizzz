@@ -8,7 +8,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { SpaceError } from "~/server/spaces/space-service";
 import { reminders } from "~/server/reminders/service";
-import { allianceRoster } from "~/server/queries";
+import { allianceRoster, passageRoster } from "~/server/queries";
 import { spaces } from "~/server/spaces/service";
 
 const CODES = {
@@ -116,6 +116,14 @@ export const spacesRouter = createTRPCRouter({
       const view = await spaces.view(ctx.userId, input.spaceId);
       if (view.kind !== "member") throw new TRPCError({ code: "FORBIDDEN" });
       return allianceRoster(view.space.server, view.space.tag);
+    }),
+  ),
+  /** The alliance's members and their nests, from the export (public data), for the Plan de passage. */
+  passageRoster: protectedProcedure.input(spaceId).query(({ ctx, input }) =>
+    run(async () => {
+      const view = await spaces.view(ctx.userId, input.spaceId);
+      if (view.kind !== "member") throw new TRPCError({ code: "FORBIDDEN" });
+      return passageRoster(view.space.server, view.space.tag);
     }),
   ),
   saveChainRoles: protectedProcedure

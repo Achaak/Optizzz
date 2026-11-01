@@ -31,19 +31,47 @@ Régler une fois pour toute l'alliance les rôles de la Chaîne de TDC (Grenier,
 - **L'extension** : la relève (`envois.ts`) lit `GET /api/extension/chain-roles` seulement si elle tient une Clé d'alliance, et garde la réponse chiffrée (`src/data/chain-roles.ts`, effacée à « Se déconnecter »). Les pages du jeu demandent au fond `chain-roles` : les rôles ouverts, ou `none` (pas d'espace ou pas de rôles), `no-key` (pas ouvrables ici : note). `effectiveChain` (`tdc-chain/site-roles.ts`) choisit les rôles affichés pour la Chaîne, la Carte et la colonne « Rôle » ; ils se mettent à jour quand une relève en apporte de nouveaux (`site-roles-source.ts`, sans React pour le script léger ; `use-site-chain-roles.ts` pour les vues React). Dans la Chaîne, les rôles du site sont en lecture seule (listes et TDC à garder désactivés, « Proposer des rôles » et « Importer » retirés), avec « Modifier sur optizzz.fr ».
 - **« Reprendre les rôles de votre extension »** passe par le pont des Espaces (`space-bridge.ts`, `CHAIN_ROLES_REQUEST` / `CHAIN_ROLES_REPLY`) : le fond rend les rôles choisis dans la Chaîne du serveur sous la forme du texte de l'enregistrement de l'espace, que la page lit avec les mêmes contrôles ; rien quand la Chaîne ne fait que proposer.
 
+## Plan de passage
+
+Décidé lors d'une session de cadrage (`/grill-me`) le 2026-11-01, et réalisé le même jour. Maquette : artboard « C · Espace d'alliance · Chaîne (plan de passage) » du canevas. Le but : que chaque membre voie qui il doit flooder, de combien et quand, sans gêner les floods déjà en route, pour qu'aucun n'échoue parce que sa cible a, à l'arrivée, trop ou trop peu de TDC.
+
+- **Où** : une vue « Plan de passage » de l'onglet « Chaîne », à côté de « Rôles » (`?onglet=chaine&vue=plan`) ; horizon et membre dans l'adresse aussi.
+- **TDC de départ** : pour chaque membre, le plus récent du TDC de l'Envoi « Production » (daté) et de l'export (« ≈ »), avec son âge. Projeté dans le temps : chasses qui rentrent (Envoi « Chasses »), floods en route (Envoi « Floods » : la cible perd la prise, l'attaquant la gagne). Les membres qui n'envoient pas « Floods » sont nommés : leurs attaques manquent.
+- **Le calcul** : le planificateur de la Chaîne de l'extension (`planChain` : TDC à garder des chasseurs, prises de 20 % ou à la limite, plus court chemin d'échelon en échelon) passe dans `packages/game`, partagé, et s'étend : il part des TDC projetés, les floods en route sont des événements fixes, et chaque flood planifié est placé dans le temps.
+- **Un flood en route est intouchable** : sa prise attendue (celle du Plan de flood de son lanceur) reste celle qu'il obtiendra. Aucun flood planifié ne change avant son arrivée le TDC de sa cible (un flood à lancer arrive au moins une minute après le dernier flood en route sur la même cible, et la baisse qu'il cause compte pour les suivants), ni celui de son attaquant. Un flood en route lancé sans le Plan prend 20 % du TDC de la cible à son arrivée. Un flood planifié qui casserait cette règle est repoussé, ou retiré s'il n'a plus de place dans l'horizon.
+- **Portée** vérifiée à l'arrivée, avec les TDC de ce moment (50 % + 1 % de marge, 300 %).
+- **Horizon** : 2, 6, 12 ou 24 h (6 h par défaut) : jusqu'où le plan place des floods, et l'heure du « TDC dans X h ».
+- **Fenêtre de départ** : « Partir entre A et B » : A au plus tôt (5 min après maintenant au moins, après les contraintes ci-dessus), B au plus tard sans casser l'ordre. Trajet d'après la Vitesse d'attaque (Envoi « Niveaux ») et les coordonnées de l'export ; sans Vitesse d'attaque, le niveau médian de ceux des membres qui l'envoient (le site n'a pas le niveau par défaut de la Carte, réglage de l'extension), et la fenêtre est « ≈ ».
+- **Armée** : la prise d'un flood est plafonnée à l'armée connue (Envoi « Armée », en nombre) ; inconnue, on la suppose suffisante (« armée inconnue »). Attaques libres : Vitesse d'attaque + 1, moins les floods en route.
+- **Floods en route qui posent problème**, dans la file de leur cible, en mots : « ⚠ échouera : hors portée à l'arrivée » (barré, compté comme ne prenant rien : ni perte ni gain, mais il occupe une attaque de son lanceur jusqu'à son arrivée), « ⚠ passe devant Lunaire : sa prise passera de 136 000 à 108 800 ». Le nombre d'alertes sur l'onglet « Chaîne ». Jamais « annulez-le » : l'Envoi ne dit pas si le jeu permet encore d'annuler (on ne peut annuler que quelques minutes après le lancement).
+- **Les floods de qui** : les vôtres par défaut ; ceux de n'importe quel membre au choix (tous voient tout).
+- **Un plan stable** : calculé à l'ouverture depuis l'heure arrondie aux 5 min, puis figé ; quand la relève apporte de nouveaux floods, « De nouveaux floods sont arrivés : Recalculer ». Mêmes données et même heure : même plan chez chacun.
+- **Copier pour Discord** : une ligne par flood à lancer dans l'ordre des départs (« 1. 13 h 05–13 h 20 · Okapi → Zeph · 122 000 fourmis · arrivée 14 h 05 »), puis les alertes.
+- **Plus tard** : l'extension montre « Vos floods à lancer » dans le jeu ; l'Envoi « Floods » dit si un flood est encore annulable (lien « Annuler » d'`Armee.php`), pour écrire « annulez-le maintenant ».
+
+### Réalisation
+
+- **Le calcul** (`packages/game/src/tdc-chain/passage.ts`) : `projectChain` rejoue les floods en route et les chasses sur les TDC (un TDC lu après une arrivée la contient déjà) et donne l'état de chaque flood en route sur un membre (`holds`, `reduced` avec le flood qui passe devant, `fails`) ; `planPassage` lance `planChain` sur les TDC une fois les floods en route arrivés, attaques libres diminuées de ceux encore en route, prise plafonnée à l'armée (nouveau champ `ants` de `planChain`), puis place chaque flood : au plus tôt 5 min + trajet après l'heure arrondie aux 5 min, une minute après le dernier flood en route qui touche son attaquant ou sa cible, une minute après le flood planifié d'avant ; « partir au plus tard » s'arrête une minute avant le flood planifié suivant qui touche l'un des deux, sinon à l'horizon. Un transfert qui arriverait après l'horizon est retiré, avec ceux qui le suivent (« allongez-le »). `planChain` et `schedule` sont passés de l'extension à `packages/game` pour être partagés.
+- **Le site** : `spaces.passageRoster` (membres de l'export avec leurs coordonnées, et l'heure de l'export) ; `src/lib/spaces/passage.ts` : `passageInput` (TDC le plus récent, chasses, armée, Vitesse d'attaque et trajets), `passageAlerts` (compteur de l'onglet « Chaîne »), `passageDiscord`, l'adresse ; `src/components/spaces/passage-panel.tsx`, montée par `ChainPanel` derrière le choix « Rôles | Plan de passage ». Le plan est calculé sur les floods ouverts au premier affichage, puis figé ; « Recalculer » quand la relève en apporte d'autres.
+
+Vérifié en local le 2026-11-01 avec une page de démonstration temporaire (alliance inventée de 7 membres, retirée) : floods à lancer et leur fenêtre, file de chaque membre avec « en route ✓ », « ⚠ Okapi passe devant : prise 108 800 au lieu de 136 000 » et « ⚠ échouera », chaîne cassée (« il manque un passeur de … à … cm², entre Lunaire et Noctis »), TDC dans 6 h ; à 375 px en sombre. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte et de vrais Envois ; les règles de prise et de portée restent celles, non vérifiées sur un vrai flood, du Plan de flood ([#1](https://github.com/Achaak/Optizzz/issues/1)).
+
 ## Code
 
-| Fichier                                                                      | Rôle                                                           |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `packages/game/src/site-links/chain-roles.ts` (+ test)                       | Format de l'enregistrement chiffré                             |
-| `packages/game/src/site-links/space-bridge.ts` (+ test)                      | Demande et réponse « Reprendre les rôles de votre extension »  |
-| `apps/web/src/lib/spaces/chain-roles.ts` (+ test)                            | Chiffrement, rôles affichés, changements, reprise d'un conflit |
-| `apps/web/src/server/spaces/space-service.ts` (+ tests, mémoire et Postgres) | Enregistrer, montrer, remettre à l'extension                   |
-| `apps/web/src/server/spaces/chain-roles-routes.ts` (+ test)                  | `GET /api/extension/chain-roles`                               |
-| `apps/web/src/components/spaces/chain-panel.tsx`                             | Onglet « Chaîne »                                              |
-| `apps/extension/src/features/optizzz-account/envois.ts` (+ test)             | Relève et ouverture des rôles du site                          |
-| `apps/extension/src/data/chain-roles.ts`                                     | Rôles du site gardés chiffrés                                  |
-| `apps/extension/src/features/tdc-chain/site-roles.ts` (+ test)               | Quels rôles font foi                                           |
+| Fichier                                                                      | Rôle                                                             |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `packages/game/src/site-links/chain-roles.ts` (+ test)                       | Format de l'enregistrement chiffré                               |
+| `packages/game/src/site-links/space-bridge.ts` (+ test)                      | Demande et réponse « Reprendre les rôles de votre extension »    |
+| `apps/web/src/lib/spaces/chain-roles.ts` (+ test)                            | Chiffrement, rôles affichés, changements, reprise d'un conflit   |
+| `apps/web/src/server/spaces/space-service.ts` (+ tests, mémoire et Postgres) | Enregistrer, montrer, remettre à l'extension                     |
+| `apps/web/src/server/spaces/chain-roles-routes.ts` (+ test)                  | `GET /api/extension/chain-roles`                                 |
+| `apps/web/src/components/spaces/chain-panel.tsx`                             | Onglet « Chaîne »                                                |
+| `packages/game/src/tdc-chain/passage.ts` (+ test)                            | Plan de passage : TDC projetés, floods en route, floods à lancer |
+| `apps/web/src/lib/spaces/passage.ts` (+ test)                                | Entrées du plan, alertes, texte Discord, adresse                 |
+| `apps/web/src/components/spaces/passage-panel.tsx`                           | Vue « Plan de passage »                                          |
+| `apps/extension/src/features/optizzz-account/envois.ts` (+ test)             | Relève et ouverture des rôles du site                            |
+| `apps/extension/src/data/chain-roles.ts`                                     | Rôles du site gardés chiffrés                                    |
+| `apps/extension/src/features/tdc-chain/site-roles.ts` (+ test)               | Quels rôles font foi                                             |
 
 ## Vérification
 

@@ -286,6 +286,19 @@ export function allianceRoster(server: string, tag: string) {
   });
 }
 
+/** The alliance's members with their nests, and when the export was taken: what the Plan de passage starts from. */
+export async function passageRoster(server: string, tag: string) {
+  const [members, exportAt] = await Promise.all([
+    db.player.findMany({
+      where: { server, alliance: { equals: tag, mode: "insensitive" } },
+      select: { id: true, pseudo: true, field: true, x: true, y: true, onHoliday: true, isBanned: true },
+      orderBy: { field: "desc" },
+    }),
+    lastReading(server),
+  ]);
+  return { members, exportAt };
+}
+
 /** `field` is the alliance's TDC now, for its rank among the server's alliances. */
 export async function alliancePage(server: string, tag: string, field: number) {
   const [members, days, journal, ranks, above, serverField] = await Promise.all([

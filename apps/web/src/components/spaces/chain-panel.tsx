@@ -19,7 +19,13 @@ import {
   roleLabel,
   type Role,
 } from "@optizzz/game/tdc-chain/roles";
+import type { MemberStates } from "@optizzz/game/sharing/shared-state";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { Segmented } from "~/components/tools/hunt/hunt-parts";
+import type { AllianceFlood } from "~/lib/envois/floods";
+import { passageViewSearch, readPassageView, type PassageView } from "~/lib/spaces/passage";
+import { PassagePanel } from "./passage-panel";
 import { CopyIcon } from "~/components/icons";
 import { Button } from "~/components/ui/button";
 import {
@@ -145,12 +151,37 @@ function useSavedRoles(view: MemberView, keyring: AllianceKeyring | null, writab
   return { record: ready ? opened.record : undefined, problem, save, reread };
 }
 
-export function ChainPanel({ view, keyring }: { view: MemberView; keyring: AllianceKeyring | null }) {
+const VIEWS = [
+  { value: "roles", label: "Rôles" },
+  { value: "plan", label: "Plan de passage" },
+] as const;
+
+export function ChainPanel({
+  view,
+  keyring,
+  floods,
+  states,
+}: {
+  view: MemberView;
+  keyring: AllianceKeyring | null;
+  /** The members' floods on their way and arrived, opened; null until then. */
+  floods: AllianceFlood[] | null;
+  /** The members' states (field, hunts, army, levels), opened; null until then. */
+  states: MemberStates[] | null;
+}) {
   const spaceId = view.space.id;
   const canEdit = view.me.role !== "member" && view.me.keyStatus === "current" && keyring !== null;
   const roster = api.spaces.chainRoster.useQuery({ spaceId });
   const saved = useSavedRoles(view, keyring, canEdit);
   const inSpace = useMemo(() => new Set(view.members.map((m) => m.playerId)), [view.members]);
+  const pseudos = useMemo(() => view.members.map((m) => m.pseudo), [view.members]);
+  const params = useSearchParams();
+  const [choice, setChoice] = useState<PassageView>(() => readPassageView(params, pseudos));
+  const passage = api.spaces.passageRoster.useQuery({ spaceId }, { enabled: choice.view === "plan" });
+  useEffect(() => {
+    window.history.replaceState(null, "", `${window.location.pathname}?${passageViewSearch(choice)}`);
+  }, [choice]);
+  const change = (next: Partial<PassageView>) => setChoice((current) => ({ ...current, ...next }));
 
   if (!keyring)
     return (
@@ -164,19 +195,55 @@ export function ChainPanel({ view, keyring }: { view: MemberView; keyring: Allia
   if (saved.problem) return <Callout>{saved.problem}</Callout>;
   if (roster.error) return <Callout>{errorText(roster.error)}</Callout>;
   if (saved.record === undefined || !roster.data) return <p className="text-muted-foreground">Chargement des rôles…</p>;
+  const switcher = (
+    <div className="space-y-1">
+      <span className={FIELD_LABEL}>Vue</span>
+      <Segmented label="Vue" options={VIEWS} value={choice.view} onChange={(next) => change({ view: next })} />
+    </div>
+  );
+  if (choice.view === "plan") {
+    const me = view.members.find((m) => m.playerId === view.me.playerId)?.pseudo ?? "";
+    return (
+      <div className="space-y-5">
+        {switcher}
+        {passage.error ? (
+          <Callout>{errorText(passage.error)}</Callout>
+        ) : !passage.data ? (
+          <p className="text-muted-foreground">Chargement des membres…</p>
+        ) : (
+          <PassagePanel
+            roster={passage.data.members}
+            exportAt={passage.data.exportAt}
+            roles={shownRoles(roster.data, saved.record).roles}
+            keep={new Map(Object.entries(saved.record?.keep ?? {}).map(([id, field]) => [Number(id), field]))}
+            floods={floods}
+            states={states}
+            choice={choice}
+            onChange={change}
+            me={me}
+            server={view.space.server}
+            tag={view.space.tag}
+          />
+        )}
+      </div>
+    );
+  }
   return (
-    <ChainEditor
-      spaceId={spaceId}
-      members={roster.data}
-      inSpace={inSpace}
-      myId={view.me.playerId}
-      saved={saved.record}
-      savedLine={view.chainRoles && { at: view.chainRoles.savedAt, by: view.chainRoles.savedBy }}
-      canEdit={canEdit}
-      save={(record) => saved.save(record, view.chainRoles?.revision ?? 0)}
-      reread={async () => (await saved.reread())?.record ?? null}
-      takeFromExtension={() => askExtensionForChainRoles(view.space.server, spaceId)}
-    />
+    <div className="space-y-5">
+      {switcher}
+      <ChainEditor
+        spaceId={spaceId}
+        members={roster.data}
+        inSpace={inSpace}
+        myId={view.me.playerId}
+        saved={saved.record}
+        savedLine={view.chainRoles && { at: view.chainRoles.savedAt, by: view.chainRoles.savedBy }}
+        canEdit={canEdit}
+        save={(record) => saved.save(record, view.chainRoles?.revision ?? 0)}
+        reread={async () => (await saved.reread())?.record ?? null}
+        takeFromExtension={() => askExtensionForChainRoles(view.space.server, spaceId)}
+      />
+    </div>
   );
 }
 

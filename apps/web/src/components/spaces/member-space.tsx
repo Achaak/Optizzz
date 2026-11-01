@@ -11,7 +11,7 @@ import { isSentCategory, sendsLabel } from "@optizzz/game/site-links/envois";
 import { cn } from "cn";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LockIcon, PlusIcon } from "~/components/icons";
 import { PageHeader } from "~/components/panel";
 import { CopyInvitation } from "~/components/spaces/copy-invitation";
@@ -59,6 +59,7 @@ import { useSpaceAccess, type MemberView, type SpaceAccess } from "./use-space-a
 import { useSpaceDemandes } from "./use-space-demandes";
 import { useKeyHandover, useSpaceEnvois } from "./use-space-envois";
 import { useSpaceKeys } from "./space-keys";
+import { CHAIN_TAB, passageAlerts } from "~/lib/spaces/passage";
 
 type Member = MemberView["members"][number];
 type Request = MemberView["requests"][number];
@@ -82,9 +83,6 @@ function keyChanged(member: Member, access: SpaceAccess, view: MemberView): bool
   if (member.role === "admin" && !access.trusted.admins.includes(member.publicKey)) return true;
   return view.me.role === "admin" && !access.trusted.members.includes(member.publicKey);
 }
-
-/** `?onglet=chaine`: the extension's « Modifier sur optizzz.fr » opens the Chaîne tab. */
-const CHAIN_TAB = "chaine";
 
 const TABS = [
   { value: "space", label: "Espace" },
@@ -114,7 +112,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
     return asked === CONVOYS_TAB ? "convoys" : asked === FLOODS_TAB ? "floods" : "space";
   });
   useEffect(() => {
-    if (tab !== "convoys" && tab !== "floods" && window.location.search)
+    if (tab !== "convoys" && tab !== "floods" && tab !== "chain" && window.location.search)
       window.history.replaceState(null, "", window.location.pathname);
   }, [tab]);
   const server = serverById(view.space.server);
@@ -124,11 +122,30 @@ export function MemberSpace({ view }: { view: MemberView }) {
     view.members.find((m) => m.publicKey === publicKey && m.keyStatus === "current")?.pseudo ?? null;
 
   const pending = demandes.demandes?.filter((demande) => demande.status === "pending").length ?? 0;
+  const passageRoster = api.spaces.passageRoster.useQuery(
+    { spaceId: view.space.id },
+    { enabled: access.keyring !== null, staleTime: 10 * 60_000 },
+  );
+  // The floods on their way between members that will fail or take less: the plan's alerts (site-chaine.md).
+  const chainAlerts = useMemo(
+    () =>
+      passageRoster.data && envois.floods
+        ? passageAlerts({
+            roster: passageRoster.data.members,
+            exportAt: passageRoster.data.exportAt?.getTime() ?? null,
+            states: envois.states,
+            floods: envois.floods,
+            now: new Date().getTime(),
+          })
+        : 0,
+    [passageRoster.data, envois.floods, envois.states],
+  );
   const counts: Partial<Record<Tab, number>> = {
     demandes: pending,
     convoys: envois.convoys?.filter((c) => c.kind === "transit" && c.at > new Date().getTime()).length ?? 0,
     floods: envois.floods?.filter((f) => f.at > new Date().getTime()).length ?? 0,
     space: isAdmin ? view.requests.length : 0,
+    chain: chainAlerts,
   };
 
   // Discord's message is set by an Admin: the tab is theirs only.
@@ -255,7 +272,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
     return (
       <div className="space-y-6">
         {header}
-        <ChainPanel view={view} keyring={access.keyring} />
+        <ChainPanel view={view} keyring={access.keyring} floods={envois.floods} states={envois.states} />
       </div>
     );
 

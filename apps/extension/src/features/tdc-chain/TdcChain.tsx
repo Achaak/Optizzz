@@ -11,7 +11,15 @@ import {
 } from "../alliance-map/settings";
 import { loadLaunches } from "@/data/launches";
 import { loadLevelsOf } from "@/data/levels";
-import { bridge, planChain, planTransfer, takeMatrix, type ChainMember, type Gap, type Transfer } from "./chain";
+import {
+  bridge,
+  planChain,
+  planTransfer,
+  takeMatrix,
+  type ChainMember,
+  type Gap,
+  type Transfer,
+} from "@optizzz/game/tdc-chain/chain";
 import { byDeparture, planText, type PlannedLaunch } from "./plan-text";
 import { BUBBLE_SIZES, bubbleOf, PALETTE, rolesTopDown, styleOf, type BubbleSize, type RoleStyle } from "./role-styles";
 import {
@@ -26,7 +34,7 @@ import {
   rungs,
   type Role,
 } from "@optizzz/game/tdc-chain/roles";
-import { defaultFirstArrival, schedule } from "./schedule";
+import { defaultFirstArrival, schedule } from "@optizzz/game/tdc-chain/schedule";
 import { readChainSettings, writeChainSettings } from "./settings";
 import { effectiveChain } from "./site-roles";
 import { useSiteChainRoles } from "./use-site-chain-roles";

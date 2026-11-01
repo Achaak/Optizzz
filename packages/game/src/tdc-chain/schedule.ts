@@ -3,7 +3,7 @@
 /** Between two arrivals: the plan holds when the attacks land in order. */
 export const ARRIVAL_SPACING_SECONDS = 60;
 /** Left to the players to launch before the first departure. */
-const LEAD_SECONDS = 5 * 60;
+export const LEAD_SECONDS = 5 * 60;
 const ROUNDING_MS = 5 * 60 * 1000;
 
 export interface Slot {
