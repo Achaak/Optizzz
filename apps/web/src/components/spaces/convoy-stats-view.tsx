@@ -9,7 +9,7 @@ import { cn } from "cn";
 import { useState } from "react";
 import { Stat, StatGrid } from "~/components/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import type { ConvoyStats, OutsideWay, Period, PlayerRow } from "~/lib/envois/convoy-stats";
+import { listNames, type ConvoyStats, type OutsideWay, type Period, type PlayerRow } from "~/lib/envois/convoy-stats";
 import { ConvoyStatsChart } from "./convoy-stats-chart";
 import { Callout, Panel } from "./parts";
 
@@ -54,7 +54,7 @@ export function ConvoyStatsView({
             {formatNumber(coverage.senders)} membre{coverage.senders > 1 ? "s" : ""} sur{" "}
             {formatNumber(coverage.members)} {coverage.senders > 1 ? "envoient leurs" : "envoie ses"} convois.
           </strong>{" "}
-          {coverage.missing.join(", ")} {coverage.missing.length > 1 ? "n'envoient" : "n'envoie"} pas
+          {listNames(coverage.missing)} {coverage.missing.length > 1 ? "n'envoient" : "n'envoie"} pas
           «&nbsp;Convois&nbsp;» : on ne compte que ce qu&apos;
           {coverage.missing.length > 1 ? "ils échangent" : "il échange"} avec ceux qui l&apos;envoient, pas{" "}
           {coverage.missing.length > 1 ? "leurs" : "ses"} convois avec d&apos;autres joueurs.

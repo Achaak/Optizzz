@@ -123,7 +123,7 @@ const byDelivered = (a: PlayerRow, b: PlayerRow) =>
   b.delivered - a.delivered || b.count - a.count || b.received - a.received || a.player.localeCompare(b.player);
 
 /** Midnight in Paris, `back` days before today. */
-function parisMidnight(now: Date, back: number): number {
+export function parisMidnight(now: Date, back: number): number {
   const { year, month, day } = parisParts(now);
   return fromParisParts({ year, month, day: day - back, hours: 0, minutes: 0 }).getTime();
 }
@@ -267,7 +267,7 @@ export function convoyStats(input: ConvoyStatsInput): ConvoyStats {
 }
 
 /** « Okapi », « Okapi et Grop », « Okapi, Grop et Lasius ». */
-const listNames = (names: readonly string[]) =>
+export const listNames = (names: readonly string[]) =>
   names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} et ${names.at(-1) ?? ""}`;
 
 /**

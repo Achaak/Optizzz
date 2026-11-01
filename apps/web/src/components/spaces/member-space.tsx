@@ -29,6 +29,7 @@ import { shortDate } from "~/lib/short-date";
 import type { Absence } from "~/lib/spaces/absences";
 import { certify, excludeMember, grantAccess, withdrawAdmin } from "~/lib/spaces/access";
 import { CONVOYS_TAB } from "~/lib/envois/convoy-view";
+import { FLOODS_TAB } from "~/lib/envois/flood-view";
 import { askExtensionForMembers } from "~/lib/spaces/extension-bridge";
 import { checkMembersList, membersCheckMessage } from "~/lib/spaces/members-check";
 import {
@@ -100,11 +101,15 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const envois = useSpaceEnvois(view, access.keyring);
   const demandes = useSpaceDemandes(view, access.keyring, envois.items);
   const versionHidden = useKeyHandover(view, access.keyring, keys.userId);
-  // A link to the Convois tab (`?onglet=convois`) opens on it; the other tabs leave the address bare.
+  // A link to the Convois or Floods tab (`?onglet=convois`) opens on it; the other tabs leave the address bare.
   const params = useSearchParams();
-  const [tab, setTab] = useState<Tab>(() => (params.get("onglet") === CONVOYS_TAB ? "convoys" : "space"));
+  const [tab, setTab] = useState<Tab>(() => {
+    const asked = params.get("onglet");
+    return asked === CONVOYS_TAB ? "convoys" : asked === FLOODS_TAB ? "floods" : "space";
+  });
   useEffect(() => {
-    if (tab !== "convoys" && window.location.search) window.history.replaceState(null, "", window.location.pathname);
+    if (tab !== "convoys" && tab !== "floods" && window.location.search)
+      window.history.replaceState(null, "", window.location.pathname);
   }, [tab]);
   const server = serverById(view.space.server);
   const isAdmin = view.me.role === "admin";
@@ -116,7 +121,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const counts: Partial<Record<Tab, number>> = {
     demandes: pending,
     convoys: envois.convoys?.filter((c) => c.kind === "transit" && c.at > new Date().getTime()).length ?? 0,
-    floods: envois.floods?.length ?? 0,
+    floods: envois.floods?.filter((f) => f.at > new Date().getTime()).length ?? 0,
     space: isAdmin ? view.requests.length : 0,
   };
 
@@ -215,6 +220,10 @@ export function MemberSpace({ view }: { view: MemberView }) {
           floods={envois.floods}
           refused={envois.refused.floods}
           isAdmin={isAdmin}
+          members={view.members}
+          sends={envois.sends}
+          server={view.space.server}
+          tag={view.space.tag}
           loading={envois.loading || (access.keyring !== null && envois.floods === null)}
         />
       </div>

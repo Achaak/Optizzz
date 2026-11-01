@@ -193,6 +193,30 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-11-01, d'après la 
 
 Vérifié en local le 2026-11-01 avec une page de démonstration temporaire (convois inventés, retirée) : alliance entière, un membre choisi, 7, 30 et 90 jours (« Convois connus depuis le … »), la liste, l'adresse qui suit les choix ; l'alliance des autres joueurs lue dans la carte locale ; en clair, sombre et à 375 px. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte, ni le collage dans Discord.
 
+## Statistiques des floods
+
+Décidé lors d'une session de cadrage (`/grill-me`) le 2026-11-01, d'après la maquette « C · Espace d'alliance · Floods (stats) » du canevas « Optizzz — maquettes du site », sur le modèle des Statistiques des convois, et réalisé le même jour.
+
+- **Où** : l'onglet « Floods » a le même choix « Statistiques | Liste » (la liste est l'onglet d'avant), Statistiques par défaut ; vue, période et membre dans l'adresse (`?onglet=floods&vue=liste&periode=24h&membre=Noctis`). L'onglet porte le nombre de floods en route.
+- **Périodes** : 24 heures ou **7 jours** (par défaut) : le site efface un flood 7 jours après son arrivée, ce que la page dit toujours. Sur 24 heures, les barres sont par heure, sur 7 jours par jour de Paris.
+- **Ce qui compte** : les floods **arrivés** dans la période, un par empreinte ; ceux en route ont leur tuile et leur encart. Un flood annulé n'est déjà plus sur le site.
+- **Prise attendue** : celle du Plan de flood, jamais celle du combat ; la somme des prises connues, « ≥ » dès qu'un flood de la période a été lancé sans le Plan (« N floods lancés sans le Plan »), et la part lancée avec le Plan. On n'invente aucune prise.
+- **Couverture** : seul celui qui lance un flood l'envoie : un membre qui n'envoie pas « Floods » n'apparaît nulle part. L'encadré « 8 membres sur 10 envoient leurs floods » les nomme ; ils sont en bas de « Par membre » (« n'envoie pas « Floods » »).
+- **Blocs** : tuiles (floods arrivés, prise attendue, en route, cibles et celles visées par plusieurs membres, avec le Plan) ; « Prise attendue par jour » (ou par heure), le nombre de floods écrit au-dessus de chaque barre ; « Par membre » (floods, prise attendue, cibles, en route, dernière arrivée ; triable) ; « Cibles les plus visées » (les 8 premières par prise attendue, leur alliance d'après la carte publique du serveur, « N membres » quand plusieurs membres la visent) ; « En route » (les 3 prochains) ; « Armée envoyée ».
+- **Armée envoyée** : réservée aux Admins (le site ne la rend qu'à eux) : le total par unité des floods arrivés dans la période, abréviations et ordre du jeu, « sur N floods lancés avec le Plan ».
+- **Un membre choisi** : tuiles et graphique deviennent les siens, « Par membre » devient « Ses cibles » (cible, floods, prise attendue, dernière arrivée), « En route » et « Armée envoyée » se limitent à ses floods.
+- **Copier pour Discord** : « **Floods 4O4 · 7 jours** (du 26/10 au 01/11) », « 64 floods arrivés · prise attendue ≥ 4,82M (9 sans le Plan) », une ligne par membre (« - Noctis : 14 floods · prise 1,24M · 6 cibles »), « Cibles : … » (les 3 premières), puis ceux qui n'envoient pas. **Jamais l'armée** : réservée aux Admins, un salon Discord est lu par tous.
+- **Calcul** : dans le navigateur seulement, d'après les floods déjà ouverts pour l'onglet ; fonctions pures dans `apps/web/src/lib/envois/flood-stats.ts` (+ test).
+
+| Fichier                                                                        | Rôle                                                                        |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `apps/web/src/lib/envois/flood-stats.ts` (+ test)                              | Tuiles, heures ou jours, par membre, cibles, en route, armée, texte Discord |
+| `apps/web/src/lib/envois/flood-view.ts` (+ test)                               | Vue, période et membre lus et écrits dans l'adresse                         |
+| `apps/web/src/components/spaces/floods-panel.tsx`                              | Onglet « Floods » : barre de choix, Statistiques ou Liste, copie            |
+| `apps/web/src/components/spaces/flood-stats-view.tsx`, `flood-stats-chart.tsx` | Vue « Statistiques », graphique Recharts                                    |
+
+Vérifié en local le 2026-11-01 avec une page de démonstration temporaire (floods inventés, retirée) : alliance entière, 7 jours et 24 heures (barres par heure), un membre choisi (« Ses cibles »), la liste filtrée par membre, l'armée des Admins, l'adresse qui suit les choix, l'alliance des cibles lue dans la carte locale ; en clair, sombre et à 375 px. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte, ni le collage dans Discord.
+
 ## Tickets
 
 20 (le circuit et les Convois), 21 (Floods et « floods sur nous »), 22 (Chasses, Armée, Niveaux, Production, Partage fusionné), puis les Demandes (23, 24) et Discord (25, 26).
