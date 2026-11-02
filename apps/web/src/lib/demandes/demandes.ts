@@ -3,12 +3,15 @@
 // whose inside does not name its row is thrown away and counted.
 import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
 import {
+  DECLARED_CONVOY_CATEGORY,
   DEMANDE_CONVOY_ITEM,
+  DEMANDES_KEPT_MS,
   demandeLabel,
   demandeProgress,
   openDemande,
   sealDemande,
   shownStatus,
+  type AttachedConvoy,
   type DemandeContent,
   type DemandeConvoy,
   type DemandeProgress,
@@ -17,7 +20,7 @@ import {
 } from "@optizzz/game/site-links/demandes";
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
-import { openEnvoi } from "@optizzz/game/site-links/envois";
+import { openEnvoi, sealEnvoi } from "@optizzz/game/site-links/envois";
 import { comparePriorites, prioriteOf, type Priorite } from "@optizzz/game/site-links/priorite";
 import { envoiCrypto } from "~/lib/envois/convoys";
 
@@ -63,19 +66,59 @@ export async function newDemande(
   return { id, blob, keyVersion: Math.max(...keyring.map((k) => k.version)) };
 }
 
-/** The convoys attached to Demandes among a space's Envois, those that open. */
-async function attachedConvoys(rows: readonly EnvoiRowInput[], keyring: AllianceKeyring): Promise<DemandeConvoy[]> {
+/** The same Demande sealed again with what its requester changed, with the newest version of the key. */
+export async function resealDemande(
+  demande: { id: string; server: string; playerId: number },
+  content: DemandeContent,
+  keyring: AllianceKeyring,
+): Promise<{ blob: string; keyVersion: number }> {
+  const blob = await sealDemande({ ...demande, content }, envoiCrypto(keyring));
+  return { blob, keyVersion: Math.max(...keyring.map((k) => k.version)) };
+}
+
+/**
+ * A convoy its sender declares for a Demande, as an Envoi of their Joueur (`declared-convoys`): sealed here, its
+ * fingerprint keyed from a random id (no two declarations alike), kept 90 days after its arrival.
+ */
+export async function declaredConvoyEnvoi(
+  sender: { server: string; playerId: number },
+  convoy: DemandeConvoy,
+  keyring: AllianceKeyring,
+  now: Date,
+): Promise<{ keyVersion: number; item: { fingerprint: string; blob: string; expiresAt: number } }> {
   const crypto = envoiCrypto(keyring);
-  const opened = await Promise.all(
-    rows
-      .filter((row) => row.category === "demande-convoys")
-      .map((row) =>
-        openEnvoi({ ...row, category: "demande-convoys" }, crypto, DEMANDE_CONVOY_ITEM).then(
-          ({ item }) => item,
-          () => null,
-        ),
-      ),
-  );
+  const fingerprint = await crypto.fingerprint(globalThis.crypto.randomUUID());
+  const envelope = { ...sender, category: DECLARED_CONVOY_CATEGORY, fingerprint, observedAt: now.getTime() };
+  return {
+    keyVersion: Math.max(...keyring.map((k) => k.version)),
+    item: {
+      fingerprint,
+      blob: await sealEnvoi({ ...envelope, item: convoy }, crypto),
+      expiresAt: convoy.at + DEMANDES_KEPT_MS,
+    },
+  };
+}
+
+/**
+ * The convoys attached to Demandes among a space's Envois, those that open: from « Envoyer un convoi », and those
+ * declared on this page (with who declared them, for « Retirer »).
+ */
+async function attachedConvoys(rows: readonly EnvoiRowInput[], keyring: AllianceKeyring): Promise<AttachedConvoy[]> {
+  const crypto = envoiCrypto(keyring);
+  const open = (row: EnvoiRowInput): Promise<AttachedConvoy | null> => {
+    if (row.category === "demande-convoys")
+      return openEnvoi({ ...row, category: "demande-convoys" }, crypto, DEMANDE_CONVOY_ITEM).then(
+        ({ item }): AttachedConvoy => item,
+        () => null,
+      );
+    if (row.category === DECLARED_CONVOY_CATEGORY)
+      return openEnvoi({ ...row, category: DECLARED_CONVOY_CATEGORY }, crypto, DEMANDE_CONVOY_ITEM).then(
+        ({ item }): AttachedConvoy => ({ ...item, declared: { playerId: row.playerId, fingerprint: row.fingerprint } }),
+        () => null,
+      );
+    return Promise.resolve(null);
+  };
+  const opened = await Promise.all(rows.map(open));
   return opened.filter((convoy) => convoy !== null);
 }
 
@@ -89,7 +132,7 @@ export async function openDemandes(
   keyring: AllianceKeyring,
   members: readonly { playerId: number; pseudo: string }[],
   now: Date,
-): Promise<{ demandes: OpenedDemande[]; refused: number; convoys: DemandeConvoy[] }> {
+): Promise<{ demandes: OpenedDemande[]; refused: number; convoys: AttachedConvoy[] }> {
   const crypto = envoiCrypto(keyring);
   const convoys = await attachedConvoys(envois, keyring);
   let refused = 0;

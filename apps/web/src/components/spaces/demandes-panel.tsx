@@ -5,22 +5,35 @@
 // A status is written in words, never told by a colour alone (ADR 0003). « Envoyer un convoi » opens the game's
 // Convoi page, which the extension fills: the player clicks « Lancer le convoi » themself.
 import { formatCompact, formatNumber } from "@optizzz/game/format/number-format";
-import { formatDateTime, formatPastTime } from "@optizzz/game/format/time-format";
+import {
+  formatDateTime,
+  formatEndTime,
+  formatPastTime,
+  fromParisParts,
+  parisParts,
+} from "@optizzz/game/format/time-format";
+import { parseGameDuration } from "@optizzz/game/pages/work-queue";
 import type { LevelKey } from "@optizzz/game/level-costs";
 import { BUILDINGS, RESEARCH } from "@optizzz/game/levels";
 import { serverById } from "@optizzz/game/servers";
 import {
+  askedOf,
   demandeConvoyLink,
   MAX_DEMANDE_LEVEL,
+  needsRevalidation,
   STATUS_LABEL,
   tableCost,
+  wantedText,
+  type AttachedConvoy,
+  type DemandeContent,
+  type DemandeConvoy,
   type Resources,
 } from "@optizzz/game/site-links/demandes";
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import { prioriteText, type Priorite } from "@optizzz/game/site-links/priorite";
 import { cn } from "cn";
-import { useId, useState } from "react";
+import { Fragment, useId, useState } from "react";
 import { ArrowRightIcon } from "~/components/icons";
 import { NumberField } from "~/components/number-field";
 import { Stat } from "~/components/stat";
@@ -70,7 +83,7 @@ function Progress({ part, whole }: { part: number; whole: number }) {
   const percent = whole > 0 ? Math.min(100, Math.round((part / whole) * 100)) : 0;
   return (
     <div className="flex items-center justify-end gap-2">
-      <div aria-hidden className="h-2 w-[90px] bg-raised">
+      <div aria-hidden className="h-2 w-16 bg-raised">
         <div className="h-full bg-info" style={{ width: `${String(percent)}%` }} />
       </div>
       <span className="w-10 text-right font-mono text-xs">{percent} %</span>
@@ -129,6 +142,28 @@ function PrioriteNote() {
   );
 }
 
+/** « pour le 05/11 », « autofinancée », « coût saisi »: what the Demande says besides its label. */
+function DemandeTags({ content }: { content: DemandeContent }) {
+  const tags = [
+    content.wanted !== undefined && wantedText(content.wanted),
+    content.self && "autofinancée",
+    content.typed && "coût saisi",
+  ].filter(Boolean);
+  return tags.length === 0 ? null : <span className="block text-xs text-muted-foreground">{tags.join(" · ")}</span>;
+}
+
+/** A Paris day for `<input type="date">`, and back. */
+const dayInput = (wanted: number | undefined) => {
+  if (wanted === undefined) return "";
+  const { year, month, day } = parisParts(new Date(wanted));
+  return `${String(year)}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+};
+const dayOf = (value: string): number | undefined => {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return undefined;
+  return fromParisParts({ year, month, day, hours: 0, minutes: 0 }).getTime();
+};
+
 export function DemandesPanel({
   view,
   demandes,
@@ -151,6 +186,9 @@ export function DemandesPanel({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // The Demande whose « Modifier » or « Déclarer un convoi » form is open under its row.
+  const [unfolded, setUnfolded] = useState<{ id: string; form: "change" | "declare" } | null>(null);
+  const myPseudo = view.members.find((m) => m.playerId === view.me.playerId)?.pseudo ?? "";
 
   if (demandes.demandes === null)
     return (
@@ -205,7 +243,7 @@ export function DemandesPanel({
   const ownActions = (demande: OpenedDemande) => {
     const at = myOpen.findIndex((d) => d.id === demande.id);
     return (
-      <div className="flex justify-end gap-1.5">
+      <div className="flex flex-wrap justify-end gap-1.5">
         <Button
           variant="outline"
           size="icon"
@@ -224,6 +262,12 @@ export function DemandesPanel({
         >
           ↓
         </Button>
+        <Button variant="outline" disabled={busy} onClick={() => toggle(demande.id, "change")}>
+          Modifier
+        </Button>
+        <Button variant="outline" disabled={busy} onClick={() => void run(() => demandes.finish(demande.id))}>
+          Clore
+        </Button>
         <Button variant="outline" disabled={busy} onClick={() => void run(() => demandes.cancel(demande.id))}>
           Annuler
         </Button>
@@ -231,7 +275,67 @@ export function DemandesPanel({
     );
   };
 
-  const remaining = groups.active.reduce((sum, d) => sum + total(d.progress.remaining), 0);
+  const toggle = (id: string, form: "change" | "declare") =>
+    setUnfolded((current) => (current?.id === id && current.form === form ? null : { id, form }));
+  const validator = view.me.role === "admin" || view.me.role === "delegate";
+
+  /** What a validator does to a validated Demande: send it back to validation, or close it. */
+  const validatorActions = (demande: OpenedDemande) => (
+    <>
+      {canDecide(view.me.role, mine(demande)) && (
+        <Button variant="outline" disabled={busy} onClick={() => void run(() => demandes.suspend(demande.id))}>
+          Suspendre
+        </Button>
+      )}
+      {!mine(demande) && validator && (
+        <Button variant="outline" disabled={busy} onClick={() => void run(() => demandes.finish(demande.id))}>
+          Clore
+        </Button>
+      )}
+    </>
+  );
+
+  /** The form unfolded under a Demande's row, if any. */
+  const unfoldedRow = (demande: OpenedDemande, columns: number) => {
+    if (unfolded?.id !== demande.id) return null;
+    const close = () => setUnfolded(null);
+    return (
+      <TableRow className="border-t border-b-0 border-dashed bg-muted hover:bg-muted">
+        <TableCell colSpan={columns} className="px-4 py-3 whitespace-normal">
+          {unfolded.form === "change" ? (
+            <ChangeForm
+              demande={demande}
+              busy={busy}
+              onClose={close}
+              onChange={async (content) => {
+                if (await run(() => demandes.change(demande, content))) close();
+              }}
+            />
+          ) : (
+            <DeclareForm
+              demande={demande}
+              me={myPseudo}
+              busy={busy}
+              onClose={close}
+              onDeclare={async (convoy) => {
+                if (await run(() => demandes.declare(convoy))) close();
+              }}
+            />
+          )}
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  /** The convoys the member declared for a Demande, each withdrawn until it arrives. */
+  const myDeclared = (demande: OpenedDemande) =>
+    (demandes.convoys ?? []).filter(
+      (c): c is AttachedConvoy & { declared: NonNullable<AttachedConvoy["declared"]> } =>
+        c.demande === demande.id && c.declared?.playerId === view.me.playerId,
+    );
+
+  // An « autofinancée » Demande asks for nothing: it stays out of what remains to send.
+  const remaining = groups.active.reduce((sum, d) => sum + total(askedOf(d.content, d.progress.remaining)), 0);
   const now = new Date();
 
   return (
@@ -287,43 +391,51 @@ export function DemandesPanel({
                 </TableHeader>
                 <TableBody>
                   {groups.pending.map((d) => (
-                    <TableRow key={d.id} className={ROW}>
-                      <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
-                      <TableCell className="min-w-32 whitespace-normal">
-                        {d.label}
-                        {d.content.typed && <span className="block text-xs text-muted-foreground">coût saisi</span>}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Cost resources={d.content.cost} />
-                      </TableCell>
-                      <TableCell className="min-w-40 whitespace-normal">
-                        <PrioriteCell priorite={priorites?.get(d.playerId)} />
-                      </TableCell>
-                      <TableCell>{formatPastTime(new Date(d.createdAt), now)}</TableCell>
-                      <TableCell className="pr-4">
-                        <div className="flex justify-end gap-1.5">
-                          {mine(d) && ownActions(d)}
-                          {canDecide(view.me.role, mine(d)) && (
-                            <>
-                              <Button
-                                variant="outline"
-                                disabled={busy}
-                                onClick={() => void run(() => demandes.decide(d.id, "refused"))}
-                              >
-                                Refuser
-                              </Button>
-                              <Button
-                                className="font-semibold"
-                                disabled={busy}
-                                onClick={() => void run(() => demandes.decide(d.id, "validated"))}
-                              >
-                                Valider
-                              </Button>
-                            </>
+                    <Fragment key={d.id}>
+                      <TableRow className={ROW}>
+                        <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
+                        <TableCell className="min-w-32 whitespace-normal">
+                          {d.label}
+                          <DemandeTags content={d.content} />
+                          {d.decidedByPseudo && (
+                            <span className="block text-xs text-muted-foreground">
+                              suspendue par {d.decidedByPseudo}
+                            </span>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Cost resources={d.content.cost} />
+                        </TableCell>
+                        <TableCell className="min-w-40 whitespace-normal">
+                          <PrioriteCell priorite={priorites?.get(d.playerId)} />
+                        </TableCell>
+                        <TableCell>{formatPastTime(new Date(d.createdAt), now)}</TableCell>
+                        <TableCell className="min-w-44 pr-4 whitespace-normal">
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            {mine(d) && ownActions(d)}
+                            {canDecide(view.me.role, mine(d)) && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  disabled={busy}
+                                  onClick={() => void run(() => demandes.decide(d.id, "refused"))}
+                                >
+                                  Refuser
+                                </Button>
+                                <Button
+                                  className="font-semibold"
+                                  disabled={busy}
+                                  onClick={() => void run(() => demandes.decide(d.id, "validated"))}
+                                >
+                                  Valider
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {unfoldedRow(d, 6)}
+                    </Fragment>
                   ))}
                 </TableBody>
               </Table>
@@ -370,44 +482,88 @@ export function DemandesPanel({
                 </TableHeader>
                 <TableBody>
                   {groups.active.map((d) => (
-                    <TableRow key={d.id} className={ROW}>
-                      <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
-                      <TableCell className="min-w-32 whitespace-normal">{d.label}</TableCell>
-                      <TableCell className="min-w-40 whitespace-normal">
-                        <PrioriteCell priorite={priorites?.get(d.playerId)} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Cost resources={d.progress.remaining} />
-                        <span className="block text-xs text-muted-foreground">
-                          sur {formatNumber(total(d.content.cost))}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Progress
-                          part={total(plus(d.progress.received, d.progress.onWay))}
-                          whole={total(d.content.cost)}
-                        />
-                      </TableCell>
-                      <TableCell className={d.status === "covered" ? "text-muted-foreground" : "font-medium"}>
-                        {STATUS_LABEL[d.status]}
-                      </TableCell>
-                      <TableCell className="pr-4">
-                        <div className="flex justify-end">
-                          {mine(d) ? (
-                            ownActions(d)
-                          ) : d.status === "validated" && origin ? (
-                            <a
-                              href={demandeConvoyLink(origin, d.id)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={buttonVariants({ variant: "outline" })}
-                            >
-                              Envoyer un convoi
-                            </a>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    <Fragment key={d.id}>
+                      <TableRow className={ROW}>
+                        <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
+                        <TableCell className="min-w-32 whitespace-normal">
+                          {d.label}
+                          <DemandeTags content={d.content} />
+                          {myDeclared(d).map((c) => (
+                            <span key={c.declared.fingerprint} className="block text-xs text-muted-foreground">
+                              Déclaré par vous : {resources(c)}, arrivée {formatEndTime(new Date(c.at), now)}
+                              {c.at > now.getTime() && (
+                                <>
+                                  {" · "}
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    className="font-semibold text-primary hover:underline"
+                                    onClick={() => void run(() => demandes.withdraw(c.declared.fingerprint))}
+                                  >
+                                    Retirer
+                                  </button>
+                                </>
+                              )}
+                            </span>
+                          ))}
+                        </TableCell>
+                        <TableCell className="min-w-40 whitespace-normal">
+                          <PrioriteCell priorite={priorites?.get(d.playerId)} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {d.content.self ? (
+                            <span className="text-muted-foreground">autofinancée</span>
+                          ) : (
+                            <>
+                              <Cost resources={d.progress.remaining} />
+                              <span className="block text-xs text-muted-foreground">
+                                sur {formatNumber(total(d.content.cost))}
+                              </span>
+                            </>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {d.content.self ? (
+                            <span className="block text-right text-muted-foreground">—</span>
+                          ) : (
+                            <Progress
+                              part={total(plus(d.progress.received, d.progress.onWay))}
+                              whole={total(d.content.cost)}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell className={d.status === "covered" ? "text-muted-foreground" : "font-medium"}>
+                          {STATUS_LABEL[d.status]}
+                        </TableCell>
+                        <TableCell className="min-w-44 pr-4 whitespace-normal">
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            {mine(d) && ownActions(d)}
+                            {!mine(d) && !d.content.self && d.status === "validated" && origin && (
+                              <a
+                                href={demandeConvoyLink(origin, d.id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={buttonVariants({ variant: "outline" })}
+                              >
+                                Envoyer un convoi
+                              </a>
+                            )}
+                            {!mine(d) && !d.content.self && d.status === "validated" && (
+                              <Button
+                                variant="outline"
+                                aria-expanded={unfolded?.id === d.id && unfolded.form === "declare"}
+                                disabled={busy}
+                                onClick={() => toggle(d.id, "declare")}
+                              >
+                                Déclarer un convoi
+                              </Button>
+                            )}
+                            {validatorActions(d)}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {unfoldedRow(d, 7)}
+                    </Fragment>
                   ))}
                 </TableBody>
               </Table>
@@ -418,9 +574,13 @@ export function DemandesPanel({
                 «&nbsp;Envoyé&nbsp;» compte les convois reçus et en route. «&nbsp;Envoyer un convoi&nbsp;» ouvre la page
                 Commerce du jeu, que l&apos;extension Optizzz remplit avec le destinataire et le reste à envoyer&nbsp;:
                 vérifiez, puis cliquez vous-même «&nbsp;Lancer le convoi&nbsp;». Ce convoi compte alors pour la Demande,
-                si vous envoyez vos Convois ; un convoi lancé autrement ne compte que dans le Solde. Une Demande est
-                couverte quand les convois reçus et en route atteignent son coût, et close quand l&apos;extension du
-                demandeur voit le niveau atteint ou le chantier lancé.
+                si vous envoyez vos Convois ; un convoi lancé autrement se déclare avec «&nbsp;Déclarer un convoi&nbsp;»
+                (il compte alors pour la Demande, pas dans le Solde). Une Demande est couverte quand les convois reçus
+                et en route atteignent son coût, et close quand l&apos;extension du demandeur voit le niveau atteint ou
+                le chantier lancé, ou à la main avec «&nbsp;Clore&nbsp;».
+              </p>
+              <p>
+                «&nbsp;Suspendre&nbsp;» renvoie une Demande à valider. Une Demande autofinancée ne demande aucun convoi.
               </p>
             </Notes>
           </Panel>
@@ -503,7 +663,9 @@ function FinishedPanel({ finished }: { finished: readonly OpenedDemande[] }) {
                   <TableCell className="min-w-32 whitespace-normal">{d.label}</TableCell>
                   <TableCell>
                     {STATUS_LABEL[d.status]}
-                    {d.stored === "refused" && d.decidedByPseudo ? ` par ${d.decidedByPseudo}` : ""}
+                    {(d.stored === "refused" || d.stored === "closed") && d.decidedByPseudo
+                      ? ` par ${d.decidedByPseudo}`
+                      : ""}
                   </TableCell>
                   <TableCell className="pr-4">{d.endedAt ? formatDateTime(new Date(d.endedAt)) : "—"}</TableCell>
                 </TableRow>
@@ -519,20 +681,18 @@ function FinishedPanel({ finished }: { finished: readonly OpenedDemande[] }) {
 const nameOf = (key: LevelKey) => [...BUILDINGS, ...RESEARCH].find((entry) => entry.key === key)?.name ?? key;
 
 /** The building or research, the levels, and the cost from the table, which the player may type over. */
-function DemandeForm({
-  busy,
-  onMake,
-}: {
-  busy: boolean;
-  onMake: (content: {
-    key: LevelKey;
-    from: number;
-    level: number;
-    cost: Resources;
-    typed: boolean;
-  }) => Promise<boolean>;
-}) {
-  const ids = { element: useId(), from: useId(), to: useId(), food: useId(), materials: useId(), hint: useId() };
+function DemandeForm({ busy, onMake }: { busy: boolean; onMake: (content: DemandeContent) => Promise<boolean> }) {
+  const ids = {
+    element: useId(),
+    from: useId(),
+    to: useId(),
+    food: useId(),
+    materials: useId(),
+    hint: useId(),
+    wanted: useId(),
+  };
+  const [wanted, setWanted] = useState("");
+  const [self, setSelf] = useState(false);
   const [key, setKey] = useState<LevelKey>("mushroom");
   const [level, setLevel] = useState<number | null>(null);
   const [from, setFrom] = useState<number | null>(null);
@@ -546,10 +706,21 @@ function DemandeForm({
 
   async function make() {
     if (!aim || !cost || cost.food + cost.materials === 0) return;
-    if (!(await onMake({ key, ...aim, cost, typed: typed !== null }))) return;
+    const day = dayOf(wanted);
+    const content: DemandeContent = {
+      key,
+      ...aim,
+      cost,
+      typed: typed !== null,
+      ...(day !== undefined && { wanted: day }),
+      ...(self && { self }),
+    };
+    if (!(await onMake(content))) return;
     setLevel(null);
     setFrom(null);
     setTyped(null);
+    setWanted("");
+    setSelf(false);
   }
 
   return (
@@ -649,6 +820,34 @@ function DemandeForm({
               : `Coût de ${nameOf(key)} calculé d'après la table des coûts d'Optizzz, modifiable.`}{" "}
           Seuls la nourriture et les matériaux se demandent&nbsp;: un convoi ne porte pas d&apos;ouvrières.
         </p>
+        <div className="col-span-2 space-y-1">
+          <label htmlFor={ids.wanted} className={FIELD_LABEL}>
+            Pour le
+          </label>
+          <input
+            id={ids.wanted}
+            type="date"
+            value={wanted}
+            onChange={(event) => setWanted(event.target.value)}
+            className={cn("block w-full border border-input px-2.5 text-sm", FIELD_INPUT)}
+          />
+          <p className="text-xs text-muted-foreground">Facultatif : le jour où vous voulez lancer le chantier.</p>
+        </div>
+        <label className="col-span-2 flex cursor-pointer items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={self}
+            onChange={(event) => setSelf(event.target.checked)}
+            className="mt-1 size-4 accent-primary"
+          />
+          <span>
+            Je la finance moi-même
+            <span className="block text-xs text-muted-foreground">
+              Autofinancée : la Demande annonce le chantier à l&apos;alliance et attend sa validation, sans demander de
+              convoi.
+            </span>
+          </span>
+        </label>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -668,6 +867,205 @@ function DemandeForm({
         Ce que vous demandez est chiffré dans votre navigateur avec la Clé d&apos;alliance&nbsp;: Optizzz ne voit que
         qui demande, quand, et où en est la Demande.
       </p>
+    </div>
+  );
+}
+
+/** « Modifier »: what the requester asks for, the day, and whether they pay it themself. */
+function ChangeForm({
+  demande,
+  busy,
+  onChange,
+  onClose,
+}: {
+  demande: OpenedDemande;
+  busy: boolean;
+  onChange: (content: DemandeContent) => Promise<void>;
+  onClose: () => void;
+}) {
+  const ids = { food: useId(), materials: useId(), wanted: useId() };
+  const [cost, setCost] = useState<Resources>(demande.content.cost);
+  const [wanted, setWanted] = useState(dayInput(demande.content.wanted));
+  const [self, setSelf] = useState(Boolean(demande.content.self));
+  const day = dayOf(wanted);
+  const kept: DemandeContent = { ...demande.content };
+  delete kept.wanted;
+  delete kept.self;
+  const content: DemandeContent = {
+    ...kept,
+    cost,
+    typed: kept.typed || cost.food !== kept.cost.food || cost.materials !== kept.cost.materials,
+    ...(day !== undefined && { wanted: day }),
+    ...(self && { self }),
+  };
+  const back = demande.stored === "validated" && needsRevalidation(demande.content, content);
+  return (
+    <div className="space-y-3">
+      <p className="text-[0.8125rem]">
+        Modifier votre Demande ({demande.label}) : baisser ce qu&apos;elle demande la garde validée ; demander plus, un
+        autre jour, ou la financer autrement la renvoie à valider.
+      </p>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] items-end gap-3">
+        <div className="space-y-1">
+          <label htmlFor={ids.food} className={FIELD_LABEL}>
+            Nourriture
+          </label>
+          <NumberField
+            id={ids.food}
+            className={FIELD_INPUT}
+            value={cost.food}
+            rules={AMOUNT_RULES}
+            onCommit={(value) => setCost((current) => ({ ...current, food: value ?? 0 }))}
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor={ids.materials} className={FIELD_LABEL}>
+            Matériaux
+          </label>
+          <NumberField
+            id={ids.materials}
+            className={FIELD_INPUT}
+            value={cost.materials}
+            rules={AMOUNT_RULES}
+            onCommit={(value) => setCost((current) => ({ ...current, materials: value ?? 0 }))}
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor={ids.wanted} className={FIELD_LABEL}>
+            Pour le
+          </label>
+          <input
+            id={ids.wanted}
+            type="date"
+            value={wanted}
+            onChange={(event) => setWanted(event.target.value)}
+            className={cn("block w-full border border-input px-2.5 text-sm", FIELD_INPUT)}
+          />
+        </div>
+        <label className="flex cursor-pointer items-center gap-2 pb-2">
+          <input
+            type="checkbox"
+            checked={self}
+            onChange={(event) => setSelf(event.target.checked)}
+            className="size-4 accent-primary"
+          />
+          Autofinancée
+        </label>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          className="font-semibold"
+          disabled={busy || cost.food + cost.materials === 0}
+          onClick={() => void onChange(content)}
+        >
+          {back ? "Enregistrer et renvoyer à valider" : "Enregistrer"}
+        </Button>
+        <Button variant="outline" disabled={busy} onClick={onClose}>
+          Fermer
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * « Déclarer un convoi »: one the member sent to the requester without « Envoyer un convoi » (without the extension,
+ * or launched in the game). It counts for the Demande, marked as declared.
+ */
+function DeclareForm({
+  demande,
+  me,
+  busy,
+  onDeclare,
+  onClose,
+}: {
+  demande: OpenedDemande;
+  me: string;
+  busy: boolean;
+  onDeclare: (convoy: DemandeConvoy) => Promise<void>;
+  onClose: () => void;
+}) {
+  const ids = { food: useId(), materials: useId(), trip: useId(), hint: useId() };
+  const left = demande.progress.remaining;
+  const [amounts, setAmounts] = useState<Resources>(left);
+  const [tripText, setTripText] = useState("");
+  const duration = tripText.trim() === "0" ? 0 : parseGameDuration(tripText);
+  const now = new Date();
+  const arrival = duration === null ? null : new Date(now.getTime() + duration);
+  const ready = arrival !== null && amounts.food + amounts.materials > 0;
+  return (
+    <div className="space-y-3">
+      <p className="text-[0.8125rem]">
+        Un convoi que vous avez lancé vers <strong>{demande.requester}</strong> sans «&nbsp;Envoyer un convoi&nbsp;» :
+        il compte pour cette Demande, marqué «&nbsp;déclaré&nbsp;». Vous pouvez le retirer tant qu&apos;il n&apos;est
+        pas arrivé.
+      </p>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] items-end gap-3">
+        <div className="space-y-1">
+          <label htmlFor={ids.food} className={FIELD_LABEL}>
+            Nourriture
+          </label>
+          <NumberField
+            id={ids.food}
+            className={FIELD_INPUT}
+            value={amounts.food}
+            rules={AMOUNT_RULES}
+            onCommit={(value) => setAmounts((current) => ({ ...current, food: value ?? 0 }))}
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor={ids.materials} className={FIELD_LABEL}>
+            Matériaux
+          </label>
+          <NumberField
+            id={ids.materials}
+            className={FIELD_INPUT}
+            value={amounts.materials}
+            rules={AMOUNT_RULES}
+            onCommit={(value) => setAmounts((current) => ({ ...current, materials: value ?? 0 }))}
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor={ids.trip} className={FIELD_LABEL}>
+            Arrivée dans
+          </label>
+          <input
+            id={ids.trip}
+            aria-describedby={ids.hint}
+            value={tripText}
+            placeholder="2h30m"
+            onChange={(event) => setTripText(event.target.value)}
+            className={cn("block w-full border border-input px-2.5 font-mono text-sm", FIELD_INPUT)}
+          />
+        </div>
+      </div>
+      <p id={ids.hint} className="text-xs text-muted-foreground">
+        {arrival
+          ? `Arrivée ${formatEndTime(arrival, now)}. 0 si le convoi est déjà arrivé.`
+          : "La durée qui reste, comme le jeu l'écrit : « 2h30m », « 45m », « 0 » s'il est arrivé."}
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          className="font-semibold"
+          disabled={busy || !ready}
+          onClick={() =>
+            arrival &&
+            void onDeclare({
+              demande: demande.id,
+              from: me,
+              to: demande.requester,
+              food: amounts.food,
+              materials: amounts.materials,
+              at: arrival.getTime(),
+            })
+          }
+        >
+          Déclarer
+        </Button>
+        <Button variant="outline" disabled={busy} onClick={onClose}>
+          Fermer
+        </Button>
+      </div>
     </div>
   );
 }

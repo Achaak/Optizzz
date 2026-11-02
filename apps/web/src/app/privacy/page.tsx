@@ -107,7 +107,10 @@ export default function PrivacyPage() {
           l&apos;Admin ou du Délégué qui a décidé. «&nbsp;Couverte&nbsp;» n&apos;est pas gardé&nbsp;: chaque membre le
           calcule dans son navigateur d&apos;après les convois rattachés à la Demande, qui sont des Envois chiffrés
           comme les autres convois. Tous les membres voient les Demandes ; une Demande close, annulée ou refusée est
-          effacée 90 jours après.
+          effacée 90 jours après. Le jour voulu et «&nbsp;autofinancée&nbsp;» sont chiffrés avec le reste ; quand un
+          Admin ou un Délégué suspend ou clôt la Demande d&apos;un autre, le site garde son pseudo. «&nbsp;Déclarer un
+          convoi&nbsp;» envoie depuis le navigateur du membre, sur ce seul clic, un convoi chiffré comme les autres,
+          effacé 90 jours après son arrivée.
         </p>
         <p>
           Rôles de la Chaîne de TDC&nbsp;: les Admins et les Délégués d&apos;un espace y règlent qui est grenier,

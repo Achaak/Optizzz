@@ -4,9 +4,20 @@
 // open, opened here with the Clé d'alliance, each with what the convoys attached to it cover (from the Envois). Making
 // one seals it here; deciding, cancelling and ordering change only what the site keeps in clear.
 import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
-import type { DemandeContent, DemandeConvoy } from "@optizzz/game/site-links/demandes";
+import {
+  needsRevalidation,
+  type AttachedConvoy,
+  type DemandeContent,
+  type DemandeConvoy,
+} from "@optizzz/game/site-links/demandes";
 import { useEffect, useState } from "react";
-import { newDemande, openDemandes, type OpenedDemande } from "~/lib/demandes/demandes";
+import {
+  declaredConvoyEnvoi,
+  newDemande,
+  openDemandes,
+  resealDemande,
+  type OpenedDemande,
+} from "~/lib/demandes/demandes";
 import { api } from "~/trpc/react";
 import type { MemberView } from "./use-space-access";
 
@@ -25,10 +36,17 @@ export function useSpaceDemandes(view: MemberView, keyring: AllianceKeyring | nu
   const decide = api.demandes.decide.useMutation({ onSuccess: refresh });
   const cancel = api.demandes.cancel.useMutation({ onSuccess: refresh });
   const reorder = api.demandes.reorder.useMutation({ onSettled: refresh });
+  const update = api.demandes.update.useMutation({ onSuccess: refresh });
+  const suspend = api.demandes.suspend.useMutation({ onSuccess: refresh });
+  const finish = api.demandes.finish.useMutation({ onSuccess: refresh });
+  // A declared convoy is an Envoi: the space's Envois are read again to count it.
+  const declare = api.envois.declareConvoy.useMutation({
+    onSuccess: () => utils.envois.space.invalidate({ spaceId: view.space.id }),
+  });
   const [opened, setOpened] = useState<{
     demandes: OpenedDemande[];
     refused: number;
-    convoys: DemandeConvoy[];
+    convoys: AttachedConvoy[];
   } | null>(null);
   const data = query.data;
 
@@ -63,6 +81,33 @@ export function useSpaceDemandes(view: MemberView, keyring: AllianceKeyring | nu
     decide: (id: string, decision: "validated" | "refused") => decide.mutateAsync({ id, decision }),
     cancel: (id: string) => cancel.mutateAsync({ id }),
     reorder: (ids: string[]) => reorder.mutateAsync({ server: view.me.server, playerId: view.me.playerId, ids }),
+    /** The requester's change, sealed here; asking for more or for another day sends it back to validation. */
+    async change(demande: OpenedDemande, content: DemandeContent) {
+      if (!keyring) throw new Error("No Clé d'alliance");
+      const sealed = await resealDemande(demande, content, keyring);
+      await update.mutateAsync({ id: demande.id, ...sealed, revalidate: needsRevalidation(demande.content, content) });
+    },
+    suspend: (id: string) => suspend.mutateAsync({ id }),
+    finish: (id: string) => finish.mutateAsync({ id }),
+    /** A convoy the member sent to a Demande's requester, declared by hand. */
+    async declare(convoy: DemandeConvoy) {
+      if (!keyring) throw new Error("No Clé d'alliance");
+      const me = { server: view.me.server, playerId: view.me.playerId };
+      const { keyVersion, item } = await declaredConvoyEnvoi(me, convoy, keyring, new Date());
+      await declare.mutateAsync({ ...me, keyVersion, items: [item], removed: [] });
+    },
+    /** Withdraws a convoy the member declared. */
+    async withdraw(fingerprint: string) {
+      if (!keyring) throw new Error("No Clé d'alliance");
+      const keyVersion = Math.max(...keyring.map((k) => k.version));
+      await declare.mutateAsync({
+        server: view.me.server,
+        playerId: view.me.playerId,
+        keyVersion,
+        items: [],
+        removed: [fingerprint],
+      });
+    },
   };
 }
 

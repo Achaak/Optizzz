@@ -77,3 +77,25 @@ Un classement affiché aux validateurs et aux donneurs, **jamais une décision**
 | `apps/extension/src/features/optizzz-account/demandes.ts`, `alliance-demandes.ts` (+ tests) | Classement et colonne « Priorité » de l'encart du jeu |
 
 Vérifié en local le 2026-10-30 : l'onglet « Demandes » rendu avec des Demandes et des Envois de démonstration (page temporaire, retirée ; sans base) : Priorités connue, bornée, nulle et inconnue, en clair, en sombre et à 375 px. Pas essayé : un vrai espace et la vraie extension dans le jeu (couverts par les tests).
+
+## Date, autofinancée, Modifier, Suspendre, Clore, convois déclarés (2026-11-02)
+
+Maquette : artboard « C · Espace d'alliance · Demandes » du canevas.
+
+- **Pour le** : un jour facultatif, chiffré avec le reste (`wanted`, minuit à Paris) ; écrit « pour le 05/11 » sous la Demande.
+- **Autofinancée** (« Je la finance moi-même », `self`) : la Demande annonce le chantier et attend sa validation, sans demander de convoi. Ni « Envoyer un convoi » ni « Déclarer un convoi », « autofinancée » à la place du reste à envoyer, hors du total « Reste à envoyer » ; l'encart du jeu ne la montre pas et refuse de remplir le formulaire pour elle.
+- Deux champs facultatifs de plus dans le contenu chiffré : une extension plus ancienne les ignore (zod les retire), mais montre encore « Envoyer un convoi » sur une Demande autofinancée ; à publier ensemble.
+- **Modifier** (le demandeur, Demande ouverte) : nourriture, matériaux, jour, autofinancée ; le contenu est scellé de nouveau dans son navigateur (`update`). Demander moins garde une Demande validée ; demander plus, un autre jour, ou changer « autofinancée » la renvoie à valider (`needsRevalidation`), avec le rappel Discord. Le site ne voit pas le contenu : c'est la page du demandeur qui le lui dit (`revalidate`), comme le reste de ce qu'un membre écrit avec la Clé d'alliance.
+- **Suspendre** (un Admin ou un Délégué, une Demande validée ; un Délégué jamais la sienne) : elle repasse à valider, « suspendue par Formica » sous la Demande.
+- **Clore** (le demandeur, ou un Admin ou un Délégué, une Demande ouverte) : le chantier lancé sans que l'extension le voie, les ressources trouvées ailleurs. « close par Formica » quand ce n'est pas le demandeur.
+- **Déclarer un convoi** (un autre membre, Demande validée et pas autofinancée) : un convoi lancé sans « Envoyer un convoi » (sans l'extension, ou depuis le jeu), avec ses quantités et le temps qui reste (« 2h30m », « 0 » s'il est arrivé). C'est un Envoi de son Joueur, catégorie `declared-convoys`, que la page scelle avec la Clé d'alliance et que le site garde comme les autres (90 jours après l'arrivée) : la seule catégorie qu'écrit la page, et sans case à cocher, la déclaration étant elle-même l'accord. Il compte pour la Demande comme un convoi rattaché (sur le site et dans l'encart du jeu, qui l'ouvre comme `demande-convoys`), pas dans le Solde. « Déclaré par vous : … · Retirer » tant qu'il n'est pas arrivé.
+- **Limites** : un convoi déclaré et aussi rattaché par l'extension (le même convoi lancé depuis « Envoyer un convoi ») compte deux fois ; la page le dit à qui déclare. Les règles du site (`update`, `suspend`, `finish`) sont testées sur le magasin en mémoire ; le magasin Postgres écrit le contenu par la même requête que les statuts.
+
+| Fichier                                                                                      | Rôle                                                                         |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `packages/game/src/site-links/demandes.ts`                                                   | `wanted`, `self`, `needsRevalidation`, `askedOf`, `DECLARED_CONVOY_CATEGORY` |
+| `apps/web/src/server/demandes/demande-service.ts` (+ test), `server/api/routers/demandes.ts` | Modifier, Suspendre, Clore                                                   |
+| `apps/web/src/server/envois/envoi-service.ts` (+ test), `server/api/routers/envois.ts`       | Catégorie `declared-convoys`, `envois.declareConvoy`                         |
+| `apps/web/src/lib/demandes/demandes.ts` (+ test), `components/spaces/use-space-demandes.ts`  | Sceller de nouveau, convoi déclaré                                           |
+| `apps/web/src/components/spaces/demandes-panel.tsx`                                          | Formulaire, étiquettes, actions, « Modifier » et « Déclarer un convoi »      |
+| `apps/extension/src/features/optizzz-account/envois.ts`, `demandes.ts`                       | Convois déclarés comptés, Demandes autofinancées hors de l'encart            |

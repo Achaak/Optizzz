@@ -18,13 +18,15 @@ export interface DemandeRow extends PlayerRef {
   endedAt: Date | null;
 }
 
-/** What a change of status writes besides it. */
+/** What a change writes: a new status and what goes with it, or a new content sealed by the requester. */
 interface DemandeChange {
-  status: DemandeStatus;
-  decidedAt?: Date;
-  decidedByPseudo?: string;
+  status?: DemandeStatus;
+  decidedAt?: Date | null;
+  decidedByPseudo?: string | null;
   endedAt?: Date;
   expiresAt?: Date;
+  blob?: string;
+  keyVersion?: number;
 }
 
 export interface DemandeStore extends Pick<EnvoiStore, "playersOf" | "spaceOf" | "space" | "settingsOf"> {
@@ -35,7 +37,8 @@ export interface DemandeStore extends Pick<EnvoiStore, "playersOf" | "spaceOf" |
   /** Adds a Demande last in its requester's order; false when its id is taken. The space's expired ones go. */
   create(row: Omit<DemandeRow, "rank" | "updatedAt" | "createdAt">, now: Date): Promise<boolean>;
   /**
-   * Moves a Demande to a new status, only while it is still in one of `from`: false when someone changed it first.
+   * Changes a Demande (its status, or its content), only while it is still in one of `from`: false when someone
+   * changed it first.
    * Its `updatedAt` moves to `now`, which the relève follows.
    */
   change(id: string, from: readonly DemandeStatus[], change: DemandeChange, now: Date): Promise<boolean>;

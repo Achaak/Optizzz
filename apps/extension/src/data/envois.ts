@@ -15,7 +15,8 @@ import { storage } from "wxt/utils/storage";
  * Every category of the Envois: lists of items (convoys, floods), one encrypted row each, and states (production,
  * hunts, army, levels), one encrypted row per Joueur.
  */
-export type ListCategory = EnvoiCategory;
+/** What the extension sends; the convoys declared on the site are sent by the space page only. */
+export type ListCategory = Exclude<EnvoiCategory, "declared-convoys">;
 
 const CHOICES_KEY = "local:optizzzAccount:envoiChoices";
 const SESSION_KEYS = "session:optizzzAccount:allianceKeys";

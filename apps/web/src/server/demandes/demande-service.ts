@@ -184,6 +184,60 @@ export function demandeService(
       });
     },
 
+    /**
+     * The requester changes what one of their open Demandes asks for (sealed again in their browser with the newest
+     * version of the key). `revalidate`: their page saw it ask for more, or for another day; a validated one goes back
+     * to validation. The site cannot tell, the content being encrypted (docs/features/site-demandes.md, « Modifier »).
+     */
+    async update(userId: string, input: unknown) {
+      const body = record(input);
+      const { blob, keyVersion, revalidate } = body;
+      if (!isPlayerId(keyVersion) || keyVersion < 1 || typeof revalidate !== "boolean") throw invalid();
+      if (typeof blob !== "string" || !ALLIANCE_DATA.test(blob) || blobKeyVersion(blob) !== keyVersion) throw invalid();
+      const { demande, space, mine } = await demandeFor(userId, input);
+      if (!mine) throw new DemandeError("forbidden", "Seul son demandeur modifie une Demande.");
+      const newest = Math.max(0, ...space.versions.map((v) => v.version));
+      if (keyVersion !== newest)
+        throw new DemandeError("stale-key", "L'accès à l'espace a changé : rechargez la page, puis réessayez.");
+      if (!OPEN_STATUSES.includes(demande.status)) throw moved();
+      const back = revalidate && demande.status === "validated";
+      await change(demande.id, [demande.status], {
+        blob,
+        keyVersion,
+        ...(back && { status: "pending", decidedAt: null, decidedByPseudo: null }),
+      });
+      if (back) remind(space.id, "demands");
+    },
+
+    /**
+     * An Admin or a Délégué sends a validated Demande back to validation (« Suspendre »), under the same rule as a
+     * decision: a Délégué never their own.
+     */
+    async suspend(userId: string, input: unknown) {
+      const { demande, actor, mine } = await demandeFor(userId, input);
+      if (actor.role !== "admin" && actor.role !== "delegate")
+        throw new DemandeError("forbidden", "Seuls un Admin ou un Délégué suspendent une Demande.");
+      if (mine && actor.role !== "admin")
+        throw new DemandeError("forbidden", "Un Admin ou un autre Délégué doit décider de votre Demande.");
+      await change(demande.id, ["validated"], { status: "pending", decidedAt: now(), decidedByPseudo: actor.pseudo });
+    },
+
+    /**
+     * « Clore »: the requester, or an Admin or a Délégué, ends an open Demande by hand (the work launched without the
+     * extension seeing it, the resources found elsewhere). Who closed it is kept when it is not the requester.
+     */
+    async finish(userId: string, input: unknown) {
+      const { demande, actor, mine } = await demandeFor(userId, input);
+      if (!mine && actor.role !== "admin" && actor.role !== "delegate")
+        throw new DemandeError("forbidden", "Seuls son demandeur, un Admin ou un Délégué closent une Demande.");
+      const at = now();
+      await change(demande.id, OPEN_STATUSES, {
+        status: "closed",
+        ...ended(at),
+        ...(!mine && { decidedAt: at, decidedByPseudo: actor.pseudo }),
+      });
+    },
+
     /** The requester cancels one of their open Demandes. */
     async cancel(userId: string, input: unknown) {
       const { demande, mine } = await demandeFor(userId, input);

@@ -36,6 +36,22 @@ export const demandesRouter = createTRPCRouter({
   decide: protectedProcedure
     .input(z.object({ id: z.string().max(64), decision: z.enum(["validated", "refused"]) }))
     .mutation(({ ctx, input }) => rules(() => demandes.decide(ctx.userId, input))),
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().max(64),
+        blob: z.string().max(8000),
+        keyVersion: z.number().int(),
+        revalidate: z.boolean(),
+      }),
+    )
+    .mutation(({ ctx, input }) => rules(() => demandes.update(ctx.userId, input))),
+  suspend: protectedProcedure
+    .input(z.object({ id: z.string().max(64) }))
+    .mutation(({ ctx, input }) => rules(() => demandes.suspend(ctx.userId, input))),
+  finish: protectedProcedure
+    .input(z.object({ id: z.string().max(64) }))
+    .mutation(({ ctx, input }) => rules(() => demandes.finish(ctx.userId, input))),
   cancel: protectedProcedure
     .input(z.object({ id: z.string().max(64) }))
     .mutation(({ ctx, input }) => rules(() => demandes.cancel(ctx.userId, input))),

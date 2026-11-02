@@ -4,6 +4,7 @@
 // The cipher is passed in (EnvoiCrypto), as for the Envois: this package never imports libsodium.
 import { z } from "zod";
 import { levelsCost, type LevelKey } from "../level-costs";
+import { dayMonth } from "../format/time-format";
 import { BUILDINGS, RESEARCH, sameName } from "../levels";
 import type { EnvoiCrypto } from "./envois";
 
@@ -52,6 +53,13 @@ export const DEMANDE_CONTENT = z
     cost: resources,
     /** Typed by the requester rather than taken from the cost table. */
     typed: z.boolean(),
+    /** The day the requester wants to launch the work, Paris midnight in milliseconds since 1970; optional. */
+    wanted: z.number().int().nonnegative().optional(),
+    /**
+     * « Autofinancée »: the requester pays it themself. The Demande tells the alliance of the work and waits for its
+     * validation, but asks for no convoy.
+     */
+    self: z.boolean().optional(),
   })
   .refine((c) => c.level > c.from);
 export type DemandeContent = z.infer<typeof DEMANDE_CONTENT>;
@@ -112,6 +120,35 @@ export function demandeLabel(content: Pick<DemandeContent, "key" | "from" | "lev
     : `${name} niveaux ${String(content.from + 1)} à ${String(content.level)}`;
 }
 
+/** « pour le 05/11 »: the day a Demande is wanted for. */
+export const wantedText = (wanted: number) => `pour le ${dayMonth(new Date(wanted))}`;
+
+/** What is left to send: nothing for an « autofinancée » Demande, which asks for no convoy. */
+export const askedOf = (content: Pick<DemandeContent, "self">, remaining: Resources): Resources =>
+  content.self ? { food: 0, materials: 0 } : remaining;
+
+/**
+ * A change of a Demande by its requester sends a validated one back to validation, unless it asks for less of each
+ * resource, for the same day or none, and stays « autofinancée » or not as it was.
+ */
+export function needsRevalidation(before: DemandeContent, after: DemandeContent): boolean {
+  return (
+    after.cost.food > before.cost.food ||
+    after.cost.materials > before.cost.materials ||
+    Boolean(after.self) !== Boolean(before.self) ||
+    (after.wanted !== undefined && after.wanted !== before.wanted)
+  );
+}
+
+// ── The convoys declared on the site
+
+/**
+ * A convoy declared by its sender on the space page, for a Demande (sent without the extension, or launched elsewhere
+ * than from « Envoyer un convoi »): the Envoi category `declared-convoys`, same item as `demande-convoys`. Its sender
+ * removes it until it arrives.
+ */
+export const DECLARED_CONVOY_CATEGORY = "declared-convoys" as const;
+
 /** The levels after `from` up to `to`, from the cost table: nourriture and matériaux only (a convoy carries no workers). */
 export function tableCost(key: LevelKey, from: number, to: number): Resources {
   const { cost } = levelsCost(key, from, to);
@@ -134,6 +171,11 @@ export const DEMANDE_CONVOY_ITEM = z.object({
   at: z.number().int().nonnegative(),
 });
 export type DemandeConvoy = z.infer<typeof DEMANDE_CONVOY_ITEM>;
+
+/** A convoy attached to a Demande, as a reader opened it; `declared` when its sender declared it on the site. */
+export type AttachedConvoy = DemandeConvoy & {
+  declared?: { playerId: number; fingerprint: string };
+};
 
 export interface DemandeProgress {
   received: Resources;

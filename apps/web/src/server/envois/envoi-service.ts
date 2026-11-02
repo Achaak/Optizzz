@@ -22,7 +22,7 @@ const CURSOR_OVERLAP = 10_000;
 const MAX_ITEMS = 2000;
 
 interface CategoryRules {
-  /** The settings that let it go: any of them. */
+  /** The settings that let it go: any of them; none for an explicit act on the space page. */
   settings: readonly string[];
   /** How long a row may stay at most, whatever an extension says. */
   longest: number;
@@ -48,6 +48,8 @@ const CATEGORIES = {
   levels: { settings: ["levels"], longest: 100 * DAY, detail: null, maxItems: 1 },
   // The convoys launched for a Demande (docs/features/site-demandes.md): with « Convois », 90 days after the arrival.
   "demande-convoys": { settings: ["convoys"], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
+  // A convoy its sender declares for a Demande on the space page: an explicit act, without a setting.
+  "declared-convoys": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
 } satisfies Record<string, CategoryRules>;
 
 /** The states, whose row goes as soon as their category is unchecked. */
@@ -206,7 +208,7 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
       const space = spaceId ? await store.space(spaceId) : null;
       if (!space) throw new EnvoiError("not-found", "Ce Joueur n'est dans aucun Espace d'alliance.");
       const settings = await store.settingsOf(player);
-      if (!rules.settings.some((setting) => settings.includes(setting)))
+      if (rules.settings.length > 0 && !rules.settings.some((setting) => settings.includes(setting)))
         throw new EnvoiError("category-off", "Cette catégorie n'est pas cochée pour ce Joueur : rien n'est gardé.");
       // The army by unit while « Par unité » is not chosen (the site did not get the choice yet): the extension is
       // told the category is off, and tells it again.

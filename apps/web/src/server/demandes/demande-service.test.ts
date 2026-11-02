@@ -212,4 +212,60 @@ describe("the Demandes on the site", () => {
     memory.removeMember(SPACE, lasius);
     expect((await read(messor)).demandes).toEqual([]);
   });
+
+  describe("changed after they are made", () => {
+    const update = async (who: typeof messor, n: number, revalidate: boolean, ring = keyring) =>
+      service.update(who.userId, {
+        id: id(n),
+        blob: await encryptData(`demande ${String(n)} changée`, ring),
+        keyVersion: 1,
+        revalidate,
+      });
+    const statusOf = async (n: number) => (await read(messor)).demandes.find((d) => d.id === id(n))?.status;
+
+    it("lets the requester change their open Demande, a validated one back to validation when it asks for more", async () => {
+      await ask(lasius, 1);
+      await service.decide(messor.userId, { id: id(1), decision: "validated" });
+      expect((await failure(update(messor, 1, false))).code).toBe("forbidden");
+
+      await update(lasius, 1, false);
+      expect(await statusOf(1)).toBe("validated");
+      await update(lasius, 1, true);
+      expect(await statusOf(1)).toBe("pending");
+      expect((await read(messor)).demandes[0]?.decidedByPseudo).toBeNull();
+
+      await service.cancel(lasius.userId, { id: id(1) });
+      expect((await failure(update(lasius, 1, false))).code).toBe("conflict");
+    });
+
+    it("lets an Admin or a Délégué suspend a validated Demande, a Délégué never their own", async () => {
+      await ask(lasius, 1);
+      await ask(formica, 2);
+      await service.decide(messor.userId, { id: id(1), decision: "validated" });
+      await service.decide(messor.userId, { id: id(2), decision: "validated" });
+      expect((await failure(service.suspend(lasius.userId, { id: id(1) }))).code).toBe("forbidden");
+      expect((await failure(service.suspend(formica.userId, { id: id(2) }))).code).toBe("forbidden");
+
+      await service.suspend(formica.userId, { id: id(1) });
+      const suspended = (await read(messor)).demandes.find((d) => d.id === id(1));
+      expect([suspended?.status, suspended?.decidedByPseudo]).toEqual(["pending", "Formica"]);
+      expect((await failure(service.suspend(formica.userId, { id: id(1) }))).code).toBe("conflict");
+    });
+
+    it("lets the requester, an Admin or a Délégué close an open Demande by hand, nobody else", async () => {
+      await ask(lasius, 1);
+      await ask(lasius, 2);
+      await ask(messor, 3);
+      expect((await failure(service.finish(lasius.userId, { id: id(3) }))).code).toBe("forbidden");
+
+      await service.finish(lasius.userId, { id: id(1) });
+      await service.finish(formica.userId, { id: id(2) });
+      const { demandes } = await read(messor);
+      expect(demandes.filter((d) => d.status === "closed").map((d) => [d.id, d.decidedByPseudo])).toEqual([
+        [id(1), null],
+        [id(2), "Formica"],
+      ]);
+      expect((await failure(service.finish(lasius.userId, { id: id(1) }))).code).toBe("conflict");
+    });
+  });
 });

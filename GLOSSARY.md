@@ -60,6 +60,14 @@ _À éviter_ : empreinte, clé, certificat (dans les écrans).
 Un joueur demande des ressources pour une construction ou une recherche précise ; une fois validée, les autres membres peuvent y répondre par des convois. Un joueur peut en avoir plusieurs, qu'il trie lui-même.
 _À éviter_ : requête, ticket, besoin.
 
+**Demande autofinancée** :
+Une Demande que son demandeur paie lui-même : elle annonce le chantier à l'alliance et attend sa validation, sans demander de convoi.
+_À éviter_ : auto-production.
+
+**Convoi déclaré** :
+Un convoi qu'un membre déclare à la main pour une Demande, sur la page de l'espace, quand il ne l'a pas lancé par « Envoyer un convoi » : il compte pour la Demande, pas dans le Solde.
+_À éviter_ : convoi manuel.
+
 **Production** :
 Ce qu'un joueur récolte par jour, moins la taxe qu'il verse à son colonisateur, plus celles que lui versent ses colonies.
 _À éviter_ : revenu, rendement.

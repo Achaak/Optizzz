@@ -5,7 +5,16 @@ import { sealEnvoi } from "@optizzz/game/site-links/envois";
 import type { Priorite } from "@optizzz/game/site-links/priorite";
 import { beforeAll, describe, expect, it } from "vitest";
 import { envoiCrypto, openConvoys } from "~/lib/envois/convoys";
-import { canDecide, groupDemandes, newDemande, openDemandes, requesterPriorites, type ServedDemande } from "./demandes";
+import {
+  canDecide,
+  declaredConvoyEnvoi,
+  groupDemandes,
+  newDemande,
+  openDemandes,
+  requesterPriorites,
+  resealDemande,
+  type ServedDemande,
+} from "./demandes";
 
 const NOW = new Date("2026-10-26T12:00:00Z");
 const HOUR = 3600_000;
@@ -120,6 +129,74 @@ describe("the Demandes on a space page", () => {
     // Atta's Priorité is unknown: last, never hidden.
     expect(order(groups.active)).toEqual(["Lasius 0", "Messor 0", "Messor 1", "Atta 0"]);
     expect(order(groups.pending)).toEqual(["Lasius 0", "Atta 0"]);
+  });
+});
+
+describe("changed Demandes and declared convoys on a space page", () => {
+  let keyring: AllianceKeyring;
+  beforeAll(async () => {
+    keyring = await createAllianceKeyring();
+  });
+  const content = {
+    key: "mushroom" as const,
+    from: 11,
+    level: 12,
+    cost: { food: 0, materials: 120_000 },
+    typed: false,
+  };
+
+  it("opens a Demande sealed again with its new content, its day and « autofinancée »", async () => {
+    const sealed = await newDemande({ server: "s5", playerId: 2, content }, keyring);
+    const changed = { ...content, cost: { food: 0, materials: 60_000 }, wanted: NOW.getTime(), self: true };
+    const again = await resealDemande({ id: sealed.id, server: "s5", playerId: 2 }, changed, keyring);
+    const row = {
+      id: sealed.id,
+      server: "s5",
+      playerId: 2,
+      status: "validated" as const,
+      rank: 0,
+      blob: again.blob,
+      createdAt: NOW.getTime(),
+      decidedAt: null,
+      decidedByPseudo: null,
+      endedAt: null,
+    };
+    const opened = await openDemandes([row], [], keyring, members, NOW);
+    expect(opened.demandes[0]?.content).toEqual(changed);
+  });
+
+  it("counts a declared convoy for its Demande, with who declared it", async () => {
+    const sealed = await newDemande({ server: "s5", playerId: 2, content }, keyring);
+    const convoy = {
+      demande: sealed.id,
+      from: "Messor",
+      to: "Lasius",
+      food: 0,
+      materials: 50_000,
+      at: NOW.getTime() - HOUR,
+    };
+    const { item } = await declaredConvoyEnvoi({ server: "s5", playerId: 1 }, convoy, keyring, NOW);
+    const row = {
+      id: sealed.id,
+      server: "s5",
+      playerId: 2,
+      status: "validated" as const,
+      rank: 0,
+      blob: sealed.blob,
+      createdAt: NOW.getTime(),
+      decidedAt: null,
+      decidedByPseudo: null,
+      endedAt: null,
+    };
+    const opened = await openDemandes(
+      [row],
+      [{ server: "s5", playerId: 1, category: "declared-convoys", fingerprint: item.fingerprint, blob: item.blob }],
+      keyring,
+      members,
+      NOW,
+    );
+    expect(opened.demandes[0]?.progress.received).toEqual({ food: 0, materials: 50_000 });
+    expect(opened.convoys[0]?.declared).toEqual({ playerId: 1, fingerprint: item.fingerprint });
   });
 });
 

@@ -207,7 +207,8 @@ export function demandeService({
     const UNKNOWN = prioriteOf({ player: "", convoys: null, production: null, now: now() });
     const prioriteOfRequester = (d: OpenedDemande) => ranks.get(d.playerId) ?? UNKNOWN;
     const open = found.demandes
-      .filter((d) => !mine(d) && d.status === "validated")
+      // An « autofinancée » Demande asks for no convoy.
+      .filter((d) => !mine(d) && d.status === "validated" && !d.content.self)
       .sort((a, b) => comparePriorites(prioriteOfRequester(a), prioriteOfRequester(b)) || ordered(a, b))
       .flatMap((d) => {
         const shown = view(space, d, attached);
@@ -241,6 +242,8 @@ export function demandeService({
     const shown = demande ? view(found.space, demande, found.attached) : null;
     if (!demande || shown?.status !== "validated")
       return { ok: false, message: "Cette Demande n'attend plus de convoi (couverte, close, ou pas encore validée)." };
+    if (demande.content.self)
+      return { ok: false, message: "Cette Demande est autofinancée : son demandeur ne demande aucun convoi." };
     if (demande.playerId === found.player.playerId)
       return { ok: false, message: "C'est votre propre Demande : les autres membres y répondent." };
     const outgoing = await loadConvoys(origin);

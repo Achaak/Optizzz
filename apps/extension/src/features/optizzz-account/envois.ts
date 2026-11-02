@@ -33,6 +33,7 @@ import {
   sealEnvoi,
   type EnvoiChoices,
   type EnvoiCrypto,
+  type EnvoiRow,
 } from "@optizzz/game/site-links/envois";
 import type { AllianceKeysMessage, HandedKey } from "@optizzz/game/site-links/space-bridge";
 import { loadAllianceMembers } from "@/data/alliance-members";
@@ -66,7 +67,7 @@ import { loadSentAttacks } from "@/data/sent-attacks";
 import { loadStatePages } from "@/data/state-pages";
 import { pairLaunches } from "@/features/flood/attacks";
 import { stateReading } from "./envoi-states";
-import { DEMANDE_CONVOY_ITEM } from "@optizzz/game/site-links/demandes";
+import { DECLARED_CONVOY_CATEGORY, DEMANDE_CONVOY_ITEM } from "@optizzz/game/site-links/demandes";
 import { loadDemandeConvoys } from "@/data/demandes";
 import { demandeConvoyItems } from "./demande-convoys";
 import { demandeService } from "./demandes";
@@ -378,8 +379,10 @@ async function openRow(
     const { observedAt, item } = await openEnvoi({ ...row, category: "floods" }, cipher, FLOOD_ITEM);
     return { ...base, observedAt, category: "floods", item };
   }
-  if (row.category === "demande-convoys") {
-    const filed = { ...row, category: "demande-convoys" as const };
+  // A convoy declared on the site counts for its Demande as one attached from the game.
+  const { category } = row;
+  if (category === "demande-convoys" || category === DECLARED_CONVOY_CATEGORY) {
+    const filed: EnvoiRow = { ...row, category };
     const { observedAt, item } = await openEnvoi(filed, cipher, DEMANDE_CONVOY_ITEM);
     return { ...base, observedAt, category: "demande-convoys", item };
   }
