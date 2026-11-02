@@ -1,7 +1,8 @@
-import { rolesTopDown, type MemberBubble } from "@/features/tdc-chain/role-styles";
+import { rolesTopDown } from "@/features/tdc-chain/role-styles";
 import { roleKey, roleLabel } from "@optizzz/game/tdc-chain/roles";
 import { formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
+import type { MemberRole } from "./roles";
 import type { MemberTrip } from "./trips";
 
 const PSEUDO_CELL = 3;
@@ -27,14 +28,17 @@ th.${COLUMN_CLASS} a { cursor: pointer; }
 .optizzz-members-role::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--role-color); }
 .optizzz-members-role[data-shape="square"]::before { border-radius: 2px; }
 .optizzz-members-role[data-shape="diamond"]::before { border-radius: 0; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-.optizzz-members-role[data-shape="triangle"]::before { border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }`;
+.optizzz-members-role[data-shape="triangle"]::before { border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.optizzz-members-role[data-shape="arrow"]::before { border-radius: 0; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.optizzz-members-role[data-shape="pin"]::before { border-radius: 2px; background: none; border: 2px solid var(--role-color); width: 5px; height: 5px; }
+#tabMembresAlliance .optizzz-members-place { display: block; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); white-space: nowrap; }`;
 
 export interface MembersColumnsContext {
   myPseudo: string;
   /** The « Trajet » column; absent when switched off. `byPseudo` is null when the trips cannot be known. */
   trips?: { byPseudo: Map<string, MemberTrip> | null; missing?: string };
   /** The « Rôle » column: each member's chain role and its bubble, by lowercase nickname; absent when switched off. */
-  roles?: Map<string, MemberBubble>;
+  roles?: Map<string, MemberRole>;
 }
 
 interface Column {
@@ -74,13 +78,15 @@ function tripColumn(context: MembersColumnsContext, trips: NonNullable<MembersCo
   } satisfies Column;
 }
 
-function roleColumn(roles: Map<string, MemberBubble>) {
+function roleColumn(roles: Map<string, MemberRole>) {
   // From the granaries down: the order of the first click.
   const order = rolesTopDown([...roles.values()].map((bubble) => bubble.role)).map(roleKey);
   return {
     kind: "roles",
     title: "Rôle",
-    hint: "Rôle dans la chaîne de TDC, aux couleurs choisies dans la Chaîne. Cliquez pour trier.",
+    hint:
+      "Rôle dans la chaîne de TDC, aux couleurs choisies dans la Chaîne ; ↑ ou ↓ quand le TDC dépasse un membre de " +
+      "l'échelon voisin. Cliquez pour trier.",
     fill: (cell, pseudo) => {
       const bubble = roles.get(pseudo.toLowerCase());
       if (!bubble) {
@@ -95,6 +101,15 @@ function roleColumn(roles: Map<string, MemberBubble>) {
       label.dataset.shape = bubble.shape;
       label.textContent = roleLabel(bubble.role);
       cell.append(label);
+      // In words too, never an arrow alone (ADR 0003); nothing for a member at its place.
+      const { place } = bubble;
+      if (place && place.kind !== "ok") {
+        const note = cell.ownerDocument.createElement("span");
+        note.className = "optizzz-members-place";
+        const than = `${place.than} (${roleLabel(place.thanRole)})`;
+        note.textContent = place.kind === "up" ? `↑ plus gros que ${than}` : `↓ plus petit que ${than}`;
+        cell.append(note);
+      }
       return order.indexOf(roleKey(bubble.role));
     },
   } satisfies Column;

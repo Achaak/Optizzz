@@ -125,6 +125,21 @@ describe("addMembersColumns", () => {
     expect(header(doc, 0)?.classList.contains("forwardSort")).toBe(false);
   });
 
+  it("says under the role who a member is bigger or smaller than, in the rungs next to its own", () => {
+    const doc = membersPage();
+    const roles = rolesOfMembers(players, "Me", new Map([["Me", 3000]]), {
+      roles: { [String(me.id)]: { kind: "hunter" }, [String(alpha.id)]: { kind: "granary" } },
+      styles: {},
+    });
+    expect(roles.get("me")?.place).toEqual({ kind: "up", than: "Alpha", thanRole: { kind: "granary" } });
+    expect(roles.get("alpha")?.place).toEqual({ kind: "down", than: "Me", thanRole: { kind: "hunter" } });
+    addMembersColumns(doc, { ...withTrips(), roles }, now);
+    expect(column(doc, 1).slice(1, 3)).toEqual([
+      "Grenier↓ plus petit que Me (Chasseur)",
+      "Chasseur↑ plus gros que Alpha (Grenier)",
+    ]);
+  });
+
   it("drops its arrow when the game sorts by one of its own columns", () => {
     const doc = membersPage();
     addMembersColumns(doc, withTrips(), now);
