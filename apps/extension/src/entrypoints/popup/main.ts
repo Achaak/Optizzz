@@ -5,6 +5,7 @@ import { loadLastServer } from "@/features/server-map/settings";
 import { loadNotificationSettings, setNotification } from "@/features/alerts/notification-settings";
 import { NOTIFICATIONS_PERMISSION, openGrantPage } from "@/features/alerts/permission";
 import { applyCompactNumbers } from "@/features/compact-numbers";
+import { hasGameAccess, openGameAccessPage } from "@/features/game-access/permission";
 import { askAccount } from "@/features/optizzz-account/messages";
 import { isEnabled, loadToggles, setToggle } from "@/features/toggles";
 import { buildWatchSummary, loadWatchSummaries, WATCH_SUMMARY_STYLE } from "@/features/watchlist/popup";
@@ -91,6 +92,24 @@ const summary = isEnabled(toggles, "watchlist", "popup")
       });
     })
   : null;
+// Without the game's pages (Firefox may take them back), the tools wait for a click on every page: say so on top.
+if (!(await hasGameAccess())) {
+  const note = document.createElement("p");
+  note.className = "optizzz-note";
+  note.textContent = "Optizzz n'est pas autorisé sur fourmizzz.fr : il ne s'active qu'après un clic sur son bouton. ";
+  const grant = document.createElement("button");
+  grant.type = "button";
+  grant.className = "optizzz-button-primary";
+  grant.textContent = "Autoriser sur fourmizzz.fr";
+  // A tab rather than asking here: on Firefox the prompt closes the popup and loses the answer.
+  grant.addEventListener("click", () => {
+    void openGameAccessPage().then(() => {
+      window.close();
+    });
+  });
+  note.append(grant);
+  popup.append(note);
+}
 if (summary) popup.append(summary);
 popup.append(buildTabs(document, tabs));
 document.body.append(popup);

@@ -5,6 +5,7 @@ import type { EnvoiCrypto } from "@optizzz/game/site-links/envois";
 import type { HandedKey } from "@optizzz/game/site-links/space-bridge";
 import { sendNotice, setUpAlerts } from "@/features/alerts/background";
 import { loadNotificationSettings } from "@/features/alerts/notification-settings";
+import { setUpGameAccess } from "@/features/game-access/permission";
 import { setUpWatchlist } from "@/features/watchlist/background";
 import { isOpenWatchlistMessage, watchlistUrl } from "@/features/watchlist/open";
 import { isOpenSimulatorMessage, simulatorUrl } from "@/features/combat-simulator/open";
@@ -26,6 +27,7 @@ function envoiCrypto(keys: HandedKey[]): EnvoiCrypto {
 }
 
 export default defineBackground(() => {
+  setUpGameAccess();
   setUpAlerts();
   setUpWatchlist();
   setUpOptizzzAccount({
