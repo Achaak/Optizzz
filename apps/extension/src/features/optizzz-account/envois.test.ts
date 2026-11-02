@@ -506,7 +506,7 @@ describe("the relève", () => {
   });
 
   it("takes up the chain's roles of the space, opened for the game's pages, and forgets them with the key", async () => {
-    const record: ChainRolesRecord = { roles: { "1": { kind: "granary" } }, keep: { "2": 1_500 } };
+    const record: ChainRolesRecord = { roles: { "1": { kind: "granary", rank: 1 } }, keep: { "2": 1_500 } };
     const blob = await fakeCrypto([KEY_1]).encrypt(chainRolesText(record, SPACE));
     site.setChainRoles([{ spaceId: SPACE, blob, revision: 3 }]);
     expect((await service().chainRoles(S5)).problem).toBe("no-space");

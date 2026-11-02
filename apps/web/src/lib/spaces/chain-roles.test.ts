@@ -17,7 +17,7 @@ const SPACE = "space-4o4";
 describe("chain roles on the site", () => {
   it("are encrypted with the newest version of the Clé d'alliance and open only in their space", async () => {
     const keyring = await rotateAllianceKey(await createAllianceKeyring());
-    const record = { roles: { "101": { kind: "granary" as const } }, keep: { "103": 1_500_000 } };
+    const record = { roles: { "101": { kind: "granary", rank: 1 } as const }, keep: { "103": 1_500_000 } };
     const blob = await lockChainRoles(record, SPACE, keyring);
 
     expect(await openChainRoles(blob, SPACE, keyring)).toEqual(record);
@@ -48,7 +48,7 @@ describe("shownRoles", () => {
     const shown = shownRoles(roster, null);
 
     expect(Object.fromEntries(shown.roles)).toEqual({
-      1: { kind: "granary" },
+      1: { kind: "granary", rank: 1 },
       2: { kind: "passer", rank: 1 },
       3: { kind: "hunter" },
       4: { kind: "out" },
@@ -57,11 +57,11 @@ describe("shownRoles", () => {
   });
 
   it("shows the saved roles; a member arrived since is out and named, a banned one stays out", () => {
-    const saved = { roles: { "1": { kind: "granary" as const }, "3": { kind: "hunter" as const } }, keep: {} };
+    const saved = { roles: { "1": { kind: "granary", rank: 1 } as const, "3": { kind: "hunter" as const } }, keep: {} };
     const shown = shownRoles([...roster, member(5, "Atta", 1_000_000, { isBanned: true })], saved);
 
     expect(Object.fromEntries(shown.roles)).toEqual({
-      1: { kind: "granary" },
+      1: { kind: "granary", rank: 1 },
       2: { kind: "out" },
       3: { kind: "hunter" },
       4: { kind: "out" },
@@ -71,7 +71,7 @@ describe("shownRoles", () => {
   });
 });
 
-const granary = { kind: "granary" as const };
+const granary = { kind: "granary", rank: 1 } as const;
 const hunter = { kind: "hunter" as const };
 const passer = (rank: number) => ({ kind: "passer" as const, rank });
 
@@ -102,7 +102,7 @@ describe("rebaseRoles", () => {
 
 describe("formerMembers", () => {
   const record = {
-    roles: { "1": { kind: "granary" }, "7": { kind: "passer", rank: 1 } },
+    roles: { "1": { kind: "granary", rank: 1 }, "7": { kind: "passer", rank: 1 } },
     keep: { "9": 1000 },
   } satisfies ChainRolesRecord;
 
@@ -111,6 +111,6 @@ describe("formerMembers", () => {
   });
 
   it("removes them from the record", () => {
-    expect(withoutMembers(record, ["7", "9"])).toEqual({ roles: { "1": { kind: "granary" } }, keep: {} });
+    expect(withoutMembers(record, ["7", "9"])).toEqual({ roles: { "1": { kind: "granary", rank: 1 } }, keep: {} });
   });
 });

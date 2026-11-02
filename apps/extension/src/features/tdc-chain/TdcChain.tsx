@@ -32,6 +32,7 @@ import {
   rungPlaceText,
   rungPlaces,
   proposeRoles,
+  roleFromKey,
   roleKey,
   roleLabel,
   rungs,
@@ -72,11 +73,7 @@ interface Member extends Player {
 
 const OUT: Role = { kind: "out" };
 
-function parseRoleValue(value: string): Role {
-  if (value.startsWith("passer:")) return { kind: "passer", rank: Number(value.slice("passer:".length)) };
-  if (value === "hunter" || value === "granary" || value === "drain" || value === "protected") return { kind: value };
-  return OUT;
-}
+const parseRoleValue = (value: string): Role => roleFromKey(value) ?? OUT;
 
 /** « ✓ », or a small ↑ or ↓ whose tooltip says who the member passes (in words too: ADR 0003). */
 function RungPlaceText({
@@ -757,14 +754,14 @@ function RoleSharing({
     <details className="sharing optizzz-disclosure">
       <summary>Partager les rôles</summary>
       <p className="optizzz-note">
-        Format : une ligne « Pseudo: rôle » par membre (Chasseur, Passeur 1, Passeur 2…, Grenier, Hors chaîne). Avec les
-        mêmes rôles, chaque membre retrouve le même plan.
+        Format : une ligne « Pseudo: rôle » par membre (Chasseur, Passeur 1, Passeur 2…, Grenier 1, Grenier 2…, Hors
+        chaîne). Avec les mêmes rôles, chaque membre retrouve le même plan.
       </p>
       <textarea
         rows={6}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={"Solenopsis: Grenier\nFormica: Passeur 1\nPheidole: Chasseur"}
+        placeholder={"Solenopsis: Grenier 1\nFormica: Passeur 1\nPheidole: Chasseur"}
       />
       <div>
         <button type="button" onClick={() => void handleExport()}>

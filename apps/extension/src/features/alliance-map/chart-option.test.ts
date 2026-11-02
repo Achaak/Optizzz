@@ -38,7 +38,7 @@ describe("chain roles on the map", () => {
 
   it("draws each member with its role's colour, size and shape, the selected one ringed and a little bigger", () => {
     const bubbles = new Map([
-      [1, { role: { kind: "granary" } as const, color: "#111111", px: 17, shape: "square" as const }],
+      [1, { role: { kind: "granary", rank: 1 } as const, color: "#111111", px: 17, shape: "square" as const }],
       [2, { role: { kind: "hunter" } as const, color: "#222222", px: 8, shape: "circle" as const }],
     ]);
     const [selected, other] = nodes(buildChartOption(members, me, 1, levels, { width: 500, height: 500 }, bubbles));

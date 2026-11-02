@@ -1,6 +1,6 @@
 // Who can take hunting field from whom, and in which order: see docs/features/chaine-tdc.md.
 import { inRange, maxTake, takeAtLimit } from "../attack";
-import { rungs, type Role } from "./roles";
+import { highestRank, rungs, type Role } from "./roles";
 
 /** Attacker by target: what a won attack takes, or null when out of range with the margin (or the same member). */
 export function takeMatrix(members: readonly { field: number }[], margin: number): (number | null)[][] {
@@ -216,8 +216,9 @@ export interface ChainPlan {
 }
 
 /**
- * Each hunter's field above what it keeps, and the whole field of each member to drain, climbs to a granary, the smallest it can reach at that time, biggest
- * surplus first. Only a higher rung attacks a lower one; passers end where they started.
+ * Each hunter's field above what it keeps, and the whole field of each member to drain, climbs to a granary of the
+ * highest rank, the smallest it can reach at that time, biggest surplus first. Only a higher rung attacks a lower one;
+ * passers, and granaries below the highest, end where they started.
  */
 export function planChain({ members, roles, keep }: ChainInput, margin: number): ChainPlan {
   const heights = rungs(roles);
@@ -228,7 +229,9 @@ export function planChain({ members, roles, keep }: ChainInput, margin: number):
   };
   let state = toState(members.filter((member) => heights.has(member.id)));
   const fieldOf = (id: number) => state.get(id)?.field ?? 0;
-  const granaries = [...roles].filter(([, role]) => role.kind === "granary").map(([id]) => id);
+  // Only the highest granaries keep: those below pass the field up, as passers.
+  const top = highestRank(roles.values(), "granary");
+  const granaries = [...roles].filter(([, role]) => role.kind === "granary" && role.rank === top).map(([id]) => id);
   // A member to drain keeps nothing.
   const kept = (id: number) => (roles.get(id)?.kind === "drain" ? 0 : (keep.get(id) ?? fieldOf(id)));
   const surplus = (id: number) => fieldOf(id) - kept(id);

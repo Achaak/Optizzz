@@ -5,7 +5,8 @@ const SPACE = "space-4o4";
 
 const record: ChainRolesRecord = {
   roles: {
-    "101": { kind: "granary" },
+    "101": { kind: "granary", rank: 1 },
+    "107": { kind: "granary", rank: 2 },
     "102": { kind: "passer", rank: 2 },
     "103": { kind: "hunter" },
     "104": { kind: "out" },
@@ -22,12 +23,19 @@ describe("chain roles record", () => {
     expect(chainRolesFrom(JSON.parse(chainRolesText(record, SPACE)), SPACE)).toEqual(record);
   });
 
+  it("writes the first granary « granary », as an older extension reads it", () => {
+    expect(JSON.parse(chainRolesText(record, SPACE))).toMatchObject({
+      roles: { "101": "granary", "107": "granary:2" },
+    });
+  });
+
   it("is refused in another space: the site cannot copy one space's roles into another", () => {
     expect(() => chainRolesFrom(JSON.parse(chainRolesText(record, SPACE)), "space-other")).toThrow();
   });
 
   it.each([
     ["an unknown role", { v: 1, spaceId: SPACE, roles: { "101": "queen" }, keep: {} }],
+    ["granary 0", { v: 1, spaceId: SPACE, roles: { "101": "granary:0" }, keep: {} }],
     ["passer 0", { v: 1, spaceId: SPACE, roles: { "101": "passer:0" }, keep: {} }],
     ["a negative field to keep", { v: 1, spaceId: SPACE, roles: {}, keep: { "101": -5 } }],
     ["a key that is no player id", { v: 1, spaceId: SPACE, roles: { Noctis: "granary" }, keep: {} }],

@@ -92,7 +92,7 @@ describe("the chain's fields over time, with the floods on their way", () => {
 });
 
 const HOUR = 60 * MIN;
-const granary: Role = { kind: "granary" };
+const granary: Role = { kind: "granary", rank: 1 };
 const hunter: Role = { kind: "hunter" };
 const passer = (rank: number): Role => ({ kind: "passer", rank });
 

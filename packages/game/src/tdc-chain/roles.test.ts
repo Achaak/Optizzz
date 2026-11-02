@@ -3,7 +3,12 @@ import {
   chainRoles,
   exportRoles,
   importRoles,
+  granaryRanks,
   passerRanks,
+  roleFromKey,
+  roleKey,
+  roleLabel,
+  rungs,
   proposeRoles,
   roleOptions,
   rungPlaces,
@@ -34,7 +39,7 @@ const byPseudo = (roles: ReadonlyMap<number, unknown>) =>
 
 describe("proposeRoles", () => {
   it("makes the biggest the granaries, then one rung per reach of the rung above, the last rung hunters", () => {
-    const granary = { kind: "granary" };
+    const granary = { kind: "granary", rank: 1 };
     const passer1 = { kind: "passer", rank: 1 };
     const hunter = { kind: "hunter" };
     expect(byPseudo(proposeRoles(s5))).toEqual({
@@ -66,7 +71,7 @@ describe("proposeRoles with close fields", () => {
       { id: 3, field: 900 },
     ]);
     expect([...roles.entries()]).toEqual([
-      [1, { kind: "granary" }],
+      [1, { kind: "granary", rank: 1 }],
       [2, { kind: "hunter" }],
       [3, { kind: "hunter" }],
     ]);
@@ -83,13 +88,13 @@ describe("sharing roles", () => {
 
   it("writes one « Pseudo: role » line per member, sorted by nickname", () => {
     const roles = new Map<number, Role>([
-      [1, { kind: "granary" } as const],
+      [1, { kind: "granary", rank: 1 } as const],
       [2, { kind: "passer", rank: 2 } as const],
       [3, { kind: "hunter" } as const],
       [4, { kind: "out" } as const],
     ]);
     expect(exportRoles(roles, members)).toBe(
-      "Atta: Passeur 2\nEctatomma: Chasseur\nPheidole: Hors chaîne\nSolenopsis: Grenier",
+      "Atta: Passeur 2\nEctatomma: Chasseur\nPheidole: Hors chaîne\nSolenopsis: Grenier 1",
     );
   });
 
@@ -101,29 +106,72 @@ describe("sharing roles", () => {
     expect(result.roles).toEqual(
       new Map([
         [2, { kind: "passer", rank: 2 }],
-        [1, { kind: "granary" }],
+        [1, { kind: "granary", rank: 1 }],
         [3, { kind: "hunter" }],
         [4, { kind: "out" }],
       ]),
     );
     expect(result.ignored).toEqual(["Inconnu: Grenier", "Solenopsis sans rôle"]);
-    expect(importRoles("ÀTTA: Grenier", members).roles).toEqual(new Map([[2, { kind: "granary" }]]));
+    expect(importRoles("ÀTTA: Grenier", members).roles).toEqual(new Map([[2, { kind: "granary", rank: 1 }]]));
   });
 
   it("reads a passer without a number as the first passer", () => {
     expect(importRoles("Atta: Passeur", members).roles.get(2)).toEqual({ kind: "passer", rank: 1 });
   });
+
+  it("reads a granary's rank, a granary without one as the first", () => {
+    const { roles } = importRoles("Atta: Grenier 2\nSolenopsis: grenier1", members);
+    expect(roles.get(2)).toEqual({ kind: "granary", rank: 2 });
+    expect(roles.get(1)).toEqual({ kind: "granary", rank: 1 });
+    expect(roleLabel({ kind: "granary", rank: 2 })).toBe("Grenier 2");
+  });
 });
 
 describe("passerRanks", () => {
   it("offers five passer ranks, highest first, even when the chain uses fewer", () => {
-    expect(passerRanks([{ kind: "granary" }, { kind: "passer", rank: 1 }, { kind: "hunter" }])).toEqual([
+    expect(passerRanks([{ kind: "granary", rank: 1 }, { kind: "passer", rank: 1 }, { kind: "hunter" }])).toEqual([
       5, 4, 3, 2, 1,
     ]);
   });
 
   it("offers one rank above the highest used", () => {
     expect(passerRanks([{ kind: "passer", rank: 6 }])).toEqual([7, 6, 5, 4, 3, 2, 1]);
+  });
+});
+
+describe("granaryRanks", () => {
+  it("offers two granary ranks, and one above the highest used", () => {
+    expect(granaryRanks([{ kind: "granary", rank: 1 }])).toEqual([2, 1]);
+    expect(granaryRanks([{ kind: "granary", rank: 3 }])).toEqual([4, 3, 2, 1]);
+  });
+});
+
+describe("roleKey", () => {
+  it("keeps « granary » for the first granary, as stored before the ranks, and reads every key back", () => {
+    expect(roleKey({ kind: "granary", rank: 1 })).toBe("granary");
+    expect(roleKey({ kind: "granary", rank: 2 })).toBe("granary:2");
+    expect(roleFromKey("granary:1")).toEqual({ kind: "granary", rank: 1 });
+    for (const role of roleOptions([])) expect(roleFromKey(roleKey(role))).toEqual(role);
+    expect(roleFromKey("granary:0")).toBeNull();
+  });
+});
+
+describe("rungs", () => {
+  it("puts granary N N rungs above the highest passer", () => {
+    const heights = rungs(
+      new Map<number, Role>([
+        [1, { kind: "granary", rank: 2 }],
+        [2, { kind: "granary", rank: 1 }],
+        [3, { kind: "passer", rank: 2 }],
+        [4, { kind: "hunter" }],
+      ]),
+    );
+    expect([...heights]).toEqual([
+      [1, 4],
+      [2, 3],
+      [3, 2],
+      [4, 0],
+    ]);
   });
 });
 
@@ -138,9 +186,9 @@ describe("chainRoles", () => {
   });
 
   it("keeps the roles set, a member without one out of the chain", () => {
-    expect(chainRoles(members, { 1: { kind: "granary" } })).toEqual(
+    expect(chainRoles(members, { 1: { kind: "granary", rank: 1 } })).toEqual(
       new Map([
-        [1, { kind: "granary" }],
+        [1, { kind: "granary", rank: 1 }],
         [2, { kind: "out" }],
       ]),
     );
@@ -150,6 +198,7 @@ describe("chainRoles", () => {
 describe("roleOptions", () => {
   it("offers the roles from the top of the chain down, the members to drain and not to touch before those out", () => {
     expect(roleOptions([{ kind: "passer", rank: 1 }]).map((role) => role.kind)).toEqual([
+      "granary",
       "granary",
       "passer",
       "passer",
@@ -166,7 +215,7 @@ describe("roleOptions", () => {
 
 describe("rungPlaces", () => {
   const roles = new Map<number, Role>([
-    [1, { kind: "granary" }],
+    [1, { kind: "granary", rank: 1 }],
     [2, { kind: "passer", rank: 1 }],
     [3, { kind: "passer", rank: 1 }],
     [4, { kind: "hunter" }],

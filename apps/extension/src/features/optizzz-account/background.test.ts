@@ -407,7 +407,7 @@ describe("the chain's own roles for « Reprendre les rôles de votre extension �
 
   it("go only to the space script while linked, as the text of the space's record", async () => {
     await writeChainSettings("s5.fourmizzz.fr", {
-      roles: { "7": { kind: "granary" } },
+      roles: { "7": { kind: "granary", rank: 1 } },
       keep: { "8": 100 },
       styles: {},
     });
@@ -416,7 +416,7 @@ describe("the chain's own roles for « Reprendre les rôles de votre extension �
     await storeLink(TOKEN, NOW);
     const reply = (await answer(service(), ask, "space")) as { status: string; record: string };
     expect(chainRolesFrom(JSON.parse(reply.record), SPACE)).toEqual({
-      roles: { "7": { kind: "granary" } },
+      roles: { "7": { kind: "granary", rank: 1 } },
       keep: { "8": 100 },
     });
     expect(site.calls).toEqual([]);

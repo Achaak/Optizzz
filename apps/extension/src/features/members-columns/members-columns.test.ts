@@ -63,7 +63,7 @@ describe("rolesOfMembers", () => {
     const roles = rolesOfMembers([me, alpha, stranger], "me", new Map([["Me", 9000]]), { roles: null, styles: {} });
     expect([...roles.keys()]).toEqual(["me", "alpha"]);
     // Proposed from the fields: Me now the biggest.
-    expect(roles.get("me")?.role).toEqual({ kind: "granary" });
+    expect(roles.get("me")?.role).toEqual({ kind: "granary", rank: 1 });
   });
 
   it("is empty when I am in no alliance", () => {
@@ -111,11 +111,11 @@ describe("addMembersColumns", () => {
   it("adds a « Rôle » column with the role's colour, sorted from the granaries down", () => {
     const doc = membersPage();
     const roles = rolesOfMembers(players, "Me", new Map(), {
-      roles: { [String(me.id)]: { kind: "hunter" }, [String(alpha.id)]: { kind: "granary" } },
+      roles: { [String(me.id)]: { kind: "hunter" }, [String(alpha.id)]: { kind: "granary", rank: 1 } },
       styles: {},
     });
     addMembersColumns(doc, { ...withTrips(), roles }, now);
-    expect(column(doc, 1).slice(0, 4)).toEqual(["Rôle", "Grenier", "Chasseur", "?"]);
+    expect(column(doc, 1).slice(0, 4)).toEqual(["Rôle", "Grenier 1", "Chasseur", "?"]);
     const pill = doc.querySelector<HTMLElement>(".optizzz-members-role");
     expect(pill?.style.getPropertyValue("--role-color")).toBe("#c5130f");
     expect(doc.querySelector(`tr.${ME_CLASS}`)?.querySelector("a")?.textContent).toBe("Me");
@@ -128,13 +128,13 @@ describe("addMembersColumns", () => {
   it("says under the role who a member is bigger or smaller than, in the rungs next to its own", () => {
     const doc = membersPage();
     const roles = rolesOfMembers(players, "Me", new Map([["Me", 3000]]), {
-      roles: { [String(me.id)]: { kind: "hunter" }, [String(alpha.id)]: { kind: "granary" } },
+      roles: { [String(me.id)]: { kind: "hunter" }, [String(alpha.id)]: { kind: "granary", rank: 1 } },
       styles: {},
     });
-    expect(roles.get("me")?.place).toEqual({ kind: "up", than: "Alpha", thanRole: { kind: "granary" } });
+    expect(roles.get("me")?.place).toEqual({ kind: "up", than: "Alpha", thanRole: { kind: "granary", rank: 1 } });
     expect(roles.get("alpha")?.place).toEqual({ kind: "down", than: "Me", thanRole: { kind: "hunter" } });
     addMembersColumns(doc, { ...withTrips(), roles }, now);
-    expect(column(doc, 1).slice(1, 3)).toEqual(["Grenier↑", "Chasseur↓"]);
+    expect(column(doc, 1).slice(1, 3)).toEqual(["Grenier 1↑", "Chasseur↓"]);
     expect(doc.querySelector(".optizzz-rung-place")?.getAttribute("aria-label")).toBe(
       "Plus petit que Me (Chasseur), de l'échelon du dessous : doit flooder pour revenir à son échelon.",
     );

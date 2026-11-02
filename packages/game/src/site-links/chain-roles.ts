@@ -1,7 +1,7 @@
 // The TDC chain's roles of an Alliance Space (docs/features/site-chaine.md), as they are encrypted with the Clé
 // d'alliance: set on optizzz.fr by an Admin or a Délégué, taken up by every member's extension.
 import { z } from "zod";
-import { roleKey, type Role } from "../tdc-chain/roles";
+import { roleFromKey, roleKey, type Role } from "../tdc-chain/roles";
 
 /** Keyed by player id, as in the extension's chain. */
 export interface ChainRolesRecord {
@@ -19,14 +19,6 @@ const RECORD = z.object({
   keep: z.record(PLAYER_ID, z.number().int().nonnegative()).refine((keep) => Object.keys(keep).length <= 500),
 });
 
-/** « granary », « passer:2 »… back to a role; null for anything else. */
-function roleOf(key: string): Role | null {
-  if (key === "granary" || key === "hunter" || key === "drain" || key === "protected" || key === "out")
-    return { kind: key };
-  const passer = /^passer:([1-9]\d{0,2})$/.exec(key);
-  return passer ? { kind: "passer", rank: Number(passer[1]) } : null;
-}
-
 /** The record as it is encrypted: the space's id inside, so that it does not open in another space. */
 export const chainRolesText = (record: ChainRolesRecord, spaceId: string): string =>
   JSON.stringify({
@@ -42,7 +34,7 @@ export function chainRolesFrom(value: unknown, spaceId: string): ChainRolesRecor
   if (parsed.spaceId !== spaceId) throw new Error("Chain roles of another space.");
   const roles: Record<string, Role> = {};
   for (const [id, key] of Object.entries(parsed.roles)) {
-    const role = roleOf(key);
+    const role = roleFromKey(key);
     if (!role) throw new Error(`Unknown chain role: ${key}`);
     roles[id] = role;
   }

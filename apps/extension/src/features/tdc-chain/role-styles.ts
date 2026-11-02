@@ -52,10 +52,13 @@ export const PALETTE: readonly string[] = CHART_COLORS.series;
  */
 const PASSER_COLORS = [1, 2, 5, 4, 6];
 
+/** Default colours of the granary rungs, from the first up (red, violet, sky): those the passers use last. */
+const GRANARY_COLORS = [0, 6, 4];
+
 function defaultStyle(role: Role): RoleStyle {
   switch (role.kind) {
     case "granary":
-      return { color: 0, size: "large" };
+      return { color: GRANARY_COLORS[(role.rank - 1) % GRANARY_COLORS.length] ?? 0, size: "large" };
     case "passer":
       return { color: PASSER_COLORS[(role.rank - 1) % PASSER_COLORS.length] ?? 1, size: "medium" };
     case "hunter":

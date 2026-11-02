@@ -98,10 +98,7 @@ function RoleShape({ role }: { role: Role }) {
   }
 }
 
-/**
- * « ✓ à sa place », or « ↓ plus gros que Lunaire, passeur 1 » (the arrow: where its field must go): in words too,
- * never an arrow alone (ADR 0003).
- */
+/** « ✓ à sa place », or « ↓ plus gros que Lunaire, passeur 1 » (the arrow: where its field must go): in words too, never an arrow alone (ADR 0003). */
 function PlaceCell({ place, name }: { place: RungPlace | undefined; name: (id: number) => string }) {
   if (!place) return <span className="text-muted-foreground">—</span>;
   if (place.kind === "ok") return <span className="text-muted-foreground">✓ à sa place</span>;
@@ -692,15 +689,15 @@ function ChainEditor({
           <summary className="cursor-pointer font-medium">Importer un texte</summary>
           <div className="mt-3 space-y-2">
             <label htmlFor="chain-import" className={FIELD_LABEL}>
-              Une ligne « Pseudo: rôle » par membre (Grenier, Passeur 1, Passeur 2…, Chasseur, À flooder, Ne pas
-              toucher, Hors chaîne)
+              Une ligne « Pseudo: rôle » par membre (Grenier 1, Grenier 2…, Passeur 1, Passeur 2…, Chasseur, À flooder,
+              Ne pas toucher, Hors chaîne)
             </label>
             <textarea
               id="chain-import"
               rows={5}
               value={text}
               onChange={(event) => setText(event.target.value)}
-              placeholder={"Noctis: Grenier\nOkapi: Passeur 1\nZeph: Chasseur"}
+              placeholder={"Noctis: Grenier 1\nOkapi: Passeur 1\nZeph: Chasseur"}
               className="block w-full border bg-background p-2 font-mono text-sm"
             />
             <Button variant="outline" disabled={!text.trim()} onClick={importText}>

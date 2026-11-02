@@ -1,14 +1,15 @@
-// Roles in a TDC chain (chasseur → passeurs → grenier). See docs/features/chaine-tdc.md.
+// Roles in a TDC chain (chasseur → passeurs → greniers). See docs/features/chaine-tdc.md.
 import { inRange } from "@optizzz/game/attack";
 
 /**
- * `drain` (« À flooder »): the whole field climbs to the granaries, like a hunter keeping nothing. `protected` (« Ne pas
+ * Granaries and passers are numbered from the bottom: Grenier 2 is a rung above Grenier 1 and may flood it, only the
+ * highest granaries keep what climbs. `drain` (« À flooder »): the whole field climbs to the granaries, like a hunter keeping nothing. `protected` (« Ne pas
  * toucher »): keeps its field, no flood of the chain on it nor from it; unlike `out`, a choice of the alliance.
  */
 export type Role =
   | { kind: "hunter" }
   | { kind: "passer"; rank: number }
-  | { kind: "granary" }
+  | { kind: "granary"; rank: number }
   | { kind: "drain" }
   | { kind: "protected" }
   | { kind: "out" };
@@ -49,7 +50,7 @@ export function proposeRoles(members: readonly Member[], margin = 0): Map<number
   const lowest = rungs.length - 1;
   rungs.forEach((rung, i) => {
     const role: Role =
-      i === 0 ? { kind: "granary" } : i === lowest ? { kind: "hunter" } : { kind: "passer", rank: lowest - i };
+      i === 0 ? { kind: "granary", rank: 1 } : i === lowest ? { kind: "hunter" } : { kind: "passer", rank: lowest - i };
     for (const member of rung) roles.set(member.id, role);
   });
   return roles;
@@ -69,17 +70,27 @@ export function chainRoles(
 
 /** Passer ranks always offered, so a chain can be built from the top without filling the rungs one by one. */
 const MIN_PASSER_RANKS = 5;
+const MIN_GRANARY_RANKS = 2;
 
-/** Passer ranks to offer, highest first: at least {@link MIN_PASSER_RANKS}, and always one above the highest used. */
-export function passerRanks(roles: Iterable<Role>): number[] {
-  const highest = Math.max(0, ...[...roles].map((role) => (role.kind === "passer" ? role.rank : 0)));
-  const count = Math.max(MIN_PASSER_RANKS, highest + 1);
+/** Highest rank of that kind among the roles; 0 when none. */
+export const highestRank = (roles: Iterable<Role>, kind: "granary" | "passer") =>
+  Math.max(0, ...[...roles].map((role) => (role.kind === kind ? role.rank : 0)));
+
+/** Ranks to offer, highest first: at least `min`, and always one above the highest used. */
+function ranks(roles: Iterable<Role>, kind: "granary" | "passer", min: number): number[] {
+  const count = Math.max(min, highestRank(roles, kind) + 1);
   return Array.from({ length: count }, (_, i) => count - i);
 }
 
+/** Passer ranks to offer, highest first: at least {@link MIN_PASSER_RANKS}, and always one above the highest used. */
+export const passerRanks = (roles: Iterable<Role>): number[] => ranks(roles, "passer", MIN_PASSER_RANKS);
+
+/** Granary ranks to offer, highest first: at least {@link MIN_GRANARY_RANKS}, and always one above the highest used. */
+export const granaryRanks = (roles: Iterable<Role>): number[] => ranks(roles, "granary", MIN_GRANARY_RANKS);
+
 /** The roles a member may be given, from the top of the chain down. */
 export const roleOptions = (roles: Iterable<Role>): Role[] => [
-  { kind: "granary" },
+  ...granaryRanks(roles).map((rank): Role => ({ kind: "granary", rank })),
   ...passerRanks(roles).map((rank): Role => ({ kind: "passer", rank })),
   { kind: "hunter" },
   { kind: "drain" },
@@ -91,7 +102,7 @@ export const roleOptions = (roles: Iterable<Role>): Role[] => [
 export function roleOrder(role: Role): number {
   switch (role.kind) {
     case "granary":
-      return 1000;
+      return 1000 + role.rank;
     case "passer":
       return role.rank;
     case "hunter":
@@ -105,10 +116,27 @@ export function roleOrder(role: Role): number {
   }
 }
 
-/** A role as a string, for a `<select>` value or a stored key: « granary », « passer:2 »… */
-export const roleKey = (role: Role): string => (role.kind === "passer" ? `passer:${String(role.rank)}` : role.kind);
+/**
+ * A role as a string, for a `<select>` value or a stored key: « granary », « granary:2 », « passer:2 »… Grenier 1
+ * stays « granary », as before the granaries had ranks: map colours already chosen, and the site's roles read by an
+ * older extension.
+ */
+export function roleKey(role: Role): string {
+  if (role.kind === "passer") return `passer:${String(role.rank)}`;
+  if (role.kind === "granary" && role.rank > 1) return `granary:${String(role.rank)}`;
+  return role.kind;
+}
 
-/** The role as the players write it: « Chasseur », « Passeur 2 », « Grenier », « Hors chaîne ». */
+/** {@link roleKey} back to a role (« granary:1 » too); null for anything else. */
+export function roleFromKey(key: string): Role | null {
+  if (key === "granary") return { kind: "granary", rank: 1 };
+  if (key === "hunter" || key === "drain" || key === "protected" || key === "out") return { kind: key };
+  const ranked = /^(granary|passer):([1-9]\d{0,2})$/.exec(key);
+  if (ranked?.[1] === "granary" || ranked?.[1] === "passer") return { kind: ranked[1], rank: Number(ranked[2]) };
+  return null;
+}
+
+/** The role as the players write it: « Chasseur », « Passeur 2 », « Grenier 1 », « Hors chaîne ». */
 export function roleLabel(role: Role): string {
   switch (role.kind) {
     case "hunter":
@@ -116,7 +144,7 @@ export function roleLabel(role: Role): string {
     case "passer":
       return `Passeur ${role.rank}`;
     case "granary":
-      return "Grenier";
+      return `Grenier ${String(role.rank)}`;
     case "drain":
       return "À flooder";
     case "protected":
@@ -136,13 +164,14 @@ const plain = (text: string) =>
 function parseRole(text: string): Role | null {
   const label = plain(text);
   if (label === "chasseur") return { kind: "hunter" };
-  if (label === "grenier") return { kind: "granary" };
   if (label === "hors chaine") return { kind: "out" };
   if (label === "a flooder") return { kind: "drain" };
   if (label === "ne pas toucher") return { kind: "protected" };
-  const passer = /^passeur\s*(\d*)$/.exec(label);
-  if (passer) return { kind: "passer", rank: passer[1] ? Math.max(1, Number(passer[1])) : 1 };
-  return null;
+  // « Passeur » and « Grenier » alone are the first rung, as written before the ranks.
+  const ranked = /^(passeur|grenier)\s*(\d*)$/.exec(label);
+  if (!ranked) return null;
+  const rank = ranked[2] ? Math.max(1, Number(ranked[2])) : 1;
+  return { kind: ranked[1] === "grenier" ? "granary" : "passer", rank };
 }
 
 interface Named {
@@ -185,16 +214,16 @@ export function importRoles(text: string, members: readonly Named[]): RolesImpor
 }
 
 /**
- * Height of each member in the chain: hunters and members to drain 0, passer N at N, granaries above the highest
- * passer; out and protected: absent.
+ * Height of each member in the chain: hunters and members to drain 0, passer N at N, granary N N rungs above the
+ * highest passer; out and protected: absent.
  */
 export function rungs(roles: ReadonlyMap<number, Role>): Map<number, number> {
-  const highestPasser = Math.max(0, ...[...roles.values()].map((role) => (role.kind === "passer" ? role.rank : 0)));
+  const highestPasser = highestRank(roles.values(), "passer");
   const heights = new Map<number, number>();
   for (const [id, role] of roles) {
     if (role.kind === "hunter" || role.kind === "drain") heights.set(id, 0);
     else if (role.kind === "passer") heights.set(id, role.rank);
-    else if (role.kind === "granary") heights.set(id, highestPasser + 1);
+    else if (role.kind === "granary") heights.set(id, highestPasser + role.rank);
   }
   return heights;
 }

@@ -3,7 +3,7 @@ import { CHART_COLORS } from "@/theme";
 import { bubbleOf, memberBubbles, rolesTopDown, styleOf } from "./role-styles";
 import type { Role } from "@optizzz/game/tdc-chain/roles";
 
-const granary: Role = { kind: "granary" };
+const granary: Role = { kind: "granary", rank: 1 };
 const hunter: Role = { kind: "hunter" };
 const passer = (rank: number): Role => ({ kind: "passer", rank });
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { effectiveChain, SITE_ROLES_NO_KEY } from "./site-roles";
 
 const local = { roles: { "1": { kind: "hunter" as const } }, keep: { "1": 500 } };
-const site = { roles: { "1": { kind: "granary" as const } }, keep: { "2": 1_500 } };
+const site = { roles: { "1": { kind: "granary", rank: 1 } as const }, keep: { "2": 1_500 } };
 
 describe("effectiveChain", () => {
   it("takes the space's roles and fields to keep, read-only, when the extension could open them", () => {

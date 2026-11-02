@@ -116,7 +116,7 @@ describe("bridge", () => {
 describe("planChain", () => {
   const hunter: Role = { kind: "hunter" };
   const passer: Role = { kind: "passer", rank: 1 };
-  const granary: Role = { kind: "granary" };
+  const granary: Role = { kind: "granary", rank: 1 };
   const out: Role = { kind: "out" };
 
   it("sends each hunter's field above what it keeps up to the smallest granary, through the passers", () => {
@@ -143,6 +143,24 @@ describe("planChain", () => {
           { attackerId: 4, targetId: 2, take: 200 },
         ],
       },
+    ]);
+  });
+
+  it("sends the field to the highest granaries, through the granaries below as through passers", () => {
+    const plan = planChain(
+      {
+        members: [member(1, 1000), member(2, 1800), member(3, 3500)],
+        roles: new Map<number, Role>([
+          [1, hunter],
+          [2, granary],
+          [3, { kind: "granary", rank: 2 }],
+        ]),
+        keep: new Map([[1, 800]]),
+      },
+      MARGIN,
+    );
+    expect(plan.transfers.map(({ path, moved, to }) => ({ path, moved, to }))).toEqual([
+      { path: [1, 2, 3], moved: 200, to: 3 },
     ]);
   });
 
