@@ -1,7 +1,7 @@
 // History of the alliances' totals, from the public exports — see docs/features/statistiques-alliance.md.
 import { z } from "zod";
 import { cachedVersion, loadEachVersion } from "@/data/export-history";
-import { getJson } from "@/data/exports";
+import { getJson, type AlliancesExport } from "@/data/exports";
 import { allianceSchema, exportUrl } from "@optizzz/game/exports";
 import type { AllianceScores } from "@optizzz/game/pages/alliance-ranking";
 
@@ -75,4 +75,14 @@ export function loadAllianceHistory(
   signal?: AbortSignal,
 ): Promise<AllianceSnapshot[]> {
   return loadEachVersion(versions, (version) => loadSnapshot(origin, version), onProgress, signal);
+}
+
+/**
+ * `snapshots` (one per day, the nightly export) then the latest hourly export, so that every alliance's curve
+ * ends at the freshest totals. Not cached per version: `latest` is already the cached latest export.
+ */
+export function withLatestExport(snapshots: AllianceSnapshot[], latest: AlliancesExport | null): AllianceSnapshot[] {
+  const last = snapshots.at(-1);
+  if (!latest || !last || latest.version <= last.version) return snapshots;
+  return [...snapshots, fromStored(latest.version, toStored(latest.alliances))];
 }

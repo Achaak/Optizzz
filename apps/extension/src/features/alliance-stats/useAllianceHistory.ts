@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { dailyVersions } from "@optizzz/game/export-versions";
 import { loadAlliancesExport, loadAlliancesVersions, type AlliancesExport } from "@/data/exports";
-import { loadAllianceHistory, type AllianceSnapshot } from "./api";
+import { loadAllianceHistory, withLatestExport, type AllianceSnapshot } from "./api";
 
 export interface AllianceHistoryState {
-  /** Latest export: names and diplomacy of today's alliances. */
+  /** Latest export: names and diplomacy of today's alliances, and the last point of the curves. */
   alliancesExport: AlliancesExport | null;
   snapshots: AllianceSnapshot[];
   /** Exports of the period, loaded or not. */
@@ -20,9 +20,14 @@ interface Loaded {
   done: boolean;
 }
 
+const NO_SNAPSHOTS: AllianceSnapshot[] = [];
+
 const EXPORT_ERROR = "l'export public de Fourmizzz ne répond pas. Réessayez dans quelques minutes.";
 
-/** The alliances exports of the last `days` days (null: all; undefined: not known yet), filled in as they arrive. */
+/**
+ * The alliances exports of the last `days` days (null: all; undefined: not known yet), one per day then the latest,
+ * filled in as they arrive.
+ */
 export function useAllianceHistory(origin: string, days: number | null | undefined): AllianceHistoryState {
   const [alliancesExport, setAlliancesExport] = useState<AlliancesExport | null>(null);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -58,10 +63,13 @@ export function useAllianceHistory(origin: string, days: number | null | undefin
 
   // Until the new period starts loading, the previous one stays drawn.
   const current = loaded?.days === days ? loaded : null;
+  const daily = current?.snapshots ?? loaded?.snapshots ?? NO_SNAPSHOTS;
+  const snapshots = useMemo(() => withLatestExport(daily, alliancesExport), [daily, alliancesExport]);
   return {
     alliancesExport,
-    snapshots: current?.snapshots ?? loaded?.snapshots ?? [],
-    total: current?.total ?? 0,
+    snapshots,
+    // The latest export counts once it is drawn, so that the loading note ends on "N / N".
+    total: current ? current.total + snapshots.length - daily.length : 0,
     loading: !current?.done && error === null,
     error,
   };

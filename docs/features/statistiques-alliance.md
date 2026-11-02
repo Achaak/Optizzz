@@ -8,15 +8,16 @@ Suivre son alliance comme un bloc, dans le temps et maintenant, et la comparer �
 
 ## Données
 
-- **Passé** : l'export public des **alliances**, un point par jour de Paris (la première version du jour, celle de minuit, comme l'Historique). Ce sont les vrais totaux du jour : un départ fait baisser la courbe. La moyenne des membres _actuels_ reste dans l'Historique.
+- **Passé** : l'export public des **alliances**, un point par jour de Paris (la première version du jour, celle de minuit, comme l'Historique), puis un dernier point au **dernier export horaire** (le 2026-11-02 : sans lui, les alliances comparées restaient aux totaux de minuit toute la journée). Ce sont les vrais totaux du jour : un départ fait baisser la courbe. La moyenne des membres _actuels_ reste dans l'Historique.
 - **Maintenant, mon alliance** : une requête vers `classementAlliance.php?alliance=TAG` à l'ouverture de la vue (`fetchGamePage`) : les cinq totaux en direct, Combat compris, et les **rangs du jeu**. Page injoignable : la somme du tableau Membres (sans le Combat) et le rang au dernier export.
-- **Maintenant, les autres alliances** : leurs courbes s'arrêtent au dernier export. Pas de rang « estimé » (comparer notre direct aux exports de minuit des autres serait faux une bonne partie de la journée).
+- **Maintenant, les autres alliances** : leurs courbes s'arrêtent au dernier export horaire. Pas de rang « estimé » (comparer notre direct aux exports de minuit des autres serait faux une bonne partie de la journée).
 - **Indicateurs** : TDC, Production, Fourmilière, Technologie, Combat, Membres. Bascule **Total / Moyenne par membre** (Total par défaut), masquée sur l'onglet Membres. Le rang sur chaque indicateur est calculé dans l'export parmi toutes les alliances ; il apparaît dans l'infobulle et le tableau, pas en courbe.
 - L'armée du Partage d'alliance n'est pas reprise : incomplète et sensible. Les ouvrières servent à la production réelle (voir plus bas).
 
 ## Cache
 
 - Une entrée par version et par serveur, `local:alliance-stats:<host>:<version>` : **toutes les alliances** en colonnes (tag, membres, TDC, Fourmilière, Technologie, Combat). Une version n'est téléchargée qu'une fois, jamais purgée ; une version que l'API ne donne pas est sautée.
+- Le dernier export horaire n'a pas d'entrée à lui : c'est le dernier export déjà mémorisé (`loadAlliancesExport`), remplacé à chaque nouvelle version.
 - Chargement du plus récent au plus ancien, une version à la fois, avec la barre de progression de l'Historique.
 
 ## Comportement
@@ -59,7 +60,7 @@ Ajouté le 2026-10-22, à la demande d'un joueur : comparer des alliances depuis
 - **Les alliances cochées sont les alliances comparées** de la vue Statistiques (même réglage) : cocher ici les retrouve là-bas, et inversement. Mon alliance est toujours affichée (case cochée, grisée), en gras, en rouge comme le premier joueur des autres graphiques.
 - **8 alliances au plus**, la mienne comprise : une couleur chacune, jamais deux fois la même (palette `CHART_COLORS.series`, vérifiée pour les daltoniens). Au-delà, les cases non cochées sont grisées avec la raison en infobulle. Une alliance garde sa couleur quand une autre arrive ou part : la couleur de chaque alliance comparée est mémorisée avec les réglages, la même ici et dans la vue, après rechargement aussi. Le rouge reste à mon alliance ; une nouvelle venue prend la première couleur libre (`apps/extension/src/features/alliance-stats/colors.ts`).
 - **Légende en pastilles** sous le graphique (couleur, tag, « (vous) », ✕ pour retirer, « Tout retirer ») : elle sert aussi pour les alliances cochées sur une autre page, une autre league ou un autre type de classement, absentes du tableau affiché. Le nom de l'alliance est dans l'infobulle du tag : une couleur n'est jamais seule à dire de quelle alliance il s'agit.
-- **Pas de point « en direct »** : le classement du jeu est moins frais que la page d'une alliance (`../research/fourmizzz-pages.md`). Les courbes s'arrêtent au dernier export de minuit.
+- **Pas de point « en direct »** : le classement du jeu est moins frais que la page d'une alliance (`../research/fourmizzz-pages.md`). Les courbes s'arrêtent au dernier export horaire.
 - Sans alliance et rien de coché : à la place du graphique, « Cochez des alliances dans la colonne « Graphique » du tableau… ».
 - Lecture du tableau par les liens `classementAlliance.php?alliance=TAG` de ses lignes, pas par le numéro de colonne : la table de `#centre` qui en a le plus (`packages/game/src/pages/alliances-ranking.ts`), seulement quand `#type_classement` vaut `alliance_*` (le classement des joueurs, même page, a aussi un lien d'alliance par ligne). Fixture copiée de la vraie page le 2026-10-22 (S5), réduite à trois lignes.
 - Le jeu réécrit `#zone_classement` en AJAX (critère, league, type, page, clic sur un en-tête) : un `MutationObserver` remet la colonne à chaque fois (`followRanking`). Le panneau est hors de cette zone.
