@@ -115,11 +115,15 @@ async function openNotified(id: string): Promise<void> {
 
 let listeningToClicks = false;
 
-/** `browser.notifications` only exists once the optional permission is granted. */
+/**
+ * `browser.notifications` only exists once the optional permission is granted. Firefox keeps the key, set to
+ * undefined: testing the key alone would stop the whole background at start.
+ */
 function listenToClicks() {
-  if (listeningToClicks || !("notifications" in browser)) return;
+  const { notifications } = browser as Partial<typeof browser>;
+  if (listeningToClicks || !notifications) return;
   listeningToClicks = true;
-  browser.notifications.onClicked.addListener((id) => {
+  notifications.onClicked.addListener((id) => {
     openNotified(id).catch((error: unknown) => {
       console.error("[Optizzz] could not open the notified page", error);
     });
