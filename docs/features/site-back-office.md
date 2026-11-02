@@ -1,13 +1,13 @@
 # Back office du site
 
-Une page `/admin` pour voir ce qui se passe sur le site. Proposée le 2026-11-02 avec trois maquettes : Vue d'ensemble, Collecte et sauvegardes, Comptes et Espaces (rangée « D · Back office » du canevas des maquettes du site). Premier lot livré : l'accès et la santé du cron et des sauvegardes.
+Une page `/admin` pour voir ce qui se passe sur le site. Proposée le 2026-11-02 avec trois maquettes : Vue d'ensemble, Collecte et sauvegardes, Comptes et Espaces (rangée « D · Back office » du canevas des maquettes du site). Livrés : l'accès, la santé du cron et des sauvegardes (lot 1), la Vue d'ensemble (lot 2).
 
 ## Accès
 
 - `/admin` s'ouvre aux Comptes Optizzz dont l'adresse **vérifiée** (lien magique) figure dans `ADMIN_EMAILS` : des adresses séparées par des virgules. Variable vide ou absente : personne.
-- Tout autre visiteur, connecté ou non, reçoit la page 404 du site. La page n'a pas de titre propre, pour que cette 404 ne nomme pas le back office ; `noindex`.
+- Tout autre visiteur, connecté ou non, reçoit la page 404 du site. Le contrôle est fait dans le layout de `/admin` (sinon la 404 porterait la barre « Back office ») et dans chaque page. Les pages n'ont pas de titre propre, pour que cette 404 ne nomme pas le back office ; `noindex`.
 - Pas de rôle en base : la liste vit dans l'environnement du VPS (`deploy/.env`, demandée par `scripts/setup-vps.sh`).
-- Fichiers : `apps/web/src/lib/admin/admin-emails.ts` (règle, testée), `apps/web/src/server/admin.ts` (`requireAdmin`).
+- Fichiers : `apps/web/src/lib/admin/admin-emails.ts` (règle, testée), `apps/web/src/server/admin.ts` (`requireAdmin`, et `loadJobs`, les passages et leurs alertes, partagés par les deux pages).
 
 ## Ce qui est enregistré
 
@@ -18,7 +18,14 @@ La table `JobRun` (schéma `public`) garde chaque passage des tâches du VPS, 30
 
 Le format de `report` est décrit et relu par des schémas zod dans `apps/web/src/lib/admin/job-runs.ts`. Un compte rendu illisible est ignoré, sans faire tomber la page.
 
-## La page
+## Vue d'ensemble (`/admin`)
+
+- **Titre** : « Tout va bien », ou le nombre de points à voir. « À regarder » reprend les alertes du cron et des sauvegardes (ci-dessous), plus les Espaces dont Discord ne prend plus les messages : webhook des annonces refusé (`SpaceDiscord.refusedStatus`, effacé quand un Admin enregistre une nouvelle adresse) et rappels suspendus (`SpaceReminders.suspendedStatus`).
+- **Chiffres** : comptes (et ceux des 7 derniers jours), extensions liées par navigateur, Joueurs rattachés, Espaces, Demandes en cours (en attente ou validées, et celles en attente depuis plus de 24 h), adhésions en attente.
+- **Nouveaux comptes** par jour de Paris sur 14 jours, et **par serveur** les Joueurs rattachés et les Espaces.
+- Des nombres et des dates seulement : le contenu des Espaces, des Demandes et des relevés reste chiffré. Logique : `apps/web/src/lib/admin/overview.ts` (testée).
+
+## Collecte et sauvegardes (`/admin/collecte`)
 
 - **Titre** : « Tout va bien », ou le nombre de points à voir, listés dans « À regarder » :
   - cron en retard (aucun passage depuis 75 min) ;
@@ -33,6 +40,5 @@ Seul l'administrateur lit ces données ; rien n'est envoyé ailleurs. Aucune mes
 
 ## Lots suivants (proposés)
 
-1. Vue d'ensemble : nombre de comptes, d'extensions liées, d'Espaces et de Demandes ; nouveaux comptes sur 30 jours ; webhooks Discord refusés et rappels suspendus (`SpaceDiscord.refused*`, `SpaceReminders.suspended*`) dans « À regarder ».
-2. Comptes et Espaces, métadonnées seulement : le contenu des Espaces est chiffré et le reste. Adresses masquées ; les afficher en entier serait une action notée.
-3. Relancer le cron depuis la page : il faut une commande côté VPS, à cadrer.
+1. Comptes et Espaces, métadonnées seulement : le contenu des Espaces est chiffré et le reste. Adresses masquées ; les afficher en entier serait une action notée.
+2. Relancer le cron depuis la page : il faut une commande côté VPS, à cadrer.

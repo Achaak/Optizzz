@@ -1,25 +1,19 @@
-import { versionDate } from "@optizzz/game/export-versions";
 import { formatNumber } from "@optizzz/game/format/number-format";
-import { formatDateTime, formatPastTime } from "@optizzz/game/format/time-format";
+import { formatPastTime } from "@optizzz/game/format/time-format";
 import { SERVERS, serverById } from "@optizzz/game/servers";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Histogram } from "~/components/bars";
 import { PageHeader, Panel } from "~/components/panel";
+import { Stat, StatGrid } from "~/components/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import {
-  formatBytes,
-  formatRunDuration,
-  jobAlerts,
-  readBackupRun,
-  readIngestRun,
-  serverHealth,
-  type IngestReport,
-  type Run,
-  type ServerState,
-} from "~/lib/admin/job-runs";
-import { requireAdmin } from "~/server/admin";
+import { dailyCounts, discordAlerts } from "~/lib/admin/overview";
+import { loadJobs, requireAdmin } from "~/server/admin";
 import { db } from "~/server/db";
+import { AlertList, alertsTitle } from "./alerts";
 
-// The back office (docs/features/site-back-office.md), first part: the hourly cron and the nightly backups.
+// The back office's overview (docs/features/site-back-office.md): accounts, spaces and what needs a look. Counts and
+// dates only: what the spaces hold is encrypted and stays so.
 
 // No title of its own: the 404 shown to anyone else must not name the back office.
 export const metadata: Metadata = { robots: { index: false } };
@@ -28,257 +22,152 @@ export const metadata: Metadata = { robots: { index: false } };
 const HEAD =
   "[&_th]:h-auto [&_th]:py-2 [&_th]:font-mono [&_th]:text-[0.6875rem] [&_th]:font-medium [&_th]:tracking-widest [&_th]:text-muted-foreground [&_th]:uppercase";
 const ROW = "grid grid-cols-[repeat(auto-fit,minmax(min(480px,100%),1fr))] gap-5";
-/** A state is told by its sign and its words, never by its color alone (docs/adr/0003-daltonisme.md). */
-const STATE: Record<ServerState, { label: string; className: string }> = {
-  ok: { label: "● à jour", className: "bg-accent text-primary" },
-  failing: { label: "▲ échec", className: "border border-foreground" },
-  missing: { label: "○ aucun passage", className: "border border-dashed border-muted-foreground" },
-};
 const DAY = 24 * 60 * 60_000;
+/** Days of the new accounts' chart. */
+const SIGNUP_DAYS = 14;
 
 const serverName = (id: string) => serverById(id)?.name ?? id;
 
-/** What a pass did, in one line: the servers that failed and why, or what it wrote. */
-function runNote(run: Run<IngestReport>): string {
-  const report = run.report;
-  if (!report) return "compte rendu illisible";
-  const failed = report.servers.filter((s) => s.status === "failed");
-  const notes = failed.map((s) => `${serverName(s.server)} : ${s.error ?? "échec"}`);
-  if (report.revalidated === false) notes.push("pages du site non reconstruites");
-  if (notes.length > 0) return notes.join(" · ");
-  const changes = report.servers.reduce((sum, s) => sum + s.changes, 0);
-  const updated = report.servers.filter((s) => s.status === "updated").length;
-  return updated === 0
-    ? "aucun nouvel export"
-    : `${formatNumber(updated)} serveur${updated > 1 ? "s" : ""} relu${updated > 1 ? "s" : ""} · ${formatNumber(changes)} entrées de Journal`;
-}
-
-export default async function AdminPage() {
+export default async function AdminOverviewPage() {
   await requireAdmin();
   const now = new Date();
-  const [ingestRows, backupRows, reads, maps, players, [size]] = await Promise.all([
-    db.jobRun.findMany({
-      where: { job: "ingest", startedAt: { gte: new Date(now.getTime() - DAY) } },
-      orderBy: { startedAt: "desc" },
+  const ago = (days: number) => new Date(now.getTime() - days * DAY);
+  const [
+    jobs,
+    accounts,
+    weekAccounts,
+    signups,
+    extensions,
+    players,
+    spaces,
+    demandes,
+    staleDemandes,
+    joins,
+    refusals,
+    suspensions,
+  ] = await Promise.all([
+    loadJobs(now),
+    db.user.count(),
+    db.user.count({ where: { createdAt: { gte: ago(7) } } }),
+    db.user.findMany({ where: { createdAt: { gte: ago(SIGNUP_DAYS) } }, select: { createdAt: true } }),
+    db.extensionToken.groupBy({ by: ["browser"], _count: { _all: true }, orderBy: { browser: "asc" } }),
+    db.declaredPlayer.groupBy({ by: ["server"], _count: { _all: true } }),
+    db.space.groupBy({ by: ["server"], _count: { _all: true } }),
+    db.demande.count({ where: { status: { in: ["pending", "validated"] } } }),
+    db.demande.count({ where: { status: "pending", createdAt: { lt: ago(1) } } }),
+    db.joinRequest.count({ where: { status: "pending" } }),
+    db.spaceDiscord.findMany({
+      where: { refusedStatus: { not: null } },
+      select: { refusedStatus: true, space: { select: { name: true, server: true } } },
     }),
-    db.jobRun.findMany({ where: { job: "backup" }, orderBy: { startedAt: "desc" }, take: 7 }),
-    db.exportRead.findMany(),
-    db.mapFile.findMany({ select: { server: true, updatedAt: true } }),
-    db.player.groupBy({ by: ["server"], _count: { _all: true } }),
-    db.$queryRaw<[{ bytes: bigint }]>`SELECT pg_database_size(current_database()) AS bytes`,
+    db.spaceReminders.findMany({
+      where: { suspendedStatus: { not: null } },
+      select: { suspendedStatus: true, space: { select: { name: true, server: true } } },
+    }),
   ]);
-  // A pass older than 24 h still says when the cron last ran.
-  const ingests = (
-    ingestRows.length > 0
-      ? ingestRows
-      : await db.jobRun.findMany({ where: { job: "ingest" }, orderBy: { startedAt: "desc" }, take: 1 })
-  ).map(readIngestRun);
-  const backups = backupRows.map(readBackupRun);
-  const health = serverHealth(SERVERS, ingests, now);
-  const alerts = jobAlerts({ health, lastIngest: ingests[0], lastBackup: backups[0], now });
-  const readOf = (server: string, kind: string) => reads.find((r) => r.server === server && r.kind === kind)?.version;
-  const lastIngest = ingests[0];
+  const alerts = [
+    ...jobs.alerts,
+    ...discordAlerts([
+      ...refusals.map((r) => ({
+        space: r.space.name,
+        server: serverName(r.space.server),
+        refusedStatus: r.refusedStatus,
+        suspendedStatus: null,
+      })),
+      ...suspensions.map((r) => ({
+        space: r.space.name,
+        server: serverName(r.space.server),
+        refusedStatus: null,
+        suspendedStatus: r.suspendedStatus,
+      })),
+    ]),
+  ];
+  const sum = (rows: readonly { _count: { _all: number } }[]) => rows.reduce((total, r) => total + r._count._all, 0);
+  const byServer = (rows: readonly { server: string; _count: { _all: number } }[], id: string) =>
+    rows.find((r) => r.server === id)?._count._all ?? 0;
+  const lastBackup = jobs.backups[0];
 
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
-        kicker="Back office · cron et sauvegardes"
-        title={
-          alerts.length === 0
-            ? "Tout va bien"
-            : `${formatNumber(alerts.length)} point${alerts.length > 1 ? "s" : ""} à voir`
-        }
+        kicker="Back office · vue d'ensemble"
+        title={alertsTitle(alerts)}
         note={`relu ${formatPastTime(now, now)}`}
       >
         <p>
-          {lastIngest
-            ? `Dernier passage du cron ${formatPastTime(lastIngest.startedAt, now)}, en ${formatRunDuration(lastIngest.endedAt.getTime() - lastIngest.startedAt.getTime())}.`
-            : "Le cron n'a encore enregistré aucun passage."}{" "}
-          Il relit chaque heure l&apos;export public des {formatNumber(SERVERS.length)} serveurs, puis reconstruit les
-          pages du site.
+          {jobs.lastIngest
+            ? `Dernier passage du cron ${formatPastTime(jobs.lastIngest.startedAt, now)}`
+            : "Aucun passage du cron enregistré"}
+          {lastBackup
+            ? `, dernière sauvegarde ${formatPastTime(lastBackup.startedAt, now)}.`
+            : ", aucune sauvegarde enregistrée."}{" "}
+          <Link href="/admin/collecte" className="text-primary underline">
+            Collecte et sauvegardes
+          </Link>
         </p>
       </PageHeader>
 
-      {alerts.length > 0 && (
-        <section aria-labelledby="alerts" className="border border-warning-border bg-warning-soft">
-          <h2
-            id="alerts"
-            className="border-b border-warning-border px-4 py-2.5 font-heading text-xl font-semibold tracking-wide uppercase"
-          >
-            À regarder
-          </h2>
-          <ul>
-            {alerts.map((alert) => (
-              <li key={alert} className="border-b border-warning-border px-4 py-2.5 last:border-b-0">
-                <span aria-hidden="true">▲ </span>
-                {alert}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <AlertList alerts={alerts} />
 
-      <Panel
-        flush
-        title="Par serveur"
-        aside={<span className="text-xs text-muted-foreground">exports lus et dernier passage, sur 24 h</span>}
-      >
-        <div className="overflow-x-auto">
-          <Table className="text-[0.8125rem]">
-            <TableHeader className={HEAD}>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-4">Serveur</TableHead>
-                <TableHead>État</TableHead>
-                <TableHead>Export joueurs</TableHead>
-                <TableHead>Export alliances</TableHead>
-                <TableHead className="text-right">Joueurs</TableHead>
-                <TableHead className="text-right">Journal, 24 h</TableHead>
-                <TableHead className="text-right">Échecs, 24 h</TableHead>
-                <TableHead>Carte</TableHead>
-                <TableHead className="pr-4 text-right">Durée</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {health.map((server) => {
-                const playersRead = readOf(server.server, "players");
-                const alliancesRead = readOf(server.server, "alliances");
-                const map = maps.find((m) => m.server === server.server);
-                const count = players.find((p) => p.server === server.server)?._count._all;
-                const journal = ingestRows
-                  .map(readIngestRun)
-                  .reduce(
-                    (sum, run) => sum + (run.report?.servers.find((s) => s.server === server.server)?.changes ?? 0),
-                    0,
-                  );
-                return (
-                  <TableRow key={server.server}>
-                    <TableCell className="pl-4 font-heading text-lg font-bold">{server.name}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`whitespace-nowrap px-2 py-0.5 font-mono text-xs ${STATE[server.state].className}`}
-                      >
-                        {STATE[server.state].label}
-                      </span>
-                      {server.state === "failing" && server.last?.error && (
-                        <span className="mt-1 block max-w-64 text-xs text-muted-foreground">{server.last.error}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono whitespace-nowrap">
-                      {playersRead ? formatDateTime(versionDate(playersRead)) : "—"}
-                    </TableCell>
-                    <TableCell className="font-mono whitespace-nowrap">
-                      {alliancesRead ? formatDateTime(versionDate(alliancesRead)) : "—"}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {count === undefined ? "—" : formatNumber(count)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(journal)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(server.failures)}</TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {map ? formatPastTime(map.updatedAt, now) : "—"}
-                    </TableCell>
-                    <TableCell className="pr-4 text-right font-mono">
-                      {server.last ? formatRunDuration(server.last.ms) : "—"}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </Panel>
+      <StatGrid label="Comptes et Espaces">
+        <Stat
+          label="Comptes Optizzz"
+          value={formatNumber(accounts)}
+          hint={`+${formatNumber(weekAccounts)} en 7 jours`}
+        />
+        <Stat
+          label="Extensions liées"
+          value={formatNumber(sum(extensions))}
+          hint={extensions.map((e) => `${e.browser} ${formatNumber(e._count._all)}`).join(" · ") || "aucune"}
+        />
+        <Stat label="Joueurs rattachés" value={formatNumber(sum(players))} hint="un par compte et par serveur" />
+        <Stat label="Espaces d'alliance" value={formatNumber(sum(spaces))} />
+        <Stat
+          label="Demandes en cours"
+          value={formatNumber(demandes)}
+          hint={`${formatNumber(staleDemandes)} en attente depuis plus de 24 h`}
+        />
+        <Stat label="Adhésions en attente" value={formatNumber(joins)} hint="à accepter par un Admin" />
+      </StatGrid>
 
       <div className={ROW}>
         <Panel
-          flush
-          title="Passages du cron"
-          aside={<span className="text-xs text-muted-foreground">les 24 dernières heures</span>}
+          title={`Nouveaux comptes, ${String(SIGNUP_DAYS)} jours`}
+          aside={<span className="text-xs text-muted-foreground">par jour, heure de Paris</span>}
         >
-          {ingests.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table className="text-[0.8125rem]">
-                <TableHeader className={HEAD}>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-4">Début</TableHead>
-                    <TableHead>Résultat</TableHead>
-                    <TableHead className="text-right">Durée</TableHead>
-                    <TableHead className="pr-4">Note</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ingests.map((run) => (
-                    <TableRow key={run.startedAt.toISOString()}>
-                      <TableCell className="pl-4 font-mono whitespace-nowrap">
-                        {formatPastTime(run.startedAt, now)}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">{run.ok ? "✓ complet" : "× échec"}</TableCell>
-                      <TableCell className="text-right font-mono whitespace-nowrap">
-                        {formatRunDuration(run.endedAt.getTime() - run.startedAt.getTime())}
-                      </TableCell>
-                      <TableCell className="min-w-56 pr-4 whitespace-normal text-muted-foreground">
-                        {runNote(run)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="px-4 py-3.5 text-muted-foreground">Aucun passage enregistré.</p>
-          )}
+          <Histogram
+            label="Nouveaux comptes par jour"
+            bars={dailyCounts(
+              signups.map((u) => u.createdAt),
+              now,
+              SIGNUP_DAYS,
+            )}
+          />
         </Panel>
 
-        <Panel
-          flush
-          title="Sauvegardes"
-          aside={
-            <span className="text-xs text-muted-foreground">chaque nuit · 7 jours sur le VPS, 30 dans le bucket</span>
-          }
-        >
-          {backups.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table className="text-[0.8125rem]">
-                <TableHeader className={HEAD}>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-4">Quand</TableHead>
-                    <TableHead className="text-right">Taille</TableHead>
-                    <TableHead>VPS</TableHead>
-                    <TableHead className="pr-4">Scaleway</TableHead>
+        <Panel flush title="Par serveur">
+          <div className="overflow-x-auto">
+            <Table className="text-[0.8125rem]">
+              <TableHeader className={HEAD}>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-4">Serveur</TableHead>
+                  <TableHead className="text-right">Joueurs rattachés</TableHead>
+                  <TableHead className="pr-4 text-right">Espaces</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {SERVERS.map((server) => (
+                  <TableRow key={server.id}>
+                    <TableCell className="pl-4 font-heading text-lg font-bold">{server.name}</TableCell>
+                    <TableCell className="text-right font-mono">{formatNumber(byServer(players, server.id))}</TableCell>
+                    <TableCell className="pr-4 text-right font-mono">
+                      {formatNumber(byServer(spaces, server.id))}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {backups.map((run) => {
-                    const report = run.report;
-                    return (
-                      <TableRow key={run.startedAt.toISOString()}>
-                        <TableCell className="pl-4 font-mono whitespace-nowrap">
-                          {formatPastTime(run.startedAt, now)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {report?.bytes == null ? "—" : formatBytes(report.bytes)}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {report?.file ? "✓ gardée" : `× échec${report?.error ? ` (${report.error})` : ""}`}
-                        </TableCell>
-                        <TableCell className="pr-4 whitespace-nowrap">
-                          {report?.copied === true
-                            ? "✓ copiée"
-                            : report?.copied === false
-                              ? "× copie échouée"
-                              : "— sans bucket"}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="px-4 py-3.5 text-muted-foreground">Aucune sauvegarde enregistrée.</p>
-          )}
-          <p className="border-t px-4 py-3 text-[0.8125rem] text-muted-foreground">
-            Base de données&nbsp;: <span className="font-mono text-foreground">{formatBytes(Number(size.bytes))}</span>.
-          </p>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </Panel>
       </div>
     </div>
