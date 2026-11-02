@@ -28,6 +28,7 @@ import {
   exportRoles,
   importRoles,
   roleOptions as chainRoleOptions,
+  rungPlaceArrow,
   rungPlaceText,
   rungPlaces,
   proposeRoles,
@@ -97,7 +98,7 @@ function RungPlaceText({
   const text = rungPlaceText(place.kind, `${pseudo(place.than)} (${roleLabel(roleOf(place.than))})`);
   return (
     <span className="optizzz-rung-place" role="img" aria-label={text} title={text}>
-      {place.kind === "up" ? "↑" : "↓"}
+      {rungPlaceArrow(place.kind)}
     </span>
   );
 }

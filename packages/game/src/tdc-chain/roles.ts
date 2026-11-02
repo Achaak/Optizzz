@@ -230,6 +230,11 @@ export function rungPlaces(
 }
 
 /**
+ * Where the member's field must go: ↓ for one too big for its rung (to be flooded), ↑ for one too small (to flood).
+ */
+export const rungPlaceArrow = (kind: "up" | "down"): string => (kind === "up" ? "↓" : "↑");
+
+/**
  * The place in words, for a tooltip. Too big for its rung, the member is to be flooded; too small, it is to flood:
  * the chain brings it back to its rung, its role stays.
  */

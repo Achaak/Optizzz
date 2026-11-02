@@ -1,5 +1,5 @@
 import { rolesTopDown } from "@/features/tdc-chain/role-styles";
-import { roleKey, roleLabel, rungPlaceText } from "@optizzz/game/tdc-chain/roles";
+import { roleKey, roleLabel, rungPlaceArrow, rungPlaceText } from "@optizzz/game/tdc-chain/roles";
 import { formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
 import type { MemberRole } from "./roles";
@@ -84,8 +84,8 @@ function roleColumn(roles: Map<string, MemberRole>) {
     kind: "roles",
     title: "Rôle",
     hint:
-      "Rôle dans la chaîne de TDC, aux couleurs choisies dans la Chaîne ; ↑ ou ↓ quand le TDC dépasse un membre de " +
-      "l'échelon voisin. Cliquez pour trier.",
+      "Rôle dans la chaîne de TDC, aux couleurs choisies dans la Chaîne ; ↓ à flooder, ↑ doit flooder, quand le " +
+      "TDC dépasse un membre de l'échelon voisin. Cliquez pour trier.",
     fill: (cell, pseudo) => {
       const bubble = roles.get(pseudo.toLowerCase());
       if (!bubble) {
@@ -105,7 +105,7 @@ function roleColumn(roles: Map<string, MemberRole>) {
       if (place && place.kind !== "ok") {
         const badge = cell.ownerDocument.createElement("span");
         badge.className = "optizzz-rung-place";
-        badge.textContent = place.kind === "up" ? "↑" : "↓";
+        badge.textContent = rungPlaceArrow(place.kind);
         badge.title = rungPlaceText(place.kind, `${place.than} (${roleLabel(place.thanRole)})`);
         badge.setAttribute("role", "img");
         badge.setAttribute("aria-label", badge.title);

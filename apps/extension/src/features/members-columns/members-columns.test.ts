@@ -134,7 +134,7 @@ describe("addMembersColumns", () => {
     expect(roles.get("me")?.place).toEqual({ kind: "up", than: "Alpha", thanRole: { kind: "granary" } });
     expect(roles.get("alpha")?.place).toEqual({ kind: "down", than: "Me", thanRole: { kind: "hunter" } });
     addMembersColumns(doc, { ...withTrips(), roles }, now);
-    expect(column(doc, 1).slice(1, 3)).toEqual(["Grenier↓", "Chasseur↑"]);
+    expect(column(doc, 1).slice(1, 3)).toEqual(["Grenier↑", "Chasseur↓"]);
     expect(doc.querySelector(".optizzz-rung-place")?.getAttribute("aria-label")).toBe(
       "Plus petit que Me (Chasseur), de l'échelon du dessous : doit flooder pour revenir à son échelon.",
     );

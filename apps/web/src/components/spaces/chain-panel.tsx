@@ -18,6 +18,7 @@ import {
   roleLabel,
   roleOptions as chainRoleOptions,
   roleOrder,
+  rungPlaceArrow,
   rungPlaces,
   type Role,
   type RungPlace,
@@ -97,14 +98,17 @@ function RoleShape({ role }: { role: Role }) {
   }
 }
 
-/** « ✓ à sa place », or « ↑ plus gros que Lunaire, passeur 1 »: in words too, never an arrow alone (ADR 0003). */
+/**
+ * « ✓ à sa place », or « ↓ plus gros que Lunaire, passeur 1 » (the arrow: where its field must go): in words too,
+ * never an arrow alone (ADR 0003).
+ */
 function PlaceCell({ place, name }: { place: RungPlace | undefined; name: (id: number) => string }) {
   if (!place) return <span className="text-muted-foreground">—</span>;
   if (place.kind === "ok") return <span className="text-muted-foreground">✓ à sa place</span>;
   return (
     <span>
       <strong aria-hidden="true" className="text-primary">
-        {place.kind === "up" ? "↑" : "↓"}
+        {rungPlaceArrow(place.kind)}
       </strong>{" "}
       {place.kind === "up" ? "plus gros que" : "plus petit que"} {name(place.than)}
     </span>
@@ -627,7 +631,8 @@ function ChainEditor({
           TDC de l&apos;export, relu chaque heure (l&apos;extension prend celui de la page Membres) · vacances et bannis
           hors chaîne d&apos;office · un membre hors de l&apos;espace a quand même un rôle : la chaîne passe aussi par
           lui · « À flooder » : tout son TDC monte vers les greniers · « Ne pas toucher » : il garde son TDC, aucun
-          flood de la chaîne · ↑ ↓ : plus gros ou plus petit qu&apos;un membre de l&apos;échelon voisin.
+          flood de la chaîne · ↓ : plus gros qu&apos;un membre de l&apos;échelon du dessus, à flooder · ↑ : plus petit
+          qu&apos;un membre de l&apos;échelon du dessous, doit flooder.
         </p>
       </Panel>
 
