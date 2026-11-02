@@ -80,6 +80,8 @@ export interface Opponent {
   weapons: number | null;
   /** « attaque du 19/10/26 10h36 contre Cible_1 », said above the form. */
   seen?: string;
+  /** Bouclier, and Dôme or Loge at the place, when the report's kills give only one pair. */
+  levels?: { shield: number; level: number };
 }
 
 const opponentSchema = z.object({
@@ -87,6 +89,7 @@ const opponentSchema = z.object({
   army: z.record(z.string(), z.number().int().nonnegative()),
   weapons: z.number().int().nonnegative().nullable(),
   seen: z.string().optional(),
+  levels: z.object({ shield: z.number().int().nonnegative(), level: z.number().int().nonnegative() }).optional(),
 });
 
 export const encodeOpponent = (opponent: Opponent): string => JSON.stringify(opponent);
@@ -110,6 +113,9 @@ export function withOpponent(form: SimulatorForm, opponent: Opponent): Simulator
       ...form.defender,
       armies: { ...emptyForm().defender.armies, [opponent.place]: opponent.army },
       weapons: opponent.weapons ?? form.defender.weapons,
+      shield: opponent.levels?.shield ?? form.defender.shield,
+      dome: opponent.place === "nest" && opponent.levels ? opponent.levels.level : form.defender.dome,
+      lodge: opponent.place === "lodge" && opponent.levels ? opponent.levels.level : form.defender.lodge,
     },
     target: opponent.place,
   };

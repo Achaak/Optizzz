@@ -29,6 +29,16 @@ export interface CombatReport {
   /** My ants killed. */
   lost: number;
   won: boolean;
+  /** Each exchange of the fight, the first one included (`dealt`, `killed`, `taken`, `lost` above). */
+  exchanges: Exchange[];
+}
+
+/** One exchange: « Vous infligez … et tuez … », then « L'ennemie inflige … et en tue … ». */
+export interface Exchange {
+  dealt: Damage;
+  killed: number;
+  taken: Damage;
+  lost: number;
 }
 
 /** Field, food and materials one message of a « Butin chez … » conversation says were taken. */
@@ -42,6 +52,12 @@ export interface Loot {
 
 /** « 1 199 »: digits in groups of three, so that a lazy match cannot stop at « 1 ». */
 const NUMBER = "(\\d{1,3}(?:\\s\\d{3})*)";
+
+const EXCHANGE = new RegExp(
+  `Vous infligez ${NUMBER} \\(\\+ ${NUMBER}\\) dégâts et tuez ${NUMBER} ennemies.*?` +
+    `inflige ${NUMBER} \\(\\+ ${NUMBER}\\) dégâts à vos fourmis et en tue ${NUMBER}`,
+  "g",
+);
 
 const PLACES: [RegExp, Place][] = [
   [/^le Terrain de Chasse$/i, "field"],
@@ -63,9 +79,16 @@ export function readCombat(date: string, text: string): CombatReport | null {
   const target = /Vous attaquez (.+?) de (\S+?),?\s*(mais une armée d'occupation|Troupes en attaque)/.exec(flat);
   const attackers = /Troupes en attaque : (.+?)\.\s*Troupes en défense/.exec(flat)?.[1];
   const defenders = /Troupes en défense : (.+?)\.\s*Vous infligez/.exec(flat)?.[1];
-  const dealt = new RegExp(`Vous infligez ${NUMBER} \\(\\+ ${NUMBER}\\) dégâts et tuez ${NUMBER} ennemies`).exec(flat);
-  const taken = new RegExp(`inflige ${NUMBER} \\(\\+ ${NUMBER}\\) dégâts à vos fourmis et en tue ${NUMBER}`).exec(flat);
-  if (!target?.[1] || !target[2] || !attackers || !defenders || !dealt || !taken) return null;
+  const exchanges = [...flat.matchAll(EXCHANGE)].map(
+    ([, dealt, dealtBonus, killed, taken, takenBonus, lost]): Exchange => ({
+      dealt: damage(dealt, dealtBonus),
+      killed: parseGameInteger(killed),
+      taken: damage(taken, takenBonus),
+      lost: parseGameInteger(lost),
+    }),
+  );
+  const first = exchanges[0];
+  if (!target?.[1] || !target[2] || !attackers || !defenders || !first) return null;
   const placeName = target[1];
   return {
     date,
@@ -74,11 +97,9 @@ export function readCombat(date: string, text: string): CombatReport | null {
     occupied: target[3] !== "Troupes en attaque",
     attackers: troops(attackers),
     defenders: troops(defenders),
-    dealt: damage(dealt[1], dealt[2]),
-    killed: parseGameInteger(dealt[3]),
-    taken: damage(taken[1], taken[2]),
-    lost: parseGameInteger(taken[3]),
+    ...first,
     won: flat.includes("Vous avez gagné"),
+    exchanges,
   };
 }
 

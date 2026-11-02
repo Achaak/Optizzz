@@ -6,6 +6,7 @@ import {
   type CombatReport,
   type Loot,
 } from "@optizzz/game/pages/combat-reports";
+import { defenseLevelsText, guessDefenseLevels, type DefenseLevels } from "@optizzz/game/army/report-levels";
 import { encodeOpponent, type Opponent } from "@/features/combat-simulator/form";
 import { formatAmount } from "@optizzz/game/format/number-format";
 import { htmlElement } from "@/utils/html";
@@ -52,16 +53,26 @@ function lootOf(combat: CombatReport, loots: Loot[]): string | null {
   return written.length > 0 ? written.join(", ") : "rien";
 }
 
+const knownArmy = (army: Record<string, number>) =>
+  Object.fromEntries(Object.entries(army).filter(([key]) => UNITS.some((unit) => unit.key === key)));
+
+/** The Bouclier, and Dôme or Loge, that give the defenders the hp for the report's kills. */
+function guessesOf(combat: CombatReport): DefenseLevels[] {
+  if (!combat.place) return [];
+  const exchanges = combat.exchanges.map(({ dealt, killed }) => ({ dealt: dealt.base + dealt.bonus, killed }));
+  return guessDefenseLevels(combat.place, knownArmy(combat.defenders), exchanges);
+}
+
 /** The army the report showed at the place attacked, for the simulator; units it does not know are left out. */
-function opponentOf(combat: CombatReport): Opponent | null {
+function opponentOf(combat: CombatReport, guesses: readonly DefenseLevels[]): Opponent | null {
   if (!combat.place) return null;
+  const [only] = guesses;
   return {
     place: combat.place,
-    army: Object.fromEntries(
-      Object.entries(combat.defenders).filter(([key]) => UNITS.some((unit) => unit.key === key)),
-    ),
+    army: knownArmy(combat.defenders),
     weapons: combatWeapons(combat.taken),
     seen: `attaque du ${combat.date} contre ${combat.opponent}`,
+    ...(only && guesses.length === 1 ? { levels: only } : {}),
   };
 }
 
@@ -104,8 +115,9 @@ export function mountCombatReport(conversation: Element, input: CombatReportInpu
   const note = doc.createElement("p");
   note.className = "optizzz-note";
   note.textContent =
-    "Armes : le niveau que montre le bonus de leurs dégâts (+10 % par niveau). « Simuler » ouvre le simulateur " +
-    "de combat avec l'armée adverse vue, au lieu attaqué.";
+    "Armes : le niveau que montre le bonus de leurs dégâts (+10 % par niveau). Bouclier, Dôme ou Loge : ceux qui " +
+    "redonnent leurs pertes (à la Fourmilière, 2 niveaux de Dôme valent 1 niveau de Bouclier). « Simuler » ouvre " +
+    "le simulateur de combat avec l'armée adverse vue, au lieu attaqué.";
   block.append(table, note);
 
   const update = () => {
@@ -120,6 +132,8 @@ export function mountCombatReport(conversation: Element, input: CombatReportInpu
       ...combats.map((combat) => {
         const row = doc.createElement("tr");
         const weapons = combatWeapons(combat.taken);
+        const guesses = guessesOf(combat);
+        const levels = combat.place ? defenseLevelsText(combat.place, guesses) : null;
         const loot = combat.won ? lootOf(combat, loots) : null;
         const place = combat.place ? PLACE_LABELS[combat.place] : "?";
         const lootCell = cell(
@@ -135,7 +149,8 @@ export function mountCombatReport(conversation: Element, input: CombatReportInpu
         const theirs = cell(
           doc,
           writeArmy(combat.defenders),
-          `${unbreakable(`Pertes : ${formatAmount(combat.killed)}`)} · ${unbreakable(`Armes : ${weapons === null ? "?" : String(weapons)}`)}`,
+          `${unbreakable(`Pertes : ${formatAmount(combat.killed)}`)} · ${unbreakable(`Armes : ${weapons === null ? "?" : String(weapons)}`)}` +
+            (levels ? ` · ${levels}` : ""),
         );
         theirs.title =
           armyNames(combat.defenders) +
@@ -151,7 +166,7 @@ export function mountCombatReport(conversation: Element, input: CombatReportInpu
           theirs,
         );
         const action = doc.createElement("td");
-        const opponent = opponentOf(combat);
+        const opponent = opponentOf(combat, guesses);
         if (opponent) {
           const button = doc.createElement("button");
           button.type = "button";

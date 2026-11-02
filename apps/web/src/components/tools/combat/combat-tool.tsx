@@ -17,6 +17,7 @@ import { useToolState } from "../use-tool-state";
 import { chooseMySide, SIDE_LEVELS, withLevels } from "./combat-levels";
 import { AttackerSide, DefenderSide } from "./combat-form";
 import { CombatResult, PLACE_LABELS } from "./combat-result";
+import { knownUnits, ReportReader, type ReadReport } from "./report-reader";
 
 const EMPTY: CombatToolState = { form: emptyForm(), mine: "attack" };
 
@@ -65,9 +66,28 @@ export function CombatTool() {
     if (side === mine && isLevelOf(side, key)) levels.remember({ [key]: value });
   };
 
+  /** A report read: its place, both armies, and the opponent's levels it tells. */
+  const simulateReport = ({ report, weapons, levels: guessed }: ReadReport) => {
+    const place = report.place ?? "field";
+    changeForm((current) => ({
+      ...current,
+      target: place,
+      attacker: { ...current.attacker, army: knownUnits(report.attackers) },
+      defender: {
+        ...current.defender,
+        armies: { field: {}, nest: {}, lodge: {}, [place]: knownUnits(report.defenders) },
+        weapons: weapons ?? current.defender.weapons,
+        shield: guessed?.shield ?? current.defender.shield,
+        dome: place === "nest" && guessed ? guessed.level : current.defender.dome,
+        lodge: place === "lodge" && guessed ? guessed.level : current.defender.lodge,
+      },
+    }));
+  };
+
   return (
     <div className="space-y-4">
       <InvalidLinkNote shown={tool.invalidLink} />
+      <ReportReader onSimulate={simulateReport} />
       <ToolLayout
         actions={
           <>

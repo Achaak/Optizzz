@@ -24,7 +24,19 @@ describe("readCombat", () => {
       taken: { base: 2, bonus: 2 },
       lost: 0,
       won: true,
+      exchanges: [{ dealt: { base: 19221, bonus: 9611 }, killed: 10, taken: { base: 2, bonus: 2 }, lost: 0 }],
     });
+  });
+
+  it("reads every exchange of a longer fight, in order", () => {
+    const text =
+      "Vous attaquez la fourmilière de X Troupes en attaque : 100 Tanks. Troupes en défense : 900 Concierges. " +
+      "Vous infligez 6 050 (+ 3 025) dégâts et tuez 160 ennemies. L’ennemie inflige 22 500 (+ 0) dégâts à vos fourmis et en tue 64. " +
+      "Vous infligez 1 980 (+ 990) dégâts et tuez 52 ennemies. L’ennemie inflige 18 500 (+ 0) dégâts à vos fourmis et en tue 36.";
+    expect(readCombat("", text)?.exchanges.map(({ dealt, killed, lost }) => [dealt.base, killed, lost])).toEqual([
+      [6050, 160, 64],
+      [1980, 52, 36],
+    ]);
   });
 
   it("reads a failed attack on the nest held by an occupying army", () => {

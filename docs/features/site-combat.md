@@ -21,9 +21,17 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-23 (ticket 04). 
 
 ## Changé
 
-- Pas de pré-remplissage depuis le jeu, pas de « J'attaque / Je défends », pas de « Simuler » depuis un rapport.
+- Pas de pré-remplissage depuis le jeu, pas de « J'attaque / Je défends ». Un rapport se colle dans « Lire un rapport d'attaque ».
 - Bouton **« Échanger les côtés »** : les joueurs changent de rôle avec leurs Armes, leur Bouclier et leur TDC ; l'armée du défenseur, tous lieux additionnés, attaque, celle de l'attaquant défend sur le Terrain de chasse ; ce qui tient au rôle (Étable à pucerons de l'attaquant ; Dôme, Loge et stock du défenseur) reste au rôle. « Mes niveaux » suivent le visiteur de l'autre côté (choix fait au codage, 2026-10-23).
 - « Mes niveaux » pré-remplit Armes, Bouclier (et Dôme, Loge, Étable à pucerons) d'un côté, au choix du visiteur (« Mes niveaux : attaquant / défenseur »).
+
+## Lire un rapport d'attaque
+
+Ajouté le 2026-11-02. Maquette : artboard « C · Lire un rapport d'attaque » du canevas.
+
+- Un encart au-dessus du simulateur : le rapport collé depuis la messagerie (d'« Vous attaquez » à la fin des échanges), lu dans le navigateur, jamais envoyé.
+- Il donne le lieu et l'adversaire, ses Armes (bonus de ses dégâts) et les niveaux qui redonnent ses morts (`combat-reports.md`, « Niveaux adverses »). Quand plusieurs couples collent, « Son Bouclier, si vous le savez » donne le Dôme ou la Loge qui reste.
+- « Simuler » met dans le simulateur le lieu, les deux armées du rapport (unités connues du moteur), les Armes adverses, et le Bouclier avec le Dôme ou la Loge quand un seul couple reste.
 
 ## Depuis l'extension
 
@@ -42,6 +50,7 @@ Fait le 2026-10-23 (ticket 09).
 | `apps/web/src/components/tools/combat/combat-tool.tsx`           | État, actions (« Échanger les côtés », « Reprendre mes niveaux », « Copier le lien »), lieu visé, côté de « Mes niveaux »                                                     |
 | `apps/web/src/components/tools/combat/combat-form.tsx`           | Les deux côtés : niveaux, armées, armée collée                                                                                                                                |
 | `apps/web/src/components/tools/combat/combat-result.tsx`         | Verdict, gains, puis chaque lieu combattu                                                                                                                                     |
+| `apps/web/src/components/tools/combat/report-reader.tsx`         | « Lire un rapport d'attaque » : niveaux adverses, « Simuler »                                                                                                                 |
 | `apps/web/src/components/tools/combat/combat-levels.ts` (+ test) | « Mes niveaux » d'un côté : Armes, Bouclier, Étable à pucerons (attaquant) ; Armes, Bouclier, Dôme, Loge (défenseur)                                                          |
 
 ## Doit
