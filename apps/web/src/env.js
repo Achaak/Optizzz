@@ -26,6 +26,8 @@ export const env = createEnv({
      * base64, `openssl rand -base64 32`. Optional: unset or malformed, the reminders stay off and the Admins read so.
      */
     DISCORD_REMINDERS_KEY: z.string().optional(),
+    /** The back office's admins (/admin, docs/features/site-back-office.md): addresses separated by commas. Unset, nobody. */
+    ADMIN_EMAILS: z.string().optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
   client: {
@@ -51,6 +53,7 @@ export const env = createEnv({
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
     DISCORD_REMINDERS_KEY: process.env.DISCORD_REMINDERS_KEY,
+    ADMIN_EMAILS: process.env.ADMIN_EMAILS,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_ADSENSE_CLIENT: process.env.NEXT_PUBLIC_ADSENSE_CLIENT,
     NEXT_PUBLIC_ADSENSE_SLOT: process.env.NEXT_PUBLIC_ADSENSE_SLOT,

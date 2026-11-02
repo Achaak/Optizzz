@@ -273,6 +273,8 @@ ask EMAIL_FROM "EMAIL_FROM (connexion@optizzz.fr) :"
 write_env EMAIL_FROM "$EMAIL_FROM"
 ask_secret DISCORD_REMINDERS_KEY "DISCORD_REMINDERS_KEY (la même, sinon les rappels enregistrés ne se lisent plus) :"
 write_env DISCORD_REMINDERS_KEY "$DISCORD_REMINDERS_KEY"
+ask ADMIN_EMAILS "ADMIN_EMAILS, les adresses qui ouvrent le back office (/admin), séparées par des virgules :"
+write_env ADMIN_EMAILS "$ADMIN_EMAILS"
 ask NEXT_PUBLIC_ADSENSE_CLIENT "NEXT_PUBLIC_ADSENSE_CLIENT (vide si aucune) :"
 write_env NEXT_PUBLIC_ADSENSE_CLIENT "$NEXT_PUBLIC_ADSENSE_CLIENT"
 ask NEXT_PUBLIC_ADSENSE_SLOT "NEXT_PUBLIC_ADSENSE_SLOT (vide si aucune) :"
@@ -302,7 +304,7 @@ if confirm "Envoyer maintenant ?"; then
   {
     echo "TAG=none"
     for name in POSTGRES_PASSWORD APP_DB_PASSWORD REVALIDATE_SECRET BETTER_AUTH_SECRET BREVO_API_KEY EMAIL_FROM \
-      DISCORD_REMINDERS_KEY BACKUP_BUCKET SCW_ACCESS_KEY SCW_SECRET_KEY; do
+      DISCORD_REMINDERS_KEY ADMIN_EMAILS BACKUP_BUCKET SCW_ACCESS_KEY SCW_SECRET_KEY; do
       echo "$name=$(_existing "$name" || true)"
     done
   } | deployer 'umask 077 && cat >/opt/optizzz/.env'

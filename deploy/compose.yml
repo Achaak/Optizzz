@@ -38,6 +38,7 @@ services:
       BREVO_API_KEY: ${BREVO_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       DISCORD_REMINDERS_KEY: ${DISCORD_REMINDERS_KEY:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
     depends_on:
       db: { condition: service_healthy }
     healthcheck:

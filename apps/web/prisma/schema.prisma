@@ -133,6 +133,22 @@ model MapFile {
   @@schema("public")
 }
 
+/// One run of a task on the VPS, for the back office (docs/features/site-back-office.md): the hourly ingest
+/// (scripts/ingest.ts) or the nightly backup (deploy/backup.sh). Written by the task, kept 30 days.
+model JobRun {
+  id        Int      @id @default(autoincrement())
+  /// « ingest » or « backup ».
+  job       String
+  startedAt DateTime
+  endedAt   DateTime
+  ok        Boolean
+  /// What the run did: `JobReport` of src/lib/admin/job-runs.ts.
+  report    Json
+
+  @@index([job, startedAt])
+  @@schema("public")
+}
+
 // ── Optizzz accounts (Better Auth, magic link). Deleting a user cascades to everything it owns; later
 // tickets (declared Players, keys, Alliance Spaces) hang their tables off User with onDelete: Cascade too.
 
