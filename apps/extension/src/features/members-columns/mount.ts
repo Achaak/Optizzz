@@ -1,5 +1,5 @@
 import { rolesTopDown } from "@/features/tdc-chain/role-styles";
-import { roleKey, roleLabel } from "@optizzz/game/tdc-chain/roles";
+import { roleKey, roleLabel, rungPlaceText } from "@optizzz/game/tdc-chain/roles";
 import { formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
 import type { MemberRole } from "./roles";
@@ -30,8 +30,7 @@ th.${COLUMN_CLASS} a { cursor: pointer; }
 .optizzz-members-role[data-shape="diamond"]::before { border-radius: 0; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
 .optizzz-members-role[data-shape="triangle"]::before { border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .optizzz-members-role[data-shape="arrow"]::before { border-radius: 0; clip-path: polygon(0 0, 100% 0, 50% 100%); }
-.optizzz-members-role[data-shape="pin"]::before { border-radius: 2px; background: none; border: 2px solid var(--role-color); width: 5px; height: 5px; }
-#tabMembresAlliance .optizzz-members-place { display: block; color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); white-space: nowrap; }`;
+.optizzz-members-role[data-shape="pin"]::before { border-radius: 2px; background: none; border: 2px solid var(--role-color); width: 5px; height: 5px; }`;
 
 export interface MembersColumnsContext {
   myPseudo: string;
@@ -101,14 +100,16 @@ function roleColumn(roles: Map<string, MemberRole>) {
       label.dataset.shape = bubble.shape;
       label.textContent = roleLabel(bubble.role);
       cell.append(label);
-      // In words too, never an arrow alone (ADR 0003); nothing for a member at its place.
+      // A small ↑ or ↓ beside the role, the sentence in its tooltip and for screen readers; nothing at its place.
       const { place } = bubble;
       if (place && place.kind !== "ok") {
-        const note = cell.ownerDocument.createElement("span");
-        note.className = "optizzz-members-place";
-        const than = `${place.than} (${roleLabel(place.thanRole)})`;
-        note.textContent = place.kind === "up" ? `↑ plus gros que ${than}` : `↓ plus petit que ${than}`;
-        cell.append(note);
+        const badge = cell.ownerDocument.createElement("span");
+        badge.className = "optizzz-rung-place";
+        badge.textContent = place.kind === "up" ? "↑" : "↓";
+        badge.title = rungPlaceText(place.kind, `${place.than} (${roleLabel(place.thanRole)})`);
+        badge.setAttribute("role", "img");
+        badge.setAttribute("aria-label", badge.title);
+        cell.append(badge);
       }
       return order.indexOf(roleKey(bubble.role));
     },

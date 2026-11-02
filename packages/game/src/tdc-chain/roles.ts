@@ -228,3 +228,9 @@ export function rungPlaces(
   }
   return places;
 }
+
+/** The place in words, for a tooltip: « Plus gros que Lunaire (Passeur 1), de l'échelon du dessus : … ». */
+export const rungPlaceText = (kind: "up" | "down", than: string): string =>
+  kind === "up"
+    ? `Plus gros que ${than}, de l'échelon du dessus : à monter d'un échelon ?`
+    : `Plus petit que ${than}, de l'échelon du dessous : à descendre d'un échelon ?`;

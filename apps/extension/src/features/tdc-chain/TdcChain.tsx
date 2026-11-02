@@ -28,6 +28,7 @@ import {
   exportRoles,
   importRoles,
   roleOptions as chainRoleOptions,
+  rungPlaceText,
   rungPlaces,
   proposeRoles,
   roleKey,
@@ -76,7 +77,7 @@ function parseRoleValue(value: string): Role {
   return OUT;
 }
 
-/** « ✓ », or « ↑ plus gros que Lunaire (Passeur 1) »: in words too, never an arrow alone. */
+/** « ✓ », or a small ↑ or ↓ whose tooltip says who the member passes (in words too: ADR 0003). */
 function RungPlaceText({
   place,
   pseudo,
@@ -87,10 +88,17 @@ function RungPlaceText({
   roleOf: (id: number) => Role;
 }) {
   if (!place) return null;
-  if (place.kind === "ok") return <span title="À sa place d'après le TDC">✓</span>;
-  const than = `${pseudo(place.than)} (${roleLabel(roleOf(place.than))})`;
+  if (place.kind === "ok")
+    return (
+      <span className="optizzz-muted" title="À sa place d'après le TDC">
+        ✓
+      </span>
+    );
+  const text = rungPlaceText(place.kind, `${pseudo(place.than)} (${roleLabel(roleOf(place.than))})`);
   return (
-    <span className="optizzz-note">{place.kind === "up" ? `↑ plus gros que ${than}` : `↓ plus petit que ${than}`}</span>
+    <span className="optizzz-rung-place" role="img" aria-label={text} title={text}>
+      {place.kind === "up" ? "↑" : "↓"}
+    </span>
   );
 }
 
