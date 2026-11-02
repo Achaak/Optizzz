@@ -46,6 +46,22 @@ export function shownRoles(
   };
 }
 
+/** Players with a role or a field to keep in the record who are no longer in the alliance's roster, in id order. */
+export function formerMembers(record: ChainRolesRecord, roster: readonly Pick<RosterMember, "id">[]): string[] {
+  const present = new Set(roster.map((m) => String(m.id)));
+  return [...new Set([...Object.keys(record.roles), ...Object.keys(record.keep)])]
+    .filter((id) => !present.has(id))
+    .sort((a, b) => Number(a) - Number(b));
+}
+
+/** The record without these players: « Retirer » on the members who left. */
+export function withoutMembers(record: ChainRolesRecord, ids: readonly string[]): ChainRolesRecord {
+  const drop = new Set(ids);
+  const keep = <T>(entries: Record<string, T>) =>
+    Object.fromEntries(Object.entries(entries).filter(([id]) => !drop.has(id)));
+  return { roles: keep(record.roles), keep: keep(record.keep) };
+}
+
 const sameMember = (a: ChainRolesRecord, b: ChainRolesRecord, id: string) =>
   (a.roles[id] ? roleKey(a.roles[id]) : null) === (b.roles[id] ? roleKey(b.roles[id]) : null) &&
   a.keep[id] === b.keep[id];

@@ -1,7 +1,17 @@
 // Roles in a TDC chain (chasseur → passeurs → grenier). See docs/features/chaine-tdc.md.
 import { inRange } from "@optizzz/game/attack";
 
-export type Role = { kind: "hunter" } | { kind: "passer"; rank: number } | { kind: "granary" } | { kind: "out" };
+/**
+ * `drain` (« À flooder »): the whole field climbs to the granaries, like a hunter keeping nothing. `protected` (« Ne pas
+ * toucher »): keeps its field, no flood of the chain on it nor from it; unlike `out`, a choice of the alliance.
+ */
+export type Role =
+  | { kind: "hunter" }
+  | { kind: "passer"; rank: number }
+  | { kind: "granary" }
+  | { kind: "drain" }
+  | { kind: "protected" }
+  | { kind: "out" };
 
 interface Member {
   id: number;
@@ -67,6 +77,34 @@ export function passerRanks(roles: Iterable<Role>): number[] {
   return Array.from({ length: count }, (_, i) => count - i);
 }
 
+/** The roles a member may be given, from the top of the chain down. */
+export const roleOptions = (roles: Iterable<Role>): Role[] => [
+  { kind: "granary" },
+  ...passerRanks(roles).map((rank): Role => ({ kind: "passer", rank })),
+  { kind: "hunter" },
+  { kind: "drain" },
+  { kind: "protected" },
+  { kind: "out" },
+];
+
+/** Where a role sorts, from the granaries down to the members out of the chain (passer ranks stay under 1 000). */
+export function roleOrder(role: Role): number {
+  switch (role.kind) {
+    case "granary":
+      return 1000;
+    case "passer":
+      return role.rank;
+    case "hunter":
+      return 0;
+    case "drain":
+      return -1;
+    case "protected":
+      return -2;
+    case "out":
+      return -3;
+  }
+}
+
 /** A role as a string, for a `<select>` value or a stored key: « granary », « passer:2 »… */
 export const roleKey = (role: Role): string => (role.kind === "passer" ? `passer:${String(role.rank)}` : role.kind);
 
@@ -79,6 +117,10 @@ export function roleLabel(role: Role): string {
       return `Passeur ${role.rank}`;
     case "granary":
       return "Grenier";
+    case "drain":
+      return "À flooder";
+    case "protected":
+      return "Ne pas toucher";
     case "out":
       return "Hors chaîne";
   }
@@ -96,6 +138,8 @@ function parseRole(text: string): Role | null {
   if (label === "chasseur") return { kind: "hunter" };
   if (label === "grenier") return { kind: "granary" };
   if (label === "hors chaine") return { kind: "out" };
+  if (label === "a flooder") return { kind: "drain" };
+  if (label === "ne pas toucher") return { kind: "protected" };
   const passer = /^passeur\s*(\d*)$/.exec(label);
   if (passer) return { kind: "passer", rank: passer[1] ? Math.max(1, Number(passer[1])) : 1 };
   return null;
@@ -140,14 +184,47 @@ export function importRoles(text: string, members: readonly Named[]): RolesImpor
   return { roles, ignored };
 }
 
-/** Height of each member in the chain: hunters 0, passer N at N, granaries above the highest passer; out: absent. */
+/**
+ * Height of each member in the chain: hunters and members to drain 0, passer N at N, granaries above the highest
+ * passer; out and protected: absent.
+ */
 export function rungs(roles: ReadonlyMap<number, Role>): Map<number, number> {
   const highestPasser = Math.max(0, ...[...roles.values()].map((role) => (role.kind === "passer" ? role.rank : 0)));
   const heights = new Map<number, number>();
   for (const [id, role] of roles) {
-    if (role.kind === "hunter") heights.set(id, 0);
+    if (role.kind === "hunter" || role.kind === "drain") heights.set(id, 0);
     else if (role.kind === "passer") heights.set(id, role.rank);
     else if (role.kind === "granary") heights.set(id, highestPasser + 1);
   }
   return heights;
+}
+
+/**
+ * A member against the rungs next to its own, from the fields: `up` when it is bigger than a member of the rung
+ * above (`than`, the smallest), `down` when it is smaller than one of the rung below (the biggest), else `ok`. Only
+ * granaries, passers and hunters; a member to drain gives everything whatever its field.
+ */
+export type RungPlace = { kind: "ok" } | { kind: "up" | "down"; than: number };
+
+export function rungPlaces(
+  roles: ReadonlyMap<number, Role>,
+  fields: ReadonlyMap<number, number>,
+): Map<number, RungPlace> {
+  const ranked = [...roles].filter(
+    ([id, role]) => fields.has(id) && (role.kind === "granary" || role.kind === "passer" || role.kind === "hunter"),
+  );
+  const heights = rungs(new Map(ranked));
+  const levels = [...new Set(heights.values())].sort((a, b) => a - b);
+  const at = (level: number | undefined) => [...heights].filter(([, height]) => height === level).map(([id]) => id);
+  const field = (id: number) => fields.get(id) ?? 0;
+  const places = new Map<number, RungPlace>();
+  for (const [id, height] of heights) {
+    const index = levels.indexOf(height);
+    const above = at(levels[index + 1]).sort((a, b) => field(a) - field(b))[0];
+    const below = at(levels[index - 1]).sort((a, b) => field(b) - field(a))[0];
+    if (above !== undefined && field(id) > field(above)) places.set(id, { kind: "up", than: above });
+    else if (below !== undefined && field(id) < field(below)) places.set(id, { kind: "down", than: below });
+    else places.set(id, { kind: "ok" });
+  }
+  return places;
 }

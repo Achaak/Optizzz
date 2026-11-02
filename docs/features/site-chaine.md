@@ -31,6 +31,14 @@ Régler une fois pour toute l'alliance les rôles de la Chaîne de TDC (Grenier,
 - **L'extension** : la relève (`envois.ts`) lit `GET /api/extension/chain-roles` seulement si elle tient une Clé d'alliance, et garde la réponse chiffrée (`src/data/chain-roles.ts`, effacée à « Se déconnecter »). Les pages du jeu demandent au fond `chain-roles` : les rôles ouverts, ou `none` (pas d'espace ou pas de rôles), `no-key` (pas ouvrables ici : note). `effectiveChain` (`tdc-chain/site-roles.ts`) choisit les rôles affichés pour la Chaîne, la Carte et la colonne « Rôle » ; ils se mettent à jour quand une relève en apporte de nouveaux (`site-roles-source.ts`, sans React pour le script léger ; `use-site-chain-roles.ts` pour les vues React). Dans la Chaîne, les rôles du site sont en lecture seule (listes et TDC à garder désactivés, « Proposer des rôles » et « Importer » retirés), avec « Modifier sur optizzz.fr ».
 - **« Reprendre les rôles de votre extension »** passe par le pont des Espaces (`space-bridge.ts`, `CHAIN_ROLES_REQUEST` / `CHAIN_ROLES_REPLY`) : le fond rend les rôles choisis dans la Chaîne du serveur sous la forme du texte de l'enregistrement de l'espace, que la page lit avec les mêmes contrôles ; rien quand la Chaîne ne fait que proposer.
 
+## Nouveaux rôles, place et anciens membres
+
+Ajoutés le 2026-11-02. Maquette : artboard « C · Espace d'alliance · Chaîne (rôles) » du canevas.
+
+- **Rôles « À flooder » et « Ne pas toucher »**, les mêmes que dans l'extension (`chaine-tdc.md`) : `drain` et `protected` dans l'enregistrement chiffré. Le plan de passage donne tout le TDC d'un membre « À flooder » (aucun TDC à garder : la colonne dit « rien : tout monte ») et laisse un membre « Ne pas toucher » hors des floods. Une extension d'avant la version 1.15 ne lit pas ces rôles : elle refuse l'enregistrement et garde ses rôles locaux, avec la note « ouvrez votre espace sur optizzz.fr ». À publier en même temps que le site.
+- **Colonne « Place »** : « ✓ à sa place », « ↑ plus gros que Lunaire, passeur 1 », « ↓ plus petit que Tapinoma, chasseur », d'après le TDC de l'export ; la règle est celle de l'extension (`rungPlaces`, `packages/game/src/tdc-chain/roles.ts`).
+- **Anciens membres** : les joueurs qui ont un rôle ou un TDC à garder dans l'enregistrement mais ne sont plus dans l'alliance d'après l'export. Un encart les nomme, avec leur alliance d'aujourd'hui (`spaces.formerMembers`, données publiques, pour les membres de l'espace) ; « Retirer » (un par un ou tous) les ôte de l'enregistrement, avec la barre « N membres modifiés » (« Camponotus : retiré ») et « Enregistrer les rôles ». Leur rôle ne comptait déjà plus dans la chaîne. Les membres le voient en lecture seule.
+
 ## Plan de passage
 
 Décidé lors d'une session de cadrage (`/grill-me`) le 2026-11-01, et réalisé le même jour. Maquette : artboard « C · Espace d'alliance · Chaîne (plan de passage) » du canevas. Le but : que chaque membre voie qui il doit flooder, de combien et quand, sans gêner les floods déjà en route, pour qu'aucun n'échoue parce que sa cible a, à l'arrivée, trop ou trop peu de TDC.
@@ -65,7 +73,8 @@ Vérifié en local le 2026-11-01 avec une page de démonstration temporaire (all
 | `apps/web/src/lib/spaces/chain-roles.ts` (+ test)                            | Chiffrement, rôles affichés, changements, reprise d'un conflit   |
 | `apps/web/src/server/spaces/space-service.ts` (+ tests, mémoire et Postgres) | Enregistrer, montrer, remettre à l'extension                     |
 | `apps/web/src/server/spaces/chain-roles-routes.ts` (+ test)                  | `GET /api/extension/chain-roles`                                 |
-| `apps/web/src/components/spaces/chain-panel.tsx`                             | Onglet « Chaîne »                                                |
+| `apps/web/src/components/spaces/chain-panel.tsx`                             | Onglet « Chaîne », colonne « Place », anciens membres            |
+| `packages/game/src/tdc-chain/roles.ts` (+ test)                              | Rôles, leur ordre et leurs options, `rungPlaces`                 |
 | `packages/game/src/tdc-chain/passage.ts` (+ test)                            | Plan de passage : TDC projetés, floods en route, floods à lancer |
 | `apps/web/src/lib/spaces/passage.ts` (+ test)                                | Entrées du plan, alertes, texte Discord, adresse                 |
 | `apps/web/src/components/spaces/passage-panel.tsx`                           | Vue « Plan de passage »                                          |

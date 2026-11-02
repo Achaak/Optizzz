@@ -209,14 +209,14 @@ export interface ChainInput {
 }
 
 export interface ChainPlan {
-  /** In landing order, one per hunter. */
+  /** In landing order, one per hunter or member to drain. */
   transfers: (Transfer & { from: number; to: number })[];
-  /** Hunters that reach no granary. */
+  /** Hunters and members to drain that reach no granary. */
   gaps: (Gap & { from: number })[];
 }
 
 /**
- * Each hunter's field above what it keeps climbs to a granary, the smallest it can reach at that time, biggest
+ * Each hunter's field above what it keeps, and the whole field of each member to drain, climbs to a granary, the smallest it can reach at that time, biggest
  * surplus first. Only a higher rung attacks a lower one; passers end where they started.
  */
 export function planChain({ members, roles, keep }: ChainInput, margin: number): ChainPlan {
@@ -229,9 +229,11 @@ export function planChain({ members, roles, keep }: ChainInput, margin: number):
   let state = toState(members.filter((member) => heights.has(member.id)));
   const fieldOf = (id: number) => state.get(id)?.field ?? 0;
   const granaries = [...roles].filter(([, role]) => role.kind === "granary").map(([id]) => id);
-  const surplus = (id: number) => fieldOf(id) - (keep.get(id) ?? fieldOf(id));
+  // A member to drain keeps nothing.
+  const kept = (id: number) => (roles.get(id)?.kind === "drain" ? 0 : (keep.get(id) ?? fieldOf(id)));
+  const surplus = (id: number) => fieldOf(id) - kept(id);
   const givers = [...roles]
-    .filter(([id, role]) => role.kind === "hunter" && state.has(id) && surplus(id) > 0)
+    .filter(([id, role]) => (role.kind === "hunter" || role.kind === "drain") && state.has(id) && surplus(id) > 0)
     .map(([id]) => id)
     .sort((a, b) => surplus(b) - surplus(a));
 

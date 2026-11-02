@@ -10,7 +10,7 @@ import { serverById } from "@optizzz/game/servers";
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import { bridge } from "@optizzz/game/tdc-chain/chain";
 import { planPassage, type FloodOnWay, type Launch, type ProjectedFlood } from "@optizzz/game/tdc-chain/passage";
-import { CHAIN_MARGIN, roleLabel, type Role } from "@optizzz/game/tdc-chain/roles";
+import { CHAIN_MARGIN, roleLabel, roleOrder, type Role } from "@optizzz/game/tdc-chain/roles";
 import { cn } from "cn";
 import { useEffect, useMemo, useState } from "react";
 import { CopyIcon } from "~/components/icons";
@@ -133,9 +133,7 @@ export function PassagePanel({
   const later = now.getTime() + choice.horizon * 3600_000;
   const origin = serverById(server)?.origin;
   const alerts = plan.projection.floods.filter((f) => f.status !== "holds");
-  const inChain = roster.filter((m) => roleOf(m.id).kind !== "out");
-  const height = (role: Role) =>
-    role.kind === "granary" ? 1e6 : role.kind === "passer" ? role.rank : role.kind === "hunter" ? 0 : -1;
+  const inChain = roster.filter((m) => !["out", "protected"].includes(roleOf(m.id).kind));
 
   return (
     <div className="space-y-5">
@@ -311,7 +309,7 @@ export function PassagePanel({
             flush
           >
             <QueueTables
-              members={[...inChain].sort((a, b) => height(roleOf(a.id)) - height(roleOf(b.id)) || a.id - b.id)}
+              members={[...inChain].sort((a, b) => roleOrder(roleOf(a.id)) - roleOrder(roleOf(b.id)) || a.id - b.id)}
               floods={plan.projection.floods}
               launches={plan.launches}
               name={name}
@@ -332,7 +330,7 @@ export function PassagePanel({
             <Table>
               <TableBody>
                 {[...inChain]
-                  .sort((a, b) => height(roleOf(b.id)) - height(roleOf(a.id)) || a.id - b.id)
+                  .sort((a, b) => roleOrder(roleOf(b.id)) - roleOrder(roleOf(a.id)) || a.id - b.id)
                   .map((m) => {
                     const fieldNow = plan.fieldAt(m.id, now.getTime());
                     const fieldLater = plan.fieldAt(m.id, later);

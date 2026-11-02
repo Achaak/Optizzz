@@ -27,12 +27,14 @@ import {
   chainRoles,
   exportRoles,
   importRoles,
-  passerRanks,
+  roleOptions as chainRoleOptions,
+  rungPlaces,
   proposeRoles,
   roleKey,
   roleLabel,
   rungs,
   type Role,
+  type RungPlace,
 } from "@optizzz/game/tdc-chain/roles";
 import { defaultFirstArrival, schedule } from "@optizzz/game/tdc-chain/schedule";
 import { readChainSettings, writeChainSettings } from "./settings";
@@ -70,8 +72,26 @@ const OUT: Role = { kind: "out" };
 
 function parseRoleValue(value: string): Role {
   if (value.startsWith("passer:")) return { kind: "passer", rank: Number(value.slice("passer:".length)) };
-  if (value === "hunter" || value === "granary") return { kind: value };
+  if (value === "hunter" || value === "granary" || value === "drain" || value === "protected") return { kind: value };
   return OUT;
+}
+
+/** « ✓ », or « ↑ plus gros que Lunaire (Passeur 1) »: in words too, never an arrow alone. */
+function RungPlaceText({
+  place,
+  pseudo,
+  roleOf,
+}: {
+  place: RungPlace | undefined;
+  pseudo: (id: number) => string;
+  roleOf: (id: number) => Role;
+}) {
+  if (!place) return null;
+  if (place.kind === "ok") return <span title="À sa place d'après le TDC">✓</span>;
+  const than = `${pseudo(place.than)} (${roleLabel(roleOf(place.than))})`;
+  return (
+    <span className="optizzz-note">{place.kind === "up" ? `↑ plus gros que ${than}` : `↓ plus petit que ${than}`}</span>
+  );
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -176,19 +196,23 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
     [storedKeep],
   );
 
+  const heights = useMemo(() => rungs(roles), [roles]);
+  const places = useMemo(
+    () => rungPlaces(roles, new Map(members.map((m) => [m.id, m.huntingField]))),
+    [roles, members],
+  );
   const chainMembers = useMemo<ChainMember[]>(() => {
     if (!levels) return [];
     return members
-      .filter((m) => (roles.get(m.id) ?? OUT).kind !== "out")
+      .filter((m) => heights.has(m.id))
       .map((m) => ({
         id: m.id,
         field: m.huntingField,
         slots: attackSlots(levelOf(m.id, levels).level, m.id === me?.id ? myAttacksOnWay : 0),
       }));
-  }, [members, roles, levels, me?.id, myAttacksOnWay]);
+  }, [members, heights, levels, me?.id, myAttacksOnWay]);
 
   // Highest rung first, then biggest field: the chain reads from top to bottom.
-  const heights = useMemo(() => rungs(roles), [roles]);
   const ordered = useMemo(
     () => [...chainMembers].sort((a, b) => (heights.get(b.id) ?? 0) - (heights.get(a.id) ?? 0) || b.field - a.field),
     [chainMembers, heights],
@@ -233,12 +257,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
   }
 
   const pseudo = (id: number) => byId.get(id)?.pseudo ?? "?";
-  const roleOptions: Role[] = [
-    { kind: "granary" },
-    ...passerRanks(roles.values()).map((rank): Role => ({ kind: "passer", rank })),
-    { kind: "hunter" },
-    OUT,
-  ];
+  const roleOptions = chainRoleOptions(roles.values());
   const setRole = (id: number, role: Role) =>
     updateSettings((s) => ({
       ...s,
@@ -345,6 +364,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
               <tr>
                 <th>Membre</th>
                 <th>TDC</th>
+                <th title="Comparé aux échelons voisins, d'après le TDC">Place</th>
                 <th>Rôle</th>
                 <th title="Le surplus au-dessus monte vers les greniers">TDC à garder</th>
                 <th title="Vitesse d'attaque + 1 (réglable sur la Carte)">Attaques à la fois</th>
@@ -369,6 +389,9 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                         <Amount value={m.huntingField} />
                       </td>
                       <td>
+                        <RungPlaceText place={places.get(m.id)} pseudo={pseudo} roleOf={(id) => roles.get(id) ?? OUT} />
+                      </td>
+                      <td>
                         <select
                           value={roleKey(role)}
                           aria-label={`Rôle de ${m.pseudo}`}
@@ -383,6 +406,7 @@ export function TdcChain({ origin, loggedInPseudo, liveHuntingFields, sharing, m
                         </select>
                       </td>
                       <td>
+                        {role.kind === "drain" && <span className="optizzz-note">rien : tout monte</span>}
                         {role.kind === "hunter" && (
                           <NumberField
                             min={0}

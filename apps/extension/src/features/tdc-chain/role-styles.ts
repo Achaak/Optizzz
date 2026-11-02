@@ -1,6 +1,6 @@
 // Colour and size of each chain role's bubble on the alliance map, chosen in the chain. See docs/features/chaine-tdc.md.
 import { CHART_COLORS } from "@/theme";
-import { chainRoles, roleKey, type Role } from "@optizzz/game/tdc-chain/roles";
+import { chainRoles, roleKey, roleOrder, type Role } from "@optizzz/game/tdc-chain/roles";
 
 export type BubbleSize = "small" | "medium" | "large";
 
@@ -8,12 +8,14 @@ export type BubbleSize = "small" | "medium" | "large";
  * Shape of a role's bubble, fixed by the kind of role: the kind still reads without telling the colours apart
  * (colour blindness). The passer rungs share a shape, their default colours are the ones told apart all together.
  */
-export type BubbleShape = "square" | "diamond" | "circle" | "triangle";
+export type BubbleShape = "square" | "diamond" | "circle" | "arrow" | "pin" | "triangle";
 
 const SHAPES: Record<Role["kind"], BubbleShape> = {
   granary: "square",
   passer: "diamond",
   hunter: "circle",
+  drain: "arrow",
+  protected: "pin",
   out: "triangle",
 };
 
@@ -22,6 +24,8 @@ export const SHAPE_SYMBOLS: Record<BubbleShape, string> = {
   square: "rect",
   diamond: "diamond",
   circle: "circle",
+  arrow: "arrow",
+  pin: "pin",
   triangle: "triangle",
 };
 
@@ -55,7 +59,9 @@ function defaultStyle(role: Role): RoleStyle {
     case "passer":
       return { color: PASSER_COLORS[(role.rank - 1) % PASSER_COLORS.length] ?? 1, size: "medium" };
     case "hunter":
+    case "drain":
       return { color: 7, size: "small" };
+    case "protected":
     case "out":
       return { color: 3, size: "small" };
   }
@@ -80,13 +86,10 @@ export const bubbleOf = (role: Role, style: RoleStyle) => ({
   shape: SHAPES[role.kind],
 });
 
-const height = (role: Role) =>
-  role.kind === "granary" ? Infinity : role.kind === "passer" ? role.rank : role.kind === "hunter" ? 0 : -1;
-
 /** Each role once, from the granaries down to the hunters, then the members out of the chain. */
 export function rolesTopDown(roles: Iterable<Role>): Role[] {
   const distinct = new Map([...roles].map((role) => [roleKey(role), role]));
-  return [...distinct.values()].sort((a, b) => height(b) - height(a));
+  return [...distinct.values()].sort((a, b) => roleOrder(b) - roleOrder(a));
 }
 
 export interface MemberBubble {

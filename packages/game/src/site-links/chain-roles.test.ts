@@ -9,6 +9,8 @@ const record: ChainRolesRecord = {
     "102": { kind: "passer", rank: 2 },
     "103": { kind: "hunter" },
     "104": { kind: "out" },
+    "105": { kind: "drain" },
+    "106": { kind: "protected" },
   },
   keep: { "103": 1_500_000 },
 };

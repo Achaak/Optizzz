@@ -286,6 +286,14 @@ export function allianceRoster(server: string, tag: string) {
   });
 }
 
+/** Players by id on a server, with their alliance now (public data): the chain's members who left the alliance. */
+export function playersById(server: string, ids: readonly number[]) {
+  return db.player.findMany({
+    where: { server, id: { in: [...ids] } },
+    select: { id: true, pseudo: true, alliance: true },
+  });
+}
+
 /** The alliance's members with their nests, and when the export was taken: what the Plan de passage starts from. */
 export async function passageRoster(server: string, tag: string) {
   const [members, exportAt] = await Promise.all([

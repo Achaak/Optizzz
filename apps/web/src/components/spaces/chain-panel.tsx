@@ -12,12 +12,15 @@ import { chainRolesFrom, type ChainRolesRecord } from "@optizzz/game/site-links/
 import {
   exportRoles,
   importRoles,
-  passerRanks,
   proposeRoles,
   CHAIN_MARGIN,
   roleKey,
   roleLabel,
+  roleOptions as chainRoleOptions,
+  roleOrder,
+  rungPlaces,
   type Role,
+  type RungPlace,
 } from "@optizzz/game/tdc-chain/roles";
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import { useSearchParams } from "next/navigation";
@@ -30,11 +33,13 @@ import { CopyIcon } from "~/components/icons";
 import { Button } from "~/components/ui/button";
 import {
   changedMembers,
+  formerMembers,
   lockChainRoles,
   openChainRoles,
   rebaseRoles,
   shownRoles,
   staleChainRoles,
+  withoutMembers,
   type RosterMember,
 } from "~/lib/spaces/chain-roles";
 import { askExtensionForChainRoles } from "~/lib/spaces/extension-bridge";
@@ -48,10 +53,6 @@ const UNREADABLE = "Les rôles de la chaîne ne s'ouvrent pas sur cet appareil. 
 const OUT: Role = { kind: "out" };
 
 const isConflict = (error: unknown) => (error as { data?: { code?: string } }).data?.code === "CONFLICT";
-
-/** Granaries first, then the passers from the highest rung down, the hunters, and those out of the chain. */
-const height = (role: Role) =>
-  role.kind === "granary" ? Infinity : role.kind === "passer" ? role.rank : role.kind === "hunter" ? 0 : -1;
 
 /** The kind's shape, as on the extension's map: the role reads without telling colours apart (ADR 0003). */
 function RoleShape({ role }: { role: Role }) {
@@ -75,6 +76,18 @@ function RoleShape({ role }: { role: Role }) {
           <circle cx="6" cy="6" r="5" fill="currentColor" />
         </svg>
       );
+    case "drain":
+      return (
+        <svg {...common}>
+          <path d="M1 1H11L6 11Z" fill="currentColor" />
+        </svg>
+      );
+    case "protected":
+      return (
+        <svg {...common} className="shrink-0 text-muted-foreground">
+          <rect x="1.8" y="1.8" width="8.4" height="8.4" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        </svg>
+      );
     case "out":
       return (
         <svg {...common} className="shrink-0 text-muted-foreground">
@@ -82,6 +95,20 @@ function RoleShape({ role }: { role: Role }) {
         </svg>
       );
   }
+}
+
+/** « ✓ à sa place », or « ↑ plus gros que Lunaire, passeur 1 »: in words too, never an arrow alone (ADR 0003). */
+function PlaceCell({ place, name }: { place: RungPlace | undefined; name: (id: number) => string }) {
+  if (!place) return <span className="text-muted-foreground">—</span>;
+  if (place.kind === "ok") return <span className="text-muted-foreground">✓ à sa place</span>;
+  return (
+    <span>
+      <strong aria-hidden="true" className="text-primary">
+        {place.kind === "up" ? "↑" : "↓"}
+      </strong>{" "}
+      {place.kind === "up" ? "plus gros que" : "plus petit que"} {name(place.than)}
+    </span>
+  );
 }
 
 /** The saved roles, opened; a record from before a rotation is encrypted again with the newest version. */
@@ -289,6 +316,8 @@ function ChainEditor({
   const [error, setError] = useState<string | null>(null);
   const [text, setText] = useState("");
 
+  const formerIds = useMemo(() => (saved ? formerMembers(saved, members).map(Number) : []), [saved, members]);
+  const formers = api.spaces.formerMembers.useQuery({ spaceId, ids: formerIds }, { enabled: formerIds.length > 0 });
   const proposed = useMemo<ChainRolesRecord>(
     () => ({ roles: Object.fromEntries(shownRoles(members, null).roles), keep: {} }),
     [members],
@@ -302,16 +331,18 @@ function ChainEditor({
 
   const record = saved;
   const { roles, newcomers } = shownRoles(members, draft);
-  const changes = changedMembers(base, draft).filter((id) => members.some((m) => String(m.id) === id));
-  const pseudoOf = (id: string) => members.find((m) => String(m.id) === id)?.pseudo ?? id;
-  const roleOptions: Role[] = [
-    { kind: "granary" },
-    ...passerRanks(roles.values()).map((rank): Role => ({ kind: "passer", rank })),
-    { kind: "hunter" },
-    OUT,
-  ];
+  const former = formerMembers(draft, members);
+  // The members whose role changed, and the former members removed from the record.
+  const changes = changedMembers(base, draft).filter(
+    (id) => members.some((m) => String(m.id) === id) || !former.includes(id),
+  );
+  const formerName = (id: string) => formers.data?.find((p) => String(p.id) === id)?.pseudo;
+  const pseudoOf = (id: string) => members.find((m) => String(m.id) === id)?.pseudo ?? formerName(id) ?? `n° ${id}`;
+  const roleOptions = chainRoleOptions(roles.values());
+  const places = rungPlaces(roles, new Map(members.map((m) => [m.id, m.field])));
+  const placeName = (id: number) => `${pseudoOf(String(id))}, ${roleLabel(roles.get(id) ?? OUT).toLowerCase()}`;
   const ordered = [...members].sort(
-    (a, b) => height(roles.get(b.id) ?? OUT) - height(roles.get(a.id) ?? OUT) || b.field - a.field,
+    (a, b) => roleOrder(roles.get(b.id) ?? OUT) - roleOrder(roles.get(a.id) ?? OUT) || b.field - a.field,
   );
   const groups = new Map<string, { role: Role; members: RosterMember[] }>();
   for (const member of ordered) {
@@ -478,6 +509,13 @@ function ChainEditor({
                 <th scope="col" className="px-2 py-2 text-right font-medium">
                   TDC
                 </th>
+                <th
+                  scope="col"
+                  className="px-2 py-2 text-left font-medium"
+                  title="Comparé aux échelons voisins, d'après le TDC"
+                >
+                  Place
+                </th>
                 <th scope="col" className="px-2 py-2 text-left font-medium">
                   Rôle
                 </th>
@@ -495,7 +533,7 @@ function ChainEditor({
                 <tr className="border-t bg-muted">
                   <th
                     scope="rowgroup"
-                    colSpan={4}
+                    colSpan={5}
                     className="px-4 py-1.5 text-left font-mono text-[0.6875rem] tracking-widest uppercase"
                   >
                     <span className="inline-flex items-center gap-2">
@@ -537,6 +575,9 @@ function ChainEditor({
                         {formatNumber(member.field)}
                       </td>
                       <td className="px-2 py-1.5">
+                        <PlaceCell place={places.get(member.id)} name={placeName} />
+                      </td>
+                      <td className="px-2 py-1.5">
                         {canEdit && !locked ? (
                           <select
                             aria-label={`Rôle de ${member.pseudo}`}
@@ -558,7 +599,9 @@ function ChainEditor({
                         )}
                       </td>
                       <td className="px-4 py-1.5 text-right">
-                        {role.kind !== "hunter" ? (
+                        {role.kind === "drain" ? (
+                          <span className="text-muted-foreground">rien : tout monte</span>
+                        ) : role.kind !== "hunter" ? (
                           <span className="text-muted-foreground">—</span>
                         ) : canEdit ? (
                           <KeepField
@@ -583,16 +626,69 @@ function ChainEditor({
         <p className="border-t px-4 py-2.5 text-xs text-muted-foreground">
           TDC de l&apos;export, relu chaque heure (l&apos;extension prend celui de la page Membres) · vacances et bannis
           hors chaîne d&apos;office · un membre hors de l&apos;espace a quand même un rôle : la chaîne passe aussi par
-          lui.
+          lui · « À flooder » : tout son TDC monte vers les greniers · « Ne pas toucher » : il garde son TDC, aucun
+          flood de la chaîne · ↑ ↓ : plus gros ou plus petit qu&apos;un membre de l&apos;échelon voisin.
         </p>
       </Panel>
+
+      {former.length > 0 && (
+        <Panel
+          title="Anciens membres"
+          aside={`${formatNumber(former.length)} rôle${former.length > 1 ? "s" : ""} enregistré${former.length > 1 ? "s" : ""}`}
+          flush
+        >
+          <p className="px-4 py-2.5 text-sm text-muted-foreground">
+            Partis de l&apos;alliance d&apos;après l&apos;export : leur rôle reste dans l&apos;enregistrement tant
+            {canEdit ? " que vous ne le retirez pas" : " qu'un Admin ou un Délégué ne le retire pas"}. Il ne compte plus
+            dans la chaîne.
+          </p>
+          <ul>
+            {former.map((id) => {
+              const player = formers.data?.find((p) => String(p.id) === id);
+              const role = draft.roles[id];
+              return (
+                <li key={id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t px-4 py-2">
+                  <span className="min-w-0 flex-1">
+                    <strong>{player?.pseudo ?? `Joueur n° ${id}`}</strong>
+                    {role && <span className="text-muted-foreground"> · {roleLabel(role)}</span>}
+                    <span className="block text-xs text-muted-foreground">
+                      {player
+                        ? player.alliance
+                          ? `aujourd'hui dans l'alliance ${player.alliance}`
+                          : "aujourd'hui sans alliance"
+                        : "absent de l'export du serveur"}
+                    </span>
+                  </span>
+                  {canEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => edit((current) => withoutMembers(current, [id]))}
+                    >
+                      Retirer
+                    </Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {canEdit && former.length > 1 && (
+            <div className="border-t px-4 py-2.5">
+              <Button variant="outline" size="sm" onClick={() => edit((current) => withoutMembers(current, former))}>
+                Retirer les {formatNumber(former.length)}
+              </Button>
+            </div>
+          )}
+        </Panel>
+      )}
 
       {canEdit && (
         <details className="border bg-card p-4">
           <summary className="cursor-pointer font-medium">Importer un texte</summary>
           <div className="mt-3 space-y-2">
             <label htmlFor="chain-import" className={FIELD_LABEL}>
-              Une ligne « Pseudo: rôle » par membre (Grenier, Passeur 1, Passeur 2…, Chasseur, Hors chaîne)
+              Une ligne « Pseudo: rôle » par membre (Grenier, Passeur 1, Passeur 2…, Chasseur, À flooder, Ne pas
+              toucher, Hors chaîne)
             </label>
             <textarea
               id="chain-import"
@@ -622,6 +718,7 @@ function ChainEditor({
               .map((id) => {
                 const before = base.roles[id];
                 const after = draft.roles[id];
+                if (!after && !members.some((m) => String(m.id) === id)) return `${pseudoOf(id)} : retiré`;
                 return `${pseudoOf(id)} : ${roleLabel(before ?? OUT)} → ${roleLabel(after ?? OUT)}`;
               })
               .join(" · ")}

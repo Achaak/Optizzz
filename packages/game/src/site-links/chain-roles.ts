@@ -21,7 +21,8 @@ const RECORD = z.object({
 
 /** « granary », « passer:2 »… back to a role; null for anything else. */
 function roleOf(key: string): Role | null {
-  if (key === "granary" || key === "hunter" || key === "out") return { kind: key };
+  if (key === "granary" || key === "hunter" || key === "drain" || key === "protected" || key === "out")
+    return { kind: key };
   const passer = /^passer:([1-9]\d{0,2})$/.exec(key);
   return passer ? { kind: "passer", rank: Number(passer[1]) } : null;
 }

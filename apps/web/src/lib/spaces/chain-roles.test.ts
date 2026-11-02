@@ -1,12 +1,15 @@
 import { createAllianceKeyring, rotateAllianceKey } from "@optizzz/crypto/alliance-key";
 import { describe, expect, it } from "vitest";
+import type { ChainRolesRecord } from "@optizzz/game/site-links/chain-roles";
 import {
   changedMembers,
+  formerMembers,
   lockChainRoles,
   openChainRoles,
   rebaseRoles,
   shownRoles,
   staleChainRoles,
+  withoutMembers,
 } from "./chain-roles";
 
 const SPACE = "space-4o4";
@@ -94,5 +97,20 @@ describe("rebaseRoles", () => {
       roles: { "1": granary, "2": passer(2), "3": passer(1) },
       keep: {},
     });
+  });
+});
+
+describe("formerMembers", () => {
+  const record = {
+    roles: { "1": { kind: "granary" }, "7": { kind: "passer", rank: 1 } },
+    keep: { "9": 1000 },
+  } satisfies ChainRolesRecord;
+
+  it("names the players with a role or a field to keep who left the alliance", () => {
+    expect(formerMembers(record, [{ id: 1 }])).toEqual(["7", "9"]);
+  });
+
+  it("removes them from the record", () => {
+    expect(withoutMembers(record, ["7", "9"])).toEqual({ roles: { "1": { kind: "granary" } }, keep: {} });
   });
 });

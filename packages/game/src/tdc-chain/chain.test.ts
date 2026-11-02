@@ -248,4 +248,38 @@ describe("planChain", () => {
     );
     expect(plan).toEqual({ transfers: [], gaps: [] });
   });
+
+  it("sends the whole field of a member to drain, without a field to keep", () => {
+    const plan = planChain(
+      {
+        members: [member(1, 1000), member(2, 1800)],
+        roles: new Map<number, Role>([
+          [1, { kind: "drain" }],
+          [2, granary],
+        ]),
+        keep: new Map([[1, 900]]),
+      },
+      MARGIN,
+    );
+    expect(plan.gaps).toEqual([]);
+    // The 900 to keep is ignored: as much as the range allows, where a hunter keeping 900 would give 100.
+    expect(plan.transfers.map(({ path, moved }) => ({ path, moved }))).toEqual([{ path: [1, 2], moved: 248 }]);
+  });
+
+  it("never floods a member not to touch, nor floods from it", () => {
+    const plan = planChain(
+      {
+        members: [member(1, 1000), member(2, 1900), member(3, 3500)],
+        roles: new Map<number, Role>([
+          [1, hunter],
+          [2, { kind: "protected" }],
+          [3, granary],
+        ]),
+        keep: new Map([[1, 900]]),
+      },
+      MARGIN,
+    );
+    expect(plan.transfers).toEqual([]);
+    expect(plan.gaps).toEqual([{ from: 1, below: 1, above: 3, reason: "range" }]);
+  });
 });

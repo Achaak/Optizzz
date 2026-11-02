@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { chainRoles, exportRoles, importRoles, passerRanks, proposeRoles, type Role } from "./roles";
+import {
+  chainRoles,
+  exportRoles,
+  importRoles,
+  passerRanks,
+  proposeRoles,
+  roleOptions,
+  rungPlaces,
+  type Role,
+} from "./roles";
 
 // Live fields of an alliance on S5, 2026-10-08.
 const s5 = [
@@ -135,5 +144,73 @@ describe("chainRoles", () => {
         [2, { kind: "out" }],
       ]),
     );
+  });
+});
+
+describe("roleOptions", () => {
+  it("offers the roles from the top of the chain down, the members to drain and not to touch before those out", () => {
+    expect(roleOptions([{ kind: "passer", rank: 1 }]).map((role) => role.kind)).toEqual([
+      "granary",
+      "passer",
+      "passer",
+      "passer",
+      "passer",
+      "passer",
+      "hunter",
+      "drain",
+      "protected",
+      "out",
+    ]);
+  });
+});
+
+describe("rungPlaces", () => {
+  const roles = new Map<number, Role>([
+    [1, { kind: "granary" }],
+    [2, { kind: "passer", rank: 1 }],
+    [3, { kind: "passer", rank: 1 }],
+    [4, { kind: "hunter" }],
+    [5, { kind: "drain" }],
+    [6, { kind: "out" }],
+  ]);
+
+  it("says who is bigger than a member of the rung above, or smaller than one of the rung below", () => {
+    const fields = new Map([
+      [1, 10_000],
+      [2, 5000],
+      [3, 3000],
+      [4, 3500],
+      [5, 9000],
+      [6, 50],
+    ]);
+    expect(Object.fromEntries(rungPlaces(roles, fields))).toEqual({
+      1: { kind: "ok" },
+      2: { kind: "ok" },
+      3: { kind: "down", than: 4 },
+      4: { kind: "up", than: 3 },
+    });
+  });
+
+  it("leaves out the members to drain and those out of the chain, whatever their field", () => {
+    const places = rungPlaces(
+      roles,
+      new Map([
+        [5, 1],
+        [6, 1],
+      ]),
+    );
+    expect(places.size).toBe(0);
+  });
+});
+
+describe("importRoles with the new roles", () => {
+  it("reads « À flooder » and « Ne pas toucher », accents and case aside", () => {
+    const members = [
+      { id: 1, pseudo: "Atta" },
+      { id: 2, pseudo: "Formica" },
+    ];
+    const { roles, ignored } = importRoles("Atta: a flooder\nFormica: Ne pas toucher", members);
+    expect(ignored).toEqual([]);
+    expect(exportRoles(roles, members)).toBe("Atta: À flooder\nFormica: Ne pas toucher");
   });
 });
