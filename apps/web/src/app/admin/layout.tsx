@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         links={[
           { href: "/admin", label: "Vue d'ensemble" },
           { href: "/admin/collecte", label: "Collecte et sauvegardes" },
+          { href: "/admin/comptes", label: "Comptes et Espaces" },
         ]}
       />
       {children}

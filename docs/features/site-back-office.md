@@ -1,13 +1,13 @@
 # Back office du site
 
-Une page `/admin` pour voir ce qui se passe sur le site. Proposée le 2026-11-02 avec trois maquettes : Vue d'ensemble, Collecte et sauvegardes, Comptes et Espaces (rangée « D · Back office » du canevas des maquettes du site). Livrés : l'accès, la santé du cron et des sauvegardes (lot 1), la Vue d'ensemble (lot 2).
+Une page `/admin` pour voir ce qui se passe sur le site. Proposée le 2026-11-02 avec trois maquettes : Vue d'ensemble, Collecte et sauvegardes, Comptes et Espaces (rangée « D · Back office » du canevas des maquettes du site). Livrés : l'accès, la santé du cron et des sauvegardes (lot 1), la Vue d'ensemble (lot 2), Comptes et Espaces (lot 3).
 
 ## Accès
 
 - `/admin` s'ouvre aux Comptes Optizzz dont l'adresse **vérifiée** (lien magique) figure dans `ADMIN_EMAILS` : des adresses séparées par des virgules. Variable vide ou absente : personne.
 - Tout autre visiteur, connecté ou non, reçoit la page 404 du site. Le contrôle est fait dans le layout de `/admin` (sinon la 404 porterait la barre « Back office ») et dans chaque page. Les pages n'ont pas de titre propre, pour que cette 404 ne nomme pas le back office ; `noindex`.
 - Pas de rôle en base : la liste vit dans l'environnement du VPS (`deploy/.env`, demandée par `scripts/setup-vps.sh`).
-- Fichiers : `apps/web/src/lib/admin/admin-emails.ts` (règle, testée), `apps/web/src/server/admin.ts` (`requireAdmin`, et `loadJobs`, les passages et leurs alertes, partagés par les deux pages).
+- Fichiers : `apps/web/src/lib/admin/admin-emails.ts` (règle, testée), `apps/web/src/server/admin.ts` (`requireAdmin`, et `loadJobs`, les passages et leurs alertes, partagés par la Vue d'ensemble et la Collecte).
 
 ## Ce qui est enregistré
 
@@ -36,9 +36,15 @@ Le format de `report` est décrit et relu par des schémas zod dans `apps/web/sr
 - **Passages du cron** des dernières 24 h, avec une note par passage (serveurs relus, Journal, erreurs).
 - **Sauvegardes** : les 7 dernières, et la taille de la base.
 
+## Comptes et Espaces (`/admin/comptes`)
+
+- **Espaces d'alliance**, du plus récemment actif au moins : serveur, membres, adhésions en attente, Demandes en cours, relevés partagés encore valables, état de Discord (✓ actif, ▲ refusé, — aucun) et des rappels du site (✓ actifs, ▲ suspendus, — aucun), création, dernière activité (un membre arrivé, une Demande qui bouge, un relevé partagé).
+- **Comptes**, les plus récents d'abord, 50 par page : adresse masquée (`a•••@gmail.com`), Joueurs rattachés (serveur et pseudo), extensions liées, Clé de chiffrement créée ou non, création, dernière connexion.
+- Ni contenu chiffré ni adresse en entier. Logique : `apps/web/src/lib/admin/accounts.ts` (testée).
+
 Seul l'administrateur lit ces données ; rien n'est envoyé ailleurs. Aucune mesure d'audience n'est ajoutée.
 
 ## Lots suivants (proposés)
 
-1. Comptes et Espaces, métadonnées seulement : le contenu des Espaces est chiffré et le reste. Adresses masquées ; les afficher en entier serait une action notée.
+1. Afficher une adresse en entier, pour répondre à quelqu'un : une action notée (qui, quand, quel compte), à cadrer.
 2. Relancer le cron depuis la page : il faut une commande côté VPS, à cadrer.
