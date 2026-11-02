@@ -1,6 +1,7 @@
 import iconSvg from "@/assets/icon.svg?raw";
 import { bugReportUrl, featureRequestUrl, REPOSITORY_URL } from "./links";
 import { svgElement } from "@/utils/html";
+import { SITE_ORIGIN } from "@/utils/site";
 
 /** Styles of the « À propos » section, shared by the in-game dialog and the toolbar popup. */
 export const ABOUT_STYLE = `
@@ -38,6 +39,7 @@ export function buildAboutSection(doc: Document, version: string, userAgent: str
   const links = doc.createElement("ul");
   links.className = "about-links";
   for (const [label, href] of [
+    ["Le site optizzz.fr : classements, carte et outils", SITE_ORIGIN],
     ["Code source sur GitHub", REPOSITORY_URL],
     ["Signaler un bug", bugReportUrl(version, userAgent)],
     ["Proposer une fonctionnalité", featureRequestUrl()],

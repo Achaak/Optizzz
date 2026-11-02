@@ -11,12 +11,17 @@ const ENTRY_ORDER = [
   "optizzz-alliance-sharing",
 ] as const;
 
+/** Display order of the Optizzz entries of the Fourmilière menu, after « Ma Fourmilière ». */
+const COLONY_ENTRY_ORDER = ["optizzz-my-state", "optizzz-site"] as const;
+
 interface MenuEntry {
   className: string;
   href: string;
   label: string;
   /** SVG markup, drawn in the link colour like the game's sprite icons (24×26 box). */
   icon: string;
+  /** Opens in a new tab (another site). */
+  newTab?: boolean;
 }
 
 export interface AllianceMenuEntry extends MenuEntry {
@@ -29,9 +34,14 @@ export function addAllianceMenuEntry(doc: Document, entry: AllianceMenuEntry): v
   addMenuEntry(doc, "#menuAlliance", [...before.map((name) => `.${name}`), "a.boutonMembres"], entry);
 }
 
-/** Adds the entry once to the Fourmilière menu, after « Ma Fourmilière ». */
-export function addColonyMenuEntry(doc: Document, entry: MenuEntry): void {
-  addMenuEntry(doc, "#menuFourmiliere", ["a.boutonMaFourmiliere"], entry);
+export interface ColonyMenuEntry extends MenuEntry {
+  className: (typeof COLONY_ENTRY_ORDER)[number];
+}
+
+/** Adds the entry once to the Fourmilière menu, after « Ma Fourmilière » and the Optizzz entries before it. */
+export function addColonyMenuEntry(doc: Document, entry: ColonyMenuEntry): void {
+  const before = COLONY_ENTRY_ORDER.slice(0, COLONY_ENTRY_ORDER.indexOf(entry.className)).reverse();
+  addMenuEntry(doc, "#menuFourmiliere", [...before.map((name) => `.${name}`), "a.boutonMaFourmiliere"], entry);
 }
 
 /** Adds the entry once, with the game's structure: <li><a><span>icon</span>Label</a></li>, after the first found. */
@@ -54,6 +64,10 @@ function addMenuEntry(doc: Document, menuSelector: string, afterSelectors: strin
   const link = doc.createElement("a");
   link.className = entry.className;
   link.href = entry.href;
+  if (entry.newTab) {
+    link.target = "_blank";
+    link.rel = "noreferrer";
+  }
   link.append(icon, entry.label);
 
   const item = doc.createElement("li");

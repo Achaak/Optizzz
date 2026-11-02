@@ -48,4 +48,21 @@ describe("addColonyMenuEntry", () => {
       "Mon état",
     ]);
   });
+
+  it("puts the site's entry after « Mon état », whichever comes first, in a new tab", () => {
+    const doc = document.implementation.createHTMLDocument();
+    doc.body.innerHTML = `<ul id="menuFourmiliere"><li><a class="boutonMaFourmiliere">Ma Fourmilière</a></li></ul>`;
+    addColonyMenuEntry(doc, {
+      className: "optizzz-site",
+      href: "https://optizzz.fr/s5",
+      label: "Optizzz.fr",
+      icon: ICON,
+      newTab: true,
+    });
+    addColonyMenuEntry(doc, { className: "optizzz-my-state", href: "#e", label: "Mon état", icon: ICON });
+    const links = [...doc.querySelectorAll<HTMLAnchorElement>("#menuFourmiliere a")];
+    expect(links.map((a) => a.textContent)).toEqual(["Ma Fourmilière", "Mon état", "Optizzz.fr"]);
+    expect(links[2]?.target).toBe("_blank");
+    expect(links[1]?.target).toBe("");
+  });
 });

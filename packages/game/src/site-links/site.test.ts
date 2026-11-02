@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { isSiteToolId, siteToolUrl, SITE_TOOLS, SITE_URL } from "./site";
+import {
+  isSiteToolId,
+  siteAlliancePath,
+  sitePlayerPath,
+  siteServerPath,
+  siteToolUrl,
+  SITE_TOOLS,
+  SITE_URL,
+} from "./site";
 
 describe("address of a site tool", () => {
   it("puts the state in the fragment of the tool's English address", () => {
@@ -17,5 +25,17 @@ describe("address of a site tool", () => {
   it("refuses a state that is not one, rather than writing it into the address", () => {
     expect(() => siteToolUrl("costs", "1.a#b")).toThrow();
     expect(() => siteToolUrl("costs", "1.a&q=b")).toThrow();
+  });
+});
+
+describe("addresses of a server's pages", () => {
+  it("gives the server, a player by its export id and an alliance by its tag", () => {
+    expect(siteServerPath("s5")).toBe("/s5");
+    expect(sitePlayerPath("s5", 42)).toBe("/s5/players/42");
+    expect(siteAlliancePath("s2", "V")).toBe("/s2/alliances/V");
+  });
+
+  it("escapes a tag the address would misread", () => {
+    expect(siteAlliancePath("s5", "A&B/C")).toBe("/s5/alliances/A%26B%2FC");
   });
 });

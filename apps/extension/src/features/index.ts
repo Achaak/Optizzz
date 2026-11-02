@@ -27,6 +27,7 @@ import { resourceForecast } from "./resource-forecast";
 import { safeReload } from "./safe-reload";
 import { serverMap } from "./server-map";
 import { settingsMenu } from "./settings";
+import { siteLinks } from "./site-links";
 import { tdcChainMenu } from "./tdc-chain/menu";
 import { targets } from "./targets";
 import { watchlist } from "./watchlist";
@@ -44,6 +45,7 @@ export const features: Feature[] = [
   historyMenu,
   allianceStatsMenu,
   allianceSharingMenu,
+  siteLinks,
   workQueue,
   endTimes,
   resourceForecast,

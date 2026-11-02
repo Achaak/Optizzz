@@ -52,7 +52,12 @@ describe("buildSettingsDialog", () => {
     tabButton(dialog, "À propos")?.click();
     expect(dialog.textContent).toContain("Version 1.2.3");
     const labels = [...dialog.querySelectorAll(".about-links a")].map((link) => link.textContent);
-    expect(labels).toEqual(["Code source sur GitHub", "Signaler un bug", "Proposer une fonctionnalité"]);
+    expect(labels).toEqual([
+      "Le site optizzz.fr : classements, carte et outils",
+      "Code source sur GitHub",
+      "Signaler un bug",
+      "Proposer une fonctionnalité",
+    ]);
   });
 
   it("opens on « Fonctionnalités » and keeps a change when coming back to it", () => {

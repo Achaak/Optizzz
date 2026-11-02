@@ -13,6 +13,11 @@ export const isSiteToolId = (value: unknown): value is SiteToolId => SITE_TOOLS.
 
 export const siteToolPath = (tool: SiteToolId) => `/tools/${tool}`;
 
+/** A server's pages on the site (`server`: « s5 »), see docs/features/site-public.md. */
+export const siteServerPath = (server: string) => `/${server}`;
+export const sitePlayerPath = (server: string, playerId: number) => `/${server}/players/${String(playerId)}`;
+export const siteAlliancePath = (server: string, tag: string) => `/${server}/alliances/${encodeURIComponent(tag)}`;
+
 /** The tool's address on the site, with `encoded` (from its `LinkFormat`) in the fragment: never sent to the site. */
 export function siteToolUrl(tool: SiteToolId, encoded?: string): string {
   if (encoded !== undefined && !/^\d+\.[A-Za-z0-9_-]*$/.test(encoded))

@@ -50,7 +50,7 @@ Un composant du socle, utilisé par les trajets et le flood : choisir un serveur
 
 - Le simulateur de combat, le Lanceur de chasse et le Plan de flood de l'extension ont deux actions : **« Ouvrir sur optizzz.fr »** (nouvel onglet, `tabs.create`, sans permission) et **« Copier le lien »**, avec leurs entrées courantes (armées, niveaux, TDC). Le lien est construit dans l'extension avec `packages/game/src/site-links/` : l'état part dans le fragment, rien n'est envoyé au site.
 - Au clic seulement ; rien ne part sans action du joueur. Pas de bouton pour les trajets ni les coûts (pas d'outil semblable dans l'extension).
-- Option **« Liens vers optizzz.fr »** dans « Fonctionnalités » (`catalog.ts`), cochée par défaut : décochée, les boutons disparaissent.
+- Option **« Liens vers optizzz.fr »** dans « Fonctionnalités » (`catalog.ts`), cochée par défaut : décochée, les boutons disparaissent. Elle porte aussi les liens vers le site depuis le menu, les profils et les pages d'alliance (`liens-site.md`).
 - `PRIVACY.md` et `docs/store/fiche.md` le disent : ouvrir un outil depuis l'extension fait visiter optizzz.fr (adresse IP vue par le serveur du site, non gardée), sans transmettre l'armée ni les niveaux au serveur. `data_collection_permissions` reste `none`.
 - Le socle fournit l'option et la construction de l'adresse ; chaque outil (tickets 09, 10, 11) pose ses boutons, et vérifie que le site donne le même résultat que l'extension pour le lien qu'elle ouvre.
 
