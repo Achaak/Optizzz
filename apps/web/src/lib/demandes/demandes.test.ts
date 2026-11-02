@@ -6,8 +6,10 @@ import type { Priorite } from "@optizzz/game/site-links/priorite";
 import { beforeAll, describe, expect, it } from "vitest";
 import { envoiCrypto, openConvoys } from "~/lib/envois/convoys";
 import {
+  byDistance,
   canDecide,
   declaredConvoyEnvoi,
+  deliveries,
   groupDemandes,
   newDemande,
   openDemandes,
@@ -197,6 +199,29 @@ describe("changed Demandes and declared convoys on a space page", () => {
     );
     expect(opened.demandes[0]?.progress.received).toEqual({ food: 0, materials: 50_000 });
     expect(opened.convoys[0]?.declared).toEqual({ playerId: 1, fingerprint: item.fingerprint });
+  });
+});
+
+describe("the trips of a convoy to the requesters", () => {
+  const nests = [
+    { id: 1, x: 0, y: 0 },
+    { id: 2, x: 3, y: 4 },
+    { id: 3, x: 30, y: 40 },
+  ];
+
+  it("gives each requester's distance and trip at the member's Attack Speed, the nearest first", () => {
+    const trips = deliveries(nests, 1, { level: 0, estimated: false }, [3, 2, 1, 9]);
+    expect([...trips.keys()]).toEqual([3, 2]);
+    expect(trips.get(2)).toMatchObject({ distance: 5, estimated: false });
+    expect([{ playerId: 9 }, { playerId: 3 }, { playerId: 2 }].sort(byDistance(trips))).toEqual([
+      { playerId: 2 },
+      { playerId: 3 },
+      { playerId: 9 },
+    ]);
+  });
+
+  it("has no trip when the member's nest is not in the export", () => {
+    expect(deliveries(nests, 7, { level: 0, estimated: true }, [2]).size).toBe(0);
   });
 });
 

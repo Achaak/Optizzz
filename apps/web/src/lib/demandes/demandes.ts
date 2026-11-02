@@ -22,6 +22,7 @@ import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import { openEnvoi, sealEnvoi } from "@optizzz/game/site-links/envois";
 import { comparePriorites, prioriteOf, type Priorite } from "@optizzz/game/site-links/priorite";
+import { distance, travelTime } from "@optizzz/game/travel";
 import { envoiCrypto } from "~/lib/envois/convoys";
 
 /** A Demande as the site serves it: its content still encrypted. */
@@ -220,3 +221,40 @@ export function groupDemandes(
       .sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0)),
   };
 }
+
+/** A convoy's trip from the member's nest to a requester's: the distance, and the time at the member's Attack Speed. */
+export interface Delivery {
+  distance: number;
+  seconds: number;
+  /** The member's Attack Speed is not known: the alliance's median level is used. */
+  estimated: boolean;
+}
+
+/**
+ * Each requester's trip from `from`'s nest, from the export's coordinates; a requester without a nest in the export
+ * has none.
+ */
+export function deliveries(
+  nests: readonly { id: number; x: number; y: number }[],
+  from: number,
+  speed: { level: number; estimated: boolean },
+  recipients: Iterable<number>,
+): Map<number, Delivery> {
+  const byId = new Map(nests.map((nest) => [nest.id, nest]));
+  const start = byId.get(from);
+  const trips = new Map<number, Delivery>();
+  if (!start) return trips;
+  for (const id of recipients) {
+    const end = byId.get(id);
+    if (!end || id === from) continue;
+    const squares = distance(start, end);
+    trips.set(id, { distance: squares, seconds: travelTime(squares, speed.level), estimated: speed.estimated });
+  }
+  return trips;
+}
+
+/** The nearest requester first; one without a trip (no nest in the export, or the member's own) last. */
+export const byDistance =
+  (trips: ReadonlyMap<number, Delivery>) =>
+  (a: { playerId: number }, b: { playerId: number }): number =>
+    (trips.get(a.playerId)?.distance ?? Infinity) - (trips.get(b.playerId)?.distance ?? Infinity);

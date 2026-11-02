@@ -4,9 +4,10 @@
 // or a Délégué decides), those waiting for convoys with what remains to send, and those finished in the last 90 days.
 // A status is written in words, never told by a colour alone (ADR 0003). « Envoyer un convoi » opens the game's
 // Convoi page, which the extension fills: the player clicks « Lancer le convoi » themself.
-import { formatCompact, formatNumber } from "@optizzz/game/format/number-format";
+import { formatCompact, formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import {
   formatDateTime,
+  formatDuration,
   formatEndTime,
   formatPastTime,
   fromParisParts,
@@ -33,13 +34,23 @@ import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import { prioriteText, type Priorite } from "@optizzz/game/site-links/priorite";
 import { cn } from "cn";
-import { Fragment, useId, useState } from "react";
+import { Fragment, useId, useMemo, useState } from "react";
+import { Segmented } from "~/components/tools/hunt/hunt-parts";
 import { ArrowRightIcon } from "~/components/icons";
 import { NumberField } from "~/components/number-field";
 import { Stat } from "~/components/stat";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { canDecide, groupDemandes, requesterPriorites, type OpenedDemande } from "~/lib/demandes/demandes";
+import {
+  byDistance,
+  canDecide,
+  deliveries,
+  groupDemandes,
+  requesterPriorites,
+  type Delivery,
+  type OpenedDemande,
+} from "~/lib/demandes/demandes";
+import { api } from "~/trpc/react";
 import { errorText } from "./errors";
 import { Callout, FIELD_INPUT, FIELD_LABEL, Panel } from "./parts";
 import type { MemberView } from "./use-space-access";
@@ -152,6 +163,21 @@ function DemandeTags({ content }: { content: DemandeContent }) {
   return tags.length === 0 ? null : <span className="block text-xs text-muted-foreground">{tags.join(" · ")}</span>;
 }
 
+/** « 6,4 » squares, and under it the trip and the arrival if it left now. */
+function DistanceCell({ trip, now }: { trip: Delivery | undefined; now: Date }) {
+  if (!trip) return <span className="text-muted-foreground">—</span>;
+  return (
+    <>
+      <span className="font-mono">{formatDecimal(trip.distance, 1)}</span>
+      <span className="block text-xs whitespace-nowrap text-muted-foreground">
+        {trip.estimated && "≈ "}
+        {formatDuration(trip.seconds * 1000)} · arrivée{" "}
+        {formatEndTime(new Date(now.getTime() + trip.seconds * 1000), now)}
+      </span>
+    </>
+  );
+}
+
 /** A Paris day for `<input type="date">`, and back. */
 const dayInput = (wanted: number | undefined) => {
   if (wanted === undefined) return "";
@@ -163,6 +189,12 @@ const dayOf = (value: string): number | undefined => {
   if (!year || !month || !day) return undefined;
   return fromParisParts({ year, month, day, hours: 0, minutes: 0 }).getTime();
 };
+
+type Order = "priorite" | "distance";
+const ORDERS = [
+  { value: "priorite", label: "Par Priorité" },
+  { value: "distance", label: "Par distance" },
+] as const satisfies readonly { value: Order; label: string }[];
 
 export function DemandesPanel({
   view,
@@ -186,9 +218,23 @@ export function DemandesPanel({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [order, setOrder] = useState<Order>("priorite");
   // The Demande whose « Modifier » or « Déclarer un convoi » form is open under its row.
   const [unfolded, setUnfolded] = useState<{ id: string; form: "change" | "declare" } | null>(null);
+  const nests = api.spaces.passageRoster.useQuery({ spaceId: view.space.id });
   const myPseudo = view.members.find((m) => m.playerId === view.me.playerId)?.pseudo ?? "";
+  const myState = states?.find((s) => s.latest.pseudo.toLowerCase() === myPseudo.toLowerCase())?.latest;
+  const trips = useMemo(() => {
+    if (!nests.data || !demandes.demandes) return new Map<number, Delivery>();
+    const known = (states ?? []).flatMap((s) => {
+      const level = s.latest.research?.attackSpeed;
+      return level === undefined ? [] : [level];
+    });
+    const mine = myState?.research?.attackSpeed;
+    const median = known.length > 0 ? ([...known].sort((a, b) => a - b)[Math.floor(known.length / 2)] ?? 0) : 0;
+    const speed = mine === undefined ? { level: median, estimated: true } : { level: mine, estimated: false };
+    return deliveries(nests.data.members, view.me.playerId, speed, new Set(demandes.demandes.map((d) => d.playerId)));
+  }, [nests.data, demandes.demandes, states, myState, view.me.playerId]);
 
   if (demandes.demandes === null)
     return (
@@ -314,6 +360,7 @@ export function DemandesPanel({
           ) : (
             <DeclareForm
               demande={demande}
+              trip={trips.get(demande.playerId)}
               me={myPseudo}
               busy={busy}
               onClose={close}
@@ -337,6 +384,7 @@ export function DemandesPanel({
   // An « autofinancée » Demande asks for nothing: it stays out of what remains to send.
   const remaining = groups.active.reduce((sum, d) => sum + total(askedOf(d.content, d.progress.remaining)), 0);
   const now = new Date();
+  const active = order === "distance" ? [...groups.active].sort(byDistance(trips)) : groups.active;
 
   return (
     <div className="space-y-5">
@@ -452,14 +500,17 @@ export function DemandesPanel({
           <Panel
             title="Validées, en cours d'envoi"
             aside={
-              <button
-                type="button"
-                onClick={onShowConvoys}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-              >
-                Voir les convois
-                <ArrowRightIcon width={14} height={14} />
-              </button>
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <Segmented label="Trier les Demandes validées" options={ORDERS} value={order} onChange={setOrder} />
+                <button
+                  type="button"
+                  onClick={onShowConvoys}
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  Voir les convois
+                  <ArrowRightIcon width={14} height={14} />
+                </button>
+              </span>
             }
             flush
           >
@@ -471,6 +522,7 @@ export function DemandesPanel({
                   <TableRow className={HEAD_ROW}>
                     <TableHead className={cn(HEAD, "pl-4")}>Demandeur</TableHead>
                     <TableHead className={HEAD}>Demande</TableHead>
+                    <TableHead className={HEAD}>Distance</TableHead>
                     <TableHead className={HEAD}>Priorité</TableHead>
                     <TableHead className={cn(HEAD, "text-right")}>Reste à envoyer</TableHead>
                     <TableHead className={cn(HEAD, "text-right")}>Envoyé</TableHead>
@@ -481,7 +533,7 @@ export function DemandesPanel({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {groups.active.map((d) => (
+                  {active.map((d) => (
                     <Fragment key={d.id}>
                       <TableRow className={ROW}>
                         <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
@@ -506,6 +558,13 @@ export function DemandesPanel({
                               )}
                             </span>
                           ))}
+                        </TableCell>
+                        <TableCell>
+                          {mine(d) || d.content.self ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            <DistanceCell trip={trips.get(d.playerId)} now={now} />
+                          )}
                         </TableCell>
                         <TableCell className="min-w-40 whitespace-normal">
                           <PrioriteCell priorite={priorites?.get(d.playerId)} />
@@ -562,7 +621,7 @@ export function DemandesPanel({
                           </div>
                         </TableCell>
                       </TableRow>
-                      {unfoldedRow(d, 7)}
+                      {unfoldedRow(d, 8)}
                     </Fragment>
                   ))}
                 </TableBody>
@@ -580,7 +639,10 @@ export function DemandesPanel({
                 le chantier lancé, ou à la main avec «&nbsp;Clore&nbsp;».
               </p>
               <p>
-                «&nbsp;Suspendre&nbsp;» renvoie une Demande à valider. Une Demande autofinancée ne demande aucun convoi.
+                «&nbsp;Distance&nbsp;» : le trajet d&apos;un convoi depuis votre colonie s&apos;il partait maintenant,
+                d&apos;après l&apos;export et votre Vitesse d&apos;attaque (≈ : celle-ci n&apos;est pas envoyée, le
+                niveau médian de l&apos;alliance est pris). «&nbsp;Suspendre&nbsp;» renvoie une Demande à valider. Une
+                Demande autofinancée ne demande aucun convoi.
               </p>
             </Notes>
           </Panel>
@@ -970,16 +1032,18 @@ function ChangeForm({
 
 /**
  * « Déclarer un convoi »: one the member sent to the requester without « Envoyer un convoi » (without the extension,
- * or launched in the game). It counts for the Demande, marked as declared.
+ * or launched in the game). It counts for the Demande, marked as declared; its trip from the distance, changeable.
  */
 function DeclareForm({
   demande,
+  trip,
   me,
   busy,
   onDeclare,
   onClose,
 }: {
   demande: OpenedDemande;
+  trip: Delivery | undefined;
   me: string;
   busy: boolean;
   onDeclare: (convoy: DemandeConvoy) => Promise<void>;
@@ -988,7 +1052,7 @@ function DeclareForm({
   const ids = { food: useId(), materials: useId(), trip: useId(), hint: useId() };
   const left = demande.progress.remaining;
   const [amounts, setAmounts] = useState<Resources>(left);
-  const [tripText, setTripText] = useState("");
+  const [tripText, setTripText] = useState(trip ? formatDuration(trip.seconds * 1000) : "");
   const duration = tripText.trim() === "0" ? 0 : parseGameDuration(tripText);
   const now = new Date();
   const arrival = duration === null ? null : new Date(now.getTime() + duration);
