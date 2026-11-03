@@ -54,6 +54,23 @@ describe("stateReading", () => {
     });
   });
 
+  it("adds the stock of the header when it was kept, dated by its reading", () => {
+    const stock = { readAt: at(-1), huntingField: 10_000, workers: 12_000, food: 40_000, materials: 70_000 };
+    expect(stateReading("production", { ...pages, stock }, NOW)?.reading.stock).toEqual({
+      food: 40_000,
+      materials: 70_000,
+      at: at(-1),
+    });
+  });
+
+  it("adds the warehouses' capacities to the levels when construction.php gave them", () => {
+    const construction = { readAt: at(-4), levels: {}, works: [], capacities: { food: 9_000, materials: 8_000 } };
+    expect(stateReading("levels", { ...pages, construction }, NOW)?.reading.capacities).toEqual({
+      food: 9_000,
+      materials: 8_000,
+    });
+  });
+
   it("has no Production before Ressources.php is read, and unknown colonies before colonies.php", () => {
     expect(stateReading("production", { stock: pages.stock }, NOW)).toBeNull();
     const withoutColonies = without("colonies");

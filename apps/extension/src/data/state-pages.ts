@@ -6,7 +6,7 @@ import { storage } from "wxt/utils/storage";
 import type { BuildingKey, ResearchKey } from "@optizzz/game/levels";
 import { readColonies } from "@optizzz/game/pages/colonies";
 import { readBuildingLevels, readResearchLevels } from "@optizzz/game/pages/levels";
-import { readIncome, readStock } from "@optizzz/game/pages/resources";
+import { readCapacities, readIncome, readStock, type Capacities } from "@optizzz/game/pages/resources";
 import { readWorkQueue } from "@optizzz/game/pages/work-queue";
 import { readTroops, UNITS } from "@optizzz/game/army/units";
 import { STATE_CATEGORIES, type StateCategory } from "@optizzz/game/site-links/envoi-states";
@@ -27,8 +27,8 @@ interface KeptWork {
 
 /** Each page's part, with when it was read (milliseconds since 1970: storage keeps JSON). */
 export interface StatePages {
-  /** The header of any page (`div#data`). */
-  stock?: { readAt: number; huntingField: number; workers: number };
+  /** The header of any page (`div#data`); food and materials since the Équilibre (absent from older parts). */
+  stock?: { readAt: number; huntingField: number; workers: number; food?: number; materials?: number };
   ressources?: {
     readAt: number;
     foodWorkers: number;
@@ -54,7 +54,13 @@ export interface StatePages {
     /** Troops coming back from a colony; their units with Compte+ only. */
     coming: { arrivesAt: number; units: Units | null }[];
   };
-  construction?: { readAt: number; levels: Partial<Record<BuildingKey, number>>; works: KeptWork[] };
+  construction?: {
+    readAt: number;
+    levels: Partial<Record<BuildingKey, number>>;
+    works: KeptWork[];
+    /** The warehouses' capacities, null when the page does not give them (absent from older parts). */
+    capacities?: Capacities | null;
+  };
   laboratory?: { readAt: number; levels: Partial<Record<ResearchKey, number>>; works: KeptWork[] };
 }
 
@@ -102,7 +108,14 @@ export function readStatePages(
   if (!stock) return {};
   const readAt = now.getTime();
   const read: StatePages = {};
-  if (wanted.has("stock")) read.stock = { readAt, huntingField: stock.huntingField, workers: stock.workers };
+  if (wanted.has("stock"))
+    read.stock = {
+      readAt,
+      huntingField: stock.huntingField,
+      workers: stock.workers,
+      food: stock.food,
+      materials: stock.materials,
+    };
   if (wanted.has("ressources") && path === "/ressources.php") {
     const income = readIncome(doc, now);
     if (income)
@@ -153,7 +166,12 @@ export function readStatePages(
     }
   }
   if (wanted.has("construction") && path === "/construction.php")
-    read.construction = { readAt, levels: readBuildingLevels(doc), works: works(doc, now) };
+    read.construction = {
+      readAt,
+      levels: readBuildingLevels(doc),
+      works: works(doc, now),
+      capacities: readCapacities(doc),
+    };
   if (wanted.has("laboratory") && path === "/laboratoire.php")
     read.laboratory = { readAt, levels: readResearchLevels(doc), works: works(doc, now) };
   return read;

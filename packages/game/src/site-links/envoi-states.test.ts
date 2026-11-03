@@ -51,6 +51,48 @@ describe("nextStateItem", () => {
     const next = nextStateItem("Messor", { total: 12, incomplete: true, returnsAt: null }, NOW.getTime() + HOUR, last);
     expect(next.item.previous).toEqual({ observedAt: NOW.getTime(), reading: last.item.reading });
   });
+
+  describe("the stock of a Production", () => {
+    const withStock = (food: number, at: number): ProductionReading => ({
+      ...production,
+      stock: { food, materials: 5_000, at },
+    });
+
+    it("keeps the last one sent while only the stock moved, for an hour", () => {
+      const last = nextStateItem("Messor", withStock(1_000, NOW.getTime()), NOW.getTime(), null);
+      const later = NOW.getTime() + HOUR - 1;
+      expect(nextStateItem("Messor", withStock(2_000, later), later, last)).toBe(last);
+    });
+
+    it("sends the new stock after an hour, keeping the previous reading", () => {
+      const first = nextStateItem("Messor", { ...production, taxRate: 0.2 }, NOW.getTime() - DAY, null);
+      const last = nextStateItem("Messor", withStock(1_000, NOW.getTime()), NOW.getTime(), first);
+      const later = NOW.getTime() + HOUR;
+      const next = nextStateItem("Messor", withStock(2_000, later), later, last);
+      expect(next.observedAt).toBe(later);
+      expect(next.item.reading).toEqual(withStock(2_000, later));
+      expect(next.item.previous).toEqual(last.item.previous);
+    });
+
+    it("sends a first stock at once", () => {
+      const last = nextStateItem("Messor", production, NOW.getTime(), null);
+      const later = NOW.getTime() + 60_000;
+      const next = nextStateItem("Messor", withStock(2_000, later), later, last);
+      expect(next.item.reading).toEqual(withStock(2_000, later));
+    });
+
+    it("sends any other change with the stock at once", () => {
+      const last = nextStateItem("Messor", withStock(1_000, NOW.getTime()), NOW.getTime(), null);
+      const later = NOW.getTime() + 60_000;
+      const next = nextStateItem("Messor", { ...withStock(2_000, later), taxRate: 0.3 }, later, last);
+      expect(next.item.previous?.reading).toEqual(last.item.reading);
+    });
+
+    it("reads a Production sent before the stock was", () => {
+      const item = { pseudo: "Messor", reading: production, previous: null };
+      expect(stateItemSchema("production").parse(item)).toEqual(item);
+    });
+  });
 });
 
 describe("productionPerDay", () => {

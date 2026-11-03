@@ -35,6 +35,8 @@ describe("readStatePages", () => {
     const read = readStatePages(parse(ressourcesHtml), "/ressources.php", ALL, [], NOW);
     expect(Object.keys(read).sort()).toEqual(["ressources", "stock"]);
     expect(read.stock?.readAt).toBe(NOW.getTime());
+    expect(read.stock?.food).toBeGreaterThanOrEqual(0);
+    expect(read.stock?.materials).toBeGreaterThanOrEqual(0);
     expect(read.ressources?.hunts.length).toBeGreaterThan(0);
     expect(read.ressources?.hunts[0]?.returnsAt).toBeGreaterThan(NOW.getTime());
   });

@@ -40,6 +40,8 @@ function production(pages: StatePages): Read<"production"> | null {
         materials: c.materials,
       })) ?? null,
   };
+  if (stock.food !== undefined && stock.materials !== undefined)
+    reading.stock = { food: stock.food, materials: stock.materials, at: stock.readAt };
   return { observedAt: newest(stock, ressources, colonies), reading };
 }
 
@@ -96,6 +98,7 @@ function levels(pages: StatePages): Read<"levels"> | null {
     research: laboratory?.levels ?? null,
     works: [...(construction?.works ?? []), ...(laboratory?.works ?? [])],
   };
+  if (construction?.capacities) reading.capacities = construction.capacities;
   return { observedAt: newest(construction, laboratory), reading };
 }
 
