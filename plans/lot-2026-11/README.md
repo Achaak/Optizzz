@@ -2,24 +2,24 @@
 
 Douze chantiers, rangés par priorité (2 à 4), à lancer chacun dans sa propre session, coordonnées par un orchestrateur (`orchestrateur.md`). Chaque fiche dit le but, ce qui existe déjà, les questions à cadrer avec le joueur, une proposition par défaut, la maquette à faire et quand c'est fini.
 
-Base : la branche `feat/demandes-chaine-rapports` (Demandes, Chaîne, rapports d'attaque), tant qu'elle n'est pas fusionnée dans `main` ; ensuite `main`.
+Base : `main` (la branche `feat/demandes-chaine-rapports` y est fusionnée).
 
 ## Chantiers et état
 
-| Fiche                                  | Chantier                                         | Priorité | Effort    | Dépend de | Vague | État    |
-| -------------------------------------- | ------------------------------------------------ | -------- | --------- | --------- | ----- | ------- |
-| [10](10-frise-mouvements.md)           | Frise des mouvements du jour                     | 2        | M         | —         | A     | À FAIRE |
-| [11](11-equilibre-ressources.md)       | Équilibre des ressources, entrepôt estimé        | 2        | M-L       | —         | A     | À FAIRE |
-| [12](12-etat-chefs.md)                 | Tableau des membres pour les chefs               | 2        | M         | —         | A     | À FAIRE |
-| [13](13-trajets-alliances.md)          | Trajets vers des alliances entières              | 2        | S-M       | —         | A     | À FAIRE |
-| [20](20-chasses-par-membre.md)         | Chasses par membre (nouvelle catégorie d'Envoi)  | 3        | M         | —         | B     | À FAIRE |
-| [21](21-tableau-7-jours-et-periode.md) | Tableau jour par jour, période au choix          | 3        | S-M       | 11        | B     | À FAIRE |
-| [22](22-recap-demandes.md)             | Récapitulatif et historiques des Demandes        | 3        | S         | —         | A     | À FAIRE |
-| [23](23-entrees-sorties.md)            | Graphique « ce qui entre / ce qui sort »         | 3        | S-M       | 11        | B     | À FAIRE |
-| [30](30-timing-59e-seconde.md)         | Timing d'une attaque à la seconde (recherche)    | 4        | à estimer | —         | A     | À FAIRE |
-| [31](31-guides-publics.md)             | Guides publics                                   | 4        | M         | (30)      | C     | À FAIRE |
-| [32](32-carte-alliance.md)             | Carte de l'alliance : taille, étiquettes, mesure | 4        | S         | —         | A     | À FAIRE |
-| [33](33-declarer-depuis-discord.md)    | Déclarer depuis Discord (ADR d'abord)            | 4        | L         | —         | C     | À FAIRE |
+| Fiche                                  | Chantier                                         | Priorité | Effort    | Dépend de | Vague | État                                                                                     |
+| -------------------------------------- | ------------------------------------------------ | -------- | --------- | --------- | ----- | ---------------------------------------------------------------------------------------- |
+| [10](10-frise-mouvements.md)           | Frise des mouvements du jour                     | 2        | M         | —         | A     | FAIT (branche `claude/lot-10-mouvements-a9c6f8`, PR à ouvrir)                            |
+| [11](11-equilibre-ressources.md)       | Équilibre des ressources, entrepôt estimé        | 2        | M-L       | —         | A     | EN COURS (cadré, maquette validée, stock dans les Envois ; reste `balance.ts` et la vue) |
+| [12](12-etat-chefs.md)                 | Tableau des membres pour les chefs               | 2        | M         | —         | A     | EN COURS (cadré, maquette validée, logique testée ; reste la vue)                        |
+| [13](13-trajets-alliances.md)          | Trajets vers des alliances entières              | 2        | S-M       | —         | A     | EN COURS (codé ; restent des vérifications dans le navigateur)                           |
+| [20](20-chasses-par-membre.md)         | Chasses par membre (nouvelle catégorie d'Envoi)  | 3        | M         | —         | B     | À FAIRE                                                                                  |
+| [21](21-tableau-7-jours-et-periode.md) | Tableau jour par jour, période au choix          | 3        | S-M       | 11        | B     | À FAIRE                                                                                  |
+| [22](22-recap-demandes.md)             | Récapitulatif et historiques des Demandes        | 3        | S         | —         | A     | À FAIRE                                                                                  |
+| [23](23-entrees-sorties.md)            | Graphique « ce qui entre / ce qui sort »         | 3        | S-M       | 11        | B     | À FAIRE                                                                                  |
+| [30](30-timing-59e-seconde.md)         | Timing d'une attaque à la seconde (recherche)    | 4        | à estimer | —         | A     | À FAIRE                                                                                  |
+| [31](31-guides-publics.md)             | Guides publics                                   | 4        | M         | (30)      | C     | À FAIRE                                                                                  |
+| [32](32-carte-alliance.md)             | Carte de l'alliance : taille, étiquettes, mesure | 4        | S         | —         | A     | À FAIRE                                                                                  |
+| [33](33-declarer-depuis-discord.md)    | Déclarer depuis Discord (ADR d'abord)            | 4        | L         | —         | C     | À FAIRE                                                                                  |
 
 États : À FAIRE · CADRAGE · EN COURS · PR OUVERTE · FAIT · BLOQUÉ (raison en une ligne) · ÉCARTÉ (raison en une ligne).
 
