@@ -16,10 +16,10 @@ type SortKey = "gap" | "field" | "production" | "sent" | "received" | "part" | "
 
 /** The columns past the member, hidden on a phone but the Écart and the verdict (the row unfolds for the rest). */
 const COLUMNS: readonly { key: SortKey | null; label: string; className: string }[] = [
-  { key: "field", label: "TDC", className: "hidden text-right lg:table-cell" },
+  { key: "field", label: "TDC", className: "hidden text-right xl:table-cell" },
   { key: null, label: "Entrepôt estimé", className: "hidden text-right md:table-cell" },
   { key: "production", label: "Production", className: "hidden text-right sm:table-cell" },
-  { key: null, label: "Colonies", className: "hidden text-right lg:table-cell" },
+  { key: null, label: "Colonies", className: "hidden text-right xl:table-cell" },
   { key: "sent", label: "Envoyés", className: "hidden text-right sm:table-cell" },
   { key: "received", label: "Reçus", className: "hidden text-right sm:table-cell" },
   { key: "part", label: "Part", className: "hidden text-right md:table-cell" },
@@ -112,8 +112,9 @@ function Detail({ row }: { row: BalanceRow }) {
     ["Ratio", ratioText(row)],
   ];
   return (
-    <div className="space-y-3 rounded-[0.625rem] bg-card p-3">
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4 lg:hidden">
+    // As wide as the table, never wider: its own day-by-day table scrolls inside.
+    <div className="w-0 min-w-full space-y-3 rounded-[0.625rem] bg-card p-3">
+      <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2 xl:hidden">
         {facts.map(([label, value]) => (
           <div key={label} className="flex justify-between gap-2">
             <dt className="text-muted-foreground">{label}</dt>
@@ -130,7 +131,7 @@ function Detail({ row }: { row: BalanceRow }) {
             {days.length < row.daily.length &&
               ` · dans l'alliance depuis le ${days.at(-1)?.label ?? ""} : sa Part commence ce jour-là`}
           </p>
-          <table className="text-xs">
+          <table className="text-xs whitespace-nowrap">
             <thead>
               <tr className="text-muted-foreground">
                 <th scope="col" className="px-2 py-1 text-left font-medium">
@@ -263,7 +264,7 @@ export function BalanceView({ balance, days, member }: { balance: Balance; days:
                     )}
                   </TableHead>
                 ))}
-                <TableHead>Verdict</TableHead>
+                <TableHead className="hidden sm:table-cell">Verdict</TableHead>
                 <TableHead className="pr-4">
                   <span className="sr-only">Détail</span>
                 </TableHead>
@@ -283,6 +284,11 @@ export function BalanceView({ balance, days, member }: { balance: Balance; days:
                             n&apos;envoie pas «&nbsp;Convois&nbsp;»
                           </span>
                         )}
+                        {row.verdict !== null && (
+                          <span className="mt-1 block sm:hidden">
+                            <VerdictBadge verdict={row.verdict} />
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className={COLUMNS[0]?.className}>
                         {row.field === null ? "—" : formatNumber(row.field)}
@@ -298,11 +304,11 @@ export function BalanceView({ balance, days, member }: { balance: Balance; days:
                       </TableCell>
                       <TableCell className={COLUMNS[5]?.className}>{formatCompact(row.received)}</TableCell>
                       <TableCell className={COLUMNS[6]?.className}>{formatCompact(row.part)}</TableCell>
-                      <TableCell className="min-w-24 sm:min-w-44">
+                      <TableCell className="align-top sm:min-w-44 sm:align-middle">
                         <GapBar gap={row.gap} widest={widest} />
                       </TableCell>
                       <TableCell className={COLUMNS[8]?.className}>{ratioText(row)}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <VerdictBadge verdict={row.verdict} />
                       </TableCell>
                       <TableCell className="pr-4 text-right">

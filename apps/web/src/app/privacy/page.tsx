@@ -90,13 +90,14 @@ export default function PrivacyPage() {
           la prise attendue sont chiffrées, et le site l&apos;efface 7 jours après l&apos;arrivée. L&apos;armée envoyée
           avec un flood part dans un second chiffré, que le site ne renvoie qu&apos;aux Admins de l&apos;espace :
           c&apos;est le site qui la leur réserve, pas le chiffrement, puisque tous les membres ont la même Clé
-          d&apos;alliance. Les états (production, chasses, armée, niveaux et chantiers) tiennent chacun dans une seule
-          ligne chiffrée par Joueur, avec le dernier relevé et le précédent ; le site l&apos;efface 90 jours sans nouvel
-          Envoi, ou dès que la catégorie est décochée. Le détail de l&apos;armée par unité part, comme l&apos;armée
-          d&apos;un flood, dans un second chiffré réservé aux Admins, effacé dès que le Joueur ne l&apos;envoie plus. Il
-          garde aussi les catégories que chaque Joueur envoie, montrées aux membres de l&apos;espace. Tous les membres
-          lisent les Envois de l&apos;espace (sauf ces armées détaillées, aux Admins seuls) ; un non-membre, rien. Le
-          site note qui a changé l&apos;accès à l&apos;espace et quand («&nbsp;Accès changé le … par Pseudo&nbsp;»).
+          d&apos;alliance. Les états (production et stock des entrepôts, chasses, armée, niveaux et chantiers avec la
+          capacité des entrepôts) tiennent chacun dans une seule ligne chiffrée par Joueur, avec le dernier relevé et le
+          précédent ; le site l&apos;efface 90 jours sans nouvel Envoi, ou dès que la catégorie est décochée. Le détail
+          de l&apos;armée par unité part, comme l&apos;armée d&apos;un flood, dans un second chiffré réservé aux Admins,
+          effacé dès que le Joueur ne l&apos;envoie plus. Il garde aussi les catégories que chaque Joueur envoie,
+          montrées aux membres de l&apos;espace. Tous les membres lisent les Envois de l&apos;espace (sauf ces armées
+          détaillées, aux Admins seuls) ; un non-membre, rien. Le site note qui a changé l&apos;accès à l&apos;espace et
+          quand («&nbsp;Accès changé le … par Pseudo&nbsp;»).
         </p>
         <p>
           Les Demandes&nbsp;: un membre qui envoie Production et Convois peut demander des ressources pour une

@@ -234,6 +234,26 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-11-03 (chantier 11 
 - **Dans l'onglet Demandes** : sous la Priorité de chaque demandeur, une ligne discrète sur 30 jours (la fenêtre du Solde), « Équilibre : recevoir (−2,1M) ». La Priorité reste le classement.
 - **Calcul** : dans le navigateur, à partir des Envois déjà ouverts et des TDC jour par jour des membres servis par le site (données publiques) ; fonctions pures dans `apps/web/src/lib/envois/balance.ts` (+ test), reprises par les chantiers 21 et 23.
 
+Réalisé le 2026-11-04. Décisions prises en codant :
+
+- **Le stock part avec la Production** (`packages/game/src/site-links/envoi-states.ts`) : `stock: { food, materials, at }`, lu dans l'en-tête de n'importe quelle page (`data/state-pages.ts`). Il bouge à chaque page : un relevé dont seul le stock a changé ne repart qu'une heure après le dernier stock envoyé (`STOCK_REFRESH_MS`), sans décaler le relevé précédent (les flèches de « État » comparent le reste). Les **capacités des entrepôts** partent avec Niveaux et chantiers (`capacities`, lues sur `construction.php`). Les deux sont facultatives : les Envois d'avant restent lisibles. Elles arrivent dans l'état partagé (`SharedState.stock`, `capacities`).
+- **Les TDC jour par jour** : `players.allianceDays` (tRPC, public, comme les courbes d'une fiche joueur) rend, pour les membres de l'Espace et les joueurs qu'ils colonisent, le pseudo du colonisateur et chaque jour (`PlayerDay`) le TDC et l'alliance ; 90 jours lus une fois, quelle que soit la période. Un jour absent de l'export garde le dernier connu ; qui colonise qui est celui d'aujourd'hui, appliqué à toute la période.
+- **Aujourd'hui** compte au prorata de l'heure (minuit → maintenant), pour la production comme pour la Part.
+- **Entrepôt estimé** : le stock, plus la récolte nette de taxe de l'Envoi Production (nourriture : ouvrières × 48 + champignonnière, matériaux : ouvrières × 48) au prorata du temps, moins les convois de ce membre arrivés ou en route après le relevé, plus ceux livrés à ce membre depuis. Un convoi compte par son arrivée (son départ n'est pas connu) : un convoi parti avant le relevé et arrivé après est retiré deux fois, d'où un entrepôt parfois sous-estimé.
+- **Vue** (`components/spaces/balance-view.tsx`, `use-space-balance.ts`) : à 375 px, Membre (avec le verdict dessous), Écart et le bouton de détail ; Production, Envoyés et Reçus à partir de 640 px, Entrepôt, Part et Ratio à partir de 768 px, TDC et Colonies à partir de 1 280 px ; le reste dans le détail déplié. L'écart en barre centrée (ambre à droite, bleu à gauche, signe écrit), le verdict en mot avec une flèche ou « = ».
+- **Demandes** : la ligne « Équilibre : … » sous la Priorité, sur 30 jours, lue seulement quand l'onglet a des Demandes.
+
+| Fichier                                                                                        | Rôle                                                                   |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `apps/web/src/lib/envois/balance.ts` (+ test)                                                  | Part, net, Écart, verdict, Entrepôt estimé, taux de taxe, Discord      |
+| `apps/web/src/server/api/routers/players.ts`                                                   | `allianceDays` : TDC et alliance jour par jour, colonies, colonisateur |
+| `apps/web/src/components/spaces/balance-view.tsx`, `use-space-balance.ts`, `convoys-panel.tsx` | Vue « Équilibre », lecture des TDC, choix et copie                     |
+| `apps/web/src/components/spaces/demandes-panel.tsx`                                            | Ligne sous la Priorité                                                 |
+| `packages/game/src/site-links/envoi-states.ts`, `sharing/shared-state.ts` (+ tests)            | Stock et capacités dans les Envois et l'état partagé                   |
+| `apps/extension/src/data/state-pages.ts`, `features/optizzz-account/envoi-states.ts` (+ tests) | Stock de l'en-tête, capacités de `construction.php`                    |
+
+Vérifié le 2026-11-04 avec une page de démonstration temporaire (membres et convois inventés, retirée) : un membre arrivé en cours de période, une colonie interne et une hors Espace, un membre sans « Convois », l'entrepôt borné et sans stock, le détail jour par jour ; en clair, sombre et à 375 px. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte et `allianceDays` sur une vraie base, la ligne des Demandes à l'écran, le collage dans Discord, et le stock envoyé par la vraie extension (il ne partira qu'avec sa prochaine version).
+
 ## Tickets
 
 20 (le circuit et les Convois), 21 (Floods et « floods sur nous »), 22 (Chasses, Armée, Niveaux, Production, Partage fusionné), puis les Demandes (23, 24) et Discord (25, 26).
