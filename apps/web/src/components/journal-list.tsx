@@ -2,24 +2,9 @@ import { describeChange, type Change } from "@optizzz/game/changes";
 import { formatDateTime } from "@optizzz/game/format/time-format";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { JOURNAL_GROUPS, journalGroupOf, journalTag } from "~/lib/server-stats";
+import { ChangeStamp } from "~/components/change-stamp";
+import { JOURNAL_GROUPS, journalGroupOf } from "~/lib/server-stats";
 import type { JournalLine } from "~/server/queries";
-
-// The kind's word takes a tone: blue for wars and alliances, amber for pacts and colonies, muted for a ban. The word
-// itself tells the kinds apart (ADR 0003).
-const TONES: Partial<Record<Change["kind"], string>> = {
-  war: "text-info",
-  "war-ended": "text-info",
-  alliance: "text-info",
-  joined: "text-info",
-  left: "text-info",
-  pact: "text-primary",
-  "pact-ended": "text-primary",
-  colonized: "text-primary",
-  freed: "text-primary",
-  banned: "text-muted-foreground",
-  unbanned: "text-muted-foreground",
-};
 
 /** The other names a Change speaks of: alliances lead to their sheet, players (known by name only) stand out. */
 function namesOf(change: Change): { name: string; alliance: boolean }[] {
@@ -111,17 +96,13 @@ export function JournalList({
     return <p className="p-4 text-sm text-muted-foreground">Aucun changement noté depuis le premier relevé du site.</p>;
   const aside = timed || grouped;
   return (
-    <ul className="divide-y text-sm">
+    <ul className="divide-y divide-dashed text-sm">
       {lines.map((line) => (
         <li
           key={line.id}
-          className={`grid grid-cols-[5.25rem_minmax(0,1fr)] gap-x-2 gap-y-0.5 px-4 py-2 ${aside ? "sm:grid-cols-[5.25rem_minmax(0,1fr)_auto]" : ""}`}
+          className={`grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-0.5 px-4.5 py-2 ${aside ? "sm:grid-cols-[6.5rem_minmax(0,1fr)_auto]" : ""}`}
         >
-          <span
-            className={`pt-0.5 font-mono text-[0.6875rem] tracking-wide uppercase ${TONES[line.change.kind] ?? "text-foreground"}`}
-          >
-            {journalTag(line.change)}
-          </span>
+          <ChangeStamp change={line.change} />
           <span>
             {named && (
               <>

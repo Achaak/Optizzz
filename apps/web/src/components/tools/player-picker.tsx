@@ -33,11 +33,11 @@ export interface PickedPlayer {
 export function ServerSelect({ value, onChange }: { value: string | null; onChange: (server: string | null) => void }) {
   return (
     <label className="block space-y-1 text-sm">
-      <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">Serveur</span>
+      <span className="block text-xs text-muted-foreground font-medium">Serveur</span>
       <select
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value || null)}
-        className="block h-8 w-full max-w-80 border border-input bg-background px-2 text-sm"
+        className="block h-8 w-full max-w-80 border border-input bg-background px-2 text-sm rounded-lg"
       >
         <option value="">Aucun (positions seulement)</option>
         {SERVERS.map((server) => (
@@ -77,7 +77,11 @@ export function ChoiceButtons<Value extends string>({
   onChange: (value: Value) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap border bg-card">
+    <div
+      role="group"
+      aria-label={label}
+      className="inline-flex max-w-full flex-wrap gap-0.5 rounded-full bg-raised p-[3px]"
+    >
       {options.map((option) => {
         const chosen = value === option.value;
         return (
@@ -87,7 +91,7 @@ export function ChoiceButtons<Value extends string>({
             aria-pressed={chosen}
             onClick={() => onChange(option.value)}
             className={cn(
-              "h-8 border-r px-3 text-sm whitespace-nowrap last:border-r-0",
+              "h-8 rounded-full px-3 text-sm whitespace-nowrap",
               chosen ? "bg-primary font-semibold text-primary-foreground" : "hover:bg-accent",
             )}
           >
@@ -130,9 +134,7 @@ export function PlayerPicker({
 
   return (
     <fieldset className="min-w-0 space-y-2">
-      <legend className="mb-1 font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
-        {label}
-      </legend>
+      <legend className="mb-1 text-xs text-muted-foreground font-medium">{label}</legend>
       {server && (
         <ChoiceButtons
           label={`${label} : joueur ou position`}
@@ -148,9 +150,7 @@ export function PlayerPicker({
         <div className="flex flex-wrap gap-3">
           {(["x", "y"] as const).map((axis) => (
             <label key={axis} className="space-y-1 text-sm">
-              <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
-                {axis}
-              </span>
+              <span className="block text-xs text-muted-foreground font-medium">{axis}</span>
               <NumberField
                 value={position[axis]}
                 rules={{ min: 0, integer: true, allowEmpty: true }}
@@ -215,7 +215,7 @@ function PlayerSearch({
       {results.length > 0 && (
         <ul
           id={listId}
-          className="absolute right-0 left-0 z-10 mt-1 overflow-hidden border bg-popover text-sm shadow-md"
+          className="absolute right-0 left-0 z-10 mt-1 overflow-hidden border bg-popover text-sm shadow-md rounded-lg"
         >
           {results.map((player) => (
             <li key={player.id}>
@@ -232,7 +232,7 @@ function PlayerSearch({
         </ul>
       )}
       {none && (
-        <p className="absolute right-0 left-0 z-10 mt-1 border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
+        <p className="absolute right-0 left-0 z-10 mt-1 border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md rounded-lg">
           Aucun joueur ne commence par « {query} ».
         </p>
       )}

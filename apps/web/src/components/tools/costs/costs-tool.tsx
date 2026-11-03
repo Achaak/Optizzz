@@ -9,7 +9,7 @@ import { BUILDINGS, RESEARCH } from "@optizzz/game/levels";
 import { cn } from "cn";
 import { useId } from "react";
 import { NumberField } from "~/components/number-field";
-import { MonoLabel, Panel } from "~/components/panel";
+import { SmallLabel, Panel } from "~/components/panel";
 import { CopyLinkButton } from "../copy-link-button";
 import { pickLevels } from "../my-levels";
 import { InvalidLinkNote, ToolLayout, Verdict } from "../tool-page";
@@ -58,7 +58,7 @@ const summedOf = (resources: Resource[]) => resources.filter((resource) => resou
 const sum = (cost: Record<Resource, number>, resources: Resource[]) =>
   resources.reduce((total, resource) => total + cost[resource], 0);
 
-const FIELD_LABEL = "flex flex-col gap-1 font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase";
+const FIELD_LABEL = "flex flex-col gap-1 text-xs text-muted-foreground font-medium";
 
 export function CostsTool() {
   const tool = useToolState<CostsState>({
@@ -103,7 +103,7 @@ export function CostsTool() {
                   const element = event.target.value as LevelKey;
                   change((current) => ({ ...current, element }));
                 }}
-                className="h-9 w-full border border-input bg-background px-2.5 font-sans text-sm tracking-normal text-foreground normal-case"
+                className="h-9 w-full border border-input bg-background px-2.5 font-sans text-sm tracking-normal text-foreground normal-case rounded-lg"
               >
                 {kind.list.map(({ key, name }) => (
                   <option key={key} value={key}>
@@ -201,7 +201,11 @@ function Segmented<Value extends string>({
   onChange: (value: Value) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap border bg-card">
+    <div
+      role="group"
+      aria-label={label}
+      className="inline-flex max-w-full flex-wrap gap-0.5 rounded-full bg-raised p-[3px]"
+    >
       {options.map((option) => {
         const chosen = value === option.value;
         return (
@@ -211,7 +215,7 @@ function Segmented<Value extends string>({
             aria-pressed={chosen}
             onClick={() => onChange(option.value)}
             className={cn(
-              "h-9 border-r px-3 text-sm last:border-r-0",
+              "h-8 rounded-full px-3 text-sm",
               chosen ? "bg-primary font-semibold text-primary-foreground" : "hover:bg-accent",
             )}
           >
@@ -260,7 +264,7 @@ function Report({
                 index >= 2 && "border-t",
               )}
             >
-              <MonoLabel className={RESOURCE_TONES[resource]}>{RESOURCE_LABELS[resource]}</MonoLabel>
+              <SmallLabel className={RESOURCE_TONES[resource]}>{RESOURCE_LABELS[resource]}</SmallLabel>
               <div className="font-mono text-2xl [overflow-wrap:anywhere]">
                 {formatNumber(plan.total.cost[resource])}
               </div>
@@ -292,7 +296,7 @@ function Report({
   );
 }
 
-const HEAD = "px-1 py-2 text-right font-mono text-[0.6875rem] font-medium tracking-wide whitespace-nowrap uppercase";
+const HEAD = "px-1 py-2 text-right text-xs font-medium whitespace-nowrap";
 const CELL = "px-1 py-1.5 text-right font-mono whitespace-nowrap tabular-nums";
 
 function Detail({

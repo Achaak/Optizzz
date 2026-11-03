@@ -44,18 +44,16 @@ export function ServerPicker() {
   return (
     <Menu.Root>
       <Menu.Trigger
-        className={`flex shrink-0 items-center gap-1.5 px-2 hover:bg-accent sm:gap-2 sm:px-3 data-popup-open:bg-accent ${onServerPage ? "bg-accent" : ""}`}
+        className={`flex h-10 shrink-0 items-center gap-1.5 self-center rounded-full border px-2.5 hover:bg-accent sm:gap-2 sm:px-3 data-popup-open:bg-accent ${onServerPage ? "border-primary bg-accent" : "bg-background"}`}
         aria-label={server ? `Serveur ${server.name}, changer de serveur` : "Choisir un serveur"}
       >
-        <span className="hidden font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase sm:inline">
-          Serveur
-        </span>
+        <span className="hidden text-[0.8125rem] text-muted-foreground sm:inline">Serveur</span>
         <span className="font-heading text-xl font-bold text-primary">{server?.name ?? "—"}</span>
         <ChevronDownIcon />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner sideOffset={4} align="start" className="z-50 outline-hidden">
-          <Menu.Popup className="min-w-40 border bg-popover py-1 text-popover-foreground shadow-lg outline-hidden">
+          <Menu.Popup className="min-w-40 rounded-lg bg-popover py-1 text-popover-foreground shadow-panel-hover outline-hidden">
             {SERVERS.map((each) => (
               <Menu.LinkItem
                 key={each.id}

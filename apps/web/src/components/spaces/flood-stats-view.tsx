@@ -282,7 +282,7 @@ function MembersPanel({ rows, now }: { rows: MemberRow[]; now: Date }) {
             {sending.map((row) => (
               <TableRow key={row.player}>
                 <TableCell className="pl-4 font-semibold">{row.player}</TableCell>
-                <TableCell className="text-right font-mono">{formatNumber(row.count)}</TableCell>
+                <TableCell className="text-right">{formatNumber(row.count)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <div aria-hidden className="h-2 min-w-20 flex-1 bg-muted">
@@ -291,10 +291,8 @@ function MembersPanel({ rows, now }: { rows: MemberRow[]; now: Date }) {
                     <span className="min-w-16 text-right font-mono">{takeText(row.take, row.withoutPlan)}</span>
                   </div>
                 </TableCell>
-                <TableCell className="hidden text-right font-mono sm:table-cell">{formatNumber(row.targets)}</TableCell>
-                <TableCell className="text-right font-mono">
-                  {row.onWay === 0 ? "—" : formatNumber(row.onWay)}
-                </TableCell>
+                <TableCell className="hidden text-right sm:table-cell">{formatNumber(row.targets)}</TableCell>
+                <TableCell className="text-right">{row.onWay === 0 ? "—" : formatNumber(row.onWay)}</TableCell>
                 <TableCell className="hidden whitespace-nowrap sm:table-cell">
                   {row.last === null ? "—" : formatPastTime(new Date(row.last), now)}
                 </TableCell>

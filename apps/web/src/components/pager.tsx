@@ -25,7 +25,7 @@ export function Pager({
       ) : (
         <span />
       )}
-      <span className="font-mono text-xs text-muted-foreground">
+      <span className="text-xs text-muted-foreground">
         Page {page} sur {pages}
       </span>
       {page < pages ? (

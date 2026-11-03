@@ -152,7 +152,7 @@ export function PassagePanel({
           <select
             value={choice.member ?? ""}
             onChange={(event) => onChange({ member: event.target.value || null })}
-            className="block h-9 min-w-44 border bg-background px-2 text-sm"
+            className="block h-9 min-w-44 border bg-background px-2 text-sm rounded-lg"
           >
             <option value="">Vous ({me})</option>
             {inChain
@@ -269,7 +269,7 @@ export function PassagePanel({
                       href={`${origin}/ennemie.php?Attaquer=${String(launch.targetId)}&lieu=1`}
                       target="_blank"
                       rel="noreferrer"
-                      className="col-start-2 inline-flex h-9 items-center justify-center bg-primary px-3.5 font-semibold text-primary-foreground hover:opacity-90 sm:col-start-3 sm:row-start-1"
+                      className="col-start-2 inline-flex h-9 items-center justify-center bg-primary px-3.5 font-semibold text-primary-foreground hover:opacity-90 sm:col-start-3 sm:row-start-1 rounded-lg"
                     >
                       Attaquer dans le jeu
                     </a>
@@ -341,7 +341,7 @@ export function PassagePanel({
                           <div className="font-semibold">{m.pseudo}</div>
                           <div className="text-xs text-muted-foreground">{roleLabel(roleOf(m.id))}</div>
                         </TableCell>
-                        <TableCell className="text-right font-mono">
+                        <TableCell className="text-right">
                           {formatNumber(fieldNow)}
                           {source && (
                             <div className="text-[0.6875rem] text-muted-foreground">
@@ -350,7 +350,7 @@ export function PassagePanel({
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="pr-4 text-right font-mono whitespace-nowrap">
+                        <TableCell className="pr-4 text-right whitespace-nowrap">
                           {fieldLater > fieldNow ? "▲ " : fieldLater < fieldNow ? "▼ " : ""}
                           {formatNumber(fieldLater)}
                         </TableCell>
@@ -440,14 +440,12 @@ function QueueTables({
               const state = flood ? floodState(flood) : null;
               return (
                 <TableRow key={`${String(at)}-${flood?.from ?? String(launch?.n)}`}>
-                  <TableCell className="pl-4 font-mono whitespace-nowrap">
-                    {formatEndTimeShort(new Date(at), now)}
-                  </TableCell>
+                  <TableCell className="pl-4 whitespace-nowrap">{formatEndTimeShort(new Date(at), now)}</TableCell>
                   <TableCell className="font-semibold">{flood ? flood.from : name(launch?.attackerId ?? 0)}</TableCell>
-                  <TableCell className={cn("text-right font-mono", fails && "line-through")}>
+                  <TableCell className={cn("text-right", fails && "line-through")}>
                     {formatNumber(flood ? flood.expected : (launch?.take ?? 0))}
                   </TableCell>
-                  <TableCell className="hidden font-mono whitespace-nowrap sm:table-cell">
+                  <TableCell className="hidden whitespace-nowrap sm:table-cell">
                     {flood
                       ? `${formatNumber(flood.targetBefore)} → ${formatNumber(flood.targetAfter)}`
                       : `${formatNumber(launch?.targetBefore ?? 0)} → ${formatNumber(launch?.targetAfter ?? 0)}`}

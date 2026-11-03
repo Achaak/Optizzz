@@ -129,7 +129,7 @@ export function DeleteAccount({ email }: { email: string }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && (
-          <p role="alert" className="border border-destructive/60 bg-destructive/10 p-3 text-sm">
+          <p role="alert" className="border border-destructive/60 bg-destructive/10 p-3 text-sm rounded-[0.625rem]">
             {error}
           </p>
         )}

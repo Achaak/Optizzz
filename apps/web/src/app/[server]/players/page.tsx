@@ -26,11 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 function PlayerStates({ colonized, holiday, banned }: { colonized: boolean; holiday: boolean; banned: boolean }) {
   const states = [colonized && "Colonisé", holiday && "Vacances", banned && "Banni"].filter(Boolean);
   if (states.length === 0) return null;
-  return (
-    <span className="font-mono text-[0.6875rem] tracking-wider text-muted-foreground uppercase">
-      {states.join(" · ")}
-    </span>
-  );
+  return <span className="text-xs text-muted-foreground font-medium">{states.join(" · ")}</span>;
 }
 
 export default async function PlayersPage({ params, searchParams }: Props) {
@@ -53,7 +49,7 @@ export default async function PlayersPage({ params, searchParams }: Props) {
       <PageHeader kicker={`Serveur ${server.name}`} title={`Joueurs de ${server.name}`}>
         Tous les joueurs du serveur, triables par score. Relus chaque heure depuis l&apos;export public.
       </PageHeader>
-      <div className="border bg-card">
+      <div className="overflow-hidden rounded-[0.875rem] bg-card shadow-panel">
         <FilterBar
           action={path}
           count={total === 0 ? "Aucun joueur" : `${formatNumber(total)} ${total > 1 ? "joueurs" : "joueur"}`}
@@ -83,7 +79,7 @@ export default async function PlayersPage({ params, searchParams }: Props) {
             <TableBody>
               {players.map((player, index) => (
                 <TableRow key={player.id}>
-                  <TableCell className="pl-4 font-mono text-primary">
+                  <TableCell className="pl-4 text-primary">
                     {String((page - 1) * PAGE_SIZE + index + 1).padStart(2, "0")}
                   </TableCell>
                   <TableCell>
@@ -103,16 +99,14 @@ export default async function PlayersPage({ params, searchParams }: Props) {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right font-mono">{formatNumber(player.field)}</TableCell>
-                  <TableCell className="hidden text-right font-mono md:table-cell">
+                  <TableCell className="text-right">{formatNumber(player.field)}</TableCell>
+                  <TableCell className="hidden text-right md:table-cell">
                     {formatNumber(player.buildingScore)}
                   </TableCell>
-                  <TableCell className="hidden text-right font-mono md:table-cell">
+                  <TableCell className="hidden text-right md:table-cell">
                     {formatNumber(player.technologyScore)}
                   </TableCell>
-                  <TableCell className="hidden text-right font-mono lg:table-cell">
-                    {formatNumber(player.trophyScore)}
-                  </TableCell>
+                  <TableCell className="hidden text-right lg:table-cell">{formatNumber(player.trophyScore)}</TableCell>
                   <TableCell className="hidden pr-4 sm:table-cell">
                     <PlayerStates
                       colonized={player.masterId !== null}

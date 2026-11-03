@@ -19,8 +19,7 @@ import { AlertList, alertsTitle } from "./alerts";
 export const metadata: Metadata = { robots: { index: false } };
 
 /** Column heads in small mono capitals, as on « Votre compte ». */
-const HEAD =
-  "[&_th]:h-auto [&_th]:py-2 [&_th]:font-mono [&_th]:text-[0.6875rem] [&_th]:font-medium [&_th]:tracking-widest [&_th]:text-muted-foreground [&_th]:uppercase";
+const HEAD = "[&_th]:h-auto [&_th]:py-2 [&_th]:text-xs [&_th]:font-medium [&_th]:text-muted-foreground";
 const ROW = "grid grid-cols-[repeat(auto-fit,minmax(min(480px,100%),1fr))] gap-5";
 const DAY = 24 * 60 * 60_000;
 /** Days of the new accounts' chart. */
@@ -159,10 +158,8 @@ export default async function AdminOverviewPage() {
                 {SERVERS.map((server) => (
                   <TableRow key={server.id}>
                     <TableCell className="pl-4 font-heading text-lg font-bold">{server.name}</TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(byServer(players, server.id))}</TableCell>
-                    <TableCell className="pr-4 text-right font-mono">
-                      {formatNumber(byServer(spaces, server.id))}
-                    </TableCell>
+                    <TableCell className="text-right">{formatNumber(byServer(players, server.id))}</TableCell>
+                    <TableCell className="pr-4 text-right">{formatNumber(byServer(spaces, server.id))}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

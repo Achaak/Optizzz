@@ -65,9 +65,23 @@ export function ScoreChart({
           dataKey="value"
           type="linear"
           stroke="var(--color-value)"
-          strokeWidth={2.5}
+          strokeWidth={1.5}
+          strokeOpacity={0.5}
           fill={reversed ? "none" : `url(#${id})`}
           dot={false}
+          isAnimationActive={false}
+        />
+        {/* The ant trail along the one curve: a chart with several series keeps its lines as drawn (Comparer). */}
+        <Area
+          dataKey="value"
+          type="linear"
+          stroke="var(--color-value)"
+          strokeWidth={4}
+          fill="none"
+          className="ant-trail"
+          dot={false}
+          activeDot={false}
+          tooltipType="none"
           isAnimationActive={false}
         />
       </AreaChart>

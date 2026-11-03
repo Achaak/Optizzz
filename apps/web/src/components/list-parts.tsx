@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { MonoLabel } from "~/components/panel";
+import { SmallLabel } from "~/components/panel";
 import { TableHead } from "~/components/ui/table";
 
 // The pieces of the players' and alliances' lists: a filter bar, column heads that sort, the page links.
@@ -56,11 +56,11 @@ export function FilterBar({ action, children, count }: { action: string; childre
       {children}
       <button
         type="submit"
-        className="h-9 bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/85"
+        className="h-9 bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/85 rounded-lg"
       >
         Filtrer
       </button>
-      <MonoLabel className="ml-auto self-center">{count}</MonoLabel>
+      <SmallLabel className="ml-auto self-center">{count}</SmallLabel>
     </form>
   );
 }
@@ -69,7 +69,7 @@ export function FilterBar({ action, children, count }: { action: string; childre
 export function FilterField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="space-y-1">
-      <MonoLabel className="block">{label}</MonoLabel>
+      <SmallLabel className="block">{label}</SmallLabel>
       {children}
     </label>
   );
@@ -91,16 +91,15 @@ export function ChoiceLinks<T extends string>({
 }) {
   return (
     <nav aria-label={label} className="flex flex-wrap items-center gap-2">
-      <MonoLabel>{label}</MonoLabel>
-      <div className="flex flex-wrap border bg-card">
-        {choices.map((choice, index) => (
+      <SmallLabel>{label}</SmallLabel>
+      <div className="flex flex-wrap gap-0.5 rounded-full bg-raised p-[3px]">
+        {choices.map((choice) => (
           <Link
             key={choice}
             href={href(choice)}
             aria-current={choice === current ? "true" : undefined}
             className={cn(
-              "px-3 py-1.5 text-sm",
-              index > 0 && "border-l",
+              "rounded-full px-3 py-1.5 text-sm",
               choice === current
                 ? "bg-primary font-semibold text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground",

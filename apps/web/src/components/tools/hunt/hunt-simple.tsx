@@ -17,7 +17,7 @@ import {
   splitText,
 } from "@optizzz/game/hunt/texts";
 import { cn } from "cn";
-import { MonoLabel } from "~/components/panel";
+import { SmallLabel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { Verdict } from "../tool-page";
 import { Check, Note, Segmented, Warning } from "./hunt-parts";
@@ -40,7 +40,7 @@ export function SimpleChoice({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <MonoLabel>Type de chasse</MonoLabel>
+        <SmallLabel>Type de chasse</SmallLabel>
         <Segmented
           label="Type de chasse"
           value={preset}
@@ -164,9 +164,9 @@ function Figure({
 }) {
   return (
     <div className="min-w-0 border-b px-4 py-3.5 odd:border-r [&:nth-last-child(-n+2)]:border-b-0">
-      <MonoLabel className={cn(tone === "primary" && "text-primary", tone === "info" && "text-info")}>
+      <SmallLabel className={cn(tone === "primary" && "text-primary", tone === "info" && "text-info")}>
         {label}
-      </MonoLabel>
+      </SmallLabel>
       <div className="font-mono text-xl leading-tight break-words sm:text-[1.375rem]">{value}</div>
       <div className="text-xs text-muted-foreground">{note}</div>
     </div>

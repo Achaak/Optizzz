@@ -6,7 +6,7 @@ import { formatEndTime, formatEndTimeShort, parisParts } from "@optizzz/game/for
 import { distance } from "@optizzz/game/travel";
 import { useState, useSyncExternalStore } from "react";
 import { NumberField } from "~/components/number-field";
-import { MonoLabel, Panel } from "~/components/panel";
+import { SmallLabel, Panel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { CopyLinkButton } from "../copy-link-button";
@@ -108,14 +108,14 @@ export function TravelTool() {
               onChange={(to) => change((current) => ({ ...current, to }))}
             />
             <div className="space-y-1 text-sm">
-              <MonoLabel className="block">Distance</MonoLabel>
-              <output className="flex h-8 items-center border bg-background px-2.5 font-mono">
+              <SmallLabel className="block">Distance</SmallLabel>
+              <output className="flex h-8 items-center border bg-background px-2.5 font-mono rounded-lg">
                 {from && to ? `${String(Math.ceil(distance(from, to)))} cases` : "—"}
               </output>
               <span className="block text-xs text-muted-foreground">calculée depuis les positions</span>
             </div>
             <label className="block space-y-1 text-sm">
-              <MonoLabel className="block">Vitesse d&apos;attaque de l&apos;expéditeur</MonoLabel>
+              <SmallLabel className="block">Vitesse d&apos;attaque de l&apos;expéditeur</SmallLabel>
               <NumberField
                 value={state.attackSpeed}
                 rules={{ min: 0, max: 1000, integer: true, allowEmpty: true }}
@@ -128,7 +128,7 @@ export function TravelTool() {
       <Panel title="Départ" aside={<span className="text-xs text-muted-foreground">heure de Paris</span>}>
         <Departure state={state} now={now} onChange={(departure) => change((current) => ({ ...current, departure }))} />
       </Panel>
-      <p className="border bg-info-soft px-3.5 py-2.5 text-[0.8125rem]">
+      <p className="bg-info-soft px-3.5 py-2.5 text-[0.8125rem] rounded-[0.625rem]">
         Même temps pour une attaque et pour un convoi.
       </p>
     </>
@@ -187,7 +187,7 @@ function Departure({
       />
       {fixed && (
         <label className="block space-y-1 text-sm">
-          <MonoLabel className="block">Départ souhaité</MonoLabel>
+          <SmallLabel className="block">Départ souhaité</SmallLabel>
           <Input
             type="datetime-local"
             value={state.departure ?? ""}
@@ -274,12 +274,12 @@ function Timeline({ departure, arrival, label }: { departure: string; arrival: s
       <figcaption className="mb-2.5 font-heading text-lg tracking-wide uppercase">Frise</figcaption>
       <div role="img" aria-label={label} className="space-y-1.5">
         <div className="text-right">
-          <MonoLabel className="block text-primary">Arrivée</MonoLabel>
+          <SmallLabel className="block text-primary">Arrivée</SmallLabel>
           <div className="font-mono text-[0.9375rem]">{arrival}</div>
         </div>
         <div className="h-2.5 bg-primary" />
         <div>
-          <MonoLabel className="block">Départ</MonoLabel>
+          <SmallLabel className="block">Départ</SmallLabel>
           <div className="font-mono text-[0.9375rem]">{departure}</div>
         </div>
       </div>
@@ -291,7 +291,7 @@ function Timeline({ departure, arrival, label }: { departure: string; arrival: s
 function Figure({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 px-4 py-3.5 first:border-r">
-      <MonoLabel className="block">{label}</MonoLabel>
+      <SmallLabel className="block">{label}</SmallLabel>
       <div className="font-mono text-[1.375rem] leading-tight break-words">{value}</div>
     </div>
   );

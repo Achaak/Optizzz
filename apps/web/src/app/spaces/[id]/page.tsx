@@ -36,7 +36,7 @@ export default async function SpaceRoute({ params }: { params: Promise<{ id: str
         </p>
       </div>
       <StepBar current={0} />
-      <section className="space-y-3 border bg-card p-4 text-sm">
+      <section className="space-y-3 rounded-[0.875rem] bg-card p-4.5 text-sm shadow-panel">
         <p>
           Connectez-vous à votre Compte Optizzz, avec votre seule adresse e-mail&nbsp;: vous reviendrez ici pour la
           suite.

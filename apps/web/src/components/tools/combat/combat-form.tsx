@@ -69,9 +69,7 @@ function Levels<Key extends string>({
     <div className="grid grid-cols-2 gap-2.5 border-b px-4 py-3.5">
       {fields.map((field) => (
         <label key={field.key} className="space-y-1 text-sm">
-          <span className="block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
-            {field.label}
-          </span>
+          <span className="block text-xs text-muted-foreground font-medium">{field.label}</span>
           <CountField
             label={field.label}
             value={values[field.key]}
@@ -108,7 +106,7 @@ export function Paste({
         rows={2}
         value={text}
         onChange={(event) => setText(event.target.value)}
-        className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+        className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30 rounded-lg"
       />
       <div className="flex flex-wrap items-center gap-2">
         {extra}
@@ -186,7 +184,7 @@ function SideCard({
     <section
       aria-labelledby={titleId}
       className={cn(
-        "flex min-w-0 flex-col border border-t-3 bg-card text-card-foreground",
+        "flex min-w-0 flex-col border-t-3 bg-card text-card-foreground rounded-[0.875rem] shadow-panel",
         attack ? "border-t-primary" : "border-t-info",
       )}
     >
@@ -346,7 +344,7 @@ export function DefenderSide({
                   <span
                     key={place}
                     role="columnheader"
-                    className="text-right font-mono text-[0.6875rem] leading-tight tracking-wider break-words text-muted-foreground uppercase"
+                    className="text-right text-xs leading-tight break-words text-muted-foreground font-medium"
                   >
                     {PLACE_LABELS[place]}
                   </span>
@@ -399,7 +397,7 @@ export function DefenderSide({
                 <select
                   value={pastePlace}
                   onChange={(event) => setPastePlace(event.target.value as Place)}
-                  className="h-8 border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+                  className="h-8 border border-input bg-transparent px-2 text-sm dark:bg-input/30 rounded-lg"
                 >
                   {places.map((place) => (
                     <option key={place} value={place}>

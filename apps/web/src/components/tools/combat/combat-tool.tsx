@@ -11,7 +11,7 @@ import { CopyLinkButton } from "../copy-link-button";
 import type { MyLevelKey } from "../my-levels";
 import { InvalidLinkNote, ToolLayout, ToolNote } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
-import { MonoLabel } from "~/components/panel";
+import { SmallLabel } from "~/components/panel";
 import { Segmented } from "../hunt/hunt-parts";
 import { useToolState } from "../use-tool-state";
 import { chooseMySide, SIDE_LEVELS, withLevels } from "./combat-levels";
@@ -39,7 +39,7 @@ function Choice<Value extends string>({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <MonoLabel>{legend}</MonoLabel>
+      <SmallLabel>{legend}</SmallLabel>
       <Segmented label={legend} options={options} value={value} onChange={onChange} />
     </div>
   );

@@ -34,7 +34,7 @@ export function LinkStatus({ email }: { email: string }) {
   }, []);
 
   return (
-    <div role="status" className="space-y-3 border bg-card p-4 text-sm">
+    <div role="status" className="space-y-3 rounded-[0.875rem] bg-card p-4.5 text-sm shadow-panel">
       <p className="text-muted-foreground">
         Compte&nbsp;: <span className="break-all text-foreground">{email}</span>
       </p>

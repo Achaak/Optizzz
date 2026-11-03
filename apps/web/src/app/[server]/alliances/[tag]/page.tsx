@@ -8,9 +8,10 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { AdSlot } from "~/components/ad-slot";
 import { ValueBars } from "~/components/bars";
 import { PlusIcon } from "~/components/icons";
+import { AllianceCrest } from "~/components/alliance-crest";
 import { JournalList } from "~/components/journal-list";
 import { MembersTable, type MemberRow } from "~/components/members-table";
-import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
+import { SmallLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
 import { ScoreChart } from "~/components/score-chart";
 import { Stat, StatGrid } from "~/components/stat";
 import { CopyLinkButton } from "~/components/tools/copy-link-button";
@@ -86,7 +87,12 @@ export default async function AlliancePage({ params }: Props) {
     <div className="space-y-6">
       <PageHeader
         kicker={`Alliance · ${server.name}`}
-        title={alliance.name.trim() ? `${alliance.tag} · ${alliance.name.trim()}` : alliance.tag}
+        title={
+          <span className="inline-flex items-center gap-4">
+            <AllianceCrest tag={alliance.tag} size="lg" />
+            {alliance.name.trim() ? `${alliance.tag} · ${alliance.name.trim()}` : alliance.tag}
+          </span>
+        }
         actions={
           <>
             <Link href={`/${server.id}/map?alliance=${encodeURIComponent(alliance.tag)}`} className={outline}>
@@ -138,7 +144,7 @@ export default async function AlliancePage({ params }: Props) {
             <div className="space-y-3 text-sm">
               {diplomacy.pacts.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <MonoLabel className="w-20">Pactes</MonoLabel>
+                  <SmallLabel className="w-20">Pactes</SmallLabel>
                   {diplomacy.pacts.map((pact, index) => {
                     const kind = pact.name.trim();
                     return (
@@ -162,7 +168,7 @@ export default async function AlliancePage({ params }: Props) {
               )}
               {diplomacy.wars.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <MonoLabel className="w-20">Guerres</MonoLabel>
+                  <SmallLabel className="w-20">Guerres</SmallLabel>
                   {diplomacy.wars.map((war, index) => (
                     <Link
                       key={`${war}-${String(index)}`}

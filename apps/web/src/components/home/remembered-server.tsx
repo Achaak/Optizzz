@@ -24,7 +24,7 @@ export function ServerRow({ id, name, players }: { id: string; name: string; pla
       <TableCell className={`py-2.5 pl-4 font-heading text-[1.375rem] font-bold ${yours ? "text-primary" : ""}`}>
         {name}
       </TableCell>
-      <TableCell className="px-2 text-right font-mono text-[0.9375rem] sm:px-4">
+      <TableCell className="px-2 text-right text-[0.9375rem] sm:px-4">
         {players === null ? <span className="text-muted-foreground">—</span> : formatNumber(players)}
       </TableCell>
       <TableCell className={`px-4 text-[0.9375rem] whitespace-normal ${yours ? "" : "text-muted-foreground"}`}>

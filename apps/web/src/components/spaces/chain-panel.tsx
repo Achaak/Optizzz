@@ -503,7 +503,7 @@ function ChainEditor({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase">
+              <tr className="text-xs text-muted-foreground font-medium">
                 <th scope="col" className="px-4 py-2 text-left font-medium">
                   Membre
                 </th>
@@ -532,11 +532,7 @@ function ChainEditor({
             {[...groups.values()].map((group) => (
               <tbody key={roleKey(group.role)}>
                 <tr className="border-t bg-muted">
-                  <th
-                    scope="rowgroup"
-                    colSpan={5}
-                    className="px-4 py-1.5 text-left font-mono text-[0.6875rem] tracking-widest uppercase"
-                  >
+                  <th scope="rowgroup" colSpan={5} className="px-4 py-1.5 text-left text-xs font-medium">
                     <span className="inline-flex items-center gap-2">
                       <RoleShape role={group.role} />
                       {roleLabel(group.role)}
@@ -567,7 +563,7 @@ function ChainEditor({
                           </span>
                         )}
                         {record && newcomers.includes(member.id) && (
-                          <span className="ml-2 border border-warning-border bg-warning-soft px-1.5 font-mono text-[0.6875rem] font-normal">
+                          <span className="ml-2 border border-warning-border bg-warning-soft px-1.5 font-mono text-[0.6875rem] font-normal rounded-[0.625rem]">
                             arrivé depuis
                           </span>
                         )}
@@ -685,7 +681,7 @@ function ChainEditor({
       )}
 
       {canEdit && (
-        <details className="border bg-card p-4">
+        <details className="rounded-[0.875rem] bg-card p-4.5 shadow-panel">
           <summary className="cursor-pointer font-medium">Importer un texte</summary>
           <div className="mt-3 space-y-2">
             <label htmlFor="chain-import" className={FIELD_LABEL}>
@@ -698,7 +694,7 @@ function ChainEditor({
               value={text}
               onChange={(event) => setText(event.target.value)}
               placeholder={"Noctis: Grenier 1\nOkapi: Passeur 1\nZeph: Chasseur"}
-              className="block w-full border bg-background p-2 font-mono text-sm"
+              className="block w-full rounded-lg border bg-background p-2 font-mono text-sm"
             />
             <Button variant="outline" disabled={!text.trim()} onClick={importText}>
               Importer
@@ -708,7 +704,7 @@ function ChainEditor({
       )}
 
       {canEdit && pending && (
-        <div className="sticky bottom-0 flex flex-wrap items-center gap-x-3 gap-y-2 border border-primary bg-card px-4 py-2.5">
+        <div className="sticky bottom-0 flex flex-wrap items-center gap-x-3 gap-y-2 border border-primary bg-card px-4 py-2.5 rounded-xl shadow-panel-hover">
           <span className="font-semibold">
             {changes.length === 0
               ? "Rôles proposés, pas encore enregistrés"
@@ -777,7 +773,7 @@ function KeepField({
         if (field === undefined) setText(value === null ? "" : formatNumber(value));
         else onCommit(field);
       }}
-      className="h-8 w-32 border bg-background px-2 text-right font-mono tabular-nums"
+      className="h-8 w-32 border bg-background px-2 text-right font-mono tabular-nums rounded-lg"
     />
   );
 }

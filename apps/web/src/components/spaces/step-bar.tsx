@@ -22,7 +22,7 @@ export function StepBar({ current }: { current: number }) {
             key={label}
             aria-current={state === "current" ? "step" : undefined}
             className={cn(
-              "flex items-center gap-2 border px-3 py-2",
+              "flex items-center gap-2 border px-3 py-2 rounded-lg",
               state === "current" ? "border-primary bg-accent font-semibold" : "bg-card",
               state === "todo" && "text-muted-foreground",
             )}

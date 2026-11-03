@@ -14,7 +14,10 @@ export function Histogram({ bars, label }: { bars: { label: string; value: numbe
         {bars.map((bar) => (
           <div key={bar.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
             <span className="font-mono text-[0.625rem] whitespace-nowrap sm:text-xs">{formatNumber(bar.value)}</span>
-            <div className="w-full bg-chart-1" style={{ height: `${String((bar.value / max) * 85)}%` }} />
+            <div
+              className="w-full rounded-t-md rounded-b-xs bg-chart-1"
+              style={{ height: `${String((bar.value / max) * 85)}%` }}
+            />
           </div>
         ))}
       </div>
@@ -54,7 +57,7 @@ export function ValueBars({ rows, tone = "blue" }: { rows: BarRow[]; tone?: "amb
           )}
           <div
             aria-hidden
-            className={`h-3.5 ${tone === "amber" ? "bg-chart-1" : "bg-chart-2"}`}
+            className={`h-3 rounded-full ${tone === "amber" ? "bg-chart-1" : "bg-chart-2"}`}
             style={{ width: `${String((row.value / max) * 100)}%` }}
           />
           <span className="text-right font-mono">{row.text}</span>

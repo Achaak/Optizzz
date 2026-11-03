@@ -52,7 +52,7 @@ export default async function AlliancesPage({ params, searchParams }: Props) {
       <PageHeader kicker={`Serveur ${server.name}`} title={`Alliances de ${server.name}`}>
         Toutes les alliances du serveur, triables par score. Relues chaque heure depuis l&apos;export public.
       </PageHeader>
-      <div className="border bg-card">
+      <div className="overflow-hidden rounded-[0.875rem] bg-card shadow-panel">
         <FilterBar
           action={path}
           count={total === 0 ? "Aucune alliance" : `${formatNumber(total)} ${total > 1 ? "alliances" : "alliance"}`}
@@ -78,7 +78,7 @@ export default async function AlliancesPage({ params, searchParams }: Props) {
             <TableBody>
               {alliances.map((alliance, index) => (
                 <TableRow key={alliance.tag}>
-                  <TableCell className="pl-4 font-mono text-primary">
+                  <TableCell className="pl-4 text-primary">
                     {String((page - 1) * PAGE_SIZE + index + 1).padStart(2, "0")}
                   </TableCell>
                   <TableCell className="max-w-64 truncate">
@@ -87,15 +87,15 @@ export default async function AlliancesPage({ params, searchParams }: Props) {
                       <span className="text-muted-foreground">{alliance.name.trim()}</span>
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right font-mono">{formatNumber(alliance.playersCount)}</TableCell>
-                  <TableCell className="text-right font-mono">{formatNumber(alliance.totalField)}</TableCell>
-                  <TableCell className="hidden text-right font-mono md:table-cell">
+                  <TableCell className="text-right">{formatNumber(alliance.playersCount)}</TableCell>
+                  <TableCell className="text-right">{formatNumber(alliance.totalField)}</TableCell>
+                  <TableCell className="hidden text-right md:table-cell">
                     {formatNumber(alliance.totalBuildingScore)}
                   </TableCell>
-                  <TableCell className="hidden text-right font-mono md:table-cell">
+                  <TableCell className="hidden text-right md:table-cell">
                     {formatNumber(alliance.totalTechnologyScore)}
                   </TableCell>
-                  <TableCell className="hidden pr-4 text-right font-mono lg:table-cell">
+                  <TableCell className="hidden pr-4 text-right lg:table-cell">
                     {formatNumber(alliance.totalTrophyScore)}
                   </TableCell>
                 </TableRow>

@@ -14,8 +14,22 @@ Le site prolonge l'extension. Trois rôles, dans cet ordre sur l'accueil :
 
 - **Sombre d'abord**, mais le site suit le système ; un bouton à trois positions (système, clair, sombre) le force, mémorisé dans le navigateur (`localStorage`, posé avant l'affichage pour ne pas clignoter).
 - **Polices** : Barlow Condensed (titres, en capitales), IBM Plex Sans (texte), IBM Plex Mono (chiffres, étiquettes).
-- **Formes** : angles vifs, bordures fines, panneaux à en-tête séparé par un filet.
+- **Formes** : angles vifs, bordures fines, panneaux à en-tête séparé par un filet (arrondis et ombres depuis « Campagne vivante », plus bas).
 - **Couleurs** : ambre (accent, tiré du brun du logo) et bleu, vérifiés en simulant protanopie et deutéranopie (ADR 0003). Jetons dans `apps/web/src/styles/globals.css`, propres au site : seul l'accent rejoint l'extension.
+
+## « Campagne vivante » (2026-11-03)
+
+Le site était jugé « un peu brut » : tout y était une boîte à filet fin, sans relief ni mouvement. Les maquettes C+ (canevas « Optizzz — maquettes du site », rangées C+) gardent la direction et lui donnent de la matière :
+
+- **Matière** : un grain de papier sur le fond ; des panneaux arrondis (14 px) que soulève une ombre, sans filet ; des tuiles pour les chiffres ; les filets ne restent que pour séparer les lignes.
+- **La file de fourmis** : les trois points du logo deviennent un pointillé qui avance, au-dessus de chaque titre de page, le long des courbes à une seule série et dans les états vides. Une courbe à plusieurs séries (Comparer, Flood) garde ses traits : plein, tirets et pointillés y disent qui est qui.
+- **La carte en esquisse** : derrière le haut de l'accueil et dans la vue d'ensemble d'un serveur, ses 600 plus gros joueurs en points, les 10 premiers dans l'accent (`mapSketch`, `MapSketch`). Les deux axes sont étirés au cadre (un serveur est une longue bande) : c'est un décor, la vraie carte reste sur « Carte ».
+- **Mouvement** : un point qui respire à côté des relevés (« relu chaque heure »), la page qui monte à l'arrivée, les derniers changements du Journal qui défilent sous le haut de l'accueil, les panneaux-liens qui se soulèvent au survol. Tout s'arrête avec `prefers-reduced-motion`.
+- **Tampons** : le genre d'un changement du Journal (Guerre, Pacte, Colonie…) est un tampon incliné ; son cadre (plein, double, tirets) et son petit signe le disent aussi, pas seulement sa couleur (`ChangeStamp`).
+- **Blasons** : un petit écu à l'initiale du tag devant chaque alliance, d'une des cinq couleurs `--crest-*`, toujours la même pour un tag (`AllianceCrest`). Les cinq diffèrent autant par la clarté que par la teinte : deux d'entre elles restent à plus de 15 (ΔE CIELAB) en simulant protanopie et deutéranopie, en sombre comme en clair ; le tag est toujours écrit à côté.
+- **Podium** : les trois premiers d'un classement dans un rond plein, cerclé ou en tirets (`RankMark`).
+- **Typographie** : les capitales condensées restent aux titres ; menus, étiquettes et en-têtes de colonnes passent en Plex Sans en casse normale (`SmallLabel`), les chiffres en Plex Sans à chiffres alignés ; le Mono ne sert plus qu'aux heures et aux petits nombres d'axes.
+- **Formes** : boutons et champs arrondis (8 px), choix et onglets en pastilles.
 
 ## Navigation
 
@@ -58,7 +72,7 @@ Le 2026-10-30, les maquettes C des fiches, de Comparer, du Journal, de l'accueil
 
 Chaque page a été recomparée à sa maquette, élément par élément. Ce que les maquettes montrent et que le site n'a pas est resté de côté, sans rien inventer : date de fondation d'une alliance, « Pour arriver à » et le retour du Trajet, appareils du compte, « Prochain convoi », Priorité « haute / normale », absences en vacances, bonus « Laboratoire » ou « Ouvrières » des Coûts, objectifs « Pertes acceptées » de la Chasse.
 
-- **Tableaux** : en-têtes en petites capitales mono partout (`globals.css`).
+- **Tableaux** : en-têtes en petites capitales mono partout (`globals.css`) ; en casse normale depuis « Campagne vivante ».
 - **Nombres abrégés** : `formatCompact` va jusqu'au T (TDC total des gros serveurs, coûts des hauts niveaux).
 - **Comparer** : le tableau finit par le rang actuel au TDC ; les lignes vont du mieux classé au moins bien classé au dernier jour.
 - **Journal** : les noms des descriptions sont en gras et les tags mènent aux fiches ; un clic sur un jour du graphique filtre la liste.

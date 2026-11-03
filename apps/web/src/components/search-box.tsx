@@ -36,11 +36,12 @@ export function SearchBox() {
         placeholder="Rechercher un joueur"
         aria-label="Rechercher un joueur"
         aria-controls={listId}
+        className="rounded-full px-4"
       />
       {results.length > 0 && (
         <ul
           id={listId}
-          className="absolute right-0 left-0 z-50 mt-1 overflow-hidden border bg-popover text-sm shadow-lg"
+          className="absolute right-0 left-0 z-50 mt-1 overflow-hidden rounded-lg bg-popover text-sm shadow-panel-hover"
         >
           {results.map((player) => (
             <li key={`${player.server}:${String(player.id)}`}>
@@ -50,7 +51,7 @@ export function SearchBox() {
                 onClick={() => setText("")}
               >
                 <span>{player.pseudo}</span>
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {player.server.toUpperCase()}
                   {player.alliance ? ` · ${player.alliance}` : ""}
                 </span>
@@ -60,7 +61,7 @@ export function SearchBox() {
         </ul>
       )}
       {none && (
-        <p className="absolute right-0 left-0 z-50 mt-1 border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-lg">
+        <p className="absolute right-0 left-0 z-50 mt-1 rounded-lg bg-popover px-3 py-2 text-sm text-muted-foreground shadow-panel-hover">
           Aucun joueur ne commence par « {query} ».
         </p>
       )}

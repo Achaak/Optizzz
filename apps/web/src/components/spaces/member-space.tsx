@@ -175,7 +175,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
         title={<span className="break-words">{view.space.name}</span>}
         actions={
           <>
-            <span className="inline-flex items-center gap-1.5 bg-raised px-2 py-0.5 font-mono text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 bg-raised px-2 py-0.5 text-xs text-muted-foreground">
               <LockIcon width={14} height={14} />
               chiffré de bout en bout · {access.keyring ? "ouvert sur cet appareil" : "fermé sur cet appareil"}
             </span>
@@ -190,8 +190,11 @@ export function MemberSpace({ view }: { view: MemberView }) {
         {formatNumber(view.members.length)} membre{view.members.length > 1 ? "s" : ""} · vous êtes{" "}
         {YOU_ARE[view.me.role]}
       </PageHeader>
-      <nav aria-label="Parties de l'Espace" className="flex overflow-x-auto border bg-card sm:flex-wrap">
-        {tabs.map((entry, index) => {
+      <nav
+        aria-label="Parties de l'Espace"
+        className="flex gap-1 overflow-x-auto rounded-[0.875rem] bg-card p-1.5 shadow-panel sm:flex-wrap"
+      >
+        {tabs.map((entry) => {
           const current = entry.value === tab;
           const count = counts[entry.value] ?? 0;
           return (
@@ -201,16 +204,15 @@ export function MemberSpace({ view }: { view: MemberView }) {
               aria-current={current ? "page" : undefined}
               onClick={() => setTab(entry.value)}
               className={cn(
-                "flex h-11 shrink-0 items-center gap-2 px-4 text-sm whitespace-nowrap",
-                index > 0 && "border-l",
-                current
-                  ? "font-semibold shadow-[inset_0_-3px_0_var(--primary)]"
-                  : "text-muted-foreground hover:text-foreground",
+                "flex h-10 shrink-0 items-center gap-2 rounded-full px-4 text-sm whitespace-nowrap",
+                current ? "bg-accent font-semibold" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {entry.label}
               {count > 0 && (
-                <span className="bg-accent px-1.5 font-mono text-[0.6875rem] text-primary">{formatNumber(count)}</span>
+                <span className="rounded-full bg-accent px-1.5 text-[0.6875rem] font-semibold text-primary">
+                  {formatNumber(count)}
+                </span>
               )}
             </button>
           );
@@ -619,7 +621,7 @@ function RequestRow({
   }
 
   return (
-    <div className="space-y-3 border bg-card p-3">
+    <div className="space-y-3 rounded-[0.625rem] bg-raised p-3.5">
       <p>
         <strong>{request.pseudo}</strong>
         <span className="text-muted-foreground">, demande du {shortDate(request.createdAt, new Date())}</span>

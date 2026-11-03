@@ -2,7 +2,7 @@ import { siteToolPath } from "@optizzz/game/site-links/site";
 import { SERVERS } from "@optizzz/game/servers";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MonoLabel, PageHeader, PanelLink } from "~/components/panel";
+import { SmallLabel, PageHeader, PanelLink } from "~/components/panel";
 import { TOOLS } from "~/components/tools/tool-list";
 
 export const metadata: Metadata = {
@@ -22,7 +22,7 @@ export default function ToolsPage() {
       <ul className="grid border-t border-l bg-card sm:grid-cols-2 lg:grid-cols-3">
         {TOOLS.map((tool, index) => (
           <li key={tool.id} className="flex flex-col gap-2 border-r border-b p-5">
-            <MonoLabel className="text-primary">{String(index + 1).padStart(2, "0")}</MonoLabel>
+            <SmallLabel className="text-primary">{String(index + 1).padStart(2, "0")}</SmallLabel>
             <h2 className="font-heading text-2xl font-bold uppercase">
               {tool.ready ? (
                 <Link href={siteToolPath(tool.id)} className="hover:text-primary">
@@ -34,12 +34,16 @@ export default function ToolsPage() {
             </h2>
             <p className="text-sm text-muted-foreground">{tool.description}</p>
             <div className="mt-auto pt-2">
-              {tool.ready ? <PanelLink href={siteToolPath(tool.id)}>Ouvrir</PanelLink> : <MonoLabel>Bientôt</MonoLabel>}
+              {tool.ready ? (
+                <PanelLink href={siteToolPath(tool.id)}>Ouvrir</PanelLink>
+              ) : (
+                <SmallLabel>Bientôt</SmallLabel>
+              )}
             </div>
           </li>
         ))}
         <li className="flex flex-col gap-2 border-r border-b p-5">
-          <MonoLabel className="text-primary">{String(TOOLS.length + 1).padStart(2, "0")}</MonoLabel>
+          <SmallLabel className="text-primary">{String(TOOLS.length + 1).padStart(2, "0")}</SmallLabel>
           <h2 className="font-heading text-2xl font-bold uppercase">Carte du serveur</h2>
           <p className="text-sm text-muted-foreground">
             Situer des joueurs et des alliances sur tout un serveur, avec distances et trajets.
@@ -49,7 +53,7 @@ export default function ToolsPage() {
               <Link
                 key={server.id}
                 href={`/${server.id}/map`}
-                className="border px-2.5 py-1 font-heading text-lg font-bold hover:bg-accent"
+                className="border px-2.5 py-1 font-heading text-lg font-bold hover:bg-accent rounded-full"
               >
                 {server.name}
               </Link>

@@ -316,8 +316,8 @@ function PlayersPanel({
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-mono">{formatCompact(row.delivered)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatCompact(row.received)}</TableCell>
+                    <TableCell className="text-right">{formatCompact(row.delivered)}</TableCell>
+                    <TableCell className="text-right">{formatCompact(row.received)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div aria-hidden className="relative h-2 min-w-20 flex-1 bg-muted">
@@ -333,9 +333,7 @@ function PlayersPanel({
                         <span className="min-w-16 text-right font-mono">{signed(row.solde)}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden text-right font-mono sm:table-cell">
-                      {formatNumber(row.count)}
-                    </TableCell>
+                    <TableCell className="hidden text-right sm:table-cell">{formatNumber(row.count)}</TableCell>
                     <TableCell className="hidden whitespace-nowrap sm:table-cell">
                       {row.last === null ? "—" : formatPastTime(new Date(row.last), now)}
                     </TableCell>

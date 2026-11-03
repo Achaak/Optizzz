@@ -228,14 +228,14 @@ export function CombatResult({ form }: { form: SimulatorForm }) {
       <OutOfRange shown={outOfRange} />
       <div className="-mx-4 grid grid-cols-2 border-b">
         <div className="border-r px-4 py-3">
-          <div className="font-mono text-[0.6875rem] tracking-wider text-primary uppercase">Pertes attaquant</div>
+          <div className="text-xs text-primary font-medium">Pertes attaquant</div>
           <div className="font-mono text-2xl">{formatNumber(attackerLost)}</div>
           <div className="text-xs text-muted-foreground">
             {attackerLost === sent ? "toute l'armée" : `sur ${formatNumber(sent)} unités`}
           </div>
         </div>
         <div className="px-4 py-3">
-          <div className="font-mono text-[0.6875rem] tracking-wider text-info uppercase">Pertes défenseur</div>
+          <div className="text-xs text-info font-medium">Pertes défenseur</div>
           <div className="font-mono text-2xl">{formatNumber(defenderLost)}</div>
           <div className="text-xs text-muted-foreground">
             {present === 0
@@ -259,7 +259,7 @@ export function CombatResult({ form }: { form: SimulatorForm }) {
 function OutOfRange({ shown }: { shown: boolean }) {
   if (!shown) return null;
   return (
-    <p role="alert" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
+    <p role="alert" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm rounded-[0.625rem]">
       Le TDC du défenseur doit être entre 50 % et 300 % de celui de l&apos;attaquant : cette attaque est impossible.
     </p>
   );

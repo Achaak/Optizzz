@@ -6,7 +6,7 @@ import { AdSlot } from "~/components/ad-slot";
 import { JournalActivityChart } from "~/components/journal-activity-chart";
 import { JournalList } from "~/components/journal-list";
 import { ChoiceLinks, queryHref } from "~/components/list-parts";
-import { MonoLabel, PageHeader, Panel } from "~/components/panel";
+import { SmallLabel, PageHeader, Panel } from "~/components/panel";
 import { MIN_CURVE_DAYS } from "~/components/score-chart";
 import { Stat, StatGrid } from "~/components/stat";
 import { buttonVariants } from "~/components/ui/button";
@@ -136,13 +136,13 @@ export default async function JournalPage({ params, searchParams }: Props) {
     <div className="space-y-5">
       <PageHeader
         title={`Journal de ${server.name}`}
-        note={reading ? `Dernier relevé ${formatDateTime(reading)}` : undefined}
+        live={reading ? `Dernier relevé ${formatDateTime(reading)} · relu chaque heure` : undefined}
       >
         Ce qui change d&apos;une heure à l&apos;autre, gardé pour toujours. Les variations de TDC et des scores sont
         dans les courbes.
       </PageHeader>
 
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 border bg-card px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[0.875rem] bg-card px-4.5 py-3.5 shadow-panel">
         <ChoiceLinks
           label="Voir"
           choices={["all", ...JOURNAL_GROUPS.map((entry) => entry.id)] as const}
@@ -152,7 +152,7 @@ export default async function JournalPage({ params, searchParams }: Props) {
         />
         <form action={path} className="flex min-w-0 flex-[1_1_22rem] flex-wrap items-center gap-x-5 gap-y-3">
           {group && <input type="hidden" name="groupe" value={group} />}
-          <label className="flex min-w-0 flex-[1_1_13rem] items-center gap-2 border bg-background px-2.5 text-muted-foreground focus-within:border-ring">
+          <label className="flex min-w-0 flex-[1_1_13rem] items-center gap-2 border bg-background px-2.5 text-muted-foreground focus-within:border-ring rounded-lg">
             <MagnifierIcon />
             <span className="sr-only">Joueur ou alliance</span>
             <input
@@ -164,12 +164,12 @@ export default async function JournalPage({ params, searchParams }: Props) {
             />
           </label>
           <label className="flex items-center gap-2">
-            <MonoLabel>Jour</MonoLabel>
+            <SmallLabel>Jour</SmallLabel>
             <Input type="date" name="jour" defaultValue={day ? dayText : ""} className="h-9 w-40" />
           </label>
           <button
             type="submit"
-            className="h-9 bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/85"
+            className="h-9 bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/85 rounded-lg"
           >
             Filtrer
           </button>
@@ -220,9 +220,9 @@ export default async function JournalPage({ params, searchParams }: Props) {
             return (
               <section key={entry.at.getTime()} aria-label={`Relevé du ${formatDateTime(entry.at)}`}>
                 <h3 className="border-b bg-raised px-4 py-1.5">
-                  <MonoLabel>
+                  <SmallLabel>
                     {whole ? `${time} · ${plural(entry.lines.length, "changement", "changements")}` : time}
-                  </MonoLabel>
+                  </SmallLabel>
                 </h3>
                 <JournalList server={server.id} lines={entry.lines} named timed={false} grouped={group === null} />
               </section>
@@ -246,7 +246,7 @@ export default async function JournalPage({ params, searchParams }: Props) {
             ) : (
               <span />
             )}
-            <span className="font-mono text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {count > 0
                 ? `${formatNumber(first)}–${formatNumber(first + lines.length - 1)} sur ${formatNumber(count)}`
                 : "Aucun changement"}

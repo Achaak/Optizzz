@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MonoLabel } from "~/components/panel";
+import { SmallLabel } from "~/components/panel";
 
 export interface SectionLink {
   href: string;
@@ -11,7 +11,7 @@ export interface SectionLink {
 
 /**
  * The bar under the header: the server's pages, or the tools. Full width whatever the page's container, the current
- * page underlined.
+ * page in a pill.
  */
 export function SectionNav({ label, links }: { label: string; links: SectionLink[] }) {
   const pathname = usePathname();
@@ -20,9 +20,9 @@ export function SectionNav({ label, links }: { label: string; links: SectionLink
     .filter((link) => pathname === link.href || pathname.startsWith(`${link.href}/`))
     .sort((a, b) => b.href.length - a.href.length)[0];
   return (
-    <nav aria-label={label} className="relative left-1/2 -mt-8 mb-8 w-screen -translate-x-1/2 border-b bg-card">
-      <div className="mx-auto flex max-w-7xl items-stretch gap-1 overflow-x-auto px-4">
-        <MonoLabel className="mr-2 hidden shrink-0 items-center border-r pr-4 sm:flex">{label}</MonoLabel>
+    <nav aria-label={label} className="relative left-1/2 -mt-6 mb-6 w-screen -translate-x-1/2">
+      <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-4 py-2.5">
+        <SmallLabel className="mr-3 hidden shrink-0 sm:block">{label}</SmallLabel>
         {links.map((link) => {
           const active = link === current;
           return (
@@ -32,8 +32,8 @@ export function SectionNav({ label, links }: { label: string; links: SectionLink
               aria-current={active ? "page" : undefined}
               className={
                 active
-                  ? "shrink-0 px-3 py-2.5 text-sm font-semibold shadow-[inset_0_-3px_0_var(--primary)]"
-                  : "shrink-0 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground"
+                  ? "shrink-0 rounded-full bg-accent px-3.5 py-2 text-sm font-semibold"
+                  : "shrink-0 rounded-full px-3.5 py-2 text-sm text-muted-foreground hover:bg-accent/60 hover:text-foreground"
               }
             >
               {link.label}

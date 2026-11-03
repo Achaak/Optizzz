@@ -46,7 +46,7 @@ export function ConvoyStatsChart({ buckets, member }: { buckets: Bucket[]; membe
   if (days < MIN_DAYS) {
     const total = buckets.reduce((sum, b) => sum + series.reduce((s, key) => s + b[key], 0), 0);
     return (
-      <div className="flex min-h-48 flex-col items-center justify-center gap-1 border border-dashed p-4 text-center">
+      <div className="flex min-h-48 flex-col items-center justify-center gap-1 border border-dashed p-4 text-center rounded-[0.625rem]">
         <span className="font-mono text-3xl">{formatCompact(total)}</span>
         <span>{member ? "livré et reçu" : "livré"} sur la période</span>
         <span className="text-xs text-muted-foreground">Graphique affiché à partir de 3 jours avec un convoi</span>

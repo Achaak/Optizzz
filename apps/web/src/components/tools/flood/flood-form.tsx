@@ -10,7 +10,7 @@ import type { FloodToolState } from "@optizzz/game/site-links/flood";
 import { cn } from "cn";
 import { useId, useState, type ReactNode } from "react";
 import { NumberField } from "~/components/number-field";
-import { MonoLabel, Panel } from "~/components/panel";
+import { SmallLabel, Panel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { CountField, Paste } from "../combat/combat-form";
 import { AddUnit, NoUnit, useShownUnits } from "../unit-rows";
@@ -50,7 +50,7 @@ function Field({
 }) {
   return (
     <label className={cn("block min-w-0 space-y-1", className)}>
-      <MonoLabel className="block">{label}</MonoLabel>
+      <SmallLabel className="block">{label}</SmallLabel>
       <span className="relative block">
         <NumberField
           aria-label={unit ? `${label} (${unit})` : label}
@@ -62,7 +62,7 @@ function Field({
         {unit && (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 font-mono text-xs text-muted-foreground"
+            className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-xs text-muted-foreground"
           >
             {unit}
           </span>
@@ -178,7 +178,7 @@ export function ArmyPanel({ army, onArmy }: { army: Army; onArmy: (army: number[
               const i = UNITS.indexOf(unit);
               return (
                 <label key={unit.key} className="block min-w-0 space-y-1" title={unit.name}>
-                  <MonoLabel className="block normal-case">{unitLabel(unit.key)}</MonoLabel>
+                  <SmallLabel className="block normal-case">{unitLabel(unit.key)}</SmallLabel>
                   <CountField
                     label={unit.name}
                     className="tabular-nums"
@@ -211,7 +211,7 @@ export function DefenseField({
   const known = defense?.some((count) => count > 0) ? defense : null;
   return (
     <div className="space-y-2">
-      <MonoLabel className="block">Sa défense sur le TDC</MonoLabel>
+      <SmallLabel className="block">Sa défense sur le TDC</SmallLabel>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         <span className={known ? "font-mono" : "text-muted-foreground"}>
           {known ? armyText(known) : "Inconnue, comptée comme nulle."}
@@ -234,7 +234,7 @@ export function DefenseField({
           setText(event.target.value);
           setNothingRead(false);
         }}
-        className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+        className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30 rounded-lg"
       />
       <Button
         type="button"

@@ -16,8 +16,7 @@ import { AlertList, alertsTitle } from "../alerts";
 export const metadata: Metadata = { robots: { index: false } };
 
 /** Column heads in small mono capitals, as on « Votre compte ». */
-const HEAD =
-  "[&_th]:h-auto [&_th]:py-2 [&_th]:font-mono [&_th]:text-[0.6875rem] [&_th]:font-medium [&_th]:tracking-widest [&_th]:text-muted-foreground [&_th]:uppercase";
+const HEAD = "[&_th]:h-auto [&_th]:py-2 [&_th]:text-xs [&_th]:font-medium [&_th]:text-muted-foreground";
 const ROW = "grid grid-cols-[repeat(auto-fit,minmax(min(480px,100%),1fr))] gap-5";
 /** A state is told by its sign and its words, never by its color alone (docs/adr/0003-daltonisme.md). */
 const STATE: Record<ServerState, { label: string; className: string }> = {
@@ -115,21 +114,19 @@ export default async function CollectPage() {
                         <span className="mt-1 block max-w-64 text-xs text-muted-foreground">{server.last.error}</span>
                       )}
                     </TableCell>
-                    <TableCell className="font-mono whitespace-nowrap">
+                    <TableCell className="whitespace-nowrap">
                       {playersRead ? formatDateTime(versionDate(playersRead)) : "—"}
                     </TableCell>
-                    <TableCell className="font-mono whitespace-nowrap">
+                    <TableCell className="whitespace-nowrap">
                       {alliancesRead ? formatDateTime(versionDate(alliancesRead)) : "—"}
                     </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {count === undefined ? "—" : formatNumber(count)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(journal)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(server.failures)}</TableCell>
+                    <TableCell className="text-right">{count === undefined ? "—" : formatNumber(count)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(journal)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(server.failures)}</TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {map ? formatPastTime(map.updatedAt, now) : "—"}
                     </TableCell>
-                    <TableCell className="pr-4 text-right font-mono">
+                    <TableCell className="pr-4 text-right">
                       {server.last ? formatRunDuration(server.last.ms) : "—"}
                     </TableCell>
                   </TableRow>
@@ -160,11 +157,9 @@ export default async function CollectPage() {
                 <TableBody>
                   {lastDay.map((run) => (
                     <TableRow key={run.startedAt.toISOString()}>
-                      <TableCell className="pl-4 font-mono whitespace-nowrap">
-                        {formatPastTime(run.startedAt, now)}
-                      </TableCell>
+                      <TableCell className="pl-4 whitespace-nowrap">{formatPastTime(run.startedAt, now)}</TableCell>
                       <TableCell className="whitespace-nowrap">{run.ok ? "✓ complet" : "× échec"}</TableCell>
-                      <TableCell className="text-right font-mono whitespace-nowrap">
+                      <TableCell className="text-right whitespace-nowrap">
                         {formatRunDuration(run.endedAt.getTime() - run.startedAt.getTime())}
                       </TableCell>
                       <TableCell className="min-w-56 pr-4 whitespace-normal text-muted-foreground">
@@ -203,10 +198,8 @@ export default async function CollectPage() {
                     const report = run.report;
                     return (
                       <TableRow key={run.startedAt.toISOString()}>
-                        <TableCell className="pl-4 font-mono whitespace-nowrap">
-                          {formatPastTime(run.startedAt, now)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
+                        <TableCell className="pl-4 whitespace-nowrap">{formatPastTime(run.startedAt, now)}</TableCell>
+                        <TableCell className="text-right">
                           {report?.bytes == null ? "—" : formatBytes(report.bytes)}
                         </TableCell>
                         <TableCell className="whitespace-nowrap">

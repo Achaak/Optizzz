@@ -17,7 +17,11 @@ export function Segmented<Value extends string | number>({
   onChange: (value: Value) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap border bg-card">
+    <div
+      role="group"
+      aria-label={label}
+      className="inline-flex max-w-full flex-wrap gap-0.5 rounded-full bg-raised p-[3px]"
+    >
       {options.map((option) => {
         const chosen = value === option.value;
         return (
@@ -28,7 +32,7 @@ export function Segmented<Value extends string | number>({
             title={option.hint}
             onClick={() => onChange(option.value)}
             className={cn(
-              "h-9 border-r px-3.5 text-sm last:border-r-0",
+              "h-8 rounded-full px-3.5 text-sm",
               chosen ? "bg-primary font-semibold text-primary-foreground" : "hover:bg-accent",
             )}
           >
@@ -53,7 +57,7 @@ export function Part({
   children: ReactNode;
 }) {
   return (
-    <details open={defaultOpen} className="group border bg-card">
+    <details open={defaultOpen} className="group rounded-[0.875rem] bg-card shadow-panel">
       <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 px-4 py-3 font-heading text-lg font-semibold tracking-wide uppercase select-none group-open:border-b">
         <span aria-hidden className="text-muted-foreground transition-transform group-open:rotate-90">
           ›
@@ -81,7 +85,7 @@ export function Warning({ children, danger = false }: { children: ReactNode; dan
     <p
       role="status"
       className={cn(
-        "border px-3 py-2 text-sm",
+        "border px-3 py-2 text-sm rounded-lg",
         danger ? "border-destructive/60 bg-destructive/10" : "border-warning-border bg-warning-soft",
       )}
     >
@@ -113,4 +117,5 @@ export function Check({
   );
 }
 
-export const SELECT_CLASS = "h-8 max-w-full min-w-0 border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+export const SELECT_CLASS =
+  "h-8 max-w-full min-w-0 border border-input bg-transparent px-2 text-sm dark:bg-input/30 rounded-lg";

@@ -72,8 +72,7 @@ function resources({ food, materials }: Resources): string {
 const total = ({ food, materials }: Resources) => food + materials;
 
 /** The columns' heads in small mono capitals, as the site's tables write them. */
-const HEAD_ROW =
-  "border-b-0 font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase hover:bg-transparent";
+const HEAD_ROW = "border-b-0 text-xs text-muted-foreground hover:bg-transparent font-medium";
 const HEAD = "h-8 font-medium text-muted-foreground";
 const ROW = "border-t border-b-0";
 
@@ -390,7 +389,7 @@ export function DemandesPanel({
     <div className="space-y-5">
       <section
         aria-label="Demandes de l'espace"
-        className="grid grid-cols-2 border-t border-l bg-card sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]"
+        className="grid grid-cols-2 gap-2.5 rounded-[0.875rem] bg-card p-2.5 shadow-panel sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]"
       >
         <Stat
           label="À valider"
@@ -799,7 +798,7 @@ function DemandeForm({ busy, onMake }: { busy: boolean; onMake: (content: Demand
               setKey(event.target.value as LevelKey);
               setTyped(null);
             }}
-            className={cn("block w-full border border-input px-2.5 text-sm", FIELD_INPUT)}
+            className={cn("block w-full border border-input px-2.5 text-sm rounded-lg", FIELD_INPUT)}
           >
             <optgroup label="Bâtiments">
               {BUILDINGS.map((b) => (
@@ -891,7 +890,7 @@ function DemandeForm({ busy, onMake }: { busy: boolean; onMake: (content: Demand
             type="date"
             value={wanted}
             onChange={(event) => setWanted(event.target.value)}
-            className={cn("block w-full border border-input px-2.5 text-sm", FIELD_INPUT)}
+            className={cn("block w-full border border-input px-2.5 text-sm rounded-lg", FIELD_INPUT)}
           />
           <p className="text-xs text-muted-foreground">Facultatif : le jour où vous voulez lancer le chantier.</p>
         </div>
@@ -1001,7 +1000,7 @@ function ChangeForm({
             type="date"
             value={wanted}
             onChange={(event) => setWanted(event.target.value)}
-            className={cn("block w-full border border-input px-2.5 text-sm", FIELD_INPUT)}
+            className={cn("block w-full border border-input px-2.5 text-sm rounded-lg", FIELD_INPUT)}
           />
         </div>
         <label className="flex cursor-pointer items-center gap-2 pb-2">
@@ -1099,7 +1098,7 @@ function DeclareForm({
             value={tripText}
             placeholder="2h30m"
             onChange={(event) => setTripText(event.target.value)}
-            className={cn("block w-full border border-input px-2.5 font-mono text-sm", FIELD_INPUT)}
+            className={cn("block w-full border border-input px-2.5 font-mono text-sm rounded-lg", FIELD_INPUT)}
           />
         </div>
       </div>

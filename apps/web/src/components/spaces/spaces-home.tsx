@@ -12,7 +12,7 @@ import { newSpace } from "~/lib/spaces/access";
 import { withVerified } from "~/lib/spaces/trust-store";
 import type { SpacesOverview } from "~/server/spaces/space-service";
 import { LockIcon } from "~/components/icons";
-import { MonoLabel, PageHeader } from "~/components/panel";
+import { SmallLabel, PageHeader } from "~/components/panel";
 import { api } from "~/trpc/react";
 import { errorText } from "./errors";
 import { PassphraseSetup, PassphraseUnlock } from "./passphrase-forms";
@@ -36,10 +36,10 @@ export function SpacesHome() {
         kicker="Compte Optizzz"
         title="Espaces d'alliance"
         actions={
-          <MonoLabel className="inline-flex items-center gap-1.5 border px-2 py-1">
+          <SmallLabel className="inline-flex items-center gap-1.5 border px-2 py-1 rounded-lg">
             <LockIcon width={12} height={12} />
             chiffré de bout en bout
-          </MonoLabel>
+          </SmallLabel>
         }
       >
         L&apos;endroit où les membres d&apos;une alliance mettent leurs données en commun. Même Optizzz ne peut pas les
@@ -115,7 +115,7 @@ function PlayerSpaces({ player }: { player: PlayerEntry }) {
           {player.joinable.length > 0 ? (
             <div className="space-y-2">
               <h3 className="font-medium">Espaces de {player.alliance}</h3>
-              <ul className="divide-y border bg-card">
+              <ul className="divide-y overflow-hidden rounded-[0.875rem] bg-card shadow-panel">
                 {player.joinable.map((space) => (
                   <li key={space.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                     <span>
@@ -125,7 +125,10 @@ function PlayerSpaces({ player }: { player: PlayerEntry }) {
                         {space.memberCount > 1 ? "s" : ""} · créé le {shortDate(space.createdAt, now)}
                       </span>
                     </span>
-                    <Link href={`/spaces/${space.id}`} className="border px-2.5 py-1 font-medium hover:bg-accent">
+                    <Link
+                      href={`/spaces/${space.id}`}
+                      className="border px-2.5 py-1 font-medium hover:bg-accent rounded-full"
+                    >
                       {pending.some((r) => r.spaceId === space.id) ? "Voir ma demande" : "Demander à rejoindre"}
                     </Link>
                   </li>
@@ -181,7 +184,7 @@ function CreateSpace({ player, alliance }: { player: PlayerEntry; alliance: stri
   }
 
   return (
-    <div className="space-y-3 border bg-card p-3">
+    <div className="space-y-3 rounded-[0.625rem] bg-raised p-3.5">
       <h3 className="font-medium">Créer un espace pour {alliance}</h3>
       {!keys.hasKey ? (
         <>

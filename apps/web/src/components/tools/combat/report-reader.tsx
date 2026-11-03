@@ -14,7 +14,7 @@ import { formatNumber } from "@optizzz/game/format/number-format";
 import { combatWeapons, readCombat, type CombatReport } from "@optizzz/game/pages/combat-reports";
 import { UNITS } from "@optizzz/game/army/units";
 import { useId, useMemo, useState } from "react";
-import { MonoLabel, Panel } from "~/components/panel";
+import { SmallLabel, Panel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { NumberField } from "~/components/number-field";
 import { PLACE_LABELS } from "./combat-result";
@@ -61,7 +61,7 @@ export function ReportReader({ onSimulate }: { onSimulate: (read: ReadReport) =>
   const defenders = report ? Object.values(report.defenders).reduce((sum, count) => sum + count, 0) : 0;
 
   return (
-    <Panel title="Lire un rapport d'attaque" aside={<MonoLabel>le Bouclier, le Dôme ou la Loge adverses</MonoLabel>}>
+    <Panel title="Lire un rapport d'attaque" aside={<SmallLabel>le Bouclier, le Dôme ou la Loge adverses</SmallLabel>}>
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor={id} className="block text-sm text-muted-foreground">
@@ -72,7 +72,7 @@ export function ReportReader({ onSimulate }: { onSimulate: (read: ReadReport) =>
             rows={7}
             value={text}
             onChange={(event) => setText(event.target.value)}
-            className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 font-mono text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+            className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 font-mono text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 rounded-lg"
           />
           <p className="text-xs text-muted-foreground">Lu dans votre navigateur, jamais envoyé.</p>
         </div>
@@ -91,17 +91,17 @@ export function ReportReader({ onSimulate }: { onSimulate: (read: ReadReport) =>
             <>
               <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1">
                 <dt>
-                  <MonoLabel>Lieu</MonoLabel>
+                  <SmallLabel>Lieu</SmallLabel>
                 </dt>
                 <dd>
                   {place ? PLACE_LABELS[place] : "lieu inconnu"} de <strong>{report.opponent}</strong>
                 </dd>
                 <dt>
-                  <MonoLabel>Armes</MonoLabel>
+                  <SmallLabel>Armes</SmallLabel>
                 </dt>
                 <dd>{weapons === null ? "? (dégâts trop faibles pour le dire)" : formatNumber(weapons)}</dd>
                 <dt>
-                  <MonoLabel>Niveaux</MonoLabel>
+                  <SmallLabel>Niveaux</SmallLabel>
                 </dt>
                 <dd>
                   {defenseLevelsText(place ?? "field", guesses) ??

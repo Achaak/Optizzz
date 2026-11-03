@@ -158,7 +158,7 @@ export function ServerMap({ server }: { server: { id: string; name: string } }) 
         <span className="whitespace-nowrap">{formatDateTime(versionDate(data.version))}</span>
       </p>
       {invalidLink && (
-        <p role="status" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
+        <p role="status" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm rounded-[0.625rem]">
           Ce lien n&apos;est pas valide : la carte s&apos;ouvre vide.
         </p>
       )}

@@ -4,7 +4,7 @@ import type { SiteToolId } from "@optizzz/game/site-links/site";
 import { cn } from "cn";
 import type { ReactNode } from "react";
 import { AdSlot } from "~/components/ad-slot";
-import { MonoLabel, PageHeader } from "~/components/panel";
+import { SmallLabel, PageHeader } from "~/components/panel";
 import { TOOLS } from "./tool-list";
 
 /** A tool's page: `children` is its client component, laid out with `ToolLayout`. */
@@ -43,10 +43,10 @@ export function ToolLayout({
       </section>
       <section
         aria-label={resultTitle}
-        className="min-w-0 border bg-card lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
+        className="min-w-0 rounded-[0.875rem] bg-card shadow-panel lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
       >
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2 lg:sticky lg:top-0 lg:z-10 lg:bg-card">
-          <MonoLabel>{resultTitle}</MonoLabel>
+        <header className="flex flex-wrap items-center justify-between gap-2 rounded-t-[0.875rem] px-4.5 py-2.5 lg:sticky lg:top-0 lg:z-10 lg:bg-card">
+          <SmallLabel>{resultTitle}</SmallLabel>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>
         <div aria-live="polite" className="space-y-4 p-4">
@@ -71,7 +71,7 @@ export function Verdict({ title, children }: { title: ReactNode; children?: Reac
 /** A warning above a tool: rules not checked, a figure to take with care. */
 export function ToolNote({ children }: { children: ReactNode }) {
   return (
-    <p role="note" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
+    <p role="note" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm rounded-[0.625rem]">
       {children}
     </p>
   );
@@ -81,7 +81,7 @@ export function ToolNote({ children }: { children: ReactNode }) {
 export function InvalidLinkNote({ shown }: { shown: boolean }) {
   if (!shown) return null;
   return (
-    <p role="status" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
+    <p role="status" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm rounded-[0.625rem]">
       Ce lien n&apos;est pas valide : l&apos;outil s&apos;ouvre vide.
     </p>
   );

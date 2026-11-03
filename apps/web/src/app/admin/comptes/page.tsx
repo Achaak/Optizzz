@@ -18,8 +18,7 @@ import { db } from "~/server/db";
 export const metadata: Metadata = { robots: { index: false } };
 
 /** Column heads in small mono capitals, as on « Votre compte ». */
-const HEAD =
-  "[&_th]:h-auto [&_th]:py-2 [&_th]:font-mono [&_th]:text-[0.6875rem] [&_th]:font-medium [&_th]:tracking-widest [&_th]:text-muted-foreground [&_th]:uppercase";
+const HEAD = "[&_th]:h-auto [&_th]:py-2 [&_th]:text-xs [&_th]:font-medium [&_th]:text-muted-foreground";
 const ACCOUNTS_PER_PAGE = 50;
 
 const serverName = (id: string) => serverById(id)?.name ?? id;
@@ -131,14 +130,14 @@ export default async function AdminAccountsPage({
                 {rows.map((space) => (
                   <TableRow key={space.id}>
                     <TableCell className="pl-4 font-semibold">{space.name}</TableCell>
-                    <TableCell className="font-mono">{serverName(space.server)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(space._count.members)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(space._count.requests)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(space.demandes)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatNumber(space.envois)}</TableCell>
+                    <TableCell>{serverName(space.server)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(space._count.members)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(space._count.requests)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(space.demandes)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(space.envois)}</TableCell>
                     <TableCell className="whitespace-nowrap">{discordState(space.discord)}</TableCell>
                     <TableCell className="whitespace-nowrap">{remindersState(space.reminders)}</TableCell>
-                    <TableCell className="font-mono whitespace-nowrap">{shortDate(space.createdAt, now)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{shortDate(space.createdAt, now)}</TableCell>
                     <TableCell className="pr-4 whitespace-nowrap text-muted-foreground">
                       {formatPastTime(space.last, now)}
                     </TableCell>
@@ -177,7 +176,7 @@ export default async function AdminAccountsPage({
                   const session = account.sessions[0];
                   return (
                     <TableRow key={account.id}>
-                      <TableCell className="pl-4 font-mono">{maskEmail(account.email)}</TableCell>
+                      <TableCell className="pl-4">{maskEmail(account.email)}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         {account.players.length > 0
                           ? account.players.map((p) => `${serverName(p.server)} ${p.pseudo}`).join(" · ")
@@ -191,7 +190,7 @@ export default async function AdminAccountsPage({
                       <TableCell className="whitespace-nowrap">
                         {account.personalKey ? "✓ créée" : "— aucune"}
                       </TableCell>
-                      <TableCell className="font-mono whitespace-nowrap">{shortDate(account.createdAt, now)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{shortDate(account.createdAt, now)}</TableCell>
                       <TableCell className="pr-4 whitespace-nowrap text-muted-foreground">
                         {session ? formatPastTime(session.updatedAt, now) : "—"}
                       </TableCell>

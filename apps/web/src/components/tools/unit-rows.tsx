@@ -38,7 +38,7 @@ export function AddUnit({ rest, onAdd }: { rest: Unit[]; onAdd: (key: string) =>
       onChange={(event) => {
         if (event.target.value) onAdd(event.target.value);
       }}
-      className="h-9 border bg-background px-2 text-sm"
+      className="h-9 border bg-background px-2 text-sm rounded-lg"
     >
       <option value="">+ Unité</option>
       {rest.map((unit) => (

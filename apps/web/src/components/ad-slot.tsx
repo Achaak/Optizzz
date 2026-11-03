@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { MonoLabel } from "~/components/panel";
+import { SmallLabel } from "~/components/panel";
 import { env } from "~/env";
 
 declare global {
@@ -43,7 +43,7 @@ export function AdSlot({ className }: { className?: string }) {
   if (!client || !slot) return null;
   return (
     <aside aria-label="Publicité" className={className}>
-      <MonoLabel className="mb-1 block">Publicité</MonoLabel>
+      <SmallLabel className="mb-1 block">Publicité</SmallLabel>
       <Unit key={pathname} />
     </aside>
   );

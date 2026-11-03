@@ -7,7 +7,7 @@ import { formatNumber } from "@optizzz/game/format/number-format";
 import type { FloodField, FloodToolPlan } from "@optizzz/game/site-links/flood";
 import { cn } from "cn";
 import { Fragment } from "react";
-import { MonoLabel } from "~/components/panel";
+import { SmallLabel } from "~/components/panel";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Verdict } from "../tool-page";
 import { FloodChart } from "./flood-chart";
@@ -21,10 +21,7 @@ export const armyText = (army: Army) => armyParts(army).join(", ");
 
 /** The report's table: 8 px between columns, 16 px at its edges, as its panel. */
 const CELL = "px-2 first:pl-4 last:pr-4";
-const HEAD = cn(
-  CELL,
-  "h-auto py-2 font-mono text-[0.6875rem] font-medium tracking-wider text-muted-foreground uppercase",
-);
+const HEAD = cn(CELL, "h-auto py-2 text-xs font-medium text-muted-foreground");
 const NUMBER = cn(CELL, "py-1.5 text-right font-mono tabular-nums");
 
 /** « 400 JSN, 2 T », a unit never cut across two lines. */
@@ -95,7 +92,7 @@ function Figure({
 }) {
   return (
     <div className={cn("min-w-0 px-4 py-3.5", className)}>
-      <MonoLabel className={cn("block", tone === "primary" ? "text-primary" : "text-info")}>{label}</MonoLabel>
+      <SmallLabel className={cn("block", tone === "primary" ? "text-primary" : "text-info")}>{label}</SmallLabel>
       <div className="truncate font-mono text-[1.375rem] tabular-nums">{value}</div>
       <div className="text-xs text-muted-foreground">{hint}</div>
     </div>

@@ -8,7 +8,7 @@ import { serverById } from "@optizzz/game/servers";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import { LockIcon, PlusIcon } from "~/components/icons";
-import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
+import { SmallLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
 import { Stat } from "~/components/stat";
 import { buttonVariants } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
@@ -76,7 +76,7 @@ function Dashboard({ tools, bulletin }: { tools: ReactNode; bulletin: ReactNode 
           )}
           <Link
             href="/spaces"
-            className="flex min-h-50 flex-col items-center justify-center gap-1.5 border border-dashed p-6 text-center text-muted-foreground hover:border-solid hover:bg-accent"
+            className="flex min-h-50 flex-col items-center justify-center gap-1.5 border border-dashed p-6 text-center text-muted-foreground hover:border-solid hover:bg-accent rounded-[0.625rem]"
           >
             <PlusIcon width={14} height={14} />
             <span className="font-semibold text-foreground">Créer ou rejoindre un Espace</span>
@@ -106,7 +106,7 @@ function PlayerCard({ player }: { player: PlayerEntry }) {
       title={`Votre joueur · ${name}`}
       aside={<span className="text-sm font-semibold">{player.pseudo}</span>}
     >
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] border-b [&>*:last-child]:border-r-0 [&>*]:border-b-0">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-2.5 px-4.5 pt-2.5">
         <Stat
           label="TDC"
           value={data ? formatNumber(data.field) : "…"}
@@ -119,7 +119,7 @@ function PlayerCard({ player }: { player: PlayerEntry }) {
         <Stat label="Rang" value={data ? ordinal(data.rank) : "…"} hint="au TDC" />
         <Stat label="Alliance" value={player.alliance ?? "—"} />
       </div>
-      <div className="flex flex-wrap gap-2 px-4 py-3">
+      <div className="flex flex-wrap gap-2 px-4.5 pt-3 pb-4">
         <Link
           href={`/${player.server}/players/${String(player.playerId)}`}
           className={buttonVariants({ variant: "outline" })}
@@ -141,7 +141,7 @@ function PlayerCard({ player }: { player: PlayerEntry }) {
 function PlayerLine({ player }: { player: PlayerEntry }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
-      <MonoLabel>{serverById(player.server)?.name ?? player.server}</MonoLabel>
+      <SmallLabel>{serverById(player.server)?.name ?? player.server}</SmallLabel>
       <Link href={`/${player.server}/players/${String(player.playerId)}`} className="font-semibold hover:underline">
         {player.pseudo}
       </Link>
@@ -228,7 +228,7 @@ function SpaceCard({ player, space, showServer }: { player: PlayerEntry; space: 
       flush
       title={space.name}
       aside={
-        <span className="inline-flex items-center gap-1.5 bg-raised px-2 py-0.5 font-mono text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5 bg-raised px-2 py-0.5 text-xs text-muted-foreground">
           <LockIcon width={14} height={14} />
           {showServer && `${serverById(player.server)?.name ?? player.server} · `}chiffré
         </span>

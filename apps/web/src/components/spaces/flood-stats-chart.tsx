@@ -13,7 +13,7 @@ const config: ChartConfig = { take: { label: "Prise attendue", color: "var(--cha
 export function FloodStatsChart({ buckets }: { buckets: Bucket[] }) {
   if (buckets.every((b) => b.count === 0))
     return (
-      <div className="flex min-h-40 items-center justify-center border border-dashed p-4 text-center text-muted-foreground">
+      <div className="flex min-h-40 items-center justify-center border border-dashed p-4 text-center text-muted-foreground rounded-[0.625rem]">
         Aucun flood arrivé sur la période.
       </div>
     );

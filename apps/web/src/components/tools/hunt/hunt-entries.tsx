@@ -9,7 +9,7 @@ import type { HuntForm } from "@optizzz/game/hunt/hunt-form";
 import { cn } from "cn";
 import { useId, useState, type ReactNode } from "react";
 import { NumberField } from "~/components/number-field";
-import { MonoLabel, Panel } from "~/components/panel";
+import { SmallLabel, Panel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { NoUnit, UnitName, useShownUnits } from "../unit-rows";
 import type { HuntLevelKey, LayingLevelKey } from "./hunt-settings";
@@ -44,7 +44,7 @@ export function Suffix({ children }: { children: ReactNode }) {
   return (
     <span
       aria-hidden
-      className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 font-mono text-xs text-muted-foreground"
+      className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-xs text-muted-foreground"
     >
       {children}
     </span>
@@ -65,7 +65,7 @@ export function LabelledField({
 }) {
   return (
     <label className={cn("block min-w-0 space-y-1", className)}>
-      <MonoLabel className="block">{label}</MonoLabel>
+      <SmallLabel className="block">{label}</SmallLabel>
       <span className="relative block">
         {children}
         {suffix && <Suffix>{suffix}</Suffix>}
@@ -179,7 +179,7 @@ function Paste({ onArmy }: { onArmy: (army: Counts) => void }) {
         rows={2}
         value={text}
         onChange={(event) => setText(event.target.value)}
-        className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+        className="w-full min-w-0 border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30 rounded-lg"
       />
       <Button
         type="button"
@@ -210,8 +210,11 @@ export function HuntArmy({ form, onArmy }: { form: HuntForm; onArmy: (army: Coun
   const pasteId = useId();
   const [pasting, setPasting] = useState(false);
   return (
-    <section aria-labelledby={titleId} className="flex min-w-0 flex-col border bg-card text-card-foreground">
-      <header className="border-b px-4 py-2.5">
+    <section
+      aria-labelledby={titleId}
+      className="flex min-w-0 flex-col rounded-[0.875rem] bg-card text-card-foreground shadow-panel"
+    >
+      <header className="px-4.5 pt-4 pb-1.5">
         <h2 id={titleId} className="font-heading text-xl font-semibold tracking-wide uppercase">
           Votre armée
         </h2>

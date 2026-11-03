@@ -4,7 +4,7 @@ import { formatNumber } from "@optizzz/game/format/number-format";
 import { cn } from "cn";
 import Link from "next/link";
 import { useState } from "react";
-import { MonoLabel, Panel } from "~/components/panel";
+import { SmallLabel, Panel } from "~/components/panel";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 
 export interface MemberRow {
@@ -33,7 +33,7 @@ const SORTS: { id: MemberSort; label: string }[] = [
 /** Rows shown before « Voir les 32 membres ». */
 const FOLDED_ROWS = 10;
 
-const head = "font-mono text-[0.6875rem] font-medium tracking-widest text-muted-foreground uppercase";
+const head = "text-xs font-medium text-muted-foreground";
 
 /**
  * The « Membres » panel of an alliance: sorted by a score picked in its header (in the page, without reloading it),
@@ -51,17 +51,16 @@ export function MembersTable({ server, members }: { server: string; members: Mem
       title="Membres"
       aside={
         <div role="group" aria-label="Trier les membres" className="flex flex-wrap items-center gap-2">
-          <MonoLabel>Trier</MonoLabel>
-          <div className="flex flex-wrap border">
-            {SORTS.map((entry, index) => (
+          <SmallLabel>Trier</SmallLabel>
+          <div className="flex flex-wrap gap-0.5 rounded-full bg-raised p-[3px]">
+            {SORTS.map((entry) => (
               <button
                 key={entry.id}
                 type="button"
                 aria-pressed={entry.id === sort}
                 onClick={() => setSort(entry.id)}
                 className={cn(
-                  "px-2 py-1 text-sm whitespace-nowrap sm:px-3",
-                  index > 0 && "border-l",
+                  "rounded-full px-2 py-1 text-sm whitespace-nowrap sm:px-3",
                   entry.id === sort
                     ? "bg-primary font-semibold text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground",
@@ -89,18 +88,18 @@ export function MembersTable({ server, members }: { server: string; members: Mem
         <TableBody>
           {shown.map((member, index) => (
             <TableRow key={member.id}>
-              <TableCell className="pl-4 font-mono">{String(index + 1).padStart(2, "0")}</TableCell>
+              <TableCell className="pl-4">{String(index + 1).padStart(2, "0")}</TableCell>
               <TableCell>
                 <Link href={`/${server}/players/${String(member.id)}`} className="font-semibold hover:underline">
                   {member.pseudo}
                 </Link>
               </TableCell>
-              <TableCell className="hidden text-right font-mono text-muted-foreground sm:table-cell">
+              <TableCell className="hidden text-right text-muted-foreground sm:table-cell">
                 {member.x} : {member.y}
               </TableCell>
-              <TableCell className="text-right font-mono">{formatNumber(member.field)}</TableCell>
-              <TableCell className="hidden text-right font-mono sm:table-cell">{member.week ?? "—"}</TableCell>
-              {sort !== "field" && <TableCell className="text-right font-mono">{formatNumber(member[sort])}</TableCell>}
+              <TableCell className="text-right">{formatNumber(member.field)}</TableCell>
+              <TableCell className="hidden text-right sm:table-cell">{member.week ?? "—"}</TableCell>
+              {sort !== "field" && <TableCell className="text-right">{formatNumber(member[sort])}</TableCell>}
               <TableCell className="hidden pr-4 md:table-cell">
                 {member.master ? (
                   <Link href={`/${server}/players/${String(member.master.id)}`} className="hover:underline">

@@ -214,7 +214,7 @@ export function FloodsPanel({
           <select
             value={choice.member ?? ""}
             onChange={(event) => change({ member: event.target.value || null })}
-            className="block h-9 min-w-44 border bg-background px-2 text-sm"
+            className="block h-9 min-w-44 border bg-background px-2 text-sm rounded-lg"
           >
             <option value="">Toute l&apos;alliance</option>
             {pseudos.map((pseudo) => (

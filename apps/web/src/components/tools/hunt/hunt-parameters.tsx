@@ -12,7 +12,7 @@ import { parisClockTime, ratioOptionText } from "@optizzz/game/hunt/texts";
 import { cn } from "cn";
 import { useState, type ReactNode } from "react";
 import { NumberField } from "~/components/number-field";
-import { MonoLabel } from "~/components/panel";
+import { SmallLabel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { AMOUNT, FIELD_CLASS, LabelledField, LEVEL, Suffix } from "./hunt-entries";
@@ -45,7 +45,7 @@ function Row({
 }) {
   return (
     <div role="group" aria-label={label} className={cn("min-w-0 space-y-1", wide && "sm:col-span-2")}>
-      <MonoLabel className="block">{label}</MonoLabel>
+      <SmallLabel className="block">{label}</SmallLabel>
       <div className="flex min-w-0 flex-wrap items-center gap-2">{children}</div>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
@@ -74,7 +74,7 @@ export function HuntParameters({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <MonoLabel>Objectif</MonoLabel>
+        <SmallLabel>Objectif</SmallLabel>
         <Segmented
           label="Objectif"
           value={form.objective}

@@ -20,8 +20,7 @@ import { ResumeAfterLogin } from "./resume-after-login";
 /** Two panels side by side, one under the other below 860 px or so. */
 const ROW = "grid grid-cols-[repeat(auto-fit,minmax(min(420px,100%),1fr))] gap-5";
 /** Column heads in small mono capitals. */
-const HEAD =
-  "[&_th]:h-auto [&_th]:py-2 [&_th]:font-mono [&_th]:text-[0.6875rem] [&_th]:font-medium [&_th]:tracking-widest [&_th]:text-muted-foreground [&_th]:uppercase";
+const HEAD = "[&_th]:h-auto [&_th]:py-2 [&_th]:text-xs [&_th]:font-medium [&_th]:text-muted-foreground";
 const ROLE_LABEL = { admin: "Admin", delegate: "Délégué", member: "Membre" } as const;
 
 export const metadata: Metadata = { title: "Mon compte", robots: { index: false } };
@@ -98,9 +97,7 @@ export default async function AccountPage() {
                   const alliance = allianceOf.get(key);
                   return (
                     <TableRow key={key}>
-                      <TableCell className="pl-4 font-mono">
-                        {serverById(player.server)?.name ?? player.server}
-                      </TableCell>
+                      <TableCell className="pl-4">{serverById(player.server)?.name ?? player.server}</TableCell>
                       <TableCell>
                         <Link
                           href={`/${player.server}/players/${String(player.playerId)}`}
@@ -121,7 +118,7 @@ export default async function AccountPage() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="pr-4 font-mono">{shortDate(player.declaredAt, now)}</TableCell>
+                      <TableCell className="pr-4">{shortDate(player.declaredAt, now)}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -176,7 +173,7 @@ export default async function AccountPage() {
             className="h-full"
             title="Chiffrement"
             aside={
-              <span className="inline-flex items-center gap-1.5 bg-raised px-2 py-0.5 font-mono text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 bg-raised px-2 py-0.5 text-xs text-muted-foreground">
                 <LockIcon width={14} height={14} />
                 chiffré de bout en bout
               </span>
@@ -213,9 +210,9 @@ export default async function AccountPage() {
                         {m.space.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-mono">{serverById(m.server)?.name ?? m.server}</TableCell>
+                    <TableCell>{serverById(m.server)?.name ?? m.server}</TableCell>
                     <TableCell>{ROLE_LABEL[m.role]}</TableCell>
-                    <TableCell className="pr-4 text-right font-mono">{formatNumber(m.space._count.members)}</TableCell>
+                    <TableCell className="pr-4 text-right">{formatNumber(m.space._count.members)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -232,7 +229,7 @@ export default async function AccountPage() {
         </Panel>
       </div>
 
-      <section className="flex flex-wrap items-center justify-between gap-3 border border-warning-border bg-warning-soft px-4 py-3.5">
+      <section className="flex flex-wrap items-center justify-between gap-3 border border-warning-border bg-warning-soft px-4 py-3.5 rounded-[0.625rem]">
         <div className="max-w-3xl">
           <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Supprimer le compte</h2>
           <p className="mt-0.5 text-[0.8125rem]">

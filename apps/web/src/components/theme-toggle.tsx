@@ -22,7 +22,7 @@ export function ThemeToggle() {
       onClick={() => setThemePreference(next)}
       aria-label={`${LABELS[preference]} : passer au ${LABELS[next].toLowerCase()}`}
       title={LABELS[preference]}
-      className="grid size-9 shrink-0 place-items-center text-muted-foreground hover:bg-accent hover:text-foreground"
+      className="grid size-10 shrink-0 place-items-center rounded-full border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
     >
       <Current />
     </button>

@@ -31,7 +31,7 @@ export function Panel({
 }
 
 /** A small mono label over a field, as the tool forms write them. */
-export const FIELD_LABEL = "block font-mono text-[0.6875rem] tracking-widest text-muted-foreground uppercase";
+export const FIELD_LABEL = "block text-xs text-muted-foreground font-medium";
 
 /** A square field on the page's ground, as tall as a button of the mockups. */
 export const FIELD_INPUT = "h-9.5 rounded-none bg-background dark:bg-background";
@@ -51,7 +51,7 @@ export function Callout({
     <div
       role={tone === "info" ? "status" : "alert"}
       className={cn(
-        "border p-3 text-sm",
+        "border p-3 text-sm rounded-[0.625rem]",
         tone === "danger" && "border-destructive/60 bg-destructive/10",
         tone === "warning" && "border-warning-border bg-warning-soft",
         tone === "info" && "bg-muted",

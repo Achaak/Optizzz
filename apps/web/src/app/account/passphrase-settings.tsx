@@ -68,7 +68,7 @@ export function PassphraseSettings({ soleAdminOf }: { soleAdminOf: string[] }) {
         ))}
 
       {mode === "confirm-forget" && (
-        <div className="space-y-3 border bg-card p-3">
+        <div className="space-y-3 rounded-[0.625rem] bg-raised p-3.5">
           <p>
             Vous allez choisir une nouvelle phrase. Vous restez membre de vos espaces, avec vos rôles, mais vous ne les
             lirez plus jusqu&apos;à ce qu&apos;un Admin vous renvoie l&apos;accès, après un nouvel échange du Code de

@@ -21,7 +21,7 @@ export default async function ConnectExtensionPage() {
       {session ? (
         <LinkStatus email={session.user.email} />
       ) : (
-        <div className="space-y-3 border bg-card p-4 text-sm">
+        <div className="space-y-3 rounded-[0.875rem] bg-card p-4.5 text-sm shadow-panel">
           <p>Connectez-vous d&apos;abord à votre Compte Optizzz, sur ce navigateur.</p>
           <p className="text-muted-foreground">
             Une fois connecté, cliquez de nouveau «&nbsp;Connecter mon Compte Optizzz&nbsp;» dans l&apos;extension.

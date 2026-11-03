@@ -2,11 +2,12 @@ import { formatNumber } from "@optizzz/game/format/number-format";
 import { dayMonth } from "@optizzz/game/format/time-format";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AllianceCrest } from "~/components/alliance-crest";
 import { notFound } from "next/navigation";
 import { AdSlot } from "~/components/ad-slot";
 import { PlusIcon } from "~/components/icons";
 import { JournalList } from "~/components/journal-list";
-import { MonoLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
+import { SmallLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
 import { ScoreChart } from "~/components/score-chart";
 import { Stat, StatGrid } from "~/components/stat";
 import { CopyLinkButton } from "~/components/tools/copy-link-button";
@@ -30,7 +31,7 @@ interface Props {
 const outline = buttonVariants({ variant: "outline", size: "lg" });
 
 // The mockups' table heads: small mono capitals, like the stats' labels.
-const HEAD = "font-mono text-[0.6875rem] tracking-widest uppercase";
+const HEAD = "text-xs font-medium";
 
 /** The colonies' names under their count: the first three, then how many more. */
 function coloniesHint(names: string[]): string | undefined {
@@ -94,8 +95,9 @@ export default async function PlayerPage({ params }: Props) {
                 Membre de{" "}
                 <Link
                   href={`/${server.id}/alliances/${encodeURIComponent(player.alliance)}`}
-                  className="font-semibold text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
                 >
+                  <AllianceCrest tag={player.alliance} size="xs" />
                   {player.alliance}
                 </Link>
               </span>
@@ -120,7 +122,7 @@ export default async function PlayerPage({ params }: Props) {
             ) : (
               <span>libre (personne ne le colonise)</span>
             )}
-            {states.length > 0 && <MonoLabel className="ml-2 text-primary">{states.join(" · ")}</MonoLabel>}
+            {states.length > 0 && <SmallLabel className="ml-2 text-primary">{states.join(" · ")}</SmallLabel>}
           </p>
         ) : (
           <p>Ce joueur n&apos;est plus dans l&apos;export du serveur.</p>
@@ -223,7 +225,7 @@ export default async function PlayerPage({ params }: Props) {
                       </Link>
                     </TableCell>
                     <TableCell>{colony.alliance ?? "—"}</TableCell>
-                    <TableCell className="pr-4 text-right font-mono">{formatNumber(colony.field)}</TableCell>
+                    <TableCell className="pr-4 text-right">{formatNumber(colony.field)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

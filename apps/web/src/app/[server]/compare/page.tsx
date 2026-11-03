@@ -9,7 +9,7 @@ import { CompareAdd } from "~/components/compare-add";
 import { CompareChart, CompareKey } from "~/components/compare-chart";
 import { CloseIcon } from "~/components/icons";
 import { ChoiceLinks } from "~/components/list-parts";
-import { MonoLabel, PageHeader, Panel } from "~/components/panel";
+import { SmallLabel, PageHeader, Panel } from "~/components/panel";
 import { CopyLinkButton } from "~/components/tools/copy-link-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import {
@@ -110,12 +110,15 @@ export default async function ComparePage({ params, searchParams }: Props) {
 
       <div className="flex flex-wrap items-center gap-2">
         {entries.map((entry, index) => (
-          <span key={entry.id} className="inline-flex h-9 items-center gap-2 border bg-card pr-1 pl-2.5 text-sm">
+          <span
+            key={entry.id}
+            className="inline-flex h-9 items-center gap-2 rounded-full bg-card pr-1 pl-3 text-sm shadow-panel"
+          >
             <CompareKey index={index} />
             <Link href={entryHref(entry.id)} className="font-semibold hover:underline">
               {entry.name}
             </Link>
-            {entry.alliance && <span className="font-mono text-xs text-muted-foreground">{entry.alliance}</span>}
+            {entry.alliance && <span className="text-xs text-muted-foreground">{entry.alliance}</span>}
             <Link
               href={href({ ids: state.ids.filter((id) => id !== entry.id) })}
               aria-label={`Retirer ${entry.name}`}
@@ -128,11 +131,11 @@ export default async function ComparePage({ params, searchParams }: Props) {
         {state.ids.length < MAX_COMPARED ? (
           <CompareAdd server={server.id} state={state} />
         ) : (
-          <MonoLabel>{MAX_COMPARED} au plus</MonoLabel>
+          <SmallLabel>{MAX_COMPARED} au plus</SmallLabel>
         )}
       </div>
       {missing && (
-        <p role="status" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm">
+        <p role="status" className="border border-warning-border bg-warning-soft px-3 py-2 text-sm rounded-[0.625rem]">
           Aucun{kind === "players" ? "" : "e"} {noun} « {missing} » sur {server.name}
           {kind === "players" ? " : choisissez-le dans la liste qui s'ouvre en tapant." : " : tapez son tag."}
         </p>
@@ -213,16 +216,14 @@ export default async function ComparePage({ params, searchParams }: Props) {
                       {kind === "players" && (
                         <TableCell className="hidden sm:table-cell">{entry.alliance ?? "—"}</TableCell>
                       )}
-                      <TableCell className="hidden text-right font-mono sm:table-cell">
+                      <TableCell className="hidden text-right sm:table-cell">
                         {first === undefined ? "—" : show(first)}
                       </TableCell>
-                      <TableCell className="text-right font-mono">{final === undefined ? "—" : show(final)}</TableCell>
-                      <TableCell className="pr-4 text-right font-mono md:pr-2">
+                      <TableCell className="text-right">{final === undefined ? "—" : show(final)}</TableCell>
+                      <TableCell className="pr-4 text-right md:pr-2">
                         {first === undefined || final === undefined ? "—" : deltaText(first, final, rank)}
                       </TableCell>
-                      <TableCell className="hidden pr-4 text-right font-mono md:table-cell">
-                        {ordinal(entry.rankNow)}
-                      </TableCell>
+                      <TableCell className="hidden pr-4 text-right md:table-cell">{ordinal(entry.rankNow)}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -230,7 +231,7 @@ export default async function ComparePage({ params, searchParams }: Props) {
             </Table>
           </Panel>
           {entries.length === 1 && (
-            <p role="note" className="border bg-info-soft px-3.5 py-2.5 text-sm">
+            <p role="note" className="bg-info-soft px-3.5 py-2.5 text-sm rounded-[0.625rem]">
               {kind === "players"
                 ? "Un seul joueur choisi : ajoutez-en un deuxième avec le champ ci-dessus pour les comparer."
                 : "Une seule alliance choisie : ajoutez-en une deuxième avec le champ ci-dessus pour les comparer."}
@@ -238,7 +239,7 @@ export default async function ComparePage({ params, searchParams }: Props) {
           )}
         </>
       ) : (
-        <p role="note" className="border bg-info-soft px-3.5 py-2.5 text-sm">
+        <p role="note" className="bg-info-soft px-3.5 py-2.5 text-sm rounded-[0.625rem]">
           Ajoutez un{kind === "players" ? "" : "e"} {noun} avec le champ ci-dessus, ou depuis sa fiche avec « Comparer
           ».
         </p>
@@ -252,15 +253,14 @@ export default async function ComparePage({ params, searchParams }: Props) {
 /** Players or alliances, in the page's header: the same look as the other choices, without their label. */
 function KindSwitch({ current, href }: { current: CompareKind; href: (choice: CompareKind) => string }) {
   return (
-    <nav aria-label="Comparer des" className="flex flex-wrap border bg-card">
-      {COMPARE_KINDS.map((choice, index) => (
+    <nav aria-label="Comparer des" className="flex flex-wrap gap-0.5 rounded-full bg-raised p-[3px]">
+      {COMPARE_KINDS.map((choice) => (
         <Link
           key={choice}
           href={href(choice)}
           aria-current={choice === current ? "true" : undefined}
           className={cn(
-            "px-3 py-1.5 text-sm",
-            index > 0 && "border-l",
+            "rounded-full px-3 py-1.5 text-sm",
             choice === current
               ? "bg-primary font-semibold text-primary-foreground"
               : "text-muted-foreground hover:text-foreground",

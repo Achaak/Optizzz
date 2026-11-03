@@ -294,6 +294,16 @@ export function playersById(server: string, ids: readonly number[]) {
   });
 }
 
+/** Where the biggest players of a server nest, by TDC: the dots of the map sketch behind the home page's top. */
+export function mapSketch(server: string) {
+  return db.player.findMany({
+    where: { server, isBanned: false },
+    select: { x: true, y: true },
+    orderBy: { field: "desc" },
+    take: 600,
+  });
+}
+
 /** The alliance's members with their nests, and when the export was taken: what the Plan de passage starts from. */
 export async function passageRoster(server: string, tag: string) {
   const [members, exportAt] = await Promise.all([

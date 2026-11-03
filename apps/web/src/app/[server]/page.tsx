@@ -5,14 +5,17 @@ import Link from "next/link";
 import { AdSlot } from "~/components/ad-slot";
 import { Histogram, ValueBars } from "~/components/bars";
 import { JournalActivityChart } from "~/components/journal-activity-chart";
+import { AllianceCrest } from "~/components/alliance-crest";
 import { JournalList } from "~/components/journal-list";
+import { MapSketch } from "~/components/map-sketch";
 import { PageHeader, Panel, PanelLink } from "~/components/panel";
+import { RankMark } from "~/components/rank-mark";
 import { MIN_CURVE_DAYS, ScoreChart } from "~/components/score-chart";
 import { ReadingNote, Stat, StatGrid } from "~/components/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { serverOfPath } from "~/lib/game-server";
 import { percentOf } from "~/lib/server-stats";
-import { lastReading, serverSummary } from "~/server/queries";
+import { lastReading, mapSketch, serverSummary } from "~/server/queries";
 
 export const revalidate = 3600;
 
@@ -58,7 +61,11 @@ function dayRange(days: { day: Date }[]): string | undefined {
 
 export default async function ServerPage({ params }: Props) {
   const server = serverOfPath((await params).server);
-  const [reading, summary] = await Promise.all([lastReading(server.id), serverSummary(server.id)]);
+  const [reading, summary, nests] = await Promise.all([
+    lastReading(server.id),
+    serverSummary(server.id),
+    mapSketch(server.id),
+  ]);
   if (!reading)
     return (
       <div className="space-y-6">
@@ -73,7 +80,27 @@ export default async function ServerPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Serveur ${server.name}`} note={`Export du ${formatDateTime(reading)} · relu chaque heure`} />
+      <div className="flex flex-wrap items-stretch gap-6">
+        <div className="flex min-w-0 flex-[999_1_32rem] items-end">
+          <PageHeader
+            title={`Serveur ${server.name}`}
+            live={`Export du ${formatDateTime(reading)} · relu chaque heure`}
+          />
+        </div>
+        <Link
+          href={`/${server.id}/map`}
+          className="lift relative min-h-56 min-w-0 flex-[1_1_22rem] overflow-hidden rounded-[0.875rem] bg-card shadow-panel"
+        >
+          <MapSketch nests={nests} className="absolute inset-0 size-full" />
+          <span className="absolute top-3.5 right-3.5 flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 text-xs text-muted-foreground">
+            <span aria-hidden="true" className="size-2 rounded-full bg-primary" />
+            les 10 premiers
+          </span>
+          <span className="absolute bottom-3.5 left-3.5 flex items-center gap-2 rounded-full bg-card px-3.5 py-2 font-semibold shadow-panel">
+            Ouvrir la carte <span aria-hidden="true">→</span>
+          </span>
+        </Link>
+      </div>
 
       <StatGrid label="Chiffres du serveur">
         <Stat label="Joueurs" value={formatNumber(summary.players)} hint={weekDelta(summary.playersPerDay)} />
@@ -91,7 +118,7 @@ export default async function ServerPage({ params }: Props) {
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel
           title="Joueurs inscrits"
-          aside={<span className="font-mono text-xs text-muted-foreground">{dayRange(summary.playersPerDay)}</span>}
+          aside={<span className="text-xs text-muted-foreground">{dayRange(summary.playersPerDay)}</span>}
         >
           <ScoreChart
             label="Joueurs"
@@ -101,7 +128,7 @@ export default async function ServerPage({ params }: Props) {
         </Panel>
         <Panel
           title="TDC total du serveur"
-          aside={<span className="font-mono text-xs text-muted-foreground">relevé de minuit</span>}
+          aside={<span className="text-xs text-muted-foreground">relevé de minuit</span>}
         >
           <ScoreChart
             label="TDC (cm²)"
@@ -165,7 +192,9 @@ export default async function ServerPage({ params }: Props) {
             <TableBody>
               {summary.topPlayers.map((player, index) => (
                 <TableRow key={player.id}>
-                  <TableCell className="pl-4 font-mono text-primary">{String(index + 1).padStart(2, "0")}</TableCell>
+                  <TableCell className="pl-4">
+                    <RankMark rank={index + 1} />
+                  </TableCell>
                   <TableCell>
                     <Link href={`/${server.id}/players/${String(player.id)}`} className="font-semibold hover:underline">
                       {player.pseudo}
@@ -173,14 +202,18 @@ export default async function ServerPage({ params }: Props) {
                   </TableCell>
                   <TableCell>
                     {player.alliance ? (
-                      <Link href={allianceHref(player.alliance)} className="hover:underline">
+                      <Link
+                        href={allianceHref(player.alliance)}
+                        className="inline-flex items-center gap-1.5 hover:underline"
+                      >
+                        <AllianceCrest tag={player.alliance} size="xs" />
                         {player.alliance}
                       </Link>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="pr-4 text-right font-mono">{formatNumber(player.field)}</TableCell>
+                  <TableCell className="pr-4 text-right">{formatNumber(player.field)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -203,15 +236,17 @@ export default async function ServerPage({ params }: Props) {
             <TableBody>
               {summary.topAlliances.map((alliance, index) => (
                 <TableRow key={alliance.tag}>
-                  <TableCell className="pl-4 font-mono text-primary">{String(index + 1).padStart(2, "0")}</TableCell>
+                  <TableCell className="pl-4">
+                    <RankMark rank={index + 1} />
+                  </TableCell>
                   <TableCell className="max-w-56 truncate">
                     <Link href={allianceHref(alliance.tag)} className="hover:underline">
-                      <strong>{alliance.tag}</strong>{" "}
+                      <AllianceCrest tag={alliance.tag} /> <strong>{alliance.tag}</strong>{" "}
                       <span className="text-muted-foreground">{alliance.name.trim()}</span>
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right font-mono">{formatNumber(alliance.playersCount)}</TableCell>
-                  <TableCell className="pr-4 text-right font-mono">{formatNumber(alliance.totalField)}</TableCell>
+                  <TableCell className="text-right">{formatNumber(alliance.playersCount)}</TableCell>
+                  <TableCell className="pr-4 text-right">{formatNumber(alliance.totalField)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -222,7 +257,7 @@ export default async function ServerPage({ params }: Props) {
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel
           title="Activité du Journal"
-          aside={journalCurve && <span className="font-mono text-xs text-muted-foreground">30 derniers jours</span>}
+          aside={journalCurve && <span className="text-xs text-muted-foreground">30 derniers jours</span>}
           // Too few days: the day's figure fills the panel, as tall as the list beside it.
           className={
             journalCurve ? undefined : "flex flex-col *:last:flex *:last:flex-1 *:last:flex-col *:last:*:flex-1"

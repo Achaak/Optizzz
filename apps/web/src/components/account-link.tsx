@@ -15,8 +15,8 @@ export function AccountLink() {
       href={signedIn ? "/account" : "/login"}
       className={
         signedIn
-          ? "flex h-9 shrink-0 items-center px-3 text-sm font-medium whitespace-nowrap hover:bg-accent"
-          : "flex h-9 shrink-0 items-center bg-primary px-3 text-sm font-semibold whitespace-nowrap text-primary-foreground hover:bg-primary/85"
+          ? "flex h-10 shrink-0 items-center rounded-lg px-3 text-sm font-medium whitespace-nowrap hover:bg-accent"
+          : "flex h-10 shrink-0 items-center rounded-lg bg-primary px-4 text-sm font-semibold whitespace-nowrap text-primary-foreground transition hover:-translate-y-px hover:brightness-110 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
       }
     >
       {signedIn ? "Mon compte" : "Se connecter"}

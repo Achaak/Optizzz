@@ -24,7 +24,7 @@ export function CompareAdd({ server, state }: { server: string; state: CompareSt
       {state.ids.length > 0 && <input type="hidden" name="ids" value={state.ids.join(",")} />}
       {state.metric !== "field" && <input type="hidden" name="courbe" value={state.metric} />}
       {state.period !== "all" && <input type="hidden" name="periode" value={state.period} />}
-      <label className="flex h-9 items-center gap-2 border border-dashed bg-background px-2 text-muted-foreground focus-within:border-solid focus-within:border-ring">
+      <label className="flex h-9 items-center gap-2 border border-dashed bg-background px-2 text-muted-foreground focus-within:border-solid focus-within:border-ring rounded-[0.625rem]">
         <PlusIcon width={14} height={14} />
         <span className="sr-only">{players ? "Ajouter un joueur" : "Ajouter une alliance"}</span>
         <Input
@@ -42,7 +42,7 @@ export function CompareAdd({ server, state }: { server: string; state: CompareSt
       {shown.length > 0 && (
         <ul
           id={listId}
-          className="absolute right-0 left-0 z-50 mt-1 overflow-hidden border bg-popover text-sm shadow-lg"
+          className="absolute right-0 left-0 z-50 mt-1 overflow-hidden border bg-popover text-sm shadow-lg rounded-lg"
         >
           {shown.map((player) => (
             <li key={player.id}>
@@ -52,7 +52,7 @@ export function CompareAdd({ server, state }: { server: string; state: CompareSt
                 className="flex justify-between gap-3 px-3 py-2 hover:bg-accent"
               >
                 <span>{player.pseudo}</span>
-                {player.alliance && <span className="font-mono text-xs text-muted-foreground">{player.alliance}</span>}
+                {player.alliance && <span className="text-xs text-muted-foreground">{player.alliance}</span>}
               </Link>
             </li>
           ))}
