@@ -69,10 +69,15 @@ export interface SharedState {
   hunts?: SharedHunt[];
 }
 
+/** A part of a state, read on its own page and merged on its own. */
+export type StatePart = (typeof PARTS)[number];
+
 /** A member's states: the latest, and the one before it to show what changed. */
 export interface MemberStates {
   latest: SharedState;
   previous?: SharedState;
+  /** When each part of `latest` was read, once merged: its parts may come from readings of different times. */
+  partsReadAt?: Partial<Record<StatePart, Date>>;
 }
 
 /** A value of a member that can be shared or entered by hand. */
@@ -120,6 +125,7 @@ export function mergeMemberStates(sources: readonly MemberStates[]): MemberState
   const base = { server: first.latest.server, alliance: first.latest.alliance, pseudo: first.latest.pseudo };
   const latest: SharedState = { ...base, readAt: new Date(0) };
   const previous: SharedState = { ...base, readAt: new Date(0) };
+  const partsReadAt: Partial<Record<StatePart, Date>> = {};
   let hasPrevious = false;
   for (const part of PARTS) {
     const having = readings
@@ -128,6 +134,7 @@ export function mergeMemberStates(sources: readonly MemberStates[]): MemberState
     const [newest] = having;
     if (!newest) continue;
     Object.assign(latest, { [part]: newest[part] });
+    partsReadAt[part] = newest.readAt;
     if (newest.readAt > latest.readAt) latest.readAt = newest.readAt;
     const before = having.find((reading) => reading.readAt < newest.readAt);
     if (!before) continue;
@@ -136,5 +143,5 @@ export function mergeMemberStates(sources: readonly MemberStates[]): MemberState
     hasPrevious = true;
   }
   if (latest.readAt.getTime() === 0) latest.readAt = first.latest.readAt;
-  return hasPrevious ? { latest, previous } : { latest };
+  return hasPrevious ? { latest, previous, partsReadAt } : { latest, partsReadAt };
 }
