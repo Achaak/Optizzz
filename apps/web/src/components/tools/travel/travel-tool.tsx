@@ -306,7 +306,7 @@ function AlliancesSummary({
         {senderPseudo !== null ? (
           <Figure label={`À portée de ${senderPseudo}`} value={String(inRange)} />
         ) : (
-          <Figure label="Portée" value="—" />
+          <Figure label="Portée : expéditeur en position, sans TDC" value="—" />
         )}
       </div>
       <p className="text-xs text-muted-foreground">Le tableau des membres est sous l&apos;outil.</p>
