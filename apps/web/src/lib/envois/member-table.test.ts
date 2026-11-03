@@ -40,8 +40,8 @@ describe("columns", () => {
       "huntingField",
       "workers",
       "army",
-      "research.weapons",
       "research.shield",
+      "research.weapons",
       "research.attackSpeed",
       "buildings.dome",
       "buildings.lodge",
@@ -57,6 +57,10 @@ describe("columns", () => {
     expect(parseColumns('{"a":1}')).toEqual(DEFAULT_COLUMNS);
     expect(parseColumns('["workers","nope","huntingField"]')).toEqual(["huntingField", "workers"]);
     expect(parseColumns("[]")).toEqual([]);
+  });
+
+  it("keeps the defaults in the menu's order, so that a toggle moves nothing", () => {
+    expect(toggleColumn(toggleColumn(DEFAULT_COLUMNS, "hunts"), "hunts")).toEqual(DEFAULT_COLUMNS);
   });
 
   it("toggles a column, keeping the menu's order", () => {

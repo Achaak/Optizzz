@@ -230,7 +230,10 @@ export function MemberSpace({ view }: { view: MemberView }) {
           refused={envois.refused.states}
           isAdmin={isAdmin}
           loading={envois.loading || (access.keyring !== null && envois.states === null)}
-          members={view.members.map((m) => m.pseudo)}
+          members={view.members}
+          convoys={envois.convoys ?? []}
+          floods={envois.floods ?? []}
+          sends={envois.sends}
           server={view.space.server}
           tag={view.space.tag}
         />

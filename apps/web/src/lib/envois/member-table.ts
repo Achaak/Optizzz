@@ -66,8 +66,8 @@ export const DEFAULT_COLUMNS: readonly ColumnKey[] = [
   "huntingField",
   "workers",
   "army",
-  "research.weapons",
   "research.shield",
+  "research.weapons",
   "research.attackSpeed",
   "buildings.dome",
   "buildings.lodge",
@@ -187,7 +187,7 @@ const CHANGE_MS = 24 * 3600_000;
 export const isOld = (readAt: Date, now: Date) => now.getTime() - readAt.getTime() > OLD_MS;
 
 /** A level or count of the state, as a number. */
-function levelOf(state: MemberStates["latest"] | undefined, key: ColumnKey): number | undefined {
+export function levelOf(state: MemberStates["latest"] | undefined, key: ColumnKey): number | undefined {
   if (!state) return undefined;
   if (key === "huntingField") return state.huntingField;
   if (key === "workers") return state.workers;
