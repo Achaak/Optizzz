@@ -1,22 +1,36 @@
 "use client";
 
 // The travel tool: two ends (a player of a server, or a position), the sender's Attack Speed and a departure give the
-// distance, the travel time and the arrival, Paris time. See docs/features/site-trajets.md.
+// distance, the travel time and the arrival, Paris time; towards alliances, the same for each of their members.
+// See docs/features/site-trajets.md.
+import { formatNumber } from "@optizzz/game/format/number-format";
 import { formatEndTime, formatEndTimeShort, parisParts } from "@optizzz/game/format/time-format";
 import { distance } from "@optizzz/game/travel";
-import { useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { NumberField } from "~/components/number-field";
 import { SmallLabel, Panel } from "~/components/panel";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { api } from "~/trpc/react";
 import { CopyLinkButton } from "../copy-link-button";
 import { pickLevels } from "../my-levels";
 import { ChoiceButtons, PlayerPicker, ServerSelect, usePickedPlayer } from "../player-picker";
 import { InvalidLinkNote, ToolLayout, Verdict } from "../tool-page";
 import { ResumeLevelsButton, useMyLevels } from "../use-my-levels";
 import { useToolState } from "../use-tool-state";
+import { allianceTrips, type AllianceMember } from "./travel-alliances";
+import { AlliancePicker, AllianceTripsTable } from "./travel-alliances-view";
 import { departureTime, endPoint, travelResult } from "./travel-result";
-import { EMPTY_TRAVEL, swapEnds, travelFormat, withServer, type TravelState } from "./travel-state";
+import {
+  EMPTY_TRAVEL,
+  swapEnds,
+  travelFormat,
+  withAlliance,
+  withoutAlliance,
+  withServer,
+  type TravelMode,
+  type TravelState,
+} from "./travel-state";
 
 const withMyLevels = (state: TravelState, mine: Parameters<typeof pickLevels>[0]): TravelState => ({
   ...state,
@@ -53,6 +67,18 @@ function parisInputValue(date: Date): string {
   return `${String(year)}-${two(month)}-${two(day)}T${two(hours)}:${two(minutes)}`;
 }
 
+const NO_MEMBERS: AllianceMember[] = [];
+
+/** The members of the alliances chosen; undefined while loading. */
+function useAllianceMembers(server: string | null, tags: readonly string[]) {
+  const query = api.players.byAlliances.useQuery(
+    { server: server ?? "", tags: [...tags] },
+    { enabled: server !== null && tags.length > 0 },
+  );
+  if (server === null || tags.length === 0) return NO_MEMBERS;
+  return query.data;
+}
+
 export function TravelTool() {
   const tool = useToolState({ tool: "travel", format: travelFormat, empty: EMPTY_TRAVEL, withMyLevels });
   const levels = useMyLevels(tool);
@@ -62,6 +88,17 @@ export function TravelTool() {
   const [swaps, setSwaps] = useState(0);
   const fromPlayer = usePickedPlayer(state.server, state.from);
   const toPlayer = usePickedPlayer(state.server, state.to);
+  /** Towards alliances only on a server. */
+  const mode: TravelMode = state.server ? state.mode : "point";
+  const towardsAlliances = mode === "alliances";
+  const members = useAllianceMembers(state.server, towardsAlliances ? state.alliances : []);
+  const membersPerTag = useMemo(() => {
+    if (!members) return undefined;
+    const counts = new Map<string, number>();
+    for (const member of members)
+      if (member.alliance) counts.set(member.alliance, (counts.get(member.alliance) ?? 0) + 1);
+    return counts;
+  }, [members]);
 
   const setAttackSpeed = (attackSpeed: number | null) => {
     change((current) => ({ ...current, attackSpeed }));
@@ -77,21 +114,39 @@ export function TravelTool() {
       <Panel
         title="Expéditeur et destination"
         aside={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              change(swapEnds);
-              setSwaps((count) => count + 1);
-            }}
-          >
-            Inverser
-          </Button>
+          !towardsAlliances && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                change(swapEnds);
+                setSwaps((count) => count + 1);
+              }}
+            >
+              Inverser
+            </Button>
+          )
         }
       >
         <div className="space-y-4">
           <ServerSelect value={state.server} onChange={(server) => change((current) => withServer(current, server))} />
+          <div className="space-y-1">
+            <ChoiceButtons
+              label="Destination : un point ou des alliances"
+              options={[
+                { value: "point", label: "Vers un point" },
+                { value: "alliances", label: "Vers des alliances", disabled: !state.server },
+              ]}
+              value={mode}
+              onChange={(next) => change((current) => ({ ...current, mode: next }))}
+            />
+            {!state.server && (
+              <span className="block text-xs text-muted-foreground">
+                Vers des alliances : choisissez d&apos;abord un serveur.
+              </span>
+            )}
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <PlayerPicker
               key={`from-${String(tool.opening)}-${String(swaps)}`}
@@ -100,20 +155,34 @@ export function TravelTool() {
               value={state.from}
               onChange={(from) => change((current) => ({ ...current, from }))}
             />
-            <PlayerPicker
-              key={`to-${String(tool.opening)}-${String(swaps)}`}
-              label="Destination"
-              server={state.server}
-              value={state.to}
-              onChange={(to) => change((current) => ({ ...current, to }))}
-            />
-            <div className="space-y-1 text-sm">
-              <SmallLabel className="block">Distance</SmallLabel>
-              <output className="flex h-8 items-center border bg-background px-2.5 font-mono rounded-lg">
-                {from && to ? `${String(Math.ceil(distance(from, to)))} cases` : "—"}
-              </output>
-              <span className="block text-xs text-muted-foreground">calculée depuis les positions</span>
-            </div>
+            {towardsAlliances && state.server ? (
+              <div className="sm:row-span-2">
+                <AlliancePicker
+                  server={state.server}
+                  chosen={state.alliances}
+                  members={membersPerTag}
+                  onAdd={(tag) => change((current) => withAlliance(current, tag))}
+                  onRemove={(tag) => change((current) => withoutAlliance(current, tag))}
+                />
+              </div>
+            ) : (
+              <>
+                <PlayerPicker
+                  key={`to-${String(tool.opening)}-${String(swaps)}`}
+                  label="Destination"
+                  server={state.server}
+                  value={state.to}
+                  onChange={(to) => change((current) => ({ ...current, to }))}
+                />
+                <div className="space-y-1 text-sm">
+                  <SmallLabel className="block">Distance</SmallLabel>
+                  <output className="flex h-8 items-center border bg-background px-2.5 font-mono rounded-lg">
+                    {from && to ? `${String(Math.ceil(distance(from, to)))} cases` : "—"}
+                  </output>
+                  <span className="block text-xs text-muted-foreground">calculée depuis les positions</span>
+                </div>
+              </>
+            )}
             <label className="block space-y-1 text-sm">
               <SmallLabel className="block">Vitesse d&apos;attaque de l&apos;expéditeur</SmallLabel>
               <NumberField
@@ -134,28 +203,114 @@ export function TravelTool() {
     </>
   );
 
-  return (
-    <ToolLayout
-      actions={
-        <>
-          <ResumeLevelsButton
-            levels={levels}
-            onResume={(mine) => change((current) => ({ ...current, attackSpeed: mine.attackSpeed ?? null }))}
-          />
-          <CopyLinkButton />
-        </>
+  const departureText =
+    !now || state.departure === null ? "maintenant" : formatEndTime(departureTime(state.departure, now), now);
+  const trips =
+    towardsAlliances && from && members && now && state.attackSpeed !== null && state.alliances.length > 0
+      ? allianceTrips({
+          sender: {
+            ...from,
+            id: state.from?.kind === "player" ? (fromPlayer?.id ?? null) : null,
+            field: state.from?.kind === "player" ? (fromPlayer?.field ?? null) : null,
+          },
+          members,
+          attackSpeed: state.attackSpeed,
+          departure: departureTime(state.departure, now),
+          now,
+        })
+      : null;
+
+  const result = towardsAlliances ? (
+    <AlliancesSummary
+      trips={trips}
+      alliances={state.alliances.length}
+      missing={
+        !now
+          ? "Chargement…"
+          : !from
+            ? fromPlayer === undefined
+              ? "Chargement du joueur…"
+              : "Choisissez l'expéditeur : un joueur ou une position (x et y)."
+            : state.attackSpeed === null
+              ? "Saisissez la Vitesse d'attaque de l'expéditeur."
+              : state.alliances.length === 0
+                ? "Choisissez une alliance ou plusieurs, par leur tag."
+                : "Chargement des membres…"
       }
-      form={form}
-      result={
-        <Result
-          state={state}
-          now={now}
-          from={from}
-          to={to}
-          loading={fromPlayer === undefined || toPlayer === undefined}
-        />
-      }
+      senderPseudo={state.from?.kind === "player" ? (fromPlayer?.pseudo ?? null) : null}
+      departureText={departureText}
     />
+  ) : (
+    <Result state={state} now={now} from={from} to={to} loading={fromPlayer === undefined || toPlayer === undefined} />
+  );
+
+  return (
+    <>
+      <ToolLayout
+        actions={
+          <>
+            <ResumeLevelsButton
+              levels={levels}
+              onResume={(mine) => change((current) => ({ ...current, attackSpeed: mine.attackSpeed ?? null }))}
+            />
+            <CopyLinkButton />
+          </>
+        }
+        form={form}
+        result={result}
+      />
+      {trips && state.server && (
+        <AllianceTripsTable
+          server={state.server}
+          trips={trips}
+          alliances={state.alliances.length}
+          senderPseudo={state.from?.kind === "player" ? (fromPlayer?.pseudo ?? null) : null}
+          departureText={departureText}
+        />
+      )}
+    </>
+  );
+}
+
+/** The report towards alliances: the closest member, how many, how many in range; the table comes under the tool. */
+function AlliancesSummary({
+  trips,
+  alliances,
+  missing,
+  senderPseudo,
+  departureText,
+}: {
+  trips: ReturnType<typeof allianceTrips> | null;
+  alliances: number;
+  missing: string;
+  senderPseudo: string | null;
+  departureText: string;
+}) {
+  if (!trips) return <p className="text-sm text-muted-foreground">{missing}</p>;
+  const [closest] = trips;
+  const inRange = trips.filter((trip) => trip.range === "in").length;
+  return (
+    <>
+      {closest ? (
+        <Verdict title={`Le plus proche : ${closest.time}`}>
+          {closest.pseudo} ({closest.alliance}), arrivée {closest.arrivalText} en partant {departureText}
+        </Verdict>
+      ) : (
+        <Verdict title="Aucun membre">dans ces alliances, hors bannis</Verdict>
+      )}
+      <div className="-mx-4 -mb-4 grid grid-cols-2">
+        <Figure
+          label={`Membres, ${String(alliances)} alliance${alliances > 1 ? "s" : ""}`}
+          value={formatNumber(trips.length)}
+        />
+        {senderPseudo !== null ? (
+          <Figure label={`À portée de ${senderPseudo}`} value={String(inRange)} />
+        ) : (
+          <Figure label="Portée" value="—" />
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">Le tableau des membres est sous l&apos;outil.</p>
+    </>
   );
 }
 
