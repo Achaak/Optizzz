@@ -50,6 +50,7 @@ Toutes les 5 minutes et à l'ouverture d'une page du jeu, l'extension relève le
   - **Floods** : par cible, avec qui, combien et l'arrivée ;
   - **Convois** : dans les deux sens, par membre, filtrables ;
   - **État** : l'ancien « Partage », fusionné ; les unités n'apparaissent qu'aux Admins.
+  - **Mouvements** (ajouté en novembre 2026) : toutes les arrivées du jour, heure par heure, floods, convois et chasses mêlés (`site-mouvements.md`).
 - **Dans le jeu**, aux endroits qui existent déjà :
   - **page Armée**, sous « Attaque(s) en cours », un encart « Floods en route vers l'alliance » : d'abord ceux qui vous visent (« Pseudo, arrivée aujourd'hui 18 h 12, prise attendue 12 348 »), puis ceux qui visent les autres membres, par cible ; note : « Seuls les floods des membres qui les envoient à Optizzz apparaissent ici » ;
   - **page Commerce** : les convois de l'alliance en route vers vous ;
