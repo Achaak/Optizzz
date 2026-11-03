@@ -91,7 +91,7 @@ export default async function AdminOverviewPage() {
       <PageHeader
         kicker="Back office · vue d'ensemble"
         title={alertsTitle(alerts)}
-        note={`relu ${formatPastTime(now, now)}`}
+        live={`relu ${formatPastTime(now, now)}`}
       >
         <p>
           {jobs.lastIngest

@@ -70,25 +70,27 @@ describe("jobAlerts", () => {
 
   it("names a missed pass, a failing server and pages not rebuilt", () => {
     expect(jobAlerts({ ...healthy([ingest(80, [])]), lastBackup: backup(60, true), now: NOW })).toEqual([
-      "Le cron n'a pas tourné depuis plus d'une heure.",
-      "S4 : aucun passage depuis 24 h.",
-      "S5 : aucun passage depuis 24 h.",
+      { topic: "cron", text: "Le cron n'a pas tourné depuis plus d'une heure." },
+      { topic: "cron", text: "S4 : aucun passage depuis 24 h." },
+      { topic: "cron", text: "S5 : aucun passage depuis 24 h." },
     ]);
     const failing = healthy([ingest(10, [entry("s4", "failed"), entry("s5", "updated")], false)]);
     expect(jobAlerts({ ...failing, lastBackup: backup(60, true), now: NOW })).toEqual([
-      "Le dernier passage n'a pas pu reconstruire les pages du site.",
-      "S4 : le dernier passage a échoué.",
+      { topic: "cron", text: "Le dernier passage n'a pas pu reconstruire les pages du site." },
+      { topic: "cron", text: "S4 : le dernier passage a échoué." },
     ]);
   });
 
   it("tells a backup kept on the VPS only from one that failed, and a missed night", () => {
     const at = (b: ReturnType<typeof backup> | undefined) => jobAlerts({ ...healthy(), lastBackup: b, now: NOW });
-    expect(at(backup(60, false))).toEqual(["La dernière sauvegarde est sur le VPS mais pas dans le bucket Scaleway."]);
-    expect(at(backup(60, false, { file: null, bytes: null, error: "pg_dump" }))).toEqual([
-      "La dernière sauvegarde a échoué (pg_dump).",
+    expect(at(backup(60, false))).toEqual([
+      { topic: "backup", text: "La dernière sauvegarde est sur le VPS mais pas dans le bucket Scaleway." },
     ]);
-    expect(at(backup(27 * 60, true))).toEqual(["Pas de sauvegarde depuis plus d'une nuit."]);
-    expect(at(undefined)).toEqual(["Aucune sauvegarde enregistrée."]);
+    expect(at(backup(60, false, { file: null, bytes: null, error: "pg_dump" }))).toEqual([
+      { topic: "backup", text: "La dernière sauvegarde a échoué (pg_dump)." },
+    ]);
+    expect(at(backup(27 * 60, true))).toEqual([{ topic: "backup", text: "Pas de sauvegarde depuis plus d'une nuit." }]);
+    expect(at(undefined)).toEqual([{ topic: "backup", text: "Aucune sauvegarde enregistrée." }]);
   });
 });
 

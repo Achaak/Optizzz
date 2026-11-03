@@ -102,7 +102,13 @@ export function serverHealth(
   });
 }
 
-/** What needs a look, in the reader's words; empty when all is well. */
+/** One thing that needs a look: what it is about, and what to say of it in the reader's words. */
+export interface AdminAlert {
+  topic: "cron" | "backup" | "discord";
+  text: string;
+}
+
+/** What needs a look; empty when all is well. */
 export function jobAlerts({
   health,
   lastIngest,
@@ -113,22 +119,24 @@ export function jobAlerts({
   lastIngest: Run<IngestReport> | undefined;
   lastBackup: Run<BackupReport> | undefined;
   now: Date;
-}): string[] {
-  const alerts: string[] = [];
-  if (!lastIngest) alerts.push("Le cron n'a encore rien enregistré.");
+}): AdminAlert[] {
+  const alerts: AdminAlert[] = [];
+  const cron = (text: string) => alerts.push({ topic: "cron", text });
+  const backup = (text: string) => alerts.push({ topic: "backup", text });
+  if (!lastIngest) cron("Le cron n'a encore rien enregistré.");
   else if (now.getTime() - lastIngest.startedAt.getTime() > INGEST_LATE_AFTER)
-    alerts.push("Le cron n'a pas tourné depuis plus d'une heure.");
+    cron("Le cron n'a pas tourné depuis plus d'une heure.");
   else if (lastIngest.report?.revalidated === false)
-    alerts.push("Le dernier passage n'a pas pu reconstruire les pages du site.");
+    cron("Le dernier passage n'a pas pu reconstruire les pages du site.");
   for (const server of health) {
-    if (server.state === "failing") alerts.push(`${server.name} : le dernier passage a échoué.`);
-    else if (server.state === "missing" && lastIngest) alerts.push(`${server.name} : aucun passage depuis 24 h.`);
+    if (server.state === "failing") cron(`${server.name} : le dernier passage a échoué.`);
+    else if (server.state === "missing" && lastIngest) cron(`${server.name} : aucun passage depuis 24 h.`);
   }
-  if (!lastBackup) alerts.push("Aucune sauvegarde enregistrée.");
+  if (!lastBackup) backup("Aucune sauvegarde enregistrée.");
   else if (now.getTime() - lastBackup.startedAt.getTime() > BACKUP_LATE_AFTER)
-    alerts.push("Pas de sauvegarde depuis plus d'une nuit.");
+    backup("Pas de sauvegarde depuis plus d'une nuit.");
   else if (!lastBackup.ok)
-    alerts.push(
+    backup(
       lastBackup.report?.copied === false
         ? "La dernière sauvegarde est sur le VPS mais pas dans le bucket Scaleway."
         : `La dernière sauvegarde a échoué${lastBackup.report?.error ? ` (${lastBackup.report.error})` : ""}.`,

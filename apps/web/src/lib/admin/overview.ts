@@ -1,6 +1,7 @@
 // The back office's overview (docs/features/site-back-office.md): new accounts per day and what the spaces' Discord
 // says. Counts and dates only: what the spaces hold is encrypted and stays so.
 import { dayMonth, fromParisParts, parisParts } from "@optizzz/game/format/time-format";
+import type { AdminAlert } from "./job-runs";
 
 /** New accounts per Paris day over the last `days` days, oldest first, today included. */
 export function dailyCounts(dates: readonly Date[], now: Date, days: number): { label: string; value: number }[] {
@@ -26,13 +27,23 @@ export interface SpaceDiscordState {
 }
 
 /** The spaces whose Discord no longer takes their messages, in the reader's words. */
-export function discordAlerts(spaces: readonly SpaceDiscordState[]): string[] {
+export function discordAlerts(spaces: readonly SpaceDiscordState[]): AdminAlert[] {
   return spaces.flatMap((s) => [
     ...(s.refusedStatus === null
       ? []
-      : [`${s.space} (${s.server}) : Discord refuse les annonces (${String(s.refusedStatus)}).`]),
+      : [
+          {
+            topic: "discord" as const,
+            text: `${s.space} (${s.server}) : Discord refuse les annonces (${String(s.refusedStatus)}).`,
+          },
+        ]),
     ...(s.suspendedStatus === null
       ? []
-      : [`${s.space} (${s.server}) : rappels suspendus, Discord a refusé le webhook (${String(s.suspendedStatus)}).`]),
+      : [
+          {
+            topic: "discord" as const,
+            text: `${s.space} (${s.server}) : rappels suspendus, Discord a refusé le webhook (${String(s.suspendedStatus)}).`,
+          },
+        ]),
   ]);
 }

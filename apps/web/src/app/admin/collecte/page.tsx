@@ -21,7 +21,7 @@ const ROW = "grid grid-cols-[repeat(auto-fit,minmax(min(480px,100%),1fr))] gap-5
 /** A state is told by its sign and its words, never by its color alone (docs/adr/0003-daltonisme.md). */
 const STATE: Record<ServerState, { label: string; className: string }> = {
   ok: { label: "● à jour", className: "bg-accent text-primary" },
-  failing: { label: "▲ échec", className: "border border-foreground" },
+  failing: { label: "▲ échec", className: "border border-info text-info" },
   missing: { label: "○ aucun passage", className: "border border-dashed border-muted-foreground" },
 };
 const serverName = (id: string) => serverById(id)?.name ?? id;
@@ -58,7 +58,7 @@ export default async function CollectPage() {
       <PageHeader
         kicker="Back office · collecte et sauvegardes"
         title={alertsTitle(alerts)}
-        note={`relu ${formatPastTime(now, now)}`}
+        live={`relu ${formatPastTime(now, now)}`}
       >
         <p>
           {lastIngest
@@ -106,7 +106,7 @@ export default async function CollectPage() {
                     <TableCell className="pl-4 font-heading text-lg font-bold">{server.name}</TableCell>
                     <TableCell>
                       <span
-                        className={`whitespace-nowrap px-2 py-0.5 font-mono text-xs ${STATE[server.state].className}`}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${STATE[server.state].className}`}
                       >
                         {STATE[server.state].label}
                       </span>

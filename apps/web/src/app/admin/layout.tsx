@@ -10,6 +10,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <>
       <SectionNav
         label="Back office"
+        stamped
         links={[
           { href: "/admin", label: "Vue d'ensemble" },
           { href: "/admin/collecte", label: "Collecte et sauvegardes" },

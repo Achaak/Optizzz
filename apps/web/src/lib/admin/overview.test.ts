@@ -31,8 +31,8 @@ describe("discordAlerts", () => {
         { space: "LGA", server: "S2", refusedStatus: null, suspendedStatus: null },
       ]),
     ).toEqual([
-      "4O4 (S5) : Discord refuse les annonces (404).",
-      "4O4 (S5) : rappels suspendus, Discord a refusé le webhook (401).",
+      { topic: "discord", text: "4O4 (S5) : Discord refuse les annonces (404)." },
+      { topic: "discord", text: "4O4 (S5) : rappels suspendus, Discord a refusé le webhook (401)." },
     ]);
   });
 });
