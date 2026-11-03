@@ -1,5 +1,6 @@
 import { SERVERS, serverById } from "@optizzz/game/servers";
 import { z } from "zod";
+import { columnDay } from "~/ingest/days";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 /** Servers in the order of the menu, for the results. */
@@ -53,5 +54,49 @@ export const playersRouter = createTRPCRouter({
         }),
       ]);
       return { ...player, rank: above + 1, weekAgo: days.length === 8 ? days[7]?.field : undefined };
+    }),
+
+  /**
+   * The Équilibre of a space (docs/features/site-envois.md): these players and those they colonize now, each with
+   * their colonizer's pseudo and their TDC and alliance on each of the last `days` Paris days (nightly export). Public
+   * data, as the curves of a player's page.
+   */
+  allianceDays: publicProcedure
+    .input(
+      z.object({
+        server: serverId,
+        ids: z.array(z.number().int().positive()).max(200),
+        days: z.number().int().min(1).max(91),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const colonies = await ctx.db.player.findMany({
+        where: { server: input.server, masterId: { in: input.ids } },
+        select: { id: true },
+      });
+      const ids = [...new Set([...input.ids, ...colonies.map((c) => c.id)])];
+      const players = await ctx.db.player.findMany({
+        where: { server: input.server, id: { in: ids } },
+        select: { id: true, pseudo: true, masterId: true },
+      });
+      const masterIds = players.flatMap((p) => (p.masterId === null ? [] : [p.masterId]));
+      const masters = await ctx.db.player.findMany({
+        where: { server: input.server, id: { in: masterIds } },
+        select: { id: true, pseudo: true },
+      });
+      const since = new Date(Date.now() - (input.days + 1) * 24 * 3600_000);
+      const days = await ctx.db.playerDay.findMany({
+        where: { server: input.server, playerId: { in: ids }, day: { gte: since } },
+        select: { playerId: true, day: true, field: true, alliance: true },
+        orderBy: { day: "asc" },
+      });
+      return players.map((player) => ({
+        id: player.id,
+        pseudo: player.pseudo,
+        master: masters.find((m) => m.id === player.masterId)?.pseudo ?? null,
+        days: days
+          .filter((d) => d.playerId === player.id)
+          .map((d) => ({ day: columnDay(d.day), field: d.field, alliance: d.alliance })),
+      }));
     }),
 });

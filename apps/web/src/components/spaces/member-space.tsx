@@ -317,6 +317,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
           members={view.members}
           sends={envois.sends}
           demandeConvoys={demandes.convoys}
+          states={envois.states}
           server={view.space.server}
           tag={view.space.tag}
           loading={envois.loading || (access.keyring !== null && envois.convoys === null)}

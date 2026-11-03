@@ -212,6 +212,7 @@ function partsOf<C extends StateCategory>(
           master: r.master,
           colonies: r.colonies?.map((c) => ({ ...c, since: new Date(c.since) })) ?? null,
         },
+        ...(r.stock && { stock: { food: r.stock.food, materials: r.stock.materials, at: new Date(r.stock.at) } }),
       };
     }
     case "hunts":
@@ -234,6 +235,7 @@ function partsOf<C extends StateCategory>(
         ...(r.buildings && { buildings: r.buildings }),
         ...(r.research && { research: r.research }),
         ...(r.works && { works: r.works.map((w) => ({ ...w, endsAt: new Date(w.endsAt) })) }),
+        ...(r.capacities && { capacities: r.capacities }),
       };
     }
   }

@@ -1,11 +1,12 @@
 "use client";
 
 // The « Convois » tab of a space (docs/features/site-envois.md, « Vues » and « Statistiques des convois »): the
-// members' convoys both ways, opened in this browser, as statistics over 7, 30 or 90 days or as a list, for the
-// alliance or one member. The choice is kept in the address. A state is written in words (« En route », « Livré »),
+// members' convoys both ways, opened in this browser, as statistics over 7, 30 or 90 days, as the Équilibre (who
+// should convoy, who should receive) or as a list, for the alliance or one member. The choice is kept in the address. A state is written in words (« En route », « Livré »),
 // never told by a colour alone (ADR 0003).
 import { formatNumber } from "@optizzz/game/format/number-format";
 import { formatDateTime, formatEndTime } from "@optizzz/game/format/time-format";
+import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import type { DemandeConvoy } from "@optizzz/game/site-links/demandes";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -13,12 +14,15 @@ import { CopyIcon } from "~/components/icons";
 import { Segmented } from "~/components/tools/hunt/hunt-parts";
 import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { balanceDiscord } from "~/lib/envois/balance";
 import { convoyStats, convoyStatsDiscord, PERIODS } from "~/lib/envois/convoy-stats";
 import { convoyViewSearch, readConvoyView, type ConvoyView } from "~/lib/envois/convoy-view";
 import { filterConvoys, type AllianceConvoy, type ConvoyFilter } from "~/lib/envois/convoys";
+import { BalanceView } from "./balance-view";
 import { ConvoyStatsView } from "./convoy-stats-view";
 import { Callout, FIELD_LABEL, Panel } from "./parts";
 import { useServerAlliances } from "./use-server-alliances";
+import { useSpaceBalance } from "./use-space-balance";
 
 const STATES = [
   { value: "all", label: "Tous" },
@@ -28,6 +32,7 @@ const STATES = [
 
 const VIEWS = [
   { value: "stats", label: "Statistiques" },
+  { value: "balance", label: "Équilibre" },
   { value: "list", label: "Liste" },
 ] as const;
 
@@ -114,6 +119,7 @@ export function ConvoysPanel({
   members,
   sends,
   demandeConvoys,
+  states,
   server,
   tag,
   loading,
@@ -126,6 +132,8 @@ export function ConvoysPanel({
   sends: readonly { playerId: number; categories: string[] }[];
   /** The convoys attached to a Demande; null until opened. */
   demandeConvoys: readonly DemandeConvoy[] | null;
+  /** The members' states, for the Entrepôt estimé and the tax rates; null until opened. */
+  states: readonly MemberStates[] | null;
   server: string;
   tag: string;
   loading: boolean;
@@ -165,6 +173,16 @@ export function ConvoysPanel({
     stats !== null &&
     (stats.outside.sent.total > 0 || stats.outside.received.total > 0 || stats.rows.some((row) => !row.member));
   const alliances = useServerAlliances(server, outsiders);
+  const balance = useSpaceBalance({
+    server,
+    tag,
+    members,
+    sends,
+    convoys,
+    states,
+    days: choice.days,
+    enabled: choice.view === "balance",
+  });
 
   if (convoys === null || stats === null)
     return (
@@ -186,7 +204,7 @@ export function ConvoysPanel({
           <span className={FIELD_LABEL}>Vue</span>
           <Segmented label="Vue" options={VIEWS} value={choice.view} onChange={(view) => change({ view })} />
         </div>
-        {choice.view === "stats" && (
+        {choice.view !== "list" && (
           <div className="space-y-1">
             <span className={FIELD_LABEL}>Période</span>
             <Segmented
@@ -212,7 +230,7 @@ export function ConvoysPanel({
             ))}
           </select>
         </label>
-        {choice.view === "stats" && (
+        {(choice.view === "stats" || (choice.view === "balance" && balance.balance !== null)) && (
           <div className="ml-auto flex items-center gap-3">
             <span role="status" className="text-xs text-muted-foreground">
               {copied === "done" && "Copié : collez-le dans Discord."}
@@ -222,7 +240,11 @@ export function ConvoysPanel({
               type="button"
               variant="outline"
               onClick={() => {
-                const text = convoyStatsDiscord(stats, { tag, days: choice.days, now: new Date() });
+                const context = { tag, days: choice.days, now: new Date() };
+                const text =
+                  choice.view === "balance" && balance.balance
+                    ? balanceDiscord(balance.balance, context)
+                    : convoyStatsDiscord(stats, context);
                 navigator.clipboard.writeText(text).then(
                   () => setCopied("done"),
                   () => setCopied("failed"),
@@ -245,6 +267,16 @@ export function ConvoysPanel({
       )}
       {choice.view === "stats" ? (
         <ConvoyStatsView stats={stats} days={choice.days} member={choice.member} alliances={alliances} now={now} />
+      ) : choice.view === "balance" ? (
+        balance.balance ? (
+          <BalanceView key={choice.member ?? ""} balance={balance.balance} days={choice.days} member={choice.member} />
+        ) : (
+          <Panel title="Équilibre">
+            <p className="text-muted-foreground">
+              {balance.loading ? "Lecture des TDC de l'alliance…" : "Les TDC de l'alliance ne se lisent pas."}
+            </p>
+          </Panel>
+        )
       ) : (
         <ConvoyList convoys={convoys} member={choice.member} now={now} />
       )}

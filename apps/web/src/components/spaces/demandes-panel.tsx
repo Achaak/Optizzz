@@ -50,11 +50,16 @@ import {
   type Delivery,
   type OpenedDemande,
 } from "~/lib/demandes/demandes";
+import { balanceLine, type BalanceRow } from "~/lib/envois/balance";
 import { api } from "~/trpc/react";
 import { errorText } from "./errors";
 import { Callout, FIELD_INPUT, FIELD_LABEL, Panel } from "./parts";
 import type { MemberView } from "./use-space-access";
 import type { SpaceDemandes } from "./use-space-demandes";
+import { useSpaceBalance } from "./use-space-balance";
+
+/** The Équilibre under a Priorité: over the Solde's 30 days. */
+const BALANCE_DAYS = 30;
 
 const LEVEL_RULES = { integer: true, min: 0, max: MAX_DEMANDE_LEVEL, allowEmpty: true } as const;
 const AMOUNT_RULES = { integer: true, min: 0, amount: true, allowEmpty: true } as const;
@@ -128,8 +133,11 @@ function prioriteDetail(priorite: Priorite): string {
   }
 }
 
-/** The requester's Priorité in days, with its Solde and Production; « … » while the Envois are being opened. */
-function PrioriteCell({ priorite }: { priorite: Priorite | undefined }) {
+/**
+ * The requester's Priorité in days, with its Solde and Production, and their Équilibre over 30 days (shown, never
+ * ranked by); « … » while the Envois are being opened.
+ */
+function PrioriteCell({ priorite, balance }: { priorite: Priorite | undefined; balance: BalanceRow | undefined }) {
   if (!priorite) return <span className="text-muted-foreground">…</span>;
   return (
     <>
@@ -137,6 +145,9 @@ function PrioriteCell({ priorite }: { priorite: Priorite | undefined }) {
         {prioriteText(priorite)}
       </span>
       <span className="block text-xs text-muted-foreground tabular-nums">{prioriteDetail(priorite)}</span>
+      {balance && (
+        <span className="block text-xs text-muted-foreground tabular-nums">{balanceLine(balance, BALANCE_DAYS)}</span>
+      )}
     </>
   );
 }
@@ -221,6 +232,18 @@ export function DemandesPanel({
   // The Demande whose « Modifier » or « Déclarer un convoi » form is open under its row.
   const [unfolded, setUnfolded] = useState<{ id: string; form: "change" | "declare" } | null>(null);
   const nests = api.spaces.passageRoster.useQuery({ spaceId: view.space.id });
+  const { balance } = useSpaceBalance({
+    server: view.space.server,
+    tag: view.space.tag,
+    members: view.members,
+    sends,
+    convoys,
+    states,
+    days: BALANCE_DAYS,
+    enabled: (demandes.demandes?.length ?? 0) > 0,
+  });
+  const balanceOfRequester = (pseudo: string) =>
+    balance?.rows.find((row) => row.pseudo.toLowerCase() === pseudo.toLowerCase());
   const myPseudo = view.members.find((m) => m.playerId === view.me.playerId)?.pseudo ?? "";
   const myState = states?.find((s) => s.latest.pseudo.toLowerCase() === myPseudo.toLowerCase())?.latest;
   const trips = useMemo(() => {
@@ -454,7 +477,10 @@ export function DemandesPanel({
                           <Cost resources={d.content.cost} />
                         </TableCell>
                         <TableCell className="min-w-40 whitespace-normal">
-                          <PrioriteCell priorite={priorites?.get(d.playerId)} />
+                          <PrioriteCell
+                            priorite={priorites?.get(d.playerId)}
+                            balance={balanceOfRequester(d.requester)}
+                          />
                         </TableCell>
                         <TableCell>{formatPastTime(new Date(d.createdAt), now)}</TableCell>
                         <TableCell className="min-w-44 pr-4 whitespace-normal">
@@ -566,7 +592,10 @@ export function DemandesPanel({
                           )}
                         </TableCell>
                         <TableCell className="min-w-40 whitespace-normal">
-                          <PrioriteCell priorite={priorites?.get(d.playerId)} />
+                          <PrioriteCell
+                            priorite={priorites?.get(d.playerId)}
+                            balance={balanceOfRequester(d.requester)}
+                          />
                         </TableCell>
                         <TableCell className="text-right">
                           {d.content.self ? (

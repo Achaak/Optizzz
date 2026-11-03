@@ -144,6 +144,31 @@ describe("stateOfEnvoi", () => {
     expect(states.previous).toBeUndefined();
   });
 
+  it("reads the stock of a Production and the capacities of the levels", () => {
+    const stock = { food: 1_000, materials: 2_000, at: NOW.getTime() - HOUR };
+    const withStock = stateOfEnvoi(
+      "production",
+      { observedAt: NOW.getTime(), item: { pseudo: "Messor", reading: { ...production, stock }, previous: null } },
+      null,
+      context,
+    );
+    expect(withStock.latest.stock).toEqual({ food: 1_000, materials: 2_000, at: new Date(NOW.getTime() - HOUR) });
+    const levels = stateOfEnvoi(
+      "levels",
+      {
+        observedAt: NOW.getTime(),
+        item: {
+          pseudo: "Messor",
+          reading: { buildings: null, research: null, works: null, capacities: { food: 9, materials: 8 } },
+          previous: null,
+        },
+      },
+      null,
+      context,
+    );
+    expect(levels.latest.capacities).toEqual({ food: 9, materials: 8 });
+  });
+
   it("puts the units of the Admins' blob in the army, and keeps the previous reading", () => {
     const states = stateOfEnvoi(
       "army",
