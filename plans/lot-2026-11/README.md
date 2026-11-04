@@ -17,9 +17,9 @@ Base : `main` (la branche `feat/demandes-chaine-rapports` y est fusionnée).
 | [22](22-recap-demandes.md)             | Récapitulatif et historiques des Demandes        | 3        | S         | —         | A     | FAIT (fusionné dans `main` le 2026-11-04)                                                                          |
 | [23](23-entrees-sorties.md)            | Graphique « ce qui entre / ce qui sort »         | 3        | S-M       | 11        | B     | FAIT (fusionné dans `main` le 2026-11-04, avec 21)                                                                 |
 | [30](30-timing-59e-seconde.md)         | Timing d'une attaque à la seconde (recherche)    | 4        | à estimer | —         | A     | FAIT pour la recherche (fusionnée dans `main`, `docs/research/timing-attaques.md`) ; feature cadrée, code à lancer |
-| [31](31-guides-publics.md)             | Guides publics                                   | 4        | M         | (30)      | C     | À FAIRE                                                                                                            |
+| [31](31-guides-publics.md)             | Guides publics                                   | 4        | M         | (30)      | C     | EN COURS (`claude/lot-31-guides-8727a0` : guide « Chaîne de TDC » codé, à relire par le joueur)                    |
 | [32](32-carte-alliance.md)             | Carte de l'alliance : taille, étiquettes, mesure | 4        | S         | —         | A     | FAIT (fusionné dans `main` le 2026-11-04 ; pas encore essayé dans le jeu)                                          |
-| [33](33-declarer-depuis-discord.md)    | Déclarer depuis Discord (ADR d'abord)            | 4        | L         | —         | C     | À FAIRE                                                                                                            |
+| [33](33-declarer-depuis-discord.md)    | Déclarer depuis Discord (ADR d'abord)            | 4        | L         | —         | C     | FAIT (`claude/lot-33-discord-adr-b9c046` : ADR 0010 acceptée, option B ; code à planifier)                         |
 
 États : À FAIRE · CADRAGE · EN COURS · PR OUVERTE · FAIT · BLOQUÉ (raison en une ligne) · ÉCARTÉ (raison en une ligne).
 
