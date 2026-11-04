@@ -39,7 +39,9 @@ export type SentCategory = (typeof SENT_CATEGORIES)[number];
  * The categories whose Envois are encrypted rows: one per item (lists) or per Joueur (states). `demande-convoys`, the
  * convoys launched for a Demande (docs/features/site-demandes.md), leaves with « Convois »; `declared-convoys`, the
  * convoys declared for a Demande on the space page, by an explicit act of their sender, needs no setting.
- * `hunts-log`, one row per hunt seen out (envoi-hunts.ts), leaves with « Chasses ».
+ * `hunts-log`, one row per hunt seen out (envoi-hunts.ts), leaves with « Chasses ». `declared-floods`,
+ * `declared-transits` and `declared-hunts`, what a member declares on the page « Déclarer » (declarations.ts), need
+ * no setting either.
  */
 export type EnvoiCategory =
   | "production"
@@ -50,7 +52,22 @@ export type EnvoiCategory =
   | "army"
   | "levels"
   | "demande-convoys"
-  | "declared-convoys";
+  | "declared-convoys"
+  | "declared-floods"
+  | "declared-transits"
+  | "declared-hunts";
+
+/** The categories a member writes by hand on the site, never their extension: each declaration is its own consent. */
+export const DECLARED_CATEGORIES = [
+  "declared-convoys",
+  "declared-floods",
+  "declared-transits",
+  "declared-hunts",
+] as const satisfies readonly EnvoiCategory[];
+export type DeclaredCategory = (typeof DECLARED_CATEGORIES)[number];
+
+export const isDeclaredCategory = (category: EnvoiCategory): category is DeclaredCategory =>
+  (DECLARED_CATEGORIES as readonly string[]).includes(category);
 
 const LABELS: Record<SentCategory, string> = {
   production: "production",
@@ -80,7 +97,7 @@ export const isSent = (choices: EnvoiChoices, category: EnvoiCategory): boolean 
       ? choices.convoys
       : category === "hunts-log"
         ? choices.hunts
-        : category === "declared-convoys"
+        : isDeclaredCategory(category)
           ? false
           : choices[category];
 

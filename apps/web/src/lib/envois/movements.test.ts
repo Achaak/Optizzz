@@ -48,6 +48,21 @@ describe("the alliance's movements", () => {
     ).toEqual([{ kind: "flood", at: at("2026-11-03T13:02:00Z"), from: "Brosse", to: "Psycho62", take: 300_000 }]);
   });
 
+  it("marks what a member declared on the page « Déclarer »", () => {
+    const when = "2026-11-03T13:02:00Z";
+    const moves = allianceMovements({
+      ...none,
+      floods: [{ ...flood("XaTaK", "Lasius", null, when), declared: true }],
+      convoys: [{ ...convoy("delivered", "XaTaK", "Formica", 10, 0, when), declared: true }],
+      hunts: [{ hunter: "XaTaK", fieldGain: 5, returnsAt: at(when), ants: null, declared: true }],
+    });
+    expect(moves.map((m) => [m.kind, m.declared])).toEqual([
+      ["flood", true],
+      ["convoy", true],
+      ["hunt", true],
+    ]);
+  });
+
   it("keeps convoys delivered and convoys still on their way", () => {
     const moves = allianceMovements({
       ...none,

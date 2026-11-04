@@ -24,7 +24,7 @@ export const knownByExcluded = (settings: DiscordSettings, newest: number): bool
   settings.url !== null && settings.urlSetAtVersion < newest;
 
 /** What Discord's answer means for the Admin. */
-function refusalReason(status: number): string {
+export function refusalReason(status: number): string {
   if (status === 404) return "ce webhook n'existe plus (supprimé dans Discord ?)";
   if (status === 401 || status === 403) return "l'adresse du webhook n'est pas valable";
   return `erreur ${String(status)}`;

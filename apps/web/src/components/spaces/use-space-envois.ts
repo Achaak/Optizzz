@@ -7,6 +7,7 @@
 import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
 import { useEffect, useMemo, useState } from "react";
 import { openConvoys, type AllianceConvoy } from "~/lib/envois/convoys";
+import { mergeDeclarations, openDeclarations, type OpenedDeclarations } from "~/lib/envois/declarations";
 import { openFloods, type AllianceFlood } from "~/lib/envois/floods";
 import { openHunts, type AllianceHunt } from "~/lib/envois/hunts";
 import { openStates } from "~/lib/envois/states";
@@ -29,6 +30,7 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
     floods: AllianceFlood[];
     hunts: AllianceHunt[];
     states: MemberStates[];
+    declarations: OpenedDeclarations;
     refused: { convoys: number; floods: number; hunts: number; states: number };
   } | null>(null);
   const data = query.data;
@@ -42,14 +44,16 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
       openFloods(data.items, keyring),
       openHunts(data.items, keyring),
       openStates(data.items, keyring, context),
+      openDeclarations(data.items, keyring, data.sends),
     ])
-      .then(([convoys, floods, hunts, states]) => {
+      .then(([convoys, floods, hunts, states, declarations]) => {
+        // What members declared on the page « Déclarer », marked declared, unless their extension sent it too.
+        const lists = { convoys: convoys.convoys, floods: floods.floods, hunts: hunts.hunts, states: states.states };
         if (!run.cancelled)
           setOpened({
-            convoys: convoys.convoys,
-            floods: floods.floods,
-            hunts: hunts.hunts,
+            ...mergeDeclarations(lists, declarations, new Date()),
             states: states.states,
+            declarations,
             refused: {
               convoys: convoys.refused,
               floods: floods.refused,
@@ -77,6 +81,8 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
     floods: keyring ? (opened?.floods ?? null) : null,
     hunts: keyring ? (opened?.hunts ?? null) : null,
     states: keyring ? (opened?.states ?? null) : null,
+    /** What the members declared on the page « Déclarer », as it came (for « Vos déclarations »). */
+    declarations: keyring ? (opened?.declarations ?? null) : null,
     refused: opened?.refused ?? { convoys: 0, floods: 0, hunts: 0, states: 0 },
   };
 }

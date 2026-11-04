@@ -52,6 +52,10 @@ const CATEGORIES = {
   "demande-convoys": { settings: ["convoys"], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
   // A convoy its sender declares for a Demande on the space page: an explicit act, without a setting.
   "declared-convoys": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
+  // What a member declares on the page « Déclarer » (ADR 0010): a flood, a convoy for no Demande, a hunt.
+  "declared-floods": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
+  "declared-transits": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
+  "declared-hunts": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
 } satisfies Record<string, CategoryRules>;
 
 /** The states, whose row goes as soon as their category is unchecked. */

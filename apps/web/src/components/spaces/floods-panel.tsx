@@ -18,7 +18,7 @@ import { floodViewSearch, readFloodView, type FloodView } from "~/lib/envois/flo
 import { floodsByTarget, type AllianceFlood } from "~/lib/envois/floods";
 import { resolvePeriod } from "~/lib/envois/period";
 import { FloodStatsView } from "./flood-stats-view";
-import { Callout, FIELD_LABEL, Panel } from "./parts";
+import { Callout, DeclaredTag, FIELD_LABEL, Panel } from "./parts";
 import { PeriodPicker } from "./period-picker";
 import { useServerAlliances } from "./use-server-alliances";
 
@@ -96,7 +96,10 @@ function FloodList({
                   <TableBody>
                     {group.floods.map((f) => (
                       <TableRow key={f.fingerprint}>
-                        <TableCell>{f.from}</TableCell>
+                        <TableCell>
+                          {f.from}
+                          {f.declared && <DeclaredTag />}
+                        </TableCell>
                         <TableCell className="text-right tabular-nums" title={f.take === null ? NO_PLAN : undefined}>
                           {f.take === null ? "—" : formatNumber(f.take)}
                         </TableCell>
@@ -129,7 +132,9 @@ function FloodList({
       )}
       <p className="text-xs text-muted-foreground">
         Seuls les floods des membres qui les envoient à Optizzz apparaissent ici, gardés 7 jours après leur arrivée. La
-        prise attendue est celle du Plan de flood&nbsp;; «&nbsp;—&nbsp;» pour une attaque lancée sans lui.{" "}
+        prise attendue est celle du Plan de flood&nbsp;; «&nbsp;—&nbsp;» pour une attaque lancée sans lui.
+        «&nbsp;déclaré&nbsp;» : saisi à la main sur la page Déclarer, jusqu&apos;à ce que l&apos;extension du membre
+        l&apos;envoie.{" "}
         {isAdmin
           ? "L'armée envoyée n'est montrée qu'aux Admins : optizzz.fr ne la renvoie qu'à eux (c'est le site qui la réserve, pas le chiffrement)."
           : "L'armée envoyée n'est montrée qu'aux Admins de l'espace."}

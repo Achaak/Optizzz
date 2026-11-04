@@ -19,6 +19,8 @@ export interface AllianceConvoy extends ConvoyItem {
   observedAt: number;
   /** The member whose extension read it. */
   reporter: string;
+  /** Declared by hand on the site (declarations.ts), not read by an extension. */
+  declared?: true;
 }
 
 interface Row {

@@ -19,6 +19,7 @@ import { Input } from "~/components/ui/input";
 import { knownByExcluded, lockDiscord, openDiscord, refusalText, staleDiscord } from "~/lib/spaces/discord";
 import { maskedWebhook } from "~/lib/spaces/reminders";
 import { api } from "~/trpc/react";
+import { DeclareLinkSection } from "./declare-link-section";
 import { errorText } from "./errors";
 import { Callout, Panel } from "./parts";
 import { RemindersSection } from "./reminders-section";
@@ -228,6 +229,7 @@ export function DiscordPanel({ view, keyring }: { view: MemberView; keyring: All
         Chaque membre garde la main&nbsp;: rien ne part sur Discord pour une catégorie qu&apos;il n&apos;envoie pas à
         l&apos;espace, ni tant qu&apos;il n&apos;a pas autorisé Discord dans son extension.
       </p>
+      {settings !== undefined && <DeclareLinkSection spaceId={view.space.id} webhook={current.url} />}
       <RemindersSection spaceId={view.space.id} spaceName={view.space.name} announcementsUrl={settings?.url ?? null} />
     </Panel>
   );

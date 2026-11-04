@@ -91,3 +91,15 @@ export function WhyCode({ pseudo }: { pseudo: string }) {
     </details>
   );
 }
+
+/** « déclaré »: saisi à la main sur la page « Déclarer », pas envoyé par l'extension (ADR 0010). */
+export function DeclaredTag({ count }: { count?: number }) {
+  return (
+    <span
+      className="ml-1.5 inline-block rounded-full border border-dashed border-muted-foreground px-1.5 text-xs font-semibold whitespace-nowrap text-muted-foreground"
+      title="Saisi à la main sur la page Déclarer : l'extension du membre ne l'a pas encore envoyé."
+    >
+      {count !== undefined && count > 1 ? `${String(count)} déclarés` : "déclaré"}
+    </span>
+  );
+}

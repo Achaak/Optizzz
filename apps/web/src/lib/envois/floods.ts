@@ -12,6 +12,8 @@ export interface AllianceFlood extends FloodItem {
   observedAt: number;
   /** The army sent, by unit key: only for an Admin, and only for an attack of the Plan de flood. */
   army: Record<string, number> | null;
+  /** Declared by hand on the page « Déclarer » (declarations.ts), not sent by the extension. */
+  declared?: true;
 }
 
 interface Row {

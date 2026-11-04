@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { listNames } from "~/lib/envois/convoy-stats";
 import type { HuntMemberRow, HuntPeriod, HuntStats } from "~/lib/envois/hunt-stats";
 import { HuntStatsChart } from "./hunt-stats-chart";
-import { Callout, Panel } from "./parts";
+import { Callout, DeclaredTag, Panel } from "./parts";
 
 export const huntsWord = (count: number) => `${formatNumber(count)} chasse${count > 1 ? "s" : ""}`;
 
@@ -172,7 +172,15 @@ function OwnPanel({ member, hunts, now }: { member: string; hunts: readonly Hunt
 }
 
 /** One row per hunt: its return (« en cours » when still out), its cm², its ants. */
-export function HuntRows({ hunts, now, hunter = false }: { hunts: readonly HuntItem[]; now: Date; hunter?: boolean }) {
+export function HuntRows({
+  hunts,
+  now,
+  hunter = false,
+}: {
+  hunts: readonly (HuntItem & { declared?: true })[];
+  now: Date;
+  hunter?: boolean;
+}) {
   return hunts.map((hunt, index) => {
     const away = hunt.returnsAt > now.getTime();
     return (
@@ -186,6 +194,7 @@ export function HuntRows({ hunts, now, hunter = false }: { hunts: readonly HuntI
           ) : (
             `rentrée ${formatPastTime(new Date(hunt.returnsAt), now)}`
           )}
+          {hunt.declared && <DeclaredTag />}
         </TableCell>
         <TableCell className="text-right font-mono">{formatNumber(hunt.fieldGain)}</TableCell>
         <TableCell className="pr-4 text-right font-mono">
