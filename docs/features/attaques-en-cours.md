@@ -27,3 +27,5 @@ Lire d'un coup d'œil les attaques parties, et pouvoir en coller une (Discord de
 | `apps/extension/src/features/attacks-on-way/index.ts`          | La feature                                                            |
 | `apps/extension/src/utils/on-way-list.ts`                      | Liste partagée avec les convois : lignes, décompte, bouton « Copier » |
 | `packages/game/src/army/units.ts`                              | `readTroops` : troupes écrites par le jeu → effectifs par unité       |
+
+Chaque ligne porte le numéro de l'attaque (`data-optizzz-on-way="attaque_<n>"`) : « Timing à la seconde » y écrit l'arrivée exacte d'une attaque visée (`timing.md`).

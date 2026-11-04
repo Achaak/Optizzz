@@ -35,6 +35,7 @@ Chasse et combat
 • Page Membres : le temps d'une attaque ou d'un convoi vers chaque membre, et son rôle dans la chaîne de TDC en couleur, deux colonnes triables.
 • Production sur les profils : ce que le TDC d'un joueur récolte par jour au plus, taxe de colonie déduite s'il est soumis.
 • Plan de flood : sur le formulaire d'attaque, les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
+• Timing à la seconde : sur le formulaire d'attaque, l'heure du jeu à la seconde et un compte à rebours jusqu'au moment de cliquer pour que l'attaque arrive à la 59e seconde d'une minute ; après l'envoi, sa seconde d'arrivée réelle. Optizzz ne clique jamais à votre place.
 • Attaques et convois en cours : une liste lisible avec décompte, heure d'arrivée, lieu et troupes (Compte+), et un bouton pour copier chacun en une ligne.
 • Anti-sondes : des fourmis gardées sur le Dôme et la Loge (et le Terrain au choix), réglées sur la page Armée, pour que le rapport d'une attaque montre l'armée de l'attaquant ; un avertissement et un bouton sur Armée, et le Lanceur de chasse comme le Plan de flood les laissent à la maison.
 

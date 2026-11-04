@@ -41,6 +41,7 @@ Ces règles vivent dans `packages/game/src/attack.ts` (prise, portée avec marge
 - **Cibles à portée** : colonne « Flood max », triable, d'après l'armée mémorisée sur `Armee.php` (Terrain + Dôme, + Loge si la case est cochée), les défenses collées et les mêmes attaques en route que ce plan (`apps/extension/src/data/on-way.ts`).
 - **Anti-sondes** (`sondes.md`) : l'armée planifiée garde une fourmi par lieu surveillé.
 - **Cible déjà visée** (ticket 21, `site-envois.md`) : quand un membre de l'Espace d'alliance a un flood en route vers la cible (Envoi « Floods », dernière relève), l'encart le dit sous les chiffres clés : « Déjà visée par Pseudo, arrivée 18 h 12 : sa prise n'est pas comptée dans ce plan. »
+- **Timing à la seconde** (`timing.md`) : son encart se met au-dessus du bouton « Attaquer », dans le formulaire ; il ne touche ni aux champs des unités ni à cet encart, et marche Plan de flood coupé. Les deux relisent le même profil de la cible (une requête partagée).
 - Interrupteur « Plan de flood » : coupé, rien sur le formulaire, pas de colonne, aucune lecture.
 
 ## Hors v1

@@ -23,3 +23,7 @@ Où (formulaire d'attaque, Plan de flood), ce qu'on montre (heure du serveur, é
 ## Fini quand
 
 La recherche est écrite et la feature cadrée ; le code seulement si la recherche confirme qu'il y a quelque chose de fiable à montrer.
+
+## Fait
+
+Recherche : `docs/research/timing-attaques.md`. Feature codée le 2026-11-04 : `docs/features/timing.md` (interrupteur « Timing à la seconde »).
