@@ -1,6 +1,7 @@
-// What the travel tool keeps in its address (`#p=1.…`) and in the browser: the server, the two ends, the sender's
-// Attack Speed and the departure if one is set. See docs/features/site-trajets.md and site-outils.md.
-import { defineLinkFormat } from "@optizzz/game/site-links/link-state";
+// What the travel tool keeps in its address (`#p=2.…`) and in the browser: the server, the two ends, the sender's
+// Attack Speed, the departure if one is set, and the alliances when it goes towards them. The links of the first
+// version (towards a point) are still read. See docs/features/site-trajets.md and site-outils.md.
+import { defineLinkFormat, earlierFormat } from "@optizzz/game/site-links/link-state";
 import { z } from "zod";
 import type { PickedEnd } from "../player-picker";
 
@@ -14,25 +15,52 @@ export interface TravelState {
   attackSpeed: number | null;
   /** A day and time of Paris, « 2026-10-23T20:15 »; null: now. */
   departure: string | null;
+  /** Towards the end `to`, or towards every member of `alliances`. */
+  mode: TravelMode;
+  /** Tags of `server`, as the export writes them, in the order chosen. */
+  alliances: readonly string[];
 }
 
-export const EMPTY_TRAVEL: TravelState = { server: null, from: null, to: null, attackSpeed: null, departure: null };
+export type TravelMode = "point" | "alliances";
+
+/** The alliances the tool takes at once: about 2,000 members at most. */
+export const MAX_ALLIANCES = 10;
+
+export const EMPTY_TRAVEL: TravelState = {
+  server: null,
+  from: null,
+  to: null,
+  attackSpeed: null,
+  departure: null,
+  mode: "point",
+  alliances: [],
+};
 
 /** « Inverser »: the ends swap; the Attack Speed stays as typed (the new sender's, to type). */
 export const swapEnds = (state: TravelState): TravelState => ({ ...state, from: state.to, to: state.from });
 
-/** A player of another server is not one of this server: only the positions stay. */
+/** A player or an alliance of another server is not one of this server: only the positions stay. */
 export function withServer(state: TravelState, server: string | null): TravelState {
   if (server === state.server) return state;
   const kept = (end: PickedEnd | null) => (end?.kind === "player" ? null : end);
-  return { ...state, server, from: kept(state.from), to: kept(state.to) };
+  return { ...state, server, from: kept(state.from), to: kept(state.to), alliances: [] };
 }
+
+export function withAlliance(state: TravelState, tag: string): TravelState {
+  if (state.alliances.includes(tag) || state.alliances.length >= MAX_ALLIANCES) return state;
+  return { ...state, alliances: [...state.alliances, tag] };
+}
+
+export const withoutAlliance = (state: TravelState, tag: string): TravelState => ({
+  ...state,
+  alliances: state.alliances.filter((chosen) => chosen !== tag),
+});
 
 const coordinate = z.number().int().min(0).max(100_000).nullable();
 /** A player is their id; a position is `[x, y]`. */
 const endSchema = z.union([z.number().int().positive(), z.tuple([coordinate, coordinate])]).nullable();
 
-const wireSchema = z.object({
+const firstSchema = z.object({
   s: z
     .string()
     .regex(/^s\d{1,2}$/)
@@ -46,6 +74,13 @@ const wireSchema = z.object({
     .nullable(),
 });
 
+const wireSchema = firstSchema.extend({
+  /** Towards alliances; absent: towards a point. */
+  m: z.literal("t").optional(),
+  t: z.array(z.string().min(1).max(20)).max(MAX_ALLIANCES).optional(),
+});
+
+type FirstWire = z.infer<typeof firstSchema>;
 type Wire = z.infer<typeof wireSchema>;
 type WireEnd = Wire["a"];
 
@@ -59,21 +94,32 @@ const endFromWire = (end: WireEnd): PickedEnd | null =>
       ? { kind: "player", id: end }
       : { kind: "position", x: end[0], y: end[1] };
 
+const fromFirstWire = (wire: FirstWire): TravelState => ({
+  server: wire.s,
+  from: endFromWire(wire.a),
+  to: endFromWire(wire.b),
+  attackSpeed: wire.v,
+  departure: wire.d,
+  mode: "point",
+  alliances: [],
+});
+
 export const travelFormat = defineLinkFormat({
-  version: 1,
+  version: 2,
   schema: wireSchema,
+  earlier: { 1: earlierFormat(firstSchema, fromFirstWire) },
   toWire: (state: TravelState): Wire => ({
     s: state.server,
     a: endToWire(state.from),
     b: endToWire(state.to),
     v: state.attackSpeed,
     d: state.departure,
+    ...(state.mode === "alliances" && { m: "t" as const }),
+    ...(state.alliances.length > 0 && { t: [...state.alliances] }),
   }),
   fromWire: (wire): TravelState => ({
-    server: wire.s,
-    from: endFromWire(wire.a),
-    to: endFromWire(wire.b),
-    attackSpeed: wire.v,
-    departure: wire.d,
+    ...fromFirstWire(wire),
+    mode: wire.m === "t" ? "alliances" : "point",
+    alliances: wire.t ?? [],
   }),
 });

@@ -72,7 +72,7 @@ export function ChoiceButtons<Value extends string>({
   onChange,
 }: {
   label: string;
-  options: readonly { value: Value; label: string }[];
+  options: readonly { value: Value; label: string; disabled?: boolean }[];
   value: Value;
   onChange: (value: Value) => void;
 }) {
@@ -89,10 +89,11 @@ export function ChoiceButtons<Value extends string>({
             key={option.value}
             type="button"
             aria-pressed={chosen}
+            disabled={option.disabled}
             onClick={() => onChange(option.value)}
             className={cn(
-              "h-8 rounded-full px-3 text-sm whitespace-nowrap",
-              chosen ? "bg-primary font-semibold text-primary-foreground" : "hover:bg-accent",
+              "h-8 rounded-full px-3 text-sm whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50",
+              chosen ? "bg-primary font-semibold text-primary-foreground" : "enabled:hover:bg-accent",
             )}
           >
             {option.label}

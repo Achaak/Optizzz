@@ -35,6 +35,19 @@ export const playersRouter = createTRPCRouter({
       ctx.db.player.findUnique({ where: { server_id: { server: input.server, id: input.id } }, select: PICKED }),
     ),
 
+  /**
+   * The members of the alliances `tags` (as the export writes them), banned players left out: the travel tool towards
+   * alliances. Ten alliances at most, about 2,000 members.
+   */
+  byAlliances: publicProcedure
+    .input(z.object({ server: serverId, tags: z.array(z.string().min(1).max(20)).min(1).max(10) }))
+    .query(({ ctx, input }) =>
+      ctx.db.player.findMany({
+        where: { server: input.server, alliance: { in: input.tags }, isBanned: false },
+        select: { id: true, pseudo: true, alliance: true, x: true, y: true, field: true, onHoliday: true },
+      }),
+    ),
+
   /** A player's card on the signed-in home: TDC, its move in a week, rank on the server; null once gone. */
   card: publicProcedure
     .input(z.object({ server: serverId, id: z.number().int().positive() }))
