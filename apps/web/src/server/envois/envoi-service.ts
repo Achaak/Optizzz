@@ -41,6 +41,8 @@ const CATEGORIES = {
   convoys: { settings: ["convoys"], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
   // 7 days after an arrival at most 30 days ahead (the longest trip the flood plan notes), and the army sent.
   floods: { settings: ["floods"], longest: 40 * DAY, detail: "floods", maxItems: MAX_ITEMS },
+  // One row per hunt seen out (envoi-hunts.ts), with « Chasses »: 90 days after a return that may be days ahead.
+  "hunts-log": { settings: ["hunts"], longest: 120 * DAY, detail: null, maxItems: MAX_ITEMS },
   // A state not sent again for 90 days goes; the army by unit only while « Par unité » is chosen.
   production: { settings: ["production"], longest: 100 * DAY, detail: null, maxItems: 1 },
   hunts: { settings: ["hunts"], longest: 100 * DAY, detail: null, maxItems: 1 },

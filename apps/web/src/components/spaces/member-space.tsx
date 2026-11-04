@@ -31,6 +31,7 @@ import { certify, excludeMember, grantAccess, withdrawAdmin } from "~/lib/spaces
 import { CONVOYS_TAB } from "~/lib/envois/convoy-view";
 import { DEMANDES_TAB } from "~/lib/demandes/recap";
 import { FLOODS_TAB } from "~/lib/envois/flood-view";
+import { HUNTS_TAB } from "~/lib/envois/hunt-view";
 import { MOVEMENTS_TAB } from "~/lib/envois/movement-view";
 import { askExtensionForMembers } from "~/lib/spaces/extension-bridge";
 import { checkMembersList, membersCheckMessage } from "~/lib/spaces/members-check";
@@ -51,6 +52,7 @@ import { DemandesTab } from "./demandes-tab";
 import { DiscordPanel } from "./discord-panel";
 import { errorText } from "./errors";
 import { FloodsPanel } from "./floods-panel";
+import { HuntsPanel } from "./hunts-panel";
 import { LeaveSpace } from "./leave-space";
 import { MovementsPanel } from "./movements-panel";
 import { PassphraseUnlock } from "./passphrase-forms";
@@ -94,6 +96,7 @@ const TABS = [
   { value: "demandes", label: "Demandes" },
   { value: "convoys", label: "Convois" },
   { value: "floods", label: "Floods" },
+  { value: "hunts", label: "Chasses" },
   { value: "chain", label: "Chaîne" },
   { value: "discord", label: "Discord" },
   { value: "settings", label: "Réglages" },
@@ -108,7 +111,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const envois = useSpaceEnvois(view, access.keyring);
   const demandes = useSpaceDemandes(view, access.keyring, envois.items);
   const versionHidden = useKeyHandover(view, access.keyring, keys.userId);
-  // A link to the Convois, Floods, Mouvements, Chaîne or Demandes tab (`?onglet=convois`) opens on it; the other tabs
+  // A link to the Convois, Floods, Chasses, Mouvements, Chaîne or Demandes tab (`?onglet=convois`) opens on it; the other tabs
   // leave the address bare.
   const params = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
@@ -116,12 +119,14 @@ export function MemberSpace({ view }: { view: MemberView }) {
     if (asked === CHAIN_TAB) return "chain";
     if (asked === MOVEMENTS_TAB) return "movements";
     if (asked === DEMANDES_TAB) return "demandes";
+    if (asked === HUNTS_TAB) return "hunts";
     return asked === CONVOYS_TAB ? "convoys" : asked === FLOODS_TAB ? "floods" : "space";
   });
   useEffect(() => {
     if (
       tab !== "convoys" &&
       tab !== "floods" &&
+      tab !== "hunts" &&
       tab !== "chain" &&
       tab !== "movements" &&
       tab !== "demandes" &&
@@ -158,6 +163,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
     demandes: pending,
     convoys: envois.convoys?.filter((c) => c.kind === "transit" && c.at > new Date().getTime()).length ?? 0,
     floods: envois.floods?.filter((f) => f.at > new Date().getTime()).length ?? 0,
+    hunts: envois.hunts?.filter((h) => h.returnsAt > new Date().getTime()).length ?? 0,
     space: isAdmin ? view.requests.length : 0,
     chain: chainAlerts,
   };
@@ -262,12 +268,14 @@ export function MemberSpace({ view }: { view: MemberView }) {
           floods={envois.floods}
           convoys={envois.convoys}
           states={envois.states}
-          refused={envois.refused.floods + envois.refused.convoys + envois.refused.states}
+          hunts={envois.hunts}
+          refused={envois.refused.floods + envois.refused.convoys + envois.refused.states + envois.refused.hunts}
           members={view.members.map((m) => m.pseudo)}
           me={view.members.find((m) => m.isMe)?.pseudo ?? null}
           loading={
             envois.loading ||
-            (access.keyring !== null && (envois.floods === null || envois.convoys === null || envois.states === null))
+            (access.keyring !== null &&
+              (envois.floods === null || envois.convoys === null || envois.states === null || envois.hunts === null))
           }
         />
       </div>
@@ -286,6 +294,21 @@ export function MemberSpace({ view }: { view: MemberView }) {
           server={view.space.server}
           tag={view.space.tag}
           loading={envois.loading || (access.keyring !== null && envois.floods === null)}
+        />
+      </div>
+    );
+
+  if (tab === "hunts")
+    return (
+      <div className="space-y-6">
+        {header}
+        <HuntsPanel
+          hunts={envois.hunts}
+          refused={envois.refused.hunts}
+          members={view.members}
+          sends={envois.sends}
+          tag={view.space.tag}
+          loading={envois.loading || (access.keyring !== null && envois.hunts === null)}
         />
       </div>
     );

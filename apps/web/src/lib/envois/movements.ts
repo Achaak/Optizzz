@@ -3,6 +3,7 @@
 // the repeated ones within an hour folded into one line.
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
+import type { HuntItem } from "@optizzz/game/site-links/envoi-hunts";
 import type { FloodItem } from "@optizzz/game/site-links/envoi-floods";
 import { fromParisParts, parisParts } from "@optizzz/game/format/time-format";
 
@@ -55,13 +56,25 @@ function convoyMovements(convoys: readonly ConvoyItem[], now: number): Movement[
     }));
 }
 
-/** The hunts of each member's last two states: a hunt still out at the first reading is the same at the second. */
-function huntMovements(states: readonly MemberStates[]): Movement[] {
+/** Two readings of a countdown are a few seconds apart: the same hunt within this, with the same gain. */
+const SAME_HUNT_MS = 2 * 60_000;
+
+/**
+ * The hunts of the hunts log (back ones too), then those of each member's last two states that the log does not have:
+ * a hunt still out at the first reading is the same at the second, and the same as the log's.
+ */
+function huntMovements(states: readonly MemberStates[], log: readonly HuntItem[]): Movement[] {
+  const logged: Movement[] = log.map((h) => ({ kind: "hunt", at: h.returnsAt, from: h.hunter, field: h.fieldGain }));
+  const inLog = (from: string, at: number, field: number) =>
+    logged.some(
+      (m) => m.kind === "hunt" && key(m.from) === key(from) && m.field === field && Math.abs(m.at - at) <= SAME_HUNT_MS,
+    );
   const hunts = new Map<string, Movement>();
   for (const { latest, previous } of states)
     for (const state of [latest, previous])
       for (const hunt of state?.hunts ?? []) {
         const at = hunt.returnsAt.getTime();
+        if (inLog(latest.pseudo, at, hunt.fieldGain)) continue;
         hunts.set(`${key(latest.pseudo)}|${String(at)}`, {
           kind: "hunt",
           at,
@@ -69,7 +82,19 @@ function huntMovements(states: readonly MemberStates[]): Movement[] {
           field: hunt.fieldGain,
         });
       }
-  return [...hunts.values()];
+  return [...logged, ...hunts.values()];
+}
+
+/**
+ * The members whose hunts are known from their states only, not from the hunts log (an extension older than it): for
+ * them, hunts already back may be missing.
+ */
+export function membersWithoutHuntsLog(states: readonly MemberStates[], log: readonly HuntItem[]): string[] {
+  const logging = new Set(log.map((h) => key(h.hunter)));
+  return states
+    .filter(({ latest, previous }) => (latest.hunts?.length ?? 0) + (previous?.hunts?.length ?? 0) > 0)
+    .map(({ latest }) => latest.pseudo)
+    .filter((pseudo) => !logging.has(key(pseudo)));
 }
 
 /** Every movement the space's Envois know, in the order they arrive. */
@@ -77,6 +102,8 @@ export function allianceMovements(input: {
   floods: readonly FloodItem[];
   convoys: readonly ConvoyItem[];
   states: readonly MemberStates[];
+  /** The hunts log; absent, the hunts come from the states only. */
+  hunts?: readonly HuntItem[];
   now: Date;
 }): Movement[] {
   const floods: Movement[] = input.floods.map((f) => ({
@@ -86,9 +113,11 @@ export function allianceMovements(input: {
     to: f.target,
     take: f.take,
   }));
-  return [...floods, ...convoyMovements(input.convoys, input.now.getTime()), ...huntMovements(input.states)].sort(
-    (a, b) => a.at - b.at,
-  );
+  return [
+    ...floods,
+    ...convoyMovements(input.convoys, input.now.getTime()),
+    ...huntMovements(input.states, input.hunts ?? []),
+  ].sort((a, b) => a.at - b.at);
 }
 
 /** How many days back the tab goes: the site keeps a flood 7 days after it arrives. */
