@@ -29,6 +29,7 @@ import { shortDate } from "~/lib/short-date";
 import type { Absence } from "~/lib/spaces/absences";
 import { certify, excludeMember, grantAccess, withdrawAdmin } from "~/lib/spaces/access";
 import { CONVOYS_TAB } from "~/lib/envois/convoy-view";
+import { DEMANDES_TAB } from "~/lib/demandes/recap";
 import { FLOODS_TAB } from "~/lib/envois/flood-view";
 import { MOVEMENTS_TAB } from "~/lib/envois/movement-view";
 import { askExtensionForMembers } from "~/lib/spaces/extension-bridge";
@@ -46,7 +47,7 @@ import { AdminExchange } from "./admin-exchange";
 import { CodeExchange } from "./code-exchange";
 import { ChainPanel } from "./chain-panel";
 import { ConvoysPanel } from "./convoys-panel";
-import { DemandesPanel } from "./demandes-panel";
+import { DemandesTab } from "./demandes-tab";
 import { DiscordPanel } from "./discord-panel";
 import { errorText } from "./errors";
 import { FloodsPanel } from "./floods-panel";
@@ -107,17 +108,25 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const envois = useSpaceEnvois(view, access.keyring);
   const demandes = useSpaceDemandes(view, access.keyring, envois.items);
   const versionHidden = useKeyHandover(view, access.keyring, keys.userId);
-  // A link to the Convois, Floods, Mouvements or Chaîne tab (`?onglet=convois`) opens on it; the other tabs leave the
-  // address bare.
+  // A link to the Convois, Floods, Mouvements, Chaîne or Demandes tab (`?onglet=convois`) opens on it; the other tabs
+  // leave the address bare.
   const params = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
     const asked = params.get("onglet");
     if (asked === CHAIN_TAB) return "chain";
     if (asked === MOVEMENTS_TAB) return "movements";
+    if (asked === DEMANDES_TAB) return "demandes";
     return asked === CONVOYS_TAB ? "convoys" : asked === FLOODS_TAB ? "floods" : "space";
   });
   useEffect(() => {
-    if (tab !== "convoys" && tab !== "floods" && tab !== "chain" && tab !== "movements" && window.location.search)
+    if (
+      tab !== "convoys" &&
+      tab !== "floods" &&
+      tab !== "chain" &&
+      tab !== "movements" &&
+      tab !== "demandes" &&
+      window.location.search
+    )
       window.history.replaceState(null, "", window.location.pathname);
   }, [tab]);
   const server = serverById(view.space.server);
@@ -285,7 +294,7 @@ export function MemberSpace({ view }: { view: MemberView }) {
     return (
       <div className="space-y-6">
         {header}
-        <DemandesPanel
+        <DemandesTab
           view={view}
           demandes={demandes}
           sends={envois.sends}
