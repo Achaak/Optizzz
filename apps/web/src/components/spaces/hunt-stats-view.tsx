@@ -72,15 +72,11 @@ export function HuntStatsView({
             period === "24h" ? "sur les dernières 24 heures" : `${formatDecimal(returned.perDay)} par jour en moyenne`
           }
         />
-        <Stat
-          label="Terrain chassé"
-          value={`${formatCompact(returned.field)} cm²`}
-          hint={`sur ${PERIOD_LABEL[period]}`}
-        />
+        <Stat label="Terrain chassé" value={formatCompact(returned.field)} hint={`cm² sur ${PERIOD_LABEL[period]}`} />
         <Stat
           label="Moyenne par chasse"
-          value={returned.average === null ? "—" : `${formatNumber(returned.average)} cm²`}
-          hint="par chasse rentrée"
+          value={returned.average === null ? "—" : formatNumber(returned.average)}
+          hint="cm² par chasse rentrée"
         />
         <Stat
           label="En cours"
