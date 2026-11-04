@@ -37,6 +37,10 @@ Un Admin relie son Espace d'alliance au salon Discord de l'alliance : un webhook
 
 Vérifié en local le 2026-10-26 (base Docker `optizzz_t25`, site sur le port 3025, un compte de test, un Joueur de l'export et un jeton d'extension posés à la main en base) : création d'un espace, adresse refusée hors Discord, adresse `discordapp.com` enregistrée et montrée masquée, « Convois » cochée, seulement du chiffré en base ; `GET /api/extension/discord` avec le jeton (et 401 sans), refus 404 signalé par `POST`, « Discord a refusé le dernier message… » sur la page, effacé par « Retirer le webhook » ; en clair, sombre et à téléphone. Jamais de vrai webhook : l'extension est testée avec un Discord simulé. Pas essayé : la vraie extension dans un navigateur (permission, page « Autoriser Discord », envoi réel), ni l'avertissement après une exclusion et le rechiffrement sur la page (couverts par les tests de `lib/spaces/discord.ts` et des règles).
 
+## Lien de déclaration (ADR 0010)
+
+Dans le panneau « Discord », entre les annonces et les rappels : « Copier le lien » vers la page « Déclarer » de l'espace, et, quand l'adresse des annonces est enregistrée, « Poster sur Discord ». Le message part du **navigateur de l'Admin**, sur le webhook des annonces qu'il ouvre avec la Clé d'alliance : « Déclarez un flood, un convoi ou une chasse sur Optizzz : <lien> » (lien entre chevrons, `allowed_mentions` vide, sans nom d'expéditeur). Le site ne le poste pas et ne lit toujours pas cette adresse. Un refus de Discord est dit à l'Admin (« ce webhook n'existe plus… »), sans rien garder. Détail : `site-declarer.md`.
+
 ## Rappels du site (ticket 26)
 
 Décidé par le propriétaire le 2026-10-26 (ADR 0005, « Discord ») : le site ne lit toujours pas l'adresse des annonces ; il poste ses rappels sur un **second webhook** que l'Admin lui donne à part, et qu'il lit.

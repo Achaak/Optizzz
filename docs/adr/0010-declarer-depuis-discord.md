@@ -50,6 +50,7 @@ Relue et décidée par le joueur le 2026-11-04.
   - **convoi** (destinataire, quantités, arrivée) : dans le Solde, et pour une Demande si le membre la choisit (ce qui reprend « Déclarer un convoi ») ;
   - **chasse** (cm², retour) : dans Mouvements.
 - **Le lien est fixe** : le panneau « Discord » de l'espace donne « Copier le lien de déclaration », que l'Admin épingle dans le salon (et que chacun peut mettre en favori). Rien de nouveau ne part du site vers Discord ; les rappels ne changent pas.
+- **Précisé au codage (2026-11-04, avec le joueur)** : le même panneau donne aussi « Poster sur Discord », qui poste le lien sur le **webhook des annonces depuis le navigateur de l'Admin** (il l'ouvre avec la Clé d'alliance, comme l'extension) ; le site ne poste toujours rien. Les déclarations ne s'affichent que sur le site ; un convoi déclaré pour une Demande compte aussi dans le Solde. Détail : `docs/features/site-declarer.md`.
 - **L'extension l'emporte** : chaque lecteur, après déchiffrement, cache une déclaration qu'un Envoi du même membre recouvre (même cible ou destinataire, mêmes quantités, arrivée ou retour à 2 minutes près). Le site n'en sait rien.
 - **Pas d'annonce Discord** pour une déclaration : le membre est déjà sur Discord. À revoir après usage.
 - **Rien ne change** à l'extension, à ses permissions, à `data_collection_permissions` ni à la fiche des stores. `PRIVACY.md` et la page Confidentialité ajoutent une phrase sur la page « Déclarer » (ce qui est saisi est chiffré dans le navigateur, comme « Déclarer un convoi »).
