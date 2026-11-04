@@ -1,18 +1,18 @@
 # Timing d'une attaque à la seconde
 
-Recherche du chantier 30 (lot de novembre 2026), menée le 2026-11-04 (nuit du 3 au 4, heure de Paris) sur S5 et S2, **en lecture seule** : uniquement des `GET` de pages du jeu, aucune attaque, aucun envoi. Heures relevées dans l'en-tête HTTP `Date`, en UTC (Paris = UTC + 1 en novembre).
+Recherche du chantier 30 (lot de novembre 2026), menée le 2026-11-04 (nuit du 3 au 4, heure de Paris) sur S5 et S2, d'abord **en lecture seule** (`GET` des pages du jeu), puis avec trois petites attaques de test sur S2, lancées par Claude avec l'accord du joueur (10 JSN en tout, sur un joueur à portée). Heures relevées dans l'en-tête HTTP `Date`, en UTC (Paris = UTC + 1 en novembre).
 
 ## En bref
 
-| Question                                       | Réponse                                                                                                                                                                                                                            | Statut                     |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Le jeu montre-t-il l'heure du serveur ?        | Non, aucune horloge dans les pages. Seuls l'en-tête HTTP `Date` (à la seconde) et les décomptes `reste(<secondes>)` la donnent.                                                                                                    | Confirmé                   |
-| L'heure du serveur et celle du PC concordent ? | Sur le PC du joueur, à ± 0,4 s près (10 requêtes). Un autre PC peut dériver de plusieurs secondes : il faut mesurer l'écart.                                                                                                       | Confirmé (une mesure)      |
-| Un trajet est-il arrondi à la seconde ?        | Oui : durées et fins sont des secondes entières (profil, `reste()`, en-tête `Date`).                                                                                                                                               | Confirmé                   |
-| « Arrivée à 19h54 » arrondit-il ?              | Tronqué à la minute (« Retour le … à 00h52 » pour une arrivée à 00:52:38).                                                                                                                                                         | Confirmé sur les convois   |
-| Un convoi arrive-t-il à sa seconde ?           | **Non** : il est traité **après la fin de sa minute** (convoi dû à 00:52:38, encore listé à 00:52:55, livré entre 00:52:55 et 00:53:17, message « Convoi livré » daté 00h53).                                                      | Confirmé (une mesure)      |
-| Une attaque arrive-t-elle à sa seconde ?       | Pas mesuré (aucune attaque en route sur S5 ni S2). Probablement comme le convoi (même liste de mouvements), mais rien ne le prouve.                                                                                                | **Non confirmé**           |
-| Pourquoi la 59e seconde ?                      | D'après un guide de joueurs : les attaques d'une même minute sont traitées en un paquet, dans l'ordre de leur seconde d'arrivée ; arriver à :59 fait passer en dernier. Cohérent avec le convoi, rien dans le règlement ni l'aide. | Témoignage, **non mesuré** |
+| Question                                       | Réponse                                                                                                                                                                                                                                                                              | Statut                    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| Le jeu montre-t-il l'heure du serveur ?        | Non, aucune horloge dans les pages. Seuls l'en-tête HTTP `Date` (à la seconde) et les décomptes `reste(<secondes>)` la donnent.                                                                                                                                                      | Confirmé                  |
+| L'heure du serveur et celle du PC concordent ? | Sur le PC du joueur, à ± 0,4 s près (10 requêtes). Un autre PC peut dériver de plusieurs secondes : il faut mesurer l'écart.                                                                                                                                                         | Confirmé (une mesure)     |
+| Un trajet est-il arrondi à la seconde ?        | Oui : durées et fins sont des secondes entières (profil, `reste()`, en-tête `Date`).                                                                                                                                                                                                 | Confirmé                  |
+| « Arrivée à 19h54 » arrondit-il ?              | Tronqué à la minute (« Retour le … à 00h52 » pour une arrivée à 00:52:38).                                                                                                                                                                                                           | Confirmé sur les convois  |
+| Un convoi arrive-t-il à sa seconde ?           | **Non** : il est traité **après la fin de sa minute** (convoi dû à 00:52:38, encore listé à 00:52:55, livré entre 00:52:55 et 00:53:17, message « Convoi livré » daté 00h53).                                                                                                        | Confirmé (une mesure)     |
+| Une attaque est-elle réglée à sa seconde ?     | **Non** : elle quitte « Attaque(s) en cours » pile à sa seconde, mais son « Butin » est daté de la **minute suivante** (arrivées 01:35:55, 01:37:01 et 01:37:23 → messages 01h36, 01h38 et 01h38, heure de Paris).                                                                   | Confirmé (trois attaques) |
+| Pourquoi la 59e seconde ?                      | Les attaques d'une même minute sont réglées ensemble à la minute suivante (mesuré). Dans ce paquet, celle arrivée à :01 est passée avant celle arrivée à :23 (mesuré) ; que l'ordre suive la seconde d'arrivée plutôt que l'ordre d'envoi reste le témoignage d'un guide de joueurs. | En partie confirmé        |
 
 ## L'heure du serveur
 
@@ -54,11 +54,22 @@ Convoi dû à 23:52:38 UTC (S5), `commerce.php` relue chaque seconde :
 
 Un convoi est donc traité **par un passage périodique, après la fin de la minute où il arrive**, entre 17 et 39 secondes plus tard sur cette mesure. Une seule mesure : le moment exact du passage (pile à la minute, ou quelques secondes après) n'est pas connu.
 
-### Attaque : non mesurée
+### Attaque : réglée à la minute suivante
 
-Aucune attaque n'était en route sur S5 ni S2. Les attaques sont des mouvements de troupes comme les convois (même décompte, même « Arrivée à HHhMM » tronqué), et le message « Butin chez X » arrive « à la même minute » que le rapport (`fourmizzz-pages.md`) ; ce n'est **pas** une preuve qu'elles suivent le même passage par minute.
+Mesure du 2026-11-04 sur S2 : trois attaques de lexa2 (27;1419) sur le Terrain de chasse de Le_gasteropode (25;1422), Vitesse d'attaque 17, lancées par Claude avec l'accord du joueur, relues sur `Armee.php` chaque seconde et dans la messagerie. Heures UTC (+ 1 h pour Paris).
 
-**Mesure à faire** (sur une attaque que le joueur lance lui-même, ou une attaque déjà en route) : relire `Armee.php` chaque seconde autour de l'arrivée, noter quand la ligne disparaît, et comparer l'heure du rapport de combat à celle de l'arrivée. Deux attaques arrivant à :05 et :55 d'une même minute diraient aussi si l'ordre de traitement suit la seconde d'arrivée.
+| Attaque  | Envoi (horloge du PC) | Arrivée (`Date` + `reste`) | Quitte la liste | Message « Butin » | N° du message |
+| -------- | --------------------- | -------------------------- | --------------- | ----------------- | ------------- |
+| A, 5 JSN | 00:17:46,1            | 00:35:55                   | à 00:35:56      | 01h36 (Paris)     | 87295722      |
+| B, 2 JSN | 00:18:52,2            | 00:37:01                   | à 00:37:02      | 01h38 (Paris)     | 87295731      |
+| C, 3 JSN | 00:19:14,3            | 00:37:23                   | à 00:37:24      | 01h38 (Paris)     | 87295733      |
+
+- **Trajet** : 1 089 s pour les trois, ce que donne la formule (`temps-de-trajet.md` : 1 089,098 s, arrondi en dessous ou au plus proche ; pas au-dessus).
+- **La liste** : la ligne disparaît d'« Attaque(s) en cours » à la seconde d'arrivée (dernière lecture avec « 0 », la suivante sans la ligne), comme une ponte.
+- **Le règlement du combat** : le « Butin chez Le_gasteropode » de A est daté 01h36 alors qu'elle arrivait à 01:35:55 ; B, arrivée à 01:37:01, n'est réglée qu'à 01h38, pas au passage de 01:37 qui a eu lieu juste avant son arrivée. Une attaque est donc réglée **au passage qui suit la fin de sa minute d'arrivée**, avec toutes celles de la même minute, comme le convoi.
+- **L'ordre dans le paquet** : B (arrivée :01) avant C (arrivée :23), d'après l'ordre des messages dans la conversation et leurs numéros. Comme B est aussi partie la première (numéro d'attaque 25079827 contre 25079828), ce test ne dit pas si l'ordre suit la seconde d'arrivée ou l'ordre d'envoi. Pour trancher : deux cibles à des distances différentes, l'attaque au trajet le plus long envoyée la première et arrivant la dernière dans la même minute.
+- **Messagerie** : les « Butin » d'une même cible s'empilent dans **une seule conversation** (`conversation_<n>`, titre et heure du dernier message, « (3) » non lus) ; chaque message porte « 04/11/26 à 01h38 », à la minute. Le contenu s'ouvre par `POST messagerie.php` (`traitement=afficher`, `conversation=<n>`), ce qui le marque comme lu. Aucun rapport de combat séparé n'est arrivé pour ces trois attaques (défense nulle ?).
+- Les numéros d'attaque se suivent (…826, …827, …828) : personne d'autre n'a lancé d'attaque sur S2 dans ces 90 secondes.
 
 ## Pourquoi la 59e seconde
 
@@ -77,14 +88,14 @@ Aucune attaque n'était en route sur S5 ni S2. Les attaques sont des mouvements 
 - l'horloge : le **chat d'alliance** affiche l'heure de chaque message **avec les secondes** (« 13:40:59 ») ; on y envoie « 59 » quand son horloge montre :59 pour vérifier l'écart (non vérifié par nous) ;
 - la vérification : renvoyer tout de suite une seconde attaque au même trajet ; si son « Arrivée à » affiche la minute d'après, la première arrivait en fin de minute (un indice, pas une preuve de :59). Cohérent avec la troncature de « Arrivée à HHhMM » mesurée ci-dessus.
 
-**Ce qui le recoupe** : le convoi mesuré ci-dessus est bien traité par un passage après la fin de sa minute, et son message porte l'heure du passage. **Ce qui reste à mesurer** : qu'une attaque suit le même passage, et l'ordre dans le paquet (la mesure décrite plus haut, deux attaques à :05 et :55 de la même minute).
+**Ce qui est confirmé** : les attaques (et les convois) d'une même minute sont réglés ensemble au passage qui suit cette minute, et dans ce paquet une attaque arrivée à :01 passe avant une arrivée à :23. **Ce qui reste du témoignage** : que l'ordre suive la seconde d'arrivée plutôt que l'ordre d'envoi (test à deux cibles ci-dessus), et l'ordre entre deux attaques de la même seconde.
 
 ## Ce qu'une feature peut montrer de fiable
 
 - **L'heure du serveur à la seconde**, et l'écart avec le PC, à quelques dixièmes près : quelques `HEAD` sur la page courante, sans rien envoyer au jeu de plus qu'une lecture.
-- **L'arrivée à la seconde d'une attaque envoyée maintenant** : heure du serveur + temps de trajet (formule vérifiée sur les profils), à la seconde près si la formule est exacte pour cette distance.
+- **L'arrivée à la seconde d'une attaque envoyée maintenant** : heure du serveur + temps de trajet (formule vérifiée sur un profil de S5 et sur trois attaques de S2), à la seconde près si la formule est exacte pour cette distance.
 - **Le moment de cliquer** pour arriver dans une seconde voulue : la fenêtre ne dure qu'une seconde (trajet 15:09:08 → le serveur doit recevoir l'envoi entre :51,0 et :51,999). Avec l'écart PC/serveur connu à ± 0,3 s et le délai réseau de l'envoi, il faut viser **le milieu de la seconde** (:51,5 sur l'horloge du serveur, moins le délai d'envoi), pas son début : un clic à :51,0 a une chance sur deux de partir à :50.
-- **L'ordre de traitement dans la minute** : seulement sur la foi du guide, tant que la mesure sur une attaque n'est pas faite.
+- **Que la minute compte** : mesuré, toutes les attaques d'une minute sont réglées ensemble à la minute suivante. **L'ordre par seconde** dans ce paquet n'est confirmé qu'en partie (voir plus haut).
 
 Règles à respecter (`reglement.md`, C2 et C3) : le clic final reste celui du joueur, **jamais d'envoi sur minuterie** ; une extension ne doit pas offrir sans Compte+ une fonction équivalente au Compte+ (le jeu a un « Simulateur Durée » réservé au Compte+, qui donne le temps d'un trajet).
 
@@ -103,6 +114,8 @@ Décidé avec le joueur le 2026-11-04 (`/grilling`). Le code reste à faire (cha
    - La fenêtre « Cliquez maintenant » dure ≈ 0,6 s, centrée sur le milieu de la seconde de départ côté serveur, avancée de la moitié de l'aller-retour mesuré (le temps que l'envoi met à atteindre le serveur).
 5. **Son** : case « Son », décochée par défaut et mémorisée par serveur ; trois bips courts aux trois dernières secondes, un bip plus long au milieu de la fenêtre (Web Audio, sans fichier ni permission). Le son ne déclenche rien.
 6. **Vérification après l'envoi** : pour une attaque lancée depuis le bloc avec une arrivée visée, sa ligne dans « Attaque(s) en cours » (formulaire d'attaque, `Armee.php`) dit l'arrivée exacte, tirée de `reste(N)` et de l'en-tête `Date` de la même réponse, sans requête de plus : « Arrivée à 23:39:59 ✓ :59 visé » ou « Arrivée à 23:40:00 : une seconde trop tard » (texte et symbole). Rapprochement comme celui du Plan de flood (`flood.md`, « Suivi »).
-7. **Coder sans attendre la mesure d'une attaque** : la règle de la 59e seconde est présentée comme venant des joueurs, dans « Pourquoi :59 ? » replié : « D'après les joueurs, le jeu traite les attaques de chaque minute ensemble, dans l'ordre de leur seconde d'arrivée. » La mesure (deux attaques lancées par le joueur à :05 et :55 de la même minute, sur une cible sans danger, puis relecture d'`Armee.php` et des rapports) reste à faire à la prochaine occasion ; elle mettra à jour ce document et ce texte.
+7. **Coder sans attendre la mesure d'une attaque** : la règle de la 59e seconde est présentée comme venant des joueurs, dans « Pourquoi :59 ? » replié. Depuis la mesure du 2026-11-04 (trois attaques sur S2), le texte peut dire : « Le jeu règle ensemble, à la minute suivante, toutes les attaques arrivées dans une même minute. D'après les joueurs, il les prend dans l'ordre de leur seconde d'arrivée. » Le test à deux cibles mettra à jour ce document et ce texte.
 
-**Garde-fous** (règlement C2 et C3) : Optizzz ne clique jamais, n'envoie jamais le formulaire, ne grise ni n'active le bouton « Attaquer », n'ajoute aucun raccourci clavier d'envoi. Les `HEAD` ne lisent que le jeu, à l'ouverture du formulaire par le joueur ; rien ne part ailleurs que vers Fourmizzz (pas de mise à jour de `PRIVACY.md`). Rien d'équivalent au Compte+ : le trajet vient du profil, gratuit, pas du Simulateur Durée.
+**Garde-fous** (règlement C2 et C3) : Optizzz ne clique jamais, n'envoie jamais le formulaire, ne grise ni n'active le bouton « Attaquer », n'ajoute aucun raccourci clavier d'envoi. Les `HEAD` ne lisent que le jeu, à l'ouverture du formulaire par le joueur ; rien ne part ailleurs que vers Fourmizzz (pas de mise à jour de `PRIVACY.md`). Rien d'équivalent au Compte+ : le trajet ne vient pas du Simulateur Durée.
+
+**À revoir (décision 3)** : le 2026-11-04 sur S2, le profil de Le_gasteropode n'affiche ni « Distance » ni « Temps de trajet » (le compte S2 ne semble pas avoir le Compte+ ce jour-là ; sur S5, avec Compte+, le profil les affiche). Si le profil ne les donne qu'avec le Compte+, la formule devient la source principale (exacte sur les trois attaques mesurées) et lire le trajet sur le profil pour un joueur sans Compte+ n'est pas possible.
