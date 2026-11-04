@@ -49,10 +49,12 @@ type Opened<State> = OpeningState<State> & { opening: number; changed: boolean }
 export function useToolState<State>({ tool, format, empty, withMyLevels }: ToolStateOptions<State>): ToolState<State> {
   // Read at opening only: a tool may pass them inline.
   const [atOpening] = useState(() => ({ empty, withMyLevels }));
-  // -1 on the server and while hydrating: the address and the browser's storage are read after.
+  // -1 on the server and while hydrating: the address and the browser's storage are read after. -1 also while the
+  // address is not yet the tool's: followed from a `Link`, the page renders before Next writes its address (and its
+  // fragment); `useSyncExternalStore` reads it again once committed.
   const opening = useSyncExternalStore(
     subscribePastedLinks,
-    () => pastedLinks,
+    () => (window.location.pathname === siteToolPath(tool) ? pastedLinks : -1),
     () => -1,
   );
   const [opened, setOpened] = useState<Opened<State> | null>(null);
