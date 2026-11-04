@@ -8,7 +8,7 @@ import { dayMonth, fromParisParts } from "@optizzz/game/format/time-format";
 import { HARVESTS_PER_DAY } from "@optizzz/game/forecast";
 import type { SharedState } from "@optizzz/game/sharing/shared-state";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
-import { listNames, parisMidnight } from "./convoy-stats";
+import { listNames, parisMidnight, periodTitle, type DiscordPeriod } from "./convoy-stats";
 
 const DAY = 24 * 3600_000;
 
@@ -65,9 +65,11 @@ export interface BalanceInput {
   taxRates?: Readonly<Record<string, number>>;
   /** The members' warehouses, by pseudo in lower case. */
   warehouses?: Readonly<Record<string, WarehouseInput>>;
-  /** How many Paris days, today included. */
+  /** How many Paris days, up to `end`. */
   days: number;
   now: Date;
+  /** The period's last instant, for a free period ended before today; now otherwise. */
+  end?: Date;
 }
 
 export type Verdict = "convoy" | "balanced" | "receive";
@@ -77,13 +79,19 @@ export interface BalanceDay {
   start: number;
   /** « 26/10 ». */
   label: string;
+  /** The share of the day counted: today as far as it went, 1 otherwise. */
+  weight: number;
   /** In the space's alliance that day, by the export. */
   present: boolean;
+  /** Their TDC that day, null when the export does not know them. */
+  field: number | null;
   production: number;
   part: number;
   /** Taxes received less taxes paid. */
   taxes: number;
   sent: number;
+  /** How many convoys they delivered that day. */
+  sentCount: number;
   received: number;
 }
 
@@ -161,11 +169,14 @@ function rowOn(days: readonly PlayerDayRow[], day: number): PlayerDayRow | null 
 
 export function balanceOf(input: BalanceInput): Balance {
   const now = input.now.getTime();
+  const endDate = input.end ?? input.now;
+  const end = endDate.getTime();
   const tag = key(input.tag);
-  const since = parisMidnight(input.now, input.days - 1);
-  const starts = Array.from({ length: input.days }, (_, i) => parisMidnight(input.now, input.days - 1 - i));
-  // Today counts as far as it went.
-  const weights = starts.map((start, i) => (i === starts.length - 1 ? Math.min(1, (now - start) / DAY) : 1));
+  const since = parisMidnight(endDate, input.days - 1);
+  const starts = Array.from({ length: input.days }, (_, i) => parisMidnight(endDate, input.days - 1 - i));
+  // Today counts as far as it went; a free period's last day (it ends on its last millisecond), whole.
+  const reached = input.end ? end + 1 : now;
+  const weights = starts.map((start, i) => (i === starts.length - 1 ? Math.min(1, (reached - start) / DAY) : 1));
   const players = new Map(input.players.map((p) => [key(p.pseudo), p]));
   const senders = new Set(input.senders.map(key));
 
@@ -176,6 +187,7 @@ export function balanceOf(input: BalanceInput): Balance {
       const row = player ? rowOn(player.days, start) : null;
       return {
         present: row !== null && row.alliance !== null && key(row.alliance) === tag,
+        field: row?.field ?? null,
         ceiling: row ? row.field * HARVESTS_PER_DAY * (weights[i] ?? 0) : 0,
       };
     });
@@ -210,9 +222,21 @@ export function balanceOf(input: BalanceInput): Balance {
     let paid = 0;
     let gotten = 0;
     const daily = starts.map((start, i): BalanceDay => {
-      const day = days[i] ?? { present: false, ceiling: 0 };
+      const day = days[i] ?? { present: false, field: null, ceiling: 0 };
       const label = dayMonth(new Date(start));
-      if (!day.present) return { start, label, present: false, production: 0, part: 0, taxes: 0, sent: 0, received: 0 };
+      const empty = {
+        start,
+        label,
+        weight: weights[i] ?? 0,
+        field: day.field,
+        production: 0,
+        part: 0,
+        taxes: 0,
+        sent: 0,
+        sentCount: 0,
+        received: 0,
+      };
+      if (!day.present) return { ...empty, present: false };
       const out = player?.master ? day.ceiling * rateOf(pseudo) : 0;
       const into = colonies.reduce(
         (total, colony) => total + (daysOf(colony.pseudo)[i]?.ceiling ?? 0) * rateOf(colony.pseudo),
@@ -221,15 +245,17 @@ export function balanceOf(input: BalanceInput): Balance {
       paid += out;
       gotten += into;
       const part = shares[i]?.share ?? 0;
-      return { start, label, present: true, production: day.ceiling, part, taxes: into - out, sent: 0, received: 0 };
+      return { ...empty, present: true, production: day.ceiling, part, taxes: into - out };
     });
     for (const convoy of input.convoys) {
-      if (convoy.kind !== "delivered" || convoy.at < since || convoy.at > now) continue;
+      if (convoy.kind !== "delivered" || convoy.at < since || convoy.at > end) continue;
       if (key(convoy.from) === key(convoy.to)) continue;
       const day = daily.findLast((d) => d.start <= convoy.at);
       if (!day) continue;
-      if (key(convoy.from) === k) day.sent += amount(convoy);
-      else if (key(convoy.to) === k) day.received += amount(convoy);
+      if (key(convoy.from) === k) {
+        day.sent += amount(convoy);
+        day.sentCount += 1;
+      } else if (key(convoy.to) === k) day.received += amount(convoy);
     }
     const sum = (pick: (d: BalanceDay) => number) => daily.reduce((total, d) => total + pick(d), 0);
     const production = sum((d) => d.production);
@@ -452,10 +478,10 @@ export function signedCompact(value: number): string {
  * The Équilibre as a message to paste in the alliance's Discord: copied, never sent by Optizzz. Never the warehouses:
  * a Discord channel is read more widely than the space.
  */
-export function balanceDiscord(balance: Balance, context: { tag: string; days: number; now: Date }): string {
+export function balanceDiscord(balance: Balance, context: DiscordPeriod): string {
   const { missing } = balance.coverage;
   return [
-    `**Équilibre ${context.tag} · ${String(context.days)} jours** (du ${dayMonth(new Date(balance.since))} au ${dayMonth(context.now)})`,
+    `**Équilibre ${context.tag} · ${periodTitle(balance.since, context)}`,
     `Production : ${formatCompact(balance.production)} · part par jour : ${formatCompact(balance.partPerDay)}`,
     ...balance.rows
       .filter((row) => row.verdict !== null)

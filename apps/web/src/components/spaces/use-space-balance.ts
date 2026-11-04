@@ -29,6 +29,8 @@ export function useSpaceBalance(input: {
   convoys: readonly ConvoyItem[] | null;
   states: readonly MemberStates[] | null;
   days: number;
+  /** A free period's last instant; null to count up to now. */
+  end?: Date | null;
   /** False: nothing is read (another view is shown). */
   enabled: boolean;
 }): { balance: Balance | null; loading: boolean } {
@@ -37,6 +39,7 @@ export function useSpaceBalance(input: {
     { enabled: input.enabled && input.convoys !== null, staleTime: 10 * 60_000 },
   );
   const { members, sends, convoys, states, tag, days } = input;
+  const end = input.end?.getTime() ?? null;
   const data = query.data;
   const balance = useMemo(() => {
     if (!data || !convoys) return null;
@@ -60,7 +63,8 @@ export function useSpaceBalance(input: {
       warehouses,
       days,
       now: new Date(),
+      ...(end === null ? {} : { end: new Date(end) }),
     });
-  }, [data, convoys, states, members, sends, tag, days]);
+  }, [data, convoys, states, members, sends, tag, days, end]);
   return { balance, loading: query.isPending && input.enabled };
 }

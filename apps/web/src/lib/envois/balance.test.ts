@@ -161,6 +161,36 @@ describe("balanceOf", () => {
     expect(row(balance, "Inconnu")).toMatchObject({ production: 0, part: 0, ratio: null, verdict: null });
   });
 
+  it("counts a free period ended yesterday as whole days, its convoys up to its end", () => {
+    const balance = balanceOf(
+      input({
+        days: 1,
+        end: new Date(TODAY - 1),
+        convoys: [delivered("Noctis", "Okapi", 500, YESTERDAY + 3600_000), delivered("Noctis", "Okapi", 9_000)],
+      }),
+    );
+    expect(balance.since).toBe(YESTERDAY);
+    expect(row(balance, "Noctis").production).toBe(1_000 * 48);
+    expect(row(balance, "Noctis").sent).toBe(500);
+    expect(row(balance, "Noctis").presentDays).toBe(1);
+  });
+
+  it("tells each day's TDC and how many convoys a member delivered", () => {
+    const balance = balanceOf(
+      input({
+        convoys: [
+          delivered("Noctis", "Okapi", 500),
+          delivered("Noctis", "Gargantua", 200),
+          delivered("Okapi", "Noctis", 1),
+        ],
+      }),
+    );
+    expect(row(balance, "Noctis").daily.map((d) => [d.field, d.sentCount])).toEqual([
+      [1_000, 0],
+      [1_000, 2],
+    ]);
+  });
+
   it("sorts by gap, the biggest first", () => {
     const balance = balanceOf(input({ convoys: [delivered("Noctis", "Okapi", 50_000)] }));
     expect(balance.rows.map((r) => r.pseudo)).toEqual(["Okapi", "Noctis"]);

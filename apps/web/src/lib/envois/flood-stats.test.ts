@@ -190,6 +190,27 @@ describe("flood statistics of a space", () => {
     expect(stats.buckets[23]).toMatchObject({ label: "11 h", count: 1, take: 2_000 });
   });
 
+  it("counts a free period by day of Paris up to its end, the floods on their way still those of now", () => {
+    const end = new Date(at("2026-10-30T23:00:00Z") - 1); // 30/10 at midnight in Paris, less a millisecond
+    const stats = floodStats(
+      input(
+        [
+          flood("Noctis", "Gargantua", 100_000, "2026-10-29T08:00:00Z"),
+          flood("Noctis", "Gargantua", 7, "2026-10-31T08:00:00Z"), // after its end
+          flood("Noctis", "Gargantua", 9, "2026-11-01T13:00:00Z"), // on its way
+        ],
+        { span: { days: 2, end } },
+      ),
+    );
+    expect(stats.since).toBe(at("2026-10-28T23:00:00Z"));
+    expect(stats.arrived.count).toBe(1);
+    expect(stats.buckets.map((b) => b.label)).toEqual(["29/10", "30/10"]);
+    expect(stats.onWay.count).toBe(1);
+    expect(
+      floodStatsDiscord(stats, { tag: "4O4", period: "7j", now: end, free: true, alliances: null }).split("\n")[0],
+    ).toBe("**Floods 4O4 · du 29/10 au 30/10**");
+  });
+
   it("with a member chosen, keeps their floods only", () => {
     const stats = floodStats(
       input(

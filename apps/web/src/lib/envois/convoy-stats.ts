@@ -18,11 +18,17 @@ export interface ConvoyStatsInput {
   members: readonly string[];
   /** The members who send their Convois. */
   senders: readonly string[];
-  days: Period;
+  /** How many Paris days: 7, 30, 90 or those of a free period. */
+  days: number;
   /** A member's pseudo: their convoys only. */
   member: string | null;
   now: Date;
+  /** The period's last instant, for a free period ended before today; now otherwise. */
+  end?: Date;
 }
+
+/** Beyond this many days, the chart is by week. */
+export const DAYS_BY_DAY = 31;
 
 interface Resources {
   food: number;
@@ -130,14 +136,16 @@ export function parisMidnight(now: Date, back: number): number {
 
 export function convoyStats(input: ConvoyStatsInput): ConvoyStats {
   const now = input.now.getTime();
-  const since = parisMidnight(input.now, input.days - 1);
+  const endDate = input.end ?? input.now;
+  const end = endDate.getTime();
+  const since = parisMidnight(endDate, input.days - 1);
   const members = new Map(input.members.map((m) => [key(m), m]));
   const senders = new Set(input.senders.map(key));
   const chosen = input.member === null ? null : key(input.member);
   const involves = (c: { from: string; to: string }) =>
     chosen === null || key(c.from) === chosen || key(c.to) === chosen;
   const inPeriod = input.convoys.filter(
-    (c) => c.kind === "delivered" && c.at >= since && c.at <= now && key(c.from) !== key(c.to) && involves(c),
+    (c) => c.kind === "delivered" && c.at >= since && c.at <= end && key(c.from) !== key(c.to) && involves(c),
   );
 
   const newRows = () => {
@@ -211,10 +219,10 @@ export function convoyStats(input: ConvoyStatsInput): ConvoyStats {
     into.set(key(other), entry);
   }
 
-  const size = input.days === 90 ? 7 : 1;
+  const size = input.days > DAYS_BY_DAY ? 7 : 1;
   const buckets: Bucket[] = [];
   for (let back = input.days - 1; back >= 0; back -= size) {
-    const start = parisMidnight(input.now, back);
+    const start = parisMidnight(endDate, back);
     buckets.push({ start, label: dayMonth(new Date(start)), food: 0, materials: 0, sent: 0, received: 0 });
   }
   for (const convoy of inPeriod) {
@@ -230,7 +238,7 @@ export function convoyStats(input: ConvoyStatsInput): ConvoyStats {
   const onWay = input.convoys
     .filter((c) => c.kind === "transit" && c.at > now && involves(c))
     .sort((a, b) => a.at - b.at);
-  const attached = input.demandeConvoys.filter((c) => c.at >= since && c.at <= now && involves(c));
+  const attached = input.demandeConvoys.filter((c) => c.at >= since && c.at <= end && involves(c));
   const oldest = Math.min(...input.convoys.filter((c) => c.kind === "delivered").map((c) => c.at));
   const missing = input.members.filter((m) => !senders.has(key(m)));
   const total = inPeriod.reduce((sum, c) => sum + amount(c), 0);
@@ -266,6 +274,20 @@ export function convoyStats(input: ConvoyStatsInput): ConvoyStats {
   };
 }
 
+/** The period of a text for Discord: its days, its end (now, or a free period's), and whether it is a free one. */
+export interface DiscordPeriod {
+  tag: string;
+  days: number;
+  now: Date;
+  free?: boolean;
+}
+
+/** « 30 jours** (du 02/10 au 01/11) », « du 12/10 au 20/10** » for a free period: the end of a bold title. */
+export function periodTitle(since: number, context: DiscordPeriod): string {
+  const span = `du ${dayMonth(new Date(since))} au ${dayMonth(context.now)}`;
+  return context.free ? `${span}**` : `${String(context.days)} jours** (${span})`;
+}
+
 /** « Okapi », « Okapi et Grop », « Okapi, Grop et Lasius ». */
 export const listNames = (names: readonly string[]) =>
   names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} et ${names.at(-1) ?? ""}`;
@@ -274,8 +296,8 @@ export const listNames = (names: readonly string[]) =>
  * The statistics as a message to paste in the alliance's Discord: copied, never sent by Optizzz. Amounts as the game
  * shortens them; a member, or a player, without a convoy in the period is left out.
  */
-export function convoyStatsDiscord(stats: ConvoyStats, context: { tag: string; days: Period; now: Date }): string {
-  const period = `${String(context.days)} jours** (du ${dayMonth(new Date(stats.since))} au ${dayMonth(context.now)})`;
+export function convoyStatsDiscord(stats: ConvoyStats, context: DiscordPeriod): string {
+  const period = periodTitle(stats.since, context);
   const sum = stats.delivered.food + stats.delivered.materials;
   const convoys = `${formatNumber(stats.delivered.count)} convoi${stats.delivered.count > 1 ? "s" : ""}`;
   const shown = stats.rows.filter((row) => row.count > 0);

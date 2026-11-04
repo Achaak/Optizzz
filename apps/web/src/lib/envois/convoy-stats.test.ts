@@ -230,6 +230,30 @@ describe("convoy statistics of a space", () => {
     expect(stats.buckets[12]?.label).toBe("27/10");
   });
 
+  it("counts a free period up to its end, the convoys on their way still those of now", () => {
+    const stats = convoyStats(
+      input(
+        [
+          delivered("Noctis", "Lunaire", 0, 1_000, "2026-10-20T08:00:00Z"),
+          delivered("Noctis", "Lunaire", 0, 2_000, "2026-10-21T08:00:00Z"), // 21/10: after the end
+          delivered("Noctis", "Lunaire", 0, 4_000, "2026-10-19T21:30:00Z"), // 19/10 at 23 h 30 in Paris: before
+          { kind: "transit", from: "Okapi", to: "Noctis", food: 0, materials: 40_000, at: at("2026-11-01T13:00:00Z") },
+        ],
+        { days: 1, end: new Date(at("2026-10-20T22:00:00Z") - 1) },
+      ),
+    );
+    expect(stats.since).toBe(at("2026-10-19T22:00:00Z"));
+    expect(stats.delivered).toEqual({ food: 0, materials: 1_000, count: 1 });
+    expect(stats.buckets.map((b) => b.label)).toEqual(["20/10"]);
+    expect(stats.onWay.count).toBe(1);
+  });
+
+  it("splits a free period of more than 31 days by week", () => {
+    const stats = convoyStats(input([], { days: 32 }));
+    expect(stats.buckets).toHaveLength(5);
+    expect(convoyStats(input([], { days: 31 })).buckets).toHaveLength(31);
+  });
+
   describe("with a member chosen", () => {
     const convoys = [
       delivered("Noctis", "Lunaire", 0, 300_000, "2026-10-31T08:00:00Z"),
@@ -285,6 +309,18 @@ describe("convoy statistics of a space", () => {
           "(Okapi n'envoie pas ses convois : seuls ceux échangés avec les autres membres comptent)",
         ].join("\n"),
       );
+    });
+
+    it("gives a free period by its days", () => {
+      const stats = convoyStats(input(convoys, { days: 3, end: new Date(at("2026-10-31T23:00:00Z") - 1) }));
+      expect(
+        convoyStatsDiscord(stats, {
+          tag: "4O4",
+          days: 3,
+          now: new Date(at("2026-10-31T23:00:00Z") - 1),
+          free: true,
+        }).split("\n")[0],
+      ).toBe("**Convois 4O4 · du 29/10 au 31/10**");
     });
 
     it("gives a member's convoys with each player", () => {
