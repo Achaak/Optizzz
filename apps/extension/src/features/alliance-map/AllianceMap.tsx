@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { loadPlayersExport, type PlayersExport } from "@/data/exports";
-import type { MapMember } from "./chart-option";
+import type { LabelMode, MapDisplay, MapMember } from "./chart-option";
 import { formatExportVersion } from "@/utils/export-date";
 import { MapChart } from "./MapChart";
 import { globalLevel, neighborRows, type KnownLevels } from "./neighbor-table";
@@ -23,6 +23,9 @@ function legend(bubbles: ReadonlyMap<number, MemberBubble>): MemberBubble[] {
     (role) => byRole.get(roleKey(role)) ?? [],
   );
 }
+
+/** Legend swatch side when the bubbles' size follows the hunting field. */
+const LEGEND_PX = 12;
 
 interface Props {
   origin: string;
@@ -93,6 +96,15 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
   const bubbles = useMemo(
     () => (showRoles && chainSettings ? memberBubbles(members, chainRolesShown ?? null, chainSettings.styles) : null),
     [showRoles, chainSettings, chainRolesShown, members],
+  );
+
+  const display = useMemo<MapDisplay>(
+    () => ({
+      sizeByTdc: settings?.sizeByTdc === true,
+      // The role is written only while the map shows them.
+      labels: settings?.labels === "pseudoRole" && !bubbles ? "pseudo" : (settings?.labels ?? "pseudo"),
+    }),
+    [settings?.sizeByTdc, settings?.labels, bubbles],
   );
 
   const shared = useSharedAttackSpeeds(origin, allianceTag, members, sharing);
@@ -173,8 +185,8 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
         </span>
       </div>
 
-      {chain && (
-        <div className="settings">
+      <div className="settings">
+        {chain && (
           <label>
             <input
               type="checkbox"
@@ -186,26 +198,57 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
             />{" "}
             Couleurs des rôles de la chaîne
           </label>
-          {bubbles && (
-            <ul className="role-legend" aria-label="Rôles de la chaîne">
-              {legend(bubbles).map(({ role, color, px, shape }) => (
+        )}
+        <label>
+          <input
+            type="checkbox"
+            checked={settings.sizeByTdc}
+            onChange={(e) => {
+              const sizeByTdc = e.target.checked;
+              updateSettings((s) => ({ ...s, sizeByTdc }));
+            }}
+          />{" "}
+          Taille selon le TDC
+        </label>
+        <label>
+          Étiquettes :{" "}
+          <select
+            value={display.labels}
+            onChange={(e) => {
+              const labels = e.target.value as LabelMode;
+              updateSettings((s) => ({ ...s, labels }));
+            }}
+          >
+            {bubbles && <option value="pseudoRole">Pseudo et rôle</option>}
+            <option value="pseudo">Pseudo</option>
+            <option value="none">Aucune</option>
+          </select>
+        </label>
+        {display.sizeByTdc && <span className="optizzz-note">Taille des bulles : proportionnelle au TDC.</span>}
+      </div>
+
+      {chain && bubbles && (
+        <div className="settings">
+          <ul className="role-legend" aria-label="Rôles de la chaîne">
+            {legend(bubbles).map(({ role, color, px, shape }) => {
+              // The size no longer says the role when it follows the hunting field.
+              const side = display.sizeByTdc ? LEGEND_PX : px;
+              return (
                 <li key={roleKey(role)}>
                   <span
                     className="optizzz-shape"
                     data-shape={shape}
-                    style={{ background: color, width: px, height: px }}
+                    style={{ background: color, width: side, height: side }}
                   />
                   {roleLabel(role)}
                 </li>
-              ))}
-            </ul>
-          )}
-          {bubbles && (
-            <span className="optizzz-note">
-              Couleurs et tailles réglables dans <a href="#chaine">Chaîne</a>
-              {!chainRolesShown && " ; rôles proposés d'après le TDC tant qu'ils n'y sont pas choisis"}.
-            </span>
-          )}
+              );
+            })}
+          </ul>
+          <span className="optizzz-note">
+            Couleurs et tailles réglables dans <a href="#chaine">Chaîne</a>
+            {!chainRolesShown && " ; rôles proposés d'après le TDC tant qu'ils n'y sont pas choisis"}.
+          </span>
         </div>
       )}
 
@@ -215,6 +258,7 @@ export function AllianceMap({ origin, loggedInPseudo, liveHuntingFields, sharing
         k={k}
         levels={levels}
         bubbles={bubbles}
+        display={display}
         onSelect={setSelectedId}
       />
 

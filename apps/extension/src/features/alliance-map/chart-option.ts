@@ -2,7 +2,7 @@ import type { EChartsCoreOption } from "echarts/core";
 import type { Player } from "@optizzz/game/exports";
 import { levelOf, type KnownLevels } from "./neighbor-table";
 import { kNearestLinks, membersByDistance } from "./neighbors";
-import { distance, travelTime } from "@optizzz/game/travel";
+import { distance, travelTime, type Level } from "@optizzz/game/travel";
 import { SHAPE_SYMBOLS, type MemberBubble } from "@/features/tdc-chain/role-styles";
 import { roleLabel } from "@optizzz/game/tdc-chain/roles";
 import { CHART_COLORS } from "@/theme";
@@ -21,6 +21,25 @@ const COLORS = { ...CHART_COLORS, selectedLink: CHART_COLORS.selected };
 
 const nameOf = (m: MapMember) => `${m.masterPlayerId !== null ? "⛓ " : ""}${m.pseudo}`;
 
+/** What is written next to each member: pseudo and chain role, pseudo, or nothing (the tooltip still names them). */
+export type LabelMode = "pseudoRole" | "pseudo" | "none";
+
+export interface MapDisplay {
+  /** Bubble area proportional to the member's hunting field, instead of the role's size. */
+  sizeByTdc: boolean;
+  labels: LabelMode;
+}
+
+const DEFAULT_DISPLAY: MapDisplay = { sizeByTdc: false, labels: "pseudo" };
+
+const TDC_PX = { min: 6, max: 26 };
+
+/** Bubble diameter whose area is proportional to the hunting field, the alliance's largest at the largest size. */
+export function tdcBubblePx(huntingField: number, largest: number): number {
+  if (largest <= 0) return TDC_PX.min;
+  return Math.max(TDC_PX.min, Math.round(TDC_PX.max * Math.sqrt(Math.max(0, huntingField) / largest)));
+}
+
 export function buildChartOption(
   members: readonly MapMember[],
   selected: MapMember,
@@ -29,6 +48,7 @@ export function buildChartOption(
   size: { width: number; height: number },
   /** Chain roles shown: each member's bubble; the selected player is then ringed instead of coloured. */
   bubbles: ReadonlyMap<number, MemberBubble> | null = null,
+  display: MapDisplay = DEFAULT_DISPLAY,
 ): EChartsCoreOption {
   const selectedNeighbors = new Set(
     membersByDistance(selected, members)
@@ -38,24 +58,46 @@ export function buildChartOption(
   const indexById = new Map(members.map((m, i) => [m.id, i]));
   const { x, y, step } = bounds(members);
   const grid = squareGrid(size.width, size.height);
+  const largestField = Math.max(0, ...members.map((m) => m.huntingField));
   const symbolSize = (m: MapMember) => {
+    // The size says the hunting field: the selected player is only ringed.
+    if (display.sizeByTdc) return tdcBubblePx(m.huntingField, largestField);
     const bubble = bubbles?.get(m.id);
     if (bubble) return bubble.px + (m.id === selected.id ? 4 : 0);
     return m.id === selected.id ? 16 : 11;
   };
 
-  // Every pseudo is written, the selected player's first: placed at the full view, they stay apart when zooming in.
+  // Every label is written, the selected player's first: placed at the full view, they stay apart when zooming in.
   const { area, toPixel } = plotProjection({ x, y }, grid, size);
-  const spots = placeLabels(
-    [selected, ...members.filter((m) => m.id !== selected.id)].map((m) => ({
+  const ordered = [selected, ...members.filter((m) => m.id !== selected.id)];
+  const itemsFor = (textOf: (m: MapMember) => string) =>
+    ordered.map((m) => ({
       id: m.id,
       ...toPixel(m),
-      width: measureName(nameOf(m), m.id === selected.id),
+      width: measureName(textOf(m), m.id === selected.id),
       height: NAME_HEIGHT,
       radius: symbolSize(m) / 2,
-    })),
-    { area, everyName: true },
-  );
+    }));
+  const withRole = (m: MapMember) => {
+    const bubble = bubbles?.get(m.id);
+    return bubble ? `${nameOf(m)} · ${roleLabel(bubble.role)}` : nameOf(m);
+  };
+  // A pseudo and role finding no free spot falls back to the pseudo alone, rather than overlapping.
+  const roomy =
+    display.labels === "pseudoRole" && bubbles
+      ? placeLabels(itemsFor(withRole), { area, everyName: false })
+      : new Map<number, unknown>();
+  const labelOf = (m: MapMember) => (roomy.get(m.id) ? withRole(m) : nameOf(m));
+  const spots = placeLabels(itemsFor(labelOf), { area, everyName: true });
+  const labelStyle = (m: MapMember, isSelected: boolean) =>
+    display.labels === "none"
+      ? { show: false }
+      : {
+          ...spotLabel(spots.get(m.id)),
+          formatter: labelOf(m),
+          fontWeight: isSelected ? "bold" : "normal",
+          color: m.onHoliday ? COLORS.holiday : COLORS.text,
+        };
 
   const nodes = members.map((m) => {
     const isSelected = m.id === selected.id;
@@ -72,12 +114,7 @@ export function buildChartOption(
           borderColor: COLORS.text,
           borderWidth: isSelected ? 2.5 : 0,
         },
-        label: {
-          ...spotLabel(spots.get(m.id)),
-          formatter: nameOf(m),
-          fontWeight: isSelected ? "bold" : "normal",
-          color: m.onHoliday ? COLORS.holiday : COLORS.text,
-        },
+        label: labelStyle(m, isSelected),
       };
     }
     const color = isSelected
@@ -91,13 +128,13 @@ export function buildChartOption(
       name: m.pseudo,
       value: [m.x, m.y],
       symbolSize: symbolSize(m),
-      itemStyle: { color, opacity: m.onHoliday ? 0.55 : 1 },
-      label: {
-        ...spotLabel(spots.get(m.id)),
-        formatter: nameOf(m),
-        fontWeight: isSelected ? "bold" : "normal",
-        color: m.onHoliday ? COLORS.holiday : COLORS.text,
+      itemStyle: {
+        color,
+        opacity: m.onHoliday ? 0.55 : 1,
+        borderColor: COLORS.text,
+        borderWidth: isSelected && display.sizeByTdc ? 2.5 : 0,
       },
+      label: labelStyle(m, isSelected),
     };
   });
 
@@ -115,6 +152,8 @@ export function buildChartOption(
   });
 
   const selectedLevel = levelOf(selected.id, levels);
+  const trip = (from: MapMember, to: MapMember, d: number, { level, estimated }: Level) =>
+    `Trajet ${escapeHtml(from.pseudo)} → ${escapeHtml(to.pseudo)} : ${estimated ? "≈ " : ""}${formatDuration(travelTime(d, level) * 1000)}`;
   return {
     animation: false,
     grid,
@@ -138,7 +177,8 @@ export function buildChartOption(
           const d = distance(selected, m);
           lines.push(
             `Distance depuis ${escapeHtml(selected.pseudo)} : ${formatDecimal(d)}`,
-            `Trajet ${escapeHtml(selected.pseudo)} → ${escapeHtml(m.pseudo)} : ${selectedLevel.estimated ? "≈ " : ""}${formatDuration(travelTime(d, selectedLevel.level) * 1000)}`,
+            trip(selected, m, d, selectedLevel),
+            trip(m, selected, d, levelOf(m.id, levels)),
           );
         }
         return lines.filter(Boolean).join("<br>");
