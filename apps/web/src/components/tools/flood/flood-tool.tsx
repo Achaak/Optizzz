@@ -7,7 +7,8 @@
 import { EMPTY_FLOOD, floodLinkFormat, floodToolPlan, type FloodToolState } from "@optizzz/game/site-links/flood";
 import { FLOOD_MARGIN } from "@optizzz/game/flood";
 import { formatNumber } from "@optizzz/game/format/number-format";
-import { Panel } from "~/components/panel";
+import { Panel, PanelLink } from "~/components/panel";
+import { guidePath } from "~/lib/guides/guides";
 import { CopyLinkButton } from "../copy-link-button";
 import { pickLevels, type MyLevels } from "../my-levels";
 import { PlayerPicker, ServerSelect, usePickedPlayer, type PickedEnd } from "../player-picker";
@@ -119,7 +120,10 @@ export function FloodTool() {
           />
         }
       />
-      <ToolNote>Règles pas encore vérifiées sur un vrai flood : à prendre comme une estimation.</ToolNote>
+      <ToolNote>
+        Règles pas encore vérifiées sur un vrai flood : à prendre comme une estimation. Pour faire monter le TDC de
+        toute une alliance : <PanelLink href={guidePath("tdc-chain")}>le guide de la chaîne de TDC</PanelLink>
+      </ToolNote>
       <details className="text-sm text-muted-foreground">
         <summary className="cursor-pointer">Règles utilisées</summary>
         <p className="mt-2">

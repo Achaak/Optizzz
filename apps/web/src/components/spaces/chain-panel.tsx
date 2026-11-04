@@ -48,6 +48,8 @@ import type { ChainRolesBridgeAnswer } from "@optizzz/game/site-links/space-brid
 import { api } from "~/trpc/react";
 import { errorText } from "./errors";
 import { Callout, FIELD_LABEL, Panel } from "./parts";
+import { PanelLink } from "~/components/panel";
+import { guidePath } from "~/lib/guides/guides";
 import type { MemberView } from "./use-space-access";
 
 const UNREADABLE = "Les rôles de la chaîne ne s'ouvrent pas sur cet appareil. Rechargez la page.";
@@ -224,9 +226,12 @@ export function ChainPanel({
   if (roster.error) return <Callout>{errorText(roster.error)}</Callout>;
   if (saved.record === undefined || !roster.data) return <p className="text-muted-foreground">Chargement des rôles…</p>;
   const switcher = (
-    <div className="space-y-1">
-      <span className={FIELD_LABEL}>Vue</span>
-      <Segmented label="Vue" options={VIEWS} value={choice.view} onChange={(next) => change({ view: next })} />
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="space-y-1">
+        <span className={FIELD_LABEL}>Vue</span>
+        <Segmented label="Vue" options={VIEWS} value={choice.view} onChange={(next) => change({ view: next })} />
+      </div>
+      <PanelLink href={guidePath("tdc-chain")}>Lire le guide de la chaîne</PanelLink>
     </div>
   );
   if (choice.view === "plan") {

@@ -17,6 +17,7 @@ Pages publiques seulement, une unité « display » responsive, marquée « Publ
 - listes des joueurs et des alliances, sous le tableau, au-dessus des pages ;
 - fiche d'un joueur, en bas ; fiche d'une alliance, entre les courbes et les membres ;
 - outils, sous le panneau du résultat, jamais dans le formulaire ni dans le rapport.
+- guides (`site-guides.md`), sous la liste et en bas d'un guide, après son pied, jamais au milieu du texte.
 
 Jamais dans les Espaces d'alliance, le compte, la connexion ni les pages légales.
 

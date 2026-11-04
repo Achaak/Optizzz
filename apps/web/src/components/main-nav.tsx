@@ -8,12 +8,13 @@ import { MenuIcon } from "~/components/icons";
 
 const MAIN_LINKS = [
   { href: "/tools", label: "Outils" },
+  { href: "/guides", label: "Guides" },
   { href: "/spaces", label: "Espaces" },
 ];
 
 const isUnder = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-/** Outils and Espaces, beside the server picker. */
+/** Outils, Guides and Espaces, beside the server picker. */
 export function MainNav() {
   const pathname = usePathname();
   return (

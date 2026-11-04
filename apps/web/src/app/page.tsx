@@ -13,14 +13,13 @@ import { MapSketch } from "~/components/map-sketch";
 import { AntTrail, LiveBadge, Panel, PanelLink, SmallLabel } from "~/components/panel";
 import { Sparkline } from "~/components/sparkline";
 import { TOOLS } from "~/components/tools/tool-list";
+import { CHROME_STORE, FIREFOX_ADDONS } from "~/lib/extension-stores";
+import { GUIDES, guidePath } from "~/lib/guides/guides";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { journalPage, journalPerDay, mapSketch, serverBulletin, type ServerBulletin } from "~/server/queries";
 
 // Rebuilt by the cron once the exports are stored (api/revalidate), at worst every hour.
 export const revalidate = 3600;
-
-const CHROME_STORE = "https://chromewebstore.google.com/detail/optizzz/goeifkbimepccacjfkkmhjmhgoiigjpl";
-const FIREFOX_ADDONS = "https://addons.mozilla.org/fr/firefox/addon/optizzz/";
 
 // Stroke icons for the three roles, drawn like the rest of the site's icons.
 const ROLE_ICONS = {
@@ -140,6 +139,34 @@ function ToolsPanel() {
         ))}
       </ul>
     </Panel>
+  );
+}
+
+/** The written guides, in a strip: a way into the game for a new member of an alliance. */
+function GuidesStrip() {
+  const ready = GUIDES.filter((guide) => guide.ready);
+  return (
+    <section
+      aria-labelledby="guides-title"
+      className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-[0.875rem] bg-card px-5 py-4 shadow-panel"
+    >
+      <h2 id="guides-title" className="font-heading text-2xl font-bold uppercase">
+        Guides
+      </h2>
+      <p className="min-w-0 flex-[1_1_16rem] text-sm text-muted-foreground">
+        Le jeu expliqué avec les outils d&apos;Optizzz, ce qui n&apos;est pas vérifié dit comme tel.
+      </p>
+      <ul className="flex flex-wrap gap-2">
+        {ready.map((guide) => (
+          <li key={guide.id}>
+            <Link href={guidePath(guide.id)} className="block rounded-full bg-raised px-3 py-1 text-sm hover:bg-accent">
+              {guide.title}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <PanelLink href="/guides">Tous les guides</PanelLink>
+    </section>
   );
 }
 
@@ -319,6 +346,8 @@ export default async function Home() {
         ))}
       </section>
 
+      <GuidesStrip />
+
       <ServersTable bulletins={bulletins} />
 
       <AdSlot />
@@ -372,6 +401,7 @@ export default async function Home() {
       tools={
         <div className="space-y-6">
           <ToolsPanel />
+          <GuidesStrip />
           <ServersTable bulletins={bulletins} />
         </div>
       }
