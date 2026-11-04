@@ -16,8 +16,10 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { floodStats, floodStatsDiscord } from "~/lib/envois/flood-stats";
 import { floodViewSearch, readFloodView, type FloodView } from "~/lib/envois/flood-view";
 import { floodsByTarget, type AllianceFlood } from "~/lib/envois/floods";
+import { resolvePeriod } from "~/lib/envois/period";
 import { FloodStatsView } from "./flood-stats-view";
 import { Callout, FIELD_LABEL, Panel } from "./parts";
+import { PeriodPicker } from "./period-picker";
 import { useServerAlliances } from "./use-server-alliances";
 
 const STATES = [
@@ -29,6 +31,9 @@ const VIEWS = [
   { value: "stats", label: "Statistiques" },
   { value: "list", label: "Liste" },
 ] as const;
+
+/** The site keeps a flood 7 days after its arrival: no free period goes further. */
+const FLOODS_KEPT = 7;
 
 const PERIODS = [
   { value: "24h", label: "24 heures" },
@@ -172,10 +177,20 @@ export function FloodsPanel({
   const senders = members
     .filter((m) => sends.find((s) => s.playerId === m.playerId)?.categories.includes("floods"))
     .map((m) => m.pseudo);
+  const free = choice.range ? resolvePeriod(choice.range, now, FLOODS_KEPT) : null;
+  const span = free ? { days: free.days, end: free.end } : undefined;
   const stats =
     floods === null
       ? null
-      : floodStats({ floods, members: pseudos, senders, period: choice.period, member: choice.member, now });
+      : floodStats({
+          floods,
+          members: pseudos,
+          senders,
+          period: choice.period,
+          member: choice.member,
+          now,
+          ...(span ? { span } : {}),
+        });
   const alliances = useServerAlliances(server, choice.view === "stats" && stats !== null && stats.targets.length > 0);
 
   if (floods === null || stats === null)
@@ -199,15 +214,16 @@ export function FloodsPanel({
           <Segmented label="Vue" options={VIEWS} value={choice.view} onChange={(view) => change({ view })} />
         </div>
         {choice.view === "stats" && (
-          <div className="space-y-1">
-            <span className={FIELD_LABEL}>Période</span>
-            <Segmented
-              label="Période"
-              options={PERIODS}
-              value={choice.period}
-              onChange={(period) => change({ period })}
-            />
-          </div>
+          <PeriodPicker
+            options={PERIODS}
+            value={choice.period}
+            range={free?.range ?? null}
+            kept={FLOODS_KEPT}
+            keptText="Les floods sont gardés 7 jours après leur arrivée"
+            now={now}
+            onFixed={(period) => change({ period, range: null })}
+            onRange={(range) => change({ range: resolvePeriod(range, new Date(), FLOODS_KEPT).range })}
+          />
         )}
         <label className="space-y-1">
           <span className={FIELD_LABEL}>Membre</span>
@@ -234,7 +250,13 @@ export function FloodsPanel({
               type="button"
               variant="outline"
               onClick={() => {
-                const text = floodStatsDiscord(stats, { tag, period: choice.period, now: new Date(), alliances });
+                const text = floodStatsDiscord(stats, {
+                  tag,
+                  period: choice.period,
+                  now: free ? free.end : new Date(),
+                  free: free !== null,
+                  alliances,
+                });
                 navigator.clipboard.writeText(text).then(
                   () => setCopied("done"),
                   () => setCopied("failed"),
@@ -260,6 +282,7 @@ export function FloodsPanel({
         <FloodStatsView
           stats={stats}
           period={choice.period}
+          freeDays={free?.days ?? null}
           member={choice.member}
           isAdmin={isAdmin}
           alliances={alliances}

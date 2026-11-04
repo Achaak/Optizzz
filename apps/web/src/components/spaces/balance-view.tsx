@@ -8,8 +8,9 @@ import { cn } from "cn";
 import { Fragment, useState } from "react";
 import { Stat, StatGrid } from "~/components/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { signedCompact, verdictText, type Balance, type BalanceRow, type Verdict } from "~/lib/envois/balance";
+import { inOutOf, signedCompact, verdictText, type Balance, type BalanceRow, type Verdict } from "~/lib/envois/balance";
 import { listNames } from "~/lib/envois/convoy-stats";
+import { InOutChart } from "./in-out-chart";
 import { Callout, Panel } from "./parts";
 
 type SortKey = "gap" | "field" | "production" | "sent" | "received" | "part" | "ratio";
@@ -98,9 +99,9 @@ function GapBar({ gap, widest }: { gap: number; widest: number }) {
   );
 }
 
-/** What the phone hides, and the member's days. */
-function Detail({ row }: { row: BalanceRow }) {
-  const days = row.daily.filter((day) => day.present).reverse();
+/** What the phone hides, and a way to the member's days. */
+function Detail({ row, onShowDays }: { row: BalanceRow; onShowDays?: (pseudo: string) => void }) {
+  const days = row.daily.filter((day) => day.present);
   const facts: [string, React.ReactNode][] = [
     ["TDC", row.field === null ? "—" : formatNumber(row.field)],
     ["Entrepôt estimé", <Warehouse key="w" row={row} />],
@@ -112,7 +113,7 @@ function Detail({ row }: { row: BalanceRow }) {
     ["Ratio", ratioText(row)],
   ];
   return (
-    // As wide as the table, never wider: its own day-by-day table scrolls inside.
+    // As wide as the table, never wider.
     <div className="w-0 min-w-full space-y-3 rounded-[0.625rem] bg-card p-3">
       <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2 xl:hidden">
         {facts.map(([label, value]) => (
@@ -125,55 +126,36 @@ function Detail({ row }: { row: BalanceRow }) {
       {days.length === 0 ? (
         <p className="text-muted-foreground">Pas dans l&apos;alliance sur la période, d&apos;après l&apos;export.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <p className="mb-1 text-xs text-muted-foreground">
-            {row.pseudo} jour par jour
-            {days.length < row.daily.length &&
-              ` · dans l'alliance depuis le ${days.at(-1)?.label ?? ""} : sa Part commence ce jour-là`}
-          </p>
-          <table className="text-xs whitespace-nowrap">
-            <thead>
-              <tr className="text-muted-foreground">
-                <th scope="col" className="px-2 py-1 text-left font-medium">
-                  Jour
-                </th>
-                <th scope="col" className="px-2 py-1 text-right font-medium">
-                  Production
-                </th>
-                <th scope="col" className="px-2 py-1 text-right font-medium">
-                  Part
-                </th>
-                <th scope="col" className="px-2 py-1 text-right font-medium">
-                  Colonies
-                </th>
-                <th scope="col" className="px-2 py-1 text-right font-medium">
-                  Envoyé
-                </th>
-                <th scope="col" className="px-2 py-1 text-right font-medium">
-                  Reçu
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {days.map((day) => (
-                <tr key={day.start} className="border-t">
-                  <td className="px-2 py-1 font-mono">{day.label}</td>
-                  <td className="px-2 py-1 text-right">{formatNumber(Math.round(day.production))}</td>
-                  <td className="px-2 py-1 text-right">{formatNumber(Math.round(day.part))}</td>
-                  <td className="px-2 py-1 text-right">{day.taxes === 0 ? "—" : signedCompact(day.taxes)}</td>
-                  <td className="px-2 py-1 text-right">{day.sent === 0 ? "—" : formatNumber(day.sent)}</td>
-                  <td className="px-2 py-1 text-right">{day.received === 0 ? "—" : formatNumber(day.received)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          {days.length < row.daily.length &&
+            `Dans l'alliance depuis le ${days[0]?.label ?? ""} : sa Part commence ce jour-là.`}
+          {onShowDays && (
+            <button
+              type="button"
+              onClick={() => onShowDays(row.pseudo)}
+              className="font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              Voir ses jours →
+            </button>
+          )}
+        </p>
       )}
     </div>
   );
 }
 
-export function BalanceView({ balance, days, member }: { balance: Balance; days: number; member: string | null }) {
+export function BalanceView({
+  balance,
+  days,
+  member,
+  onShowDays,
+}: {
+  balance: Balance;
+  days: number;
+  member: string | null;
+  /** Opens the « Jours » view on a member. */
+  onShowDays?: (pseudo: string) => void;
+}) {
   const [sort, setSort] = useState<SortKey>("gap");
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(member ? [member] : []));
   const value = (row: BalanceRow) =>
@@ -336,7 +318,7 @@ export function BalanceView({ balance, days, member }: { balance: Balance; days:
                     {unfolded && (
                       <TableRow className={cn(chosen && "bg-primary/10", "hover:bg-transparent")}>
                         <TableCell colSpan={COLUMNS.length + 3} className="px-4 pb-3 whitespace-normal">
-                          <Detail row={row} />
+                          <Detail row={row} onShowDays={onShowDays} />
                         </TableCell>
                       </TableRow>
                     )}
@@ -356,6 +338,8 @@ export function BalanceView({ balance, days, member }: { balance: Balance; days:
           <span>«&nbsp;≈&nbsp;» : taux de taxe supposé à 20 %</span>
         </div>
       </Panel>
+
+      <InOutChart chart={inOutOf(rows, balance.partPerDay)} partPerDay={balance.partPerDay} chosen={member} />
 
       <details className="rounded-[0.875rem] bg-card px-4 pb-3 shadow-panel">
         <summary className="cursor-pointer py-3 font-heading text-lg font-bold uppercase">

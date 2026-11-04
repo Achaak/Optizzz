@@ -9,7 +9,7 @@ import { cn } from "cn";
 import { useState } from "react";
 import { Stat, StatGrid } from "~/components/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { listNames, type ConvoyStats, type OutsideWay, type Period, type PlayerRow } from "~/lib/envois/convoy-stats";
+import { DAYS_BY_DAY, listNames, type ConvoyStats, type OutsideWay, type PlayerRow } from "~/lib/envois/convoy-stats";
 import { ConvoyStatsChart } from "./convoy-stats-chart";
 import { Callout, Panel } from "./parts";
 
@@ -38,7 +38,8 @@ export function ConvoyStatsView({
   now,
 }: {
   stats: ConvoyStats;
-  days: Period;
+  /** How many days in the period. */
+  days: number;
   member: string | null;
   /** Lower-case pseudo → alliance tag, from the server's public map; null until read. */
   alliances: Map<string, string | null> | null;
@@ -109,7 +110,7 @@ export function ConvoyStatsView({
       )}
 
       <Panel
-        title={`${member ? "Livré et reçu" : "Livré"} par ${days === 90 ? "semaine" : "jour"}`}
+        title={`${member ? "Livré et reçu" : "Livré"} par ${days > DAYS_BY_DAY ? "semaine" : "jour"}`}
         aside="convois livrés, heure de Paris"
       >
         <ConvoyStatsChart buckets={stats.buckets} member={member !== null} />

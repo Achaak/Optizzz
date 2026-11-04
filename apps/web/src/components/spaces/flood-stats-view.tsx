@@ -36,6 +36,7 @@ const COLUMNS: readonly { key: SortKey; label: string; className?: string }[] = 
 export function FloodStatsView({
   stats,
   period,
+  freeDays = null,
   member,
   isAdmin,
   alliances,
@@ -43,6 +44,8 @@ export function FloodStatsView({
 }: {
   stats: FloodStats;
   period: FloodPeriod;
+  /** A free period's days, over `period` when set. */
+  freeDays?: number | null;
   member: string | null;
   isAdmin: boolean;
   /** Lower-case pseudo → alliance tag, from the server's public map; null until read. */
@@ -51,7 +54,10 @@ export function FloodStatsView({
 }) {
   const { arrived, coverage } = stats;
   const share = arrived.count === 0 ? null : (arrived.count - arrived.withoutPlan) / arrived.count;
-  const perDay = period === "24h" ? null : arrived.count / 7;
+  const byHour = freeDays === null && period === "24h";
+  const days = freeDays ?? 7;
+  const perDay = byHour ? null : arrived.count / days;
+  const periodLabel = freeDays === null ? PERIOD_LABEL[period] : `${String(freeDays)} jour${freeDays > 1 ? "s" : ""}`;
   return (
     <div className="space-y-5">
       {coverage.missing.length > 0 && (
@@ -70,9 +76,9 @@ export function FloodStatsView({
         celle qu&apos;attendait le Plan de flood, pas celle du combat.
       </p>
 
-      <StatGrid label={`Floods sur ${PERIOD_LABEL[period]}${member ? ` de ${member}` : ""}`}>
+      <StatGrid label={`Floods sur ${periodLabel}${member ? ` de ${member}` : ""}`}>
         <Stat
-          label={`Floods arrivés · ${PERIOD_LABEL[period]}`}
+          label={`Floods arrivés · ${periodLabel}`}
           value={formatNumber(arrived.count)}
           hint={perDay === null ? "sur les dernières 24 heures" : `${formatDecimal(perDay)} par jour en moyenne`}
         />
@@ -112,7 +118,7 @@ export function FloodStatsView({
       </StatGrid>
 
       <Panel
-        title={`Prise attendue par ${period === "24h" ? "heure" : "jour"}`}
+        title={`Prise attendue par ${byHour ? "heure" : "jour"}`}
         aside="floods arrivés, heure de Paris · nombre de floods au-dessus de chaque barre"
       >
         <FloodStatsChart buckets={stats.buckets} />

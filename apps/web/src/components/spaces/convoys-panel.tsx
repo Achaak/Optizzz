@@ -1,9 +1,10 @@
 "use client";
 
 // The « Convois » tab of a space (docs/features/site-envois.md, « Vues » and « Statistiques des convois »): the
-// members' convoys both ways, opened in this browser, as statistics over 7, 30 or 90 days, as the Équilibre (who
-// should convoy, who should receive) or as a list, for the alliance or one member. The choice is kept in the address. A state is written in words (« En route », « Livré »),
-// never told by a colour alone (ADR 0003).
+// members' convoys both ways, opened in this browser, as statistics over 7, 30, 90 days or a free period, as the
+// Équilibre (who should convoy, who should receive), day by day (« Jours ») or as a list, for the alliance or one
+// member. The choice is kept in the address. A state is written in words (« En route », « Livré »), never told by a
+// colour alone (ADR 0003).
 import { formatNumber } from "@optizzz/game/format/number-format";
 import { formatDateTime, formatEndTime } from "@optizzz/game/format/time-format";
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
@@ -18,8 +19,12 @@ import { balanceDiscord } from "~/lib/envois/balance";
 import { convoyStats, convoyStatsDiscord, PERIODS } from "~/lib/envois/convoy-stats";
 import { convoyViewSearch, readConvoyView, type ConvoyView } from "~/lib/envois/convoy-view";
 import { filterConvoys, type AllianceConvoy, type ConvoyFilter } from "~/lib/envois/convoys";
+import { dayTableDiscord, dayTableOf } from "~/lib/envois/day-table";
+import { resolvePeriod } from "~/lib/envois/period";
 import { BalanceView } from "./balance-view";
 import { ConvoyStatsView } from "./convoy-stats-view";
+import { DayTableView } from "./day-table-view";
+import { PeriodPicker } from "./period-picker";
 import { Callout, FIELD_LABEL, Panel } from "./parts";
 import { useServerAlliances } from "./use-server-alliances";
 import { useSpaceBalance } from "./use-space-balance";
@@ -33,10 +38,14 @@ const STATES = [
 const VIEWS = [
   { value: "stats", label: "Statistiques" },
   { value: "balance", label: "Équilibre" },
+  { value: "days", label: "Jours" },
   { value: "list", label: "Liste" },
 ] as const;
 
 const PERIOD_OPTIONS = PERIODS.map((days) => ({ value: days, label: `${String(days)} jours` }));
+
+/** The site keeps a convoy 90 days: no free period goes further. */
+const CONVOYS_KEPT = 90;
 
 const when = (convoy: AllianceConvoy, now: Date) =>
   convoy.kind === "transit"
@@ -156,6 +165,7 @@ export function ConvoysPanel({
   const senders = members
     .filter((m) => sends.find((s) => s.playerId === m.playerId)?.categories.includes("convoys"))
     .map((m) => m.pseudo);
+  const period = resolvePeriod(choice.range ?? { days: choice.days }, now, CONVOYS_KEPT);
   const stats =
     convoys === null
       ? null
@@ -164,9 +174,10 @@ export function ConvoysPanel({
           demandeConvoys: demandeConvoys ?? [],
           members: pseudos,
           senders,
-          days: choice.days,
+          days: period.days,
           member: choice.member,
           now,
+          end: period.end,
         });
   const outsiders =
     choice.view === "stats" &&
@@ -180,8 +191,9 @@ export function ConvoysPanel({
     sends,
     convoys,
     states,
-    days: choice.days,
-    enabled: choice.view === "balance",
+    days: period.days,
+    end: period.range ? period.end : null,
+    enabled: choice.view === "balance" || choice.view === "days",
   });
 
   if (convoys === null || stats === null)
@@ -205,15 +217,16 @@ export function ConvoysPanel({
           <Segmented label="Vue" options={VIEWS} value={choice.view} onChange={(view) => change({ view })} />
         </div>
         {choice.view !== "list" && (
-          <div className="space-y-1">
-            <span className={FIELD_LABEL}>Période</span>
-            <Segmented
-              label="Période"
-              options={PERIOD_OPTIONS}
-              value={choice.days}
-              onChange={(days) => change({ days })}
-            />
-          </div>
+          <PeriodPicker
+            options={PERIOD_OPTIONS}
+            value={choice.days}
+            range={period.range}
+            kept={CONVOYS_KEPT}
+            keptText="Les convois sont gardés 90 jours"
+            now={now}
+            onFixed={(days) => change({ days, range: null })}
+            onRange={(range) => change({ range: resolvePeriod(range, new Date(), CONVOYS_KEPT).range })}
+          />
         )}
         <label className="space-y-1">
           <span className={FIELD_LABEL}>Membre</span>
@@ -230,7 +243,9 @@ export function ConvoysPanel({
             ))}
           </select>
         </label>
-        {(choice.view === "stats" || (choice.view === "balance" && balance.balance !== null)) && (
+        {(choice.view === "stats" ||
+          (choice.view === "balance" && balance.balance !== null) ||
+          (choice.view === "days" && choice.member === null && balance.balance !== null)) && (
           <div className="ml-auto flex items-center gap-3">
             <span role="status" className="text-xs text-muted-foreground">
               {copied === "done" && "Copié : collez-le dans Discord."}
@@ -240,11 +255,18 @@ export function ConvoysPanel({
               type="button"
               variant="outline"
               onClick={() => {
-                const context = { tag, days: choice.days, now: new Date() };
+                const context = {
+                  tag,
+                  days: period.days,
+                  now: period.range ? period.end : new Date(),
+                  free: period.range !== null,
+                };
                 const text =
                   choice.view === "balance" && balance.balance
                     ? balanceDiscord(balance.balance, context)
-                    : convoyStatsDiscord(stats, context);
+                    : choice.view === "days" && balance.balance
+                      ? dayTableDiscord(dayTableOf(balance.balance, choice.measure), choice.measure, context)
+                      : convoyStatsDiscord(stats, context);
                 navigator.clipboard.writeText(text).then(
                   () => setCopied("done"),
                   () => setCopied("failed"),
@@ -266,16 +288,31 @@ export function ConvoysPanel({
         </Callout>
       )}
       {choice.view === "stats" ? (
-        <ConvoyStatsView stats={stats} days={choice.days} member={choice.member} alliances={alliances} now={now} />
-      ) : choice.view === "balance" ? (
-        balance.balance ? (
-          <BalanceView key={choice.member ?? ""} balance={balance.balance} days={choice.days} member={choice.member} />
-        ) : (
-          <Panel title="Équilibre">
+        <ConvoyStatsView stats={stats} days={period.days} member={choice.member} alliances={alliances} now={now} />
+      ) : choice.view === "balance" || choice.view === "days" ? (
+        balance.balance === null ? (
+          <Panel title={choice.view === "days" ? "Jours" : "Équilibre"}>
             <p className="text-muted-foreground">
               {balance.loading ? "Lecture des TDC de l'alliance…" : "Les TDC de l'alliance ne se lisent pas."}
             </p>
           </Panel>
+        ) : choice.view === "days" ? (
+          <DayTableView
+            key={`${choice.member ?? ""}:${choice.measure}`}
+            balance={balance.balance}
+            days={period.days}
+            measure={choice.measure}
+            member={choice.member}
+            onMeasure={(measure) => change({ measure })}
+          />
+        ) : (
+          <BalanceView
+            key={choice.member ?? ""}
+            balance={balance.balance}
+            days={period.days}
+            member={choice.member}
+            onShowDays={(member) => change({ view: "days", member })}
+          />
         )
       ) : (
         <ConvoyList convoys={convoys} member={choice.member} now={now} />

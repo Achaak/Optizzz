@@ -20,6 +20,8 @@ export interface FloodStatsInput {
   /** The members who send their Floods. */
   senders: readonly string[];
   period: FloodPeriod;
+  /** A free period, by Paris day up to its last instant, over `period` when set. */
+  span?: { days: number; end: Date };
   /** A member's pseudo: their floods only. */
   member: string | null;
   now: Date;
@@ -102,10 +104,14 @@ const byTake = (a: MemberRow, b: MemberRow) =>
 
 export function floodStats(input: FloodStatsInput): FloodStats {
   const now = input.now.getTime();
-  const since = input.period === "24h" ? now - 24 * HOUR : parisMidnight(input.now, 6);
+  const endDate = input.span?.end ?? input.now;
+  const end = endDate.getTime();
+  const days = input.span?.days ?? 7;
+  const byHour = !input.span && input.period === "24h";
+  const since = byHour ? now - 24 * HOUR : parisMidnight(endDate, days - 1);
   const chosen = input.member === null ? null : key(input.member);
   const mine = (f: FloodItem) => chosen === null || key(f.from) === chosen;
-  const arrived = input.floods.filter((f) => f.at >= since && f.at <= now && mine(f));
+  const arrived = input.floods.filter((f) => f.at >= since && f.at <= end && mine(f));
   const onWay = input.floods.filter((f) => f.at > now && mine(f)).sort((a, b) => a.at - b.at);
   const senders = new Set(input.senders.map(key));
 
@@ -152,13 +158,13 @@ export function floodStats(input: FloodStatsInput): FloodStats {
   const armed = arrived.filter((f) => f.army !== null);
   for (const f of armed) for (const [unit, n] of Object.entries(f.army ?? {})) units[unit] = (units[unit] ?? 0) + n;
   const buckets: Bucket[] = [];
-  if (input.period === "24h")
+  if (byHour)
     // Paris is a whole number of hours from UTC: its hours start with UTC's.
     for (let start = Math.floor(since / HOUR) * HOUR; start < now; start += HOUR)
       buckets.push({ start, label: `${String(parisParts(new Date(start)).hours)} h`, count: 0, take: 0 });
   else
-    for (let back = 6; back >= 0; back--) {
-      const start = parisMidnight(input.now, back);
+    for (let back = days - 1; back >= 0; back--) {
+      const start = parisMidnight(endDate, back);
       buckets.push({ start, label: dayMonth(new Date(start)), count: 0, take: 0 });
     }
   for (const f of arrived) {
@@ -200,10 +206,19 @@ const takeText = (take: number, withoutPlan: number) => `${withoutPlan > 0 ? "�
  */
 export function floodStatsDiscord(
   stats: FloodStats,
-  context: { tag: string; period: FloodPeriod; now: Date; alliances: ReadonlyMap<string, string | null> | null },
+  context: {
+    tag: string;
+    period: FloodPeriod;
+    /** The period's end: now, or a free period's. */
+    now: Date;
+    /** A free period, by its days. */
+    free?: boolean;
+    alliances: ReadonlyMap<string, string | null> | null;
+  },
 ): string {
-  const period =
-    context.period === "24h"
+  const period = context.free
+    ? `du ${dayMonth(new Date(stats.since))} au ${dayMonth(context.now)}**`
+    : context.period === "24h"
       ? `24 heures** (depuis le ${formatDateTime(new Date(stats.since))})`
       : `7 jours** (du ${dayMonth(new Date(stats.since))} au ${dayMonth(context.now)})`;
   const title = stats.self ? `**Floods de ${stats.self.player} (${context.tag}) · ` : `**Floods ${context.tag} · `;

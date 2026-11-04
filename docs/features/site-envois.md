@@ -259,7 +259,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-11-03 (chantier 11 
 - **Écart** = net − Part ; **ratio** = net / Part ; **verdict** écrit en mot : « Convoyer » (écart positif), « Équilibré » (à ±5 % de la Part, fixe), « Recevoir » (négatif). Un membre qui n'envoie pas « Convois » n'a pas de verdict (« partiel » : on ne voit pas ce qu'il échange hors de l'Espace), mais garde sa Part dans le calcul des autres.
 - **Entrepôt estimé** : le stock du dernier Envoi Production (nourriture et matériaux, **nouveau dans l'Envoi**, lu dans l'en-tête comme le TDC), plus le plafond depuis, moins la taxe, moins les convois partis depuis (en route compris), plus ceux arrivés ; borné par la capacité des entrepôts quand l'Envoi Niveaux la donne. Un maximum (« ≤ ») : les dépenses (chantiers, ponte, armée) ne sont pas connues. « — » sans stock de moins de 48 h. Montré en deux lignes, nourriture et matériaux.
 - **La vue** : trois tuiles (production de l'alliance, Part moyenne par jour, N à convoyer · N à recevoir), l'encadré de couverture comme les Statistiques (« 14 membres sur 18 envoient leurs convois ») ; un tableau Membre · TDC · Entrepôt estimé · Production · Colonies (taxes ±) · Envoyés · Reçus · Part · Écart · Ratio · Verdict, triable, trié par écart (« Convoyer » en haut) ; à 375 px Membre, Écart et Verdict, le reste en dépliant la ligne ; une note de méthode dépliable : « La Priorité compare ce qu'un membre a reçu à sa propre production ; l'Équilibre compare ce qui lui reste à sa part. »
-- **Un membre choisi** (`?membre=`) : sa ligne surlignée et son détail jour par jour (production, Part, convois), simple liste que le chantier 21 remplacera.
+- **Un membre choisi** (`?membre=`) : sa ligne surlignée et son détail dépliant ; ses jours sont dans la vue « Jours » (lien « Voir ses jours », chantier 21).
 - **Copier pour Discord** : « **Équilibre 4O4 · 30 jours** (du … au …) », une ligne par membre (« Noctis : convoyer · écart +6,7M (ratio 1,8) »), puis ceux sans verdict. **Jamais l'entrepôt** : un salon Discord est plus large que l'Espace.
 - **Dans l'onglet Demandes** : sous la Priorité de chaque demandeur, une ligne discrète sur 30 jours (la fenêtre du Solde), « Équilibre : recevoir (−2,1M) ». La Priorité reste le classement.
 - **Calcul** : dans le navigateur, à partir des Envois déjà ouverts et des TDC jour par jour des membres servis par le site (données publiques) ; fonctions pures dans `apps/web/src/lib/envois/balance.ts` (+ test), reprises par les chantiers 21 et 23.
@@ -273,16 +273,78 @@ Réalisé le 2026-11-04. Décisions prises en codant :
 - **Vue** (`components/spaces/balance-view.tsx`, `use-space-balance.ts`) : à 375 px, Membre (avec le verdict dessous), Écart et le bouton de détail ; Production, Envoyés et Reçus à partir de 640 px, Entrepôt, Part et Ratio à partir de 768 px, TDC et Colonies à partir de 1 280 px ; le reste dans le détail déplié. L'écart en barre centrée (ambre à droite, bleu à gauche, signe écrit), le verdict en mot avec une flèche ou « = ».
 - **Demandes** : la ligne « Équilibre : … » sous la Priorité, sur 30 jours, lue seulement quand l'onglet a des Demandes.
 
-| Fichier                                                                                        | Rôle                                                                   |
-| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `apps/web/src/lib/envois/balance.ts` (+ test)                                                  | Part, net, Écart, verdict, Entrepôt estimé, taux de taxe, Discord      |
-| `apps/web/src/server/api/routers/players.ts`                                                   | `allianceDays` : TDC et alliance jour par jour, colonies, colonisateur |
-| `apps/web/src/components/spaces/balance-view.tsx`, `use-space-balance.ts`, `convoys-panel.tsx` | Vue « Équilibre », lecture des TDC, choix et copie                     |
-| `apps/web/src/components/spaces/demandes-panel.tsx`                                            | Ligne sous la Priorité                                                 |
-| `packages/game/src/site-links/envoi-states.ts`, `sharing/shared-state.ts` (+ tests)            | Stock et capacités dans les Envois et l'état partagé                   |
-| `apps/extension/src/data/state-pages.ts`, `features/optizzz-account/envoi-states.ts` (+ tests) | Stock de l'en-tête, capacités de `construction.php`                    |
+| Fichier                                                                                        | Rôle                                                                                                        |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/lib/envois/balance.ts` (+ test)                                                  | Part, net, Écart, verdict, Entrepôt estimé, taux de taxe, Discord, données de « Ce qui entre, ce qui sort » |
+| `apps/web/src/components/spaces/in-out-chart.tsx`                                              | Graphique « Ce qui entre, ce qui sort »                                                                     |
+| `apps/web/src/server/api/routers/players.ts`                                                   | `allianceDays` : TDC et alliance jour par jour, colonies, colonisateur                                      |
+| `apps/web/src/components/spaces/balance-view.tsx`, `use-space-balance.ts`, `convoys-panel.tsx` | Vue « Équilibre », lecture des TDC, choix et copie                                                          |
+| `apps/web/src/components/spaces/demandes-panel.tsx`                                            | Ligne sous la Priorité                                                                                      |
+| `packages/game/src/site-links/envoi-states.ts`, `sharing/shared-state.ts` (+ tests)            | Stock et capacités dans les Envois et l'état partagé                                                        |
+| `apps/extension/src/data/state-pages.ts`, `features/optizzz-account/envoi-states.ts` (+ tests) | Stock de l'en-tête, capacités de `construction.php`                                                         |
 
 Vérifié le 2026-11-04 avec une page de démonstration temporaire (membres et convois inventés, retirée) : un membre arrivé en cours de période, une colonie interne et une hors Espace, un membre sans « Convois », l'entrepôt borné et sans stock, le détail jour par jour ; en clair, sombre et à 375 px. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte et `allianceDays` sur une vraie base, la ligne des Demandes à l'écran, le collage dans Discord, et le stock envoyé par la vraie extension (il ne partira qu'avec sa prochaine version).
+
+### Ce qui entre, ce qui sort
+
+Décidé lors d'une session de cadrage le 2026-11-04 (chantier 23, `plans/lot-2026-11/23-entrees-sorties.md`).
+
+- **Où** : sous le tableau de l'Équilibre, dans son panneau « Ce qui entre, ce qui sort ». Même ordre que le tableau (par Écart, et il suit le tri choisi) ; le membre choisi (`?membre=`) surligné.
+- **Quoi** : par membre, des barres empilées de part et d'autre d'un axe central, en ressources **par jour de présence** (aujourd'hui au prorata de l'heure, comme la Part) ; « 10 j » à côté du nom quand le membre n'a pas été là toute la période, « pas dans l'alliance sur la période » sans aucun jour.
+- **Segments** : à droite ce qui entre, ambre, en partant de l'axe : production (plein), taxes reçues (ambre clair, pointillé), convois reçus (hachuré). À gauche ce qui sort, bleu : convois livrés (plein), taxe versée (hachuré). Un segment nul n'est pas dessiné. Côté, ordre et motif disent chaque segment avec la couleur ; la légende le dit en mots (« Convois reçus (à droite, hachuré) ») (ADR 0003).
+- **Reste par jour** : le net par jour (entrées − sorties), une marque (trait épais couleur du texte et losange) et écrit en bout de ligne (« 1,2M/j »). Une ligne en tirets sur toute la hauteur à la **Part moyenne par jour** (la tuile) : la distance de la marque à la ligne montre l'Écart. L'infobulle (survol ou toucher) donne chaque segment, le Reste, la Part par jour du membre et ses jours de présence.
+- **Partiels** (sans « Convois ») : en bas, en opacité réduite, « partiel » à la place du Reste, sans marque : on ne voit pas ce qu'ils échangent hors de l'Espace.
+- **Lecture** : sur ordinateur, le nom dans une colonne à gauche, la barre, le Reste écrit ; à 375 px, nom et Reste au-dessus d'une barre pleine largeur. Axe en haut en format court (« 500K », « 1M »), « ← sort | entre → » de part et d'autre du zéro.
+- **Dessin** : en HTML et SVG, comme la barre d'Écart, et pas avec Recharts : Recharts ne sait pas mettre le nom au-dessus de la barre à 375 px. Les données du graphique sont une fonction pure de `balance.ts` (+ test).
+
+Réalisé le 2026-11-04 : `inOutOf` dans `balance.ts` (+ test) ramène chaque `BalanceRow` à un jour de présence (`presentDays`, nouveau dans la ligne, aujourd'hui au prorata) et cale l'axe sur des graduations rondes (1, 2 ou 5 × 10ⁿ, environ cinq intervalles) assez larges pour chaque barre, chaque Reste (y compris sous zéro) et la Part moyenne. La vue est `components/spaces/in-out-chart.tsx`, montée par `balance-view.tsx` avec les lignes dans l'ordre du tableau. Chaque ligne est un bouton : l'infobulle s'ouvre au survol de la souris, au toucher ou au clic, et son libellé dit la ligne en mots pour un lecteur d'écran. Les graduations des bouts restent dans le panneau.
+
+Vérifié le 2026-11-04 avec une page de démonstration temporaire (membres et convois inventés, retirée) : un membre arrivé en cours de période, une colonie interne et une hors Espace, un partiel, un membre jamais présent, l'infobulle, le membre choisi surligné ; en clair, en sombre et à 375 px ; protanopie et deutéranopie simulées (matrices de Machado), en clair et en sombre : l'ambre vire à l'olive et reste loin du bleu, les segments d'un même côté se séparent par leur motif et leur clarté. Pas essayé : un vrai Espace avec de vrais convois, et l'infobulle au toucher sur un vrai téléphone.
+
+## Jours et période libre
+
+Décidé lors d'une session de cadrage le 2026-11-04 (chantier 21, `plans/lot-2026-11/21-tableau-7-jours-et-periode.md`).
+
+### La vue « Jours »
+
+- **Où** : une quatrième vue de l'onglet « Convois », « Statistiques | Équilibre | Jours | Liste » (`?vue=jours`), avec la même période et le même membre ; elle lit les TDC comme l'Équilibre (`allianceDays`, en cache s'il a déjà été ouvert) et réutilise `balanceOf` (`BalanceRow.daily`).
+- **Alliance entière** : une mesure à la fois, choisie au-dessus du tableau (« TDC | Production | Après colonies | Envoyés | Reçus », `?mesure=`, **Production** par défaut et absente de l'adresse). Une ligne par membre, une colonne par jour, plus « Total » et « Moy. / jour » ; en tête une ligne « Alliance », en italique avec « partiel » quand des membres n'envoient pas leurs convois.
+- **Un membre choisi** (`?membre=`) : ses cinq mesures en lignes, les jours en colonnes.
+- **Mesures** : **TDC** du jour d'après l'export de la nuit (`PlayerDay`) ; le site n'a pas de relevé heure par heure et la Production des Envois n'a pas d'historique, d'où pas de « moyen » ; la ligne Alliance en fait la somme. **Production** : TDC × 48, aujourd'hui au prorata de l'heure. **Après colonies** : production − taxe versée + taxes reçues (« ≈ » quand un taux est supposé à 20 %). **Envoyés** : ce que le membre a livré ce jour-là (nourriture + matériaux), le nombre de convois écrit petit dessous (« 3 conv. »). **Reçus** : ce qui lui a été livré. Un jour hors de l'alliance s'écrit « — » ; la moyenne ne compte que les jours de présence (aujourd'hui au prorata), comme « Ce qui entre, ce qui sort ».
+- **Colonnes** : une par jour jusqu'à 31 jours, par semaine au-delà (comme « Livré par jour »). Total et Moy. / jour **avant** les jours ; la colonne Membre figée, les jours défilent (à 375 px aussi).
+- **Tri** : par Écart comme l'Équilibre (« Convoyer » en haut), triable par chaque en-tête (Membre, Total, Moy. / jour, chaque jour).
+- **Nombres** : en format court comme le jeu (« 1,2M », « 640K ») ; le TDC entier (« 12 348 ») sur 7 jours au plus, en format court au-delà. Pas de couleur dans les cases : seulement des nombres.
+- **Équilibre** : le détail d'un membre garde ses chiffres ; sa liste jour par jour devient un lien « Voir ses jours » vers la vue « Jours » avec ce membre choisi.
+- **Copier pour Discord** : la mesure choisie, une ligne par membre (« Noctis : 1,2M/j (8,4M sur 7 jours) ») ; pas de tableau par jour, que Discord montre mal. Jamais l'entrepôt.
+
+### La période libre
+
+- **Où** : dans les trois vues chiffrées de « Convois » (Statistiques, Équilibre, Jours) et dans « Floods » : « 7 jours | 30 jours | 90 jours | Du … au … » (Floods : « 24 heures | 7 jours | Du … au … »), qui ouvre deux champs date, jours de Paris, bornes comprises.
+- **Bornes** : la conservation du site, écrite sous les champs : « Les convois sont gardés 90 jours : pas avant le 06/08. », 7 jours pour les floods (la période libre n'y sert qu'à isoler quelques jours). « Au » au plus aujourd'hui, qui compte jusqu'à maintenant. Les champs refusent ce qui sort des bornes (`min`, `max`) ; un « du » après le « au » est remis dans l'ordre.
+- **Adresse** : `?du=2026-10-12&au=2026-10-20` à la place de `periode`.
+- **Découpage** : par jour jusqu'à 31 jours, par semaine au-delà.
+- **Discord** : « **Convois 4O4 · du 12/10 au 20/10** » au lieu de « 30 jours ».
+
+### Réalisation
+
+Réalisé le 2026-11-04 d'après la maquette « C+ · Espace d'alliance · Convois (jours, période libre) » (nouvel artboard : agrandir « Convois (stats) » l'aurait posé sur « Coûts et durées » ; celui-ci n'a reçu que les choix de vue et de période). Décisions prises en codant :
+
+- **Une seule source** : la vue « Jours » lit `BalanceRow.daily` ; chaque jour y gagne son TDC (`field`), le nombre de convois livrés (`sentCount`) et la part du jour comptée (`weight`, aujourd'hui au prorata). Les colonnes d'une semaine additionnent leurs jours, sauf le TDC, moyen sur les jours de présence.
+- **Fin de période** : `convoyStats`, `balanceOf` et `floodStats` prennent une fin (`end`, `span` pour les floods) en plus de « maintenant ». Les jours se comptent en arrière depuis elle ; les convois et floods en route restent ceux d'aujourd'hui, et l'Entrepôt estimé reste calculé à maintenant. Le dernier jour d'une période libre passée compte entier.
+- **Choisir « Du … au … »** ouvre les 7 derniers jours ; une date hors des bornes est ramenée dedans, et les deux sont remises dans l'ordre, avant d'être écrites dans l'adresse (`resolvePeriod`). Sur Floods, la période libre remplace 24 heures ou 7 jours, par jour de Paris.
+- **Lecture des cases** : un jour hors de l'alliance « — » ; un jour sans convoi « 0 » estompé, pour ne pas le confondre avec une absence. Les colonnes d'une semaine s'écrivent « sem. 07/08 », la colonne d'aujourd'hui « · auj. ».
+- **Tri** : un clic trie du plus grand au plus petit (le nom de A à Z), un deuxième à l'envers, un troisième revient à l'ordre de l'Équilibre ; un membre sans valeur dans la colonne va en bas.
+- **Copier pour Discord** dans « Jours » seulement pour l'alliance entière (un membre choisi n'a pas de copie).
+
+| Fichier                                                             | Rôle                                                                            |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `apps/web/src/lib/envois/period.ts` (+ test)                        | Période fixe ou libre : jours, fin, bornes ; `?du=&au=` lus dans l'adresse      |
+| `apps/web/src/lib/envois/day-table.ts` (+ test)                     | Tableau de l'alliance par mesure, jours d'un membre, tri, texte pour Discord    |
+| `apps/web/src/lib/envois/convoy-view.ts`, `flood-view.ts` (+ tests) | Vue « Jours », mesure et période libre dans l'adresse                           |
+| `apps/web/src/components/spaces/day-table-view.tsx`                 | Vue « Jours »                                                                   |
+| `apps/web/src/components/spaces/period-picker.tsx`                  | Choix de la période, « Du … au … » et ses bornes, partagé par Convois et Floods |
+
+Vérifié le 2026-11-04 avec une page de démonstration temporaire (membres et convois inventés, retirée) : chaque mesure, la ligne Alliance « partiel », un membre arrivé en cours de période, un membre choisi, le tri, le lien « Voir ses jours » de l'Équilibre, une période libre hors bornes et à l'envers (ramenée du 07/08 au 29/10, par semaine), la période libre des floods ; en clair, en sombre et à 375 px (colonne Membre figée, pas de défilement de la page). Pas essayé : l'onglet réel avec `allianceDays` et la Clé d'alliance, l'adresse qui suit les choix dans le vrai onglet, la vue Floods sur une période libre à l'écran, le collage dans Discord.
 
 ## Tickets
 
