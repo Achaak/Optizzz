@@ -8,8 +8,9 @@ import { cn } from "cn";
 import { Fragment, useState } from "react";
 import { Stat, StatGrid } from "~/components/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { signedCompact, verdictText, type Balance, type BalanceRow, type Verdict } from "~/lib/envois/balance";
+import { inOutOf, signedCompact, verdictText, type Balance, type BalanceRow, type Verdict } from "~/lib/envois/balance";
 import { listNames } from "~/lib/envois/convoy-stats";
+import { InOutChart } from "./in-out-chart";
 import { Callout, Panel } from "./parts";
 
 type SortKey = "gap" | "field" | "production" | "sent" | "received" | "part" | "ratio";
@@ -356,6 +357,8 @@ export function BalanceView({ balance, days, member }: { balance: Balance; days:
           <span>«&nbsp;≈&nbsp;» : taux de taxe supposé à 20 %</span>
         </div>
       </Panel>
+
+      <InOutChart chart={inOutOf(rows, balance.partPerDay)} partPerDay={balance.partPerDay} chosen={member} />
 
       <details className="rounded-[0.875rem] bg-card px-4 pb-3 shadow-panel">
         <summary className="cursor-pointer py-3 font-heading text-lg font-bold uppercase">

@@ -273,16 +273,33 @@ Réalisé le 2026-11-04. Décisions prises en codant :
 - **Vue** (`components/spaces/balance-view.tsx`, `use-space-balance.ts`) : à 375 px, Membre (avec le verdict dessous), Écart et le bouton de détail ; Production, Envoyés et Reçus à partir de 640 px, Entrepôt, Part et Ratio à partir de 768 px, TDC et Colonies à partir de 1 280 px ; le reste dans le détail déplié. L'écart en barre centrée (ambre à droite, bleu à gauche, signe écrit), le verdict en mot avec une flèche ou « = ».
 - **Demandes** : la ligne « Équilibre : … » sous la Priorité, sur 30 jours, lue seulement quand l'onglet a des Demandes.
 
-| Fichier                                                                                        | Rôle                                                                   |
-| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `apps/web/src/lib/envois/balance.ts` (+ test)                                                  | Part, net, Écart, verdict, Entrepôt estimé, taux de taxe, Discord      |
-| `apps/web/src/server/api/routers/players.ts`                                                   | `allianceDays` : TDC et alliance jour par jour, colonies, colonisateur |
-| `apps/web/src/components/spaces/balance-view.tsx`, `use-space-balance.ts`, `convoys-panel.tsx` | Vue « Équilibre », lecture des TDC, choix et copie                     |
-| `apps/web/src/components/spaces/demandes-panel.tsx`                                            | Ligne sous la Priorité                                                 |
-| `packages/game/src/site-links/envoi-states.ts`, `sharing/shared-state.ts` (+ tests)            | Stock et capacités dans les Envois et l'état partagé                   |
-| `apps/extension/src/data/state-pages.ts`, `features/optizzz-account/envoi-states.ts` (+ tests) | Stock de l'en-tête, capacités de `construction.php`                    |
+| Fichier                                                                                        | Rôle                                                                                                        |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/lib/envois/balance.ts` (+ test)                                                  | Part, net, Écart, verdict, Entrepôt estimé, taux de taxe, Discord, données de « Ce qui entre, ce qui sort » |
+| `apps/web/src/components/spaces/in-out-chart.tsx`                                              | Graphique « Ce qui entre, ce qui sort »                                                                     |
+| `apps/web/src/server/api/routers/players.ts`                                                   | `allianceDays` : TDC et alliance jour par jour, colonies, colonisateur                                      |
+| `apps/web/src/components/spaces/balance-view.tsx`, `use-space-balance.ts`, `convoys-panel.tsx` | Vue « Équilibre », lecture des TDC, choix et copie                                                          |
+| `apps/web/src/components/spaces/demandes-panel.tsx`                                            | Ligne sous la Priorité                                                                                      |
+| `packages/game/src/site-links/envoi-states.ts`, `sharing/shared-state.ts` (+ tests)            | Stock et capacités dans les Envois et l'état partagé                                                        |
+| `apps/extension/src/data/state-pages.ts`, `features/optizzz-account/envoi-states.ts` (+ tests) | Stock de l'en-tête, capacités de `construction.php`                                                         |
 
 Vérifié le 2026-11-04 avec une page de démonstration temporaire (membres et convois inventés, retirée) : un membre arrivé en cours de période, une colonie interne et une hors Espace, un membre sans « Convois », l'entrepôt borné et sans stock, le détail jour par jour ; en clair, sombre et à 375 px. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte et `allianceDays` sur une vraie base, la ligne des Demandes à l'écran, le collage dans Discord, et le stock envoyé par la vraie extension (il ne partira qu'avec sa prochaine version).
+
+### Ce qui entre, ce qui sort
+
+Décidé lors d'une session de cadrage le 2026-11-04 (chantier 23, `plans/lot-2026-11/23-entrees-sorties.md`).
+
+- **Où** : sous le tableau de l'Équilibre, dans son panneau « Ce qui entre, ce qui sort ». Même ordre que le tableau (par Écart, et il suit le tri choisi) ; le membre choisi (`?membre=`) surligné.
+- **Quoi** : par membre, des barres empilées de part et d'autre d'un axe central, en ressources **par jour de présence** (aujourd'hui au prorata de l'heure, comme la Part) ; « 10 j » à côté du nom quand le membre n'a pas été là toute la période, « pas dans l'alliance sur la période » sans aucun jour.
+- **Segments** : à droite ce qui entre, ambre, en partant de l'axe : production (plein), taxes reçues (ambre clair, pointillé), convois reçus (hachuré). À gauche ce qui sort, bleu : convois livrés (plein), taxe versée (hachuré). Un segment nul n'est pas dessiné. Côté, ordre et motif disent chaque segment avec la couleur ; la légende le dit en mots (« Convois reçus (à droite, hachuré) ») (ADR 0003).
+- **Reste par jour** : le net par jour (entrées − sorties), une marque (trait épais couleur du texte et losange) et écrit en bout de ligne (« 1,2M/j »). Une ligne en tirets sur toute la hauteur à la **Part moyenne par jour** (la tuile) : la distance de la marque à la ligne montre l'Écart. L'infobulle (survol ou toucher) donne chaque segment, le Reste, la Part par jour du membre et ses jours de présence.
+- **Partiels** (sans « Convois ») : en bas, en opacité réduite, « partiel » à la place du Reste, sans marque : on ne voit pas ce qu'ils échangent hors de l'Espace.
+- **Lecture** : sur ordinateur, le nom dans une colonne à gauche, la barre, le Reste écrit ; à 375 px, nom et Reste au-dessus d'une barre pleine largeur. Axe en haut en format court (« 500K », « 1M »), « ← sort | entre → » de part et d'autre du zéro.
+- **Dessin** : en HTML et SVG, comme la barre d'Écart, et pas avec Recharts : Recharts ne sait pas mettre le nom au-dessus de la barre à 375 px. Les données du graphique sont une fonction pure de `balance.ts` (+ test).
+
+Réalisé le 2026-11-04 : `inOutOf` dans `balance.ts` (+ test) ramène chaque `BalanceRow` à un jour de présence (`presentDays`, nouveau dans la ligne, aujourd'hui au prorata) et cale l'axe sur des graduations rondes (1, 2 ou 5 × 10ⁿ, environ cinq intervalles) assez larges pour chaque barre, chaque Reste (y compris sous zéro) et la Part moyenne. La vue est `components/spaces/in-out-chart.tsx`, montée par `balance-view.tsx` avec les lignes dans l'ordre du tableau. Chaque ligne est un bouton : l'infobulle s'ouvre au survol de la souris, au toucher ou au clic, et son libellé dit la ligne en mots pour un lecteur d'écran. Les graduations des bouts restent dans le panneau.
+
+Vérifié le 2026-11-04 avec une page de démonstration temporaire (membres et convois inventés, retirée) : un membre arrivé en cours de période, une colonie interne et une hors Espace, un partiel, un membre jamais présent, l'infobulle, le membre choisi surligné ; en clair, en sombre et à 375 px ; protanopie et deutéranopie simulées (matrices de Machado), en clair et en sombre : l'ambre vire à l'olive et reste loin du bleu, les segments d'un même côté se séparent par leur motif et leur clarté. Pas essayé : un vrai Espace avec de vrais convois, et l'infobulle au toucher sur un vrai téléphone.
 
 ## Tickets
 

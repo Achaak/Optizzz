@@ -109,6 +109,8 @@ export interface BalanceRow {
   partial: boolean;
   /** A maximum (spending is unknown); null without a stock of less than 48 hours. */
   warehouse: (Resources & { capped: boolean }) | null;
+  /** Days in the alliance over the period, today counting as far as it went. */
+  presentDays: number;
   daily: BalanceDay[];
 }
 
@@ -259,15 +261,13 @@ export function balanceOf(input: BalanceInput): Balance {
       verdict,
       partial,
       warehouse: warehouseOf(pseudo, input.warehouses?.[k], input.convoys, now),
+      presentDays: days.reduce((n, d, i) => n + (d.present ? (weights[i] ?? 0) : 0), 0),
       daily,
     };
   });
 
   const missing = input.members.filter((m) => !senders.has(key(m)));
-  const presentDays = [...memberDays.values()].reduce(
-    (count, days) => count + days.reduce((n, d, i) => n + (d.present ? (weights[i] ?? 0) : 0), 0),
-    0,
-  );
+  const presentDays = rows.reduce((count, row) => count + row.presentDays, 0);
   const production = shares.reduce((total, s) => total + s.total, 0);
   const counts = { convoy: 0, balanced: 0, receive: 0, unknown: 0 };
   for (const r of rows) counts[r.verdict ?? "unknown"] += 1;
@@ -286,6 +286,79 @@ export function balanceOf(input: BalanceInput): Balance {
       missing,
     },
   };
+}
+
+/** A member in « Ce qui entre, ce qui sort », a day of presence on average. */
+export interface InOutRow {
+  pseudo: string;
+  /** Their days in the alliance when fewer than the period's (« 12 j »), null when there all along. */
+  days: number | null;
+  /** In the alliance at least once over the period: else nothing to draw. */
+  present: boolean;
+  partial: boolean;
+  /** Right of the axis, from it outward. */
+  in: { production: number; taxes: number; convoys: number };
+  /** Left of the axis, from it outward. */
+  out: { convoys: number; taxes: number };
+  /** What comes in less what goes out; null for a partial member (their convoys are not all known) or one absent. */
+  rest: number | null;
+  /** Their own Part a day; null when absent. */
+  part: number | null;
+}
+
+export interface InOut {
+  /** In the order given (the table's). */
+  rows: InOutRow[];
+  /** The axis, from what goes out the most (≤ 0) to what comes in the most, on round ticks. */
+  min: number;
+  max: number;
+  ticks: number[];
+}
+
+/** About this many intervals on the axis. */
+const TICKS = 5;
+
+/** 1, 2 or 5 × a power of ten, the smallest above `raw`. */
+function niceStep(raw: number): number {
+  const power = 10 ** Math.floor(Math.log10(raw));
+  return ([1, 2, 5, 10].find((m) => m * power >= raw) ?? 10) * power;
+}
+
+/**
+ * « Ce qui entre, ce qui sort » (docs/features/site-envois.md): each member's production, taxes and convoys a day of
+ * presence, their rest against the alliance's average Part a day (`partPerDay`).
+ */
+export function inOutOf(rows: readonly BalanceRow[], partPerDay: number): InOut {
+  const chart = rows.map((row): InOutRow => {
+    const count = row.daily.filter((d) => d.present).length;
+    const per = (value: number) => (row.presentDays > 0 ? value / row.presentDays : 0);
+    const present = row.presentDays > 0;
+    const inflow = { production: per(row.production), taxes: per(row.taxes.received), convoys: per(row.received) };
+    const out = { convoys: per(row.sent), taxes: per(row.taxes.paid) };
+    return {
+      pseudo: row.pseudo,
+      days: count === row.daily.length ? null : count,
+      present,
+      partial: row.partial,
+      in: inflow,
+      out,
+      rest:
+        present && !row.partial ? inflow.production + inflow.taxes + inflow.convoys - out.convoys - out.taxes : null,
+      part: present ? per(row.part) : null,
+    };
+  });
+  const low = Math.max(0, ...chart.map((r) => Math.max(r.out.convoys + r.out.taxes, -(r.rest ?? 0))));
+  const high = Math.max(
+    0,
+    partPerDay,
+    ...chart.map((r) => Math.max(r.in.production + r.in.taxes + r.in.convoys, r.rest ?? 0)),
+  );
+  if (low + high <= 0) return { rows: chart, min: 0, max: 1, ticks: [0] };
+  const step = niceStep((low + high) / TICKS);
+  const min = -Math.ceil(low / step) * step;
+  const max = Math.ceil(high / step) * step;
+  const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step);
+  return { rows: chart, min, max, ticks };
 }
 
 /**

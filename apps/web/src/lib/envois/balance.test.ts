@@ -5,6 +5,7 @@ import {
   balanceLine,
   balanceOf,
   balancePlayers,
+  inOutOf,
   taxRatesOf,
   verdictText,
   warehouseInputOf,
@@ -163,6 +164,87 @@ describe("balanceOf", () => {
   it("sorts by gap, the biggest first", () => {
     const balance = balanceOf(input({ convoys: [delivered("Noctis", "Okapi", 50_000)] }));
     expect(balance.rows.map((r) => r.pseudo)).toEqual(["Okapi", "Noctis"]);
+  });
+});
+
+describe("inOutOf", () => {
+  const PER_DAY = 1_000 * 48;
+
+  it("averages what comes in and goes out over each member's days in the alliance, today counting so far", () => {
+    const okapi = player("Okapi", 1_000, {
+      days: [
+        { day: YESTERDAY, field: 1_000, alliance: "AUTRE" },
+        { day: TODAY, field: 1_000, alliance: "4O4" },
+      ],
+    });
+    const balance = balanceOf(
+      input({ players: [player("Noctis", 3_000), okapi], convoys: [delivered("Noctis", "Okapi", 6_000)] }),
+    );
+    const chart = inOutOf(balance.rows, balance.partPerDay);
+    const noctis = chart.rows.find((r) => r.pseudo === "Noctis");
+    const okapiRow = chart.rows.find((r) => r.pseudo === "Okapi");
+    expect(noctis).toMatchObject({ days: null, present: true, partial: false });
+    expect(noctis?.in.production).toBe(3 * PER_DAY);
+    expect(noctis?.out.convoys).toBe(6_000 / 1.5);
+    expect(noctis?.rest).toBe(3 * PER_DAY - 6_000 / 1.5);
+    // Arrived today: half a day so far, one day of the period.
+    expect(okapiRow).toMatchObject({ days: 1, present: true });
+    expect(okapiRow?.in.production).toBe(PER_DAY);
+    expect(okapiRow?.in.convoys).toBe(6_000 / 0.5);
+    expect(okapiRow?.part).toBe(row(balance, "Okapi").part / 0.5);
+  });
+
+  it("keeps the order of the rows given", () => {
+    const balance = balanceOf(input({ convoys: [delivered("Noctis", "Okapi", 50_000)] }));
+    const reversed = [...balance.rows].reverse();
+    expect(inOutOf(reversed, balance.partPerDay).rows.map((r) => r.pseudo)).toEqual(reversed.map((r) => r.pseudo));
+  });
+
+  it("splits the colony taxes paid and received", () => {
+    const balance = balanceOf(
+      input({
+        players: [player("Noctis", 1_000), player("Okapi", 1_000, { master: "Noctis" })],
+        taxRates: { okapi: 0.25 },
+      }),
+    );
+    const chart = inOutOf(balance.rows, balance.partPerDay);
+    expect(chart.rows.find((r) => r.pseudo === "Noctis")?.in.taxes).toBe(PER_DAY * 0.25);
+    expect(chart.rows.find((r) => r.pseudo === "Okapi")?.out.taxes).toBe(PER_DAY * 0.25);
+    expect(chart.rows.find((r) => r.pseudo === "Okapi")?.rest).toBe(PER_DAY * 0.75);
+  });
+
+  it("gives no rest to a member who does not send their Convois", () => {
+    const balance = balanceOf(input({ senders: ["Noctis"] }));
+    const okapi = inOutOf(balance.rows, balance.partPerDay).rows.find((r) => r.pseudo === "Okapi");
+    expect(okapi).toMatchObject({ partial: true, rest: null });
+    expect(okapi?.in.production).toBe(PER_DAY);
+  });
+
+  it("draws nothing for a member never in the alliance over the period", () => {
+    const balance = balanceOf(input({ members: ["Noctis", "Okapi", "Inconnu"] }));
+    const unknown = inOutOf(balance.rows, balance.partPerDay).rows.find((r) => r.pseudo === "Inconnu");
+    expect(unknown).toMatchObject({ present: false, days: 0, rest: null, part: null });
+    expect(unknown?.in).toEqual({ production: 0, taxes: 0, convoys: 0 });
+  });
+
+  it("scales the axis on round ticks around zero, wide enough for every bar, rest and the average part", () => {
+    const balance = balanceOf(input({ convoys: [delivered("Noctis", "Okapi", 30_000)] }));
+    const chart = inOutOf(balance.rows, balance.partPerDay);
+    // Out: 20 000 a day at most; in: 48 000 + 20 000 at most.
+    expect(chart.min).toBe(-20_000);
+    expect(chart.max).toBe(80_000);
+    expect(chart.ticks).toEqual([-20_000, 0, 20_000, 40_000, 60_000, 80_000]);
+  });
+
+  it("widens the axis to a rest below zero", () => {
+    const balance = balanceOf(input({ convoys: [delivered("Noctis", "Gargantua", 150_000)] }));
+    const chart = inOutOf(balance.rows, balance.partPerDay);
+    expect(chart.rows[1]?.rest).toBe(PER_DAY - 100_000);
+    expect(chart.min).toBe(-100_000);
+  });
+
+  it("keeps an axis without any bar", () => {
+    expect(inOutOf([], 0)).toEqual({ rows: [], min: 0, max: 1, ticks: [0] });
   });
 });
 
