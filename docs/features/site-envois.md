@@ -284,6 +284,23 @@ Réalisé le 2026-11-04. Décisions prises en codant :
 
 Vérifié le 2026-11-04 avec une page de démonstration temporaire (membres et convois inventés, retirée) : un membre arrivé en cours de période, une colonie interne et une hors Espace, un membre sans « Convois », l'entrepôt borné et sans stock, le détail jour par jour ; en clair, sombre et à 375 px. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte et `allianceDays` sur une vraie base, la ligne des Demandes à l'écran, le collage dans Discord, et le stock envoyé par la vraie extension (il ne partira qu'avec sa prochaine version).
 
+## Chasses par membre (chantier 20)
+
+Décidé lors d'une session de cadrage le 2026-11-04 (`plans/lot-2026-11/20-chasses-par-membre.md`). Jusque-là, le site ne connaissait que les chasses encore dehors (état « Chasses », dernier relevé et précédent) : une chasse rentrée était oubliée.
+
+- **Le journal des chasses** (`hunts-log`) : une nouvelle catégorie en liste, une ligne chiffrée par chasse, gardée 90 jours après son retour. Elle part avec « Chasses », déjà cochée, sans case de plus ; la phrase des réglages devient « Vos chasses en cours et rentrées : retour, cm², fourmis ». Écrit dans `PRIVACY.md`, la page Confidentialité et `docs/store/fiche.md`.
+- **D'où ça vient** : les chasses lues sur `Ressources.php` (déjà gardées et relues pour l'état « Chasses »), reconnues par le numéro que le jeu leur donne (`span#chasse_<n>`), dont on tire l'empreinte. Pas les rapports de la messagerie : ils ne sont lus que quand le joueur ouvre la conversation, n'en montrent que 10 et ne portent pas ce numéro. Une chasse compte comme **rentrée à son heure de retour**. Une chasse partie et rentrée entre deux lectures de `Ressources.php` manque (rare : une chasse dure des heures, la page est relue au bout de 15 minutes).
+- **Quand part une chasse** : dès qu'elle est vue en cours, avec son retour, son gain en cm² et ses fourmis ; son chiffré ne change plus ensuite (il ne repart pas). Le site la compte rentrée à son heure, même si le membre n'ouvre plus le jeu. Une chasse disparue de la liste avant son retour est retirée.
+- **Fourmis** : le nombre total envoyé, vu par tous comme l'armée en Nombre ; seulement avec Compte+ (« Troupes en chasses »), sinon inconnu. Pas de détail par unité.
+- **Où** : un onglet « Chasses », après « Floods », avec « Statistiques | Liste », Statistiques par défaut ; vue, période et membre dans l'adresse (`?onglet=chasses&vue=liste&periode=24h&membre=Noctis`). L'onglet porte le nombre de chasses en cours.
+- **Périodes** : 24 heures, **7 jours** (par défaut) ou 30 jours ; barres par heure sur 24 heures, par jour de Paris sinon. Une période qui commence avant la plus vieille chasse connue le dit : « Chasses connues depuis le 04/11 : avant, il peut en manquer. »
+- **Statistiques** : tuiles (chasses rentrées et moyenne par jour, terrain chassé, moyenne par chasse, en cours avec les cm² attendus et le prochain retour, cm² pour 1 000 fourmis sur les chasses dont on connaît les fourmis) ; « Terrain chassé par jour » (ou par heure), le nombre de chasses écrit au-dessus de chaque barre ; « Par membre » (Chasses · Terrain · Moyenne · En cours · Dernière rentrée, triable, trié par terrain) ; « En cours » (les 3 prochains retours) ; l'encadré de couverture (« 12 membres sur 18 envoient leurs chasses »), ceux qui n'envoient pas en bas de « Par membre ».
+- **Un membre choisi** : tuiles et graphique deviennent les siens, « Par membre » devient « Ses chasses » (retour, cm², fourmis).
+- **Liste** : les chasses une par une, en cours et rentrées, filtrables par membre.
+- **Copier pour Discord** : « **Chasses 4O4 · 7 jours** (du … au …) », « 412 chasses · 1,8M cm² », une ligne par membre, puis ceux qui n'envoient pas.
+- **Mouvements** : l'onglet lit aussi le journal, mêlé aux états sans doublon (même membre, même heure de retour) ; la note « certaines déjà rentrées peuvent manquer » ne reste que pour les membres sans journal (extension pas encore à jour).
+- **Calcul** : dans le navigateur, d'après les Envois déjà ouverts ; fonctions pures dans `apps/web/src/lib/envois/hunt-stats.ts` (+ test).
+
 ## Tickets
 
 20 (le circuit et les Convois), 21 (Floods et « floods sur nous »), 22 (Chasses, Armée, Niveaux, Production, Partage fusionné), puis les Demandes (23, 24) et Discord (25, 26).
