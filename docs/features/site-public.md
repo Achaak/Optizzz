@@ -38,6 +38,8 @@ Toutes en français, à des adresses en anglais depuis le 2026-10-23 (`site-outi
 - `/s5/journal` et `/s5/compare` (2026-10-30, `site-refonte.md`) : tout le Journal du serveur, filtrable ; 2 à 5 joueurs ou alliances sur une même courbe.
 - Mentions légales (`/legal` ; éditeur : Axel Lavoie ; hébergeur : Scaleway, depuis le 2026-10-30) et Confidentialité (`/privacy` ; ni mesure d'audience, ni cookie du site hors du cookie de session posé à la connexion d'un Compte Optizzz ; publicité AdSense sans pistage depuis le 2026-10-30, `site-publicite.md`).
 
+- `/guides` et `/guides/<id>` (2026-11-04, `site-guides.md`) : le jeu expliqué avec les outils d'Optizzz.
+
 Les outils et les pages de serveur sont indexés par les moteurs de recherche ; les pages joueur et alliance, et Comparer, sont en `noindex`.
 
 ### Look
