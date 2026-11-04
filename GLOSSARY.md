@@ -80,6 +80,14 @@ _À éviter_ : dette, balance.
 Le Solde d'un joueur divisé par sa Production : combien de jours de sa propre production il a déjà reçus. Le plus bas passe en premier ; c'est un classement affiché, jamais une décision automatique.
 _À éviter_ : score, rang.
 
+**Part** :
+Ce qui reviendrait à un membre si l'alliance partageait sa production à parts égales : chaque jour, le plafond (TDC × 48) de tous les membres de l'Espace présents dans l'alliance, divisé par leur nombre, additionné sur la période.
+_À éviter_ : quota, dû.
+
+**Écart** :
+Ce qui reste à un membre sur la période (sa production, les taxes de colonie, les convois) moins sa Part. Positif : il a de quoi convoyer ; négatif : il doit recevoir. « Équilibré » à ±5 % de la Part. Il ne classe pas les Demandes : la Priorité le fait.
+_À éviter_ : dette, solde (c'est autre chose).
+
 **Clé d'alliance** :
 Le secret partagé par les membres d'une alliance, qui chiffre ses données. Le Site Optizzz ne la connaît pas.
 _À éviter_ : mot de passe d'alliance.

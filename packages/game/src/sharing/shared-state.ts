@@ -67,6 +67,10 @@ export interface SharedState {
   army?: SharedArmy;
   production?: SharedProduction;
   hunts?: SharedHunt[];
+  /** The warehouses' content and when the header showed it (Envoi « Production », never copied). */
+  stock?: { food: number; materials: number; at: Date };
+  /** The warehouses' capacities (Envoi « Niveaux et chantiers », never copied). */
+  capacities?: { food: number; materials: number };
 }
 
 /** A member's states: the latest, and the one before it to show what changed. */
@@ -106,6 +110,8 @@ const PARTS = [
   "army",
   "production",
   "hunts",
+  "stock",
+  "capacities",
 ] as const satisfies readonly (keyof SharedState)[];
 
 /**

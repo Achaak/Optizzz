@@ -23,6 +23,12 @@ export const STATES_KEPT_MS = 90 * DAY;
 /** An unchanged reading is sent again, dated anew, after this long: its age stays true on the readers' side. */
 export const STATE_REFRESH_MS = 6 * HOUR;
 
+/**
+ * A Production whose stock alone moved (it moves at every page) is sent again after this long: often enough for the
+ * Entrepôt estimé, rarely enough not to send at every page.
+ */
+export const STOCK_REFRESH_MS = HOUR;
+
 const count = z.number().int().nonnegative();
 const time = z.number().int().nonnegative();
 const pseudo = z.string().min(1).max(40);
@@ -40,6 +46,8 @@ const PRODUCTION_READING = z.object({
     .array(z.object({ pseudo, since: time, food: count, materials: count }))
     .max(100)
     .nullable(),
+  /** The warehouses' content (header of any page) and when it was read; absent from the Envois before it was sent. */
+  stock: z.object({ food: count, materials: count, at: time }).optional(),
 });
 
 const HUNTS_READING = z.object({ hunts: z.array(z.object({ returnsAt: time, fieldGain: count })).max(100) });
@@ -57,6 +65,8 @@ const LEVELS_READING = z.object({
     .array(z.object({ name: z.string().min(1).max(60), level: count, endsAt: time }))
     .max(40)
     .nullable(),
+  /** The warehouses' capacities (construction.php); absent from the Envois before they were sent. */
+  capacities: z.object({ food: count, materials: count }).nullable().optional(),
 });
 
 const READINGS = {
@@ -102,9 +112,19 @@ export interface DatedItem<C extends StateCategory = StateCategory> {
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
+/** A reading without the stock of a Production, which moves at every page. */
+function steady(reading: StateReading): unknown {
+  return "stock" in reading ? { ...reading, stock: undefined } : reading;
+}
+
+/** When the stock of a reading was read, if it has one. */
+const stockAt = (reading: StateReading) => ("stock" in reading ? reading.stock?.at : undefined);
+
 /**
  * The item to send after a new reading: the last one sent as it is while the reading does not change (dated anew
- * after STATE_REFRESH_MS), otherwise the new reading with the last one as its previous.
+ * after STATE_REFRESH_MS), otherwise the new reading with the last one as its previous. A Production whose stock
+ * alone moved goes again once its last stock sent is STOCK_REFRESH_MS old, its previous kept (the arrows of « État »
+ * compare the rest).
  */
 export function nextStateItem<C extends StateCategory>(
   who: string,
@@ -115,6 +135,11 @@ export function nextStateItem<C extends StateCategory>(
   if (last && same(last.item.reading, reading)) {
     if (observedAt - last.observedAt < STATE_REFRESH_MS) return last;
     return { observedAt, item: { ...last.item, pseudo: who } };
+  }
+  if (last && same(steady(last.item.reading), steady(reading))) {
+    const sentAt = stockAt(last.item.reading);
+    if (sentAt !== undefined && observedAt - sentAt < STOCK_REFRESH_MS) return last;
+    return { observedAt, item: { ...last.item, pseudo: who, reading } };
   }
   return {
     observedAt,
@@ -187,6 +212,7 @@ function partsOf<C extends StateCategory>(
           master: r.master,
           colonies: r.colonies?.map((c) => ({ ...c, since: new Date(c.since) })) ?? null,
         },
+        ...(r.stock && { stock: { food: r.stock.food, materials: r.stock.materials, at: new Date(r.stock.at) } }),
       };
     }
     case "hunts":
@@ -209,6 +235,7 @@ function partsOf<C extends StateCategory>(
         ...(r.buildings && { buildings: r.buildings }),
         ...(r.research && { research: r.research }),
         ...(r.works && { works: r.works.map((w) => ({ ...w, endsAt: new Date(w.endsAt) })) }),
+        ...(r.capacities && { capacities: r.capacities }),
       };
     }
   }

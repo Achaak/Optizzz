@@ -13,6 +13,13 @@ describe("the Convois tab's choice in the address", () => {
     expect(read("vue=liste&periode=7&membre=noctis")).toEqual({ view: "list", days: 7, member: "Noctis" });
   });
 
+  it("reads and writes the Équilibre", () => {
+    expect(read("vue=equilibre&periode=7")).toEqual({ view: "balance", days: 7, member: null });
+    expect(convoyViewSearch({ view: "balance", days: 30, member: "Noctis" })).toBe(
+      "onglet=convois&vue=equilibre&membre=Noctis",
+    );
+  });
+
   it("ignores what it does not know", () => {
     expect(read("vue=graphe&periode=12&membre=Gargantua")).toEqual({ view: "stats", days: 30, member: null });
   });
