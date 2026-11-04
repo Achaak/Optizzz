@@ -1,4 +1,5 @@
 import { storage } from "wxt/utils/storage";
+import type { LabelMode } from "./chart-option";
 
 /** Map settings, stored per server in the browser. */
 export interface Settings {
@@ -12,6 +13,9 @@ export interface Settings {
   playerLevelsAt: Record<string, number>;
   /** Members drawn with the bubble of their role in the TDC chain (« Chaîne de TDC » on). */
   showRoles: boolean;
+  /** Bubble area proportional to the member's hunting field. */
+  sizeByTdc: boolean;
+  labels: LabelMode;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -21,6 +25,8 @@ export const DEFAULT_SETTINGS: Settings = {
   playerLevels: {},
   playerLevelsAt: {},
   showRoles: true,
+  sizeByTdc: false,
+  labels: "pseudo",
 };
 
 const key = (host: string) => `local:allianceMap:${host}:settings` as const;

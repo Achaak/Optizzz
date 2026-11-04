@@ -5,7 +5,7 @@ import { CanvasRenderer } from "echarts/renderers";
 // The ESM build: the CommonJS one (lib/core) resolves to the module object instead of the component.
 import ReactECharts from "echarts-for-react/esm/core";
 import { useMemo } from "react";
-import { buildChartOption, zoomWindowAround, type MapMember } from "./chart-option";
+import { buildChartOption, zoomWindowAround, type MapDisplay, type MapMember } from "./chart-option";
 import type { KnownLevels } from "./neighbor-table";
 import type { MemberBubble } from "@/features/tdc-chain/role-styles";
 import { chartHeightFor } from "@optizzz/map/axes";
@@ -25,18 +25,19 @@ interface Props {
   levels: KnownLevels;
   /** Each member's chain role bubble, when the map shows them. */
   bubbles: ReadonlyMap<number, MemberBubble> | null;
+  display: MapDisplay;
   onSelect: (playerId: number) => void;
 }
 
 const MAX_HEIGHT = 640;
 
-export function MapChart({ members, selected, k, levels, bubbles, onSelect }: Props) {
+export function MapChart({ members, selected, k, levels, bubbles, display, onSelect }: Props) {
   const { chartRef, boxRef, width, height, zoomTo, resetZoom } = useMapChart((width) =>
     chartHeightFor(width, MAX_HEIGHT),
   );
   const option = useMemo(
-    () => buildChartOption(members, selected, k, levels, { width, height }, bubbles),
-    [members, selected, k, levels, width, height, bubbles],
+    () => buildChartOption(members, selected, k, levels, { width, height }, bubbles, display),
+    [members, selected, k, levels, width, height, bubbles, display],
   );
 
   const memberAt = (event: ChartEvent) => (event.dataType === "node" ? members[event.dataIndex] : undefined);
