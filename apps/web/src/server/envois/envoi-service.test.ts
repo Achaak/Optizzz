@@ -238,6 +238,36 @@ describe("the Envois on the site", () => {
     expect(next.cursor).toBeGreaterThan(first.cursor);
   });
 
+  describe("the hunts log", () => {
+    const hunt = async (n: number, expiresAt = now.getTime() + 90 * DAY) => ({
+      fingerprint: fp(n),
+      blob: await encryptData(`hunt ${String(n)}`, keyring),
+      expiresAt,
+    });
+    const sendHunts = (items: Awaited<ReturnType<typeof hunt>>[]) =>
+      service.saveEnvoi(messor.userId, {
+        server: "s5",
+        playerId: 1,
+        category: "hunts-log",
+        keyVersion: 1,
+        items,
+        removed: [],
+      });
+
+    it("is kept with « Chasses », one row per hunt, 90 days after its return and never more than 120 days", async () => {
+      await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["convoys"] });
+      expect((await failure(sendHunts([await hunt(1)]))).code).toBe("category-off");
+      await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["hunts"] });
+      await sendHunts([await hunt(1), await hunt(2, now.getTime() + 400 * DAY)]);
+      expect(memory.rows().map((r) => [r.category, r.fingerprint, r.expiresAt.getTime()])).toEqual([
+        ["hunts-log", fp(1), now.getTime() + 90 * DAY],
+        ["hunts-log", fp(2), now.getTime() + 120 * DAY],
+      ]);
+      const read = await service.readEnvois(lasius.userId, { spaceId: SPACE });
+      expect(read.items.map((r) => r.category)).toEqual(["hunts-log", "hunts-log"]);
+    });
+  });
+
   describe("the floods", () => {
     const flood = async (n: number, detail: string | null = null, ring = keyring) => ({
       fingerprint: fp(n),

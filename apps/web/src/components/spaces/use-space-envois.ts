@@ -1,6 +1,6 @@
 "use client";
 
-// A space's Envois for its member's page (docs/features/site-envois.md): the encrypted rows (convoys, floods, states), read
+// A space's Envois for its member's page (docs/features/site-envois.md): the encrypted rows (convoys, floods, hunts log, states), read
 // again every minute while the page is open, opened here with the Clé d'alliance; what each member sends; the newest
 // key version. The army sent with a flood, and the army by unit, come only to an Admin: the site leaves it out for the others. The
 // page also hands the opened Clé d'alliance to the extension of this browser, for its own Envois.
@@ -8,6 +8,7 @@ import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
 import { useEffect, useMemo, useState } from "react";
 import { openConvoys, type AllianceConvoy } from "~/lib/envois/convoys";
 import { openFloods, type AllianceFlood } from "~/lib/envois/floods";
+import { openHunts, type AllianceHunt } from "~/lib/envois/hunts";
 import { openStates } from "~/lib/envois/states";
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import { handKeysToExtension } from "~/lib/spaces/extension-bridge";
@@ -26,8 +27,9 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
   const [opened, setOpened] = useState<{
     convoys: AllianceConvoy[];
     floods: AllianceFlood[];
+    hunts: AllianceHunt[];
     states: MemberStates[];
-    refused: { convoys: number; floods: number; states: number };
+    refused: { convoys: number; floods: number; hunts: number; states: number };
   } | null>(null);
   const data = query.data;
 
@@ -38,15 +40,22 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
     Promise.all([
       openConvoys(data.items, keyring, data.sends),
       openFloods(data.items, keyring),
+      openHunts(data.items, keyring),
       openStates(data.items, keyring, context),
     ])
-      .then(([convoys, floods, states]) => {
+      .then(([convoys, floods, hunts, states]) => {
         if (!run.cancelled)
           setOpened({
             convoys: convoys.convoys,
             floods: floods.floods,
+            hunts: hunts.hunts,
             states: states.states,
-            refused: { convoys: convoys.refused, floods: floods.refused, states: states.refused },
+            refused: {
+              convoys: convoys.refused,
+              floods: floods.refused,
+              hunts: hunts.refused,
+              states: states.refused,
+            },
           });
       })
       .catch((error: unknown) => {
@@ -66,8 +75,9 @@ export function useSpaceEnvois(view: MemberView, keyring: AllianceKeyring | null
     items: data?.items ?? null,
     convoys: keyring ? (opened?.convoys ?? null) : null,
     floods: keyring ? (opened?.floods ?? null) : null,
+    hunts: keyring ? (opened?.hunts ?? null) : null,
     states: keyring ? (opened?.states ?? null) : null,
-    refused: opened?.refused ?? { convoys: 0, floods: 0, states: 0 },
+    refused: opened?.refused ?? { convoys: 0, floods: 0, hunts: 0, states: 0 },
   };
 }
 

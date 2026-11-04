@@ -94,10 +94,12 @@ export default function PrivacyPage() {
           capacité des entrepôts) tiennent chacun dans une seule ligne chiffrée par Joueur, avec le dernier relevé et le
           précédent ; le site l&apos;efface 90 jours sans nouvel Envoi, ou dès que la catégorie est décochée. Le détail
           de l&apos;armée par unité part, comme l&apos;armée d&apos;un flood, dans un second chiffré réservé aux Admins,
-          effacé dès que le Joueur ne l&apos;envoie plus. Il garde aussi les catégories que chaque Joueur envoie,
-          montrées aux membres de l&apos;espace. Tous les membres lisent les Envois de l&apos;espace (sauf ces armées
-          détaillées, aux Admins seuls) ; un non-membre, rien. Le site note qui a changé l&apos;accès à l&apos;espace et
-          quand («&nbsp;Accès changé le … par Pseudo&nbsp;»).
+          effacé dès que le Joueur ne l&apos;envoie plus. Avec «&nbsp;Chasses&nbsp;» part aussi le journal des chasses :
+          une ligne chiffrée par chasse vue en cours (son retour, le terrain qu&apos;elle rapporte et, avec le Compte+,
+          le nombre de fourmis envoyées), que le site efface 90 jours après le retour. Il garde aussi les catégories que
+          chaque Joueur envoie, montrées aux membres de l&apos;espace. Tous les membres lisent les Envois de
+          l&apos;espace (sauf ces armées détaillées, aux Admins seuls) ; un non-membre, rien. Le site note qui a changé
+          l&apos;accès à l&apos;espace et quand («&nbsp;Accès changé le … par Pseudo&nbsp;»).
         </p>
         <p>
           Les Demandes&nbsp;: un membre qui envoie Production et Convois peut demander des ressources pour une

@@ -6,6 +6,7 @@ import {
   allianceMovements,
   dayTimeline,
   foldPastHours,
+  membersWithoutHuntsLog,
   movementDays,
   type Movement,
   type MovementFilter,
@@ -112,6 +113,41 @@ describe("the alliance's movements", () => {
       { kind: "hunt", at: at("2026-11-03T09:00:00Z"), from: "Tamo", field: 12_000 },
       { kind: "hunt", at: at("2026-11-03T13:31:00Z"), from: "Tamo", field: 16_054 },
     ]);
+  });
+});
+
+describe("the hunts log in the movements", () => {
+  const logged = (hunter: string, returns: string, fieldGain: number) => ({
+    hunter,
+    returnsAt: at(returns),
+    fieldGain,
+    ants: null,
+  });
+
+  it("adds the hunts of the log, back ones too, a hunt also in a state once", () => {
+    const moves = allianceMovements({
+      ...none,
+      // The state read the countdown 20 seconds off.
+      states: [states("Tamo", [hunt("2026-11-03T13:31:20Z", 16_054)])],
+      hunts: [logged("Tamo", "2026-11-03T13:31:00Z", 16_054), logged("Tamo", "2026-11-03T07:10:00Z", 9_000)],
+    });
+    expect(moves).toEqual([
+      { kind: "hunt", at: at("2026-11-03T07:10:00Z"), from: "Tamo", field: 9_000 },
+      { kind: "hunt", at: at("2026-11-03T13:31:00Z"), from: "Tamo", field: 16_054 },
+    ]);
+  });
+
+  it("names the members whose hunts come from their states only (an extension not up to date)", () => {
+    expect(
+      membersWithoutHuntsLog(
+        [
+          states("Tamo", [hunt("2026-11-03T13:31:00Z", 1)]),
+          states("Zeph", [hunt("2026-11-03T13:31:00Z", 1)]),
+          states("Grop", []),
+        ],
+        [logged("Tamo", "2026-11-03T13:31:00Z", 1)],
+      ),
+    ).toEqual(["Zeph"]);
   });
 });
 

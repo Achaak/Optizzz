@@ -39,9 +39,18 @@ export type SentCategory = (typeof SENT_CATEGORIES)[number];
  * The categories whose Envois are encrypted rows: one per item (lists) or per Joueur (states). `demande-convoys`, the
  * convoys launched for a Demande (docs/features/site-demandes.md), leaves with « Convois »; `declared-convoys`, the
  * convoys declared for a Demande on the space page, by an explicit act of their sender, needs no setting.
+ * `hunts-log`, one row per hunt seen out (envoi-hunts.ts), leaves with « Chasses ».
  */
 export type EnvoiCategory =
-  "production" | "convoys" | "floods" | "hunts" | "army" | "levels" | "demande-convoys" | "declared-convoys";
+  | "production"
+  | "convoys"
+  | "floods"
+  | "hunts"
+  | "hunts-log"
+  | "army"
+  | "levels"
+  | "demande-convoys"
+  | "declared-convoys";
 
 const LABELS: Record<SentCategory, string> = {
   production: "production",
@@ -69,9 +78,11 @@ export const isSent = (choices: EnvoiChoices, category: EnvoiCategory): boolean 
     ? choices.army !== "none"
     : category === "demande-convoys"
       ? choices.convoys
-      : category === "declared-convoys"
-        ? false
-        : choices[category];
+      : category === "hunts-log"
+        ? choices.hunts
+        : category === "declared-convoys"
+          ? false
+          : choices[category];
 
 /** « convois, floods », or « rien ». */
 export function sentCategoriesText(categories: readonly SentCategory[]): string {

@@ -26,7 +26,7 @@ const CATEGORIES = [
     sentence:
       "Vos attaques en route, leur cible et leur arrivée ; avec le Plan de flood, la prise attendue et l'armée envoyée (l'armée, pour les Admins seuls).",
   },
-  { id: "hunts", label: "Chasses", sentence: "Vos chasses en cours, leur retour et leur gain." },
+  { id: "hunts", label: "Chasses", sentence: "Vos chasses en cours et rentrées : retour, cm², fourmis." },
   {
     id: "army",
     label: "Armée",

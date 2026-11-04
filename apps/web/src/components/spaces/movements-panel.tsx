@@ -13,11 +13,14 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Stat, StatGrid } from "~/components/stat";
 import type { AllianceConvoy } from "~/lib/envois/convoys";
 import type { AllianceFlood } from "~/lib/envois/floods";
+import type { AllianceHunt } from "~/lib/envois/hunts";
+import { listNames } from "~/lib/envois/convoy-stats";
 import { movementViewSearch, readMovementView, type MovementView } from "~/lib/envois/movement-view";
 import {
   allianceMovements,
   dayTimeline,
   foldPastHours,
+  membersWithoutHuntsLog,
   movementDays,
   parisDay,
   type Movement,
@@ -225,6 +228,7 @@ export function MovementsPanel({
   floods,
   convoys,
   states,
+  hunts,
   refused,
   members,
   me,
@@ -234,6 +238,8 @@ export function MovementsPanel({
   floods: AllianceFlood[] | null;
   convoys: AllianceConvoy[] | null;
   states: MemberStates[] | null;
+  /** The hunts log, back ones too. */
+  hunts: AllianceHunt[] | null;
   /** Envois that do not open, every category together. */
   refused: number;
   members: readonly string[];
@@ -252,9 +258,13 @@ export function MovementsPanel({
   }, [choice]);
 
   const movements = useMemo(
-    () => (floods && convoys && states ? allianceMovements({ floods, convoys, states, now: new Date() }) : null),
-    [floods, convoys, states],
+    () =>
+      floods && convoys && states && hunts
+        ? allianceMovements({ floods, convoys, states, hunts, now: new Date() })
+        : null,
+    [floods, convoys, states, hunts],
   );
+  const withoutLog = useMemo(() => (states && hunts ? membersWithoutHuntsLog(states, hunts) : []), [states, hunts]);
 
   if (movements === null)
     return (
@@ -493,8 +503,9 @@ export function MovementsPanel({
       </Panel>
 
       <p className="text-xs text-muted-foreground">
-        Chasses connues par le dernier état de chaque membre : certaines déjà rentrées peuvent manquer. Un convoi
-        «&nbsp;arrivé, non confirmé&nbsp;» est arrivé à l&apos;heure prévue, mais ni l&apos;expéditeur ni le
+        {withoutLog.length > 0 &&
+          `Chasses de ${listNames(withoutLog)} connues par ${withoutLog.length > 1 ? "leur" : "son"} dernier état seulement (extension pas encore à jour) : certaines déjà rentrées peuvent manquer. `}
+        Un convoi «&nbsp;arrivé, non confirmé&nbsp;» est arrivé à l&apos;heure prévue, mais ni l&apos;expéditeur ni le
         destinataire n&apos;a encore relu sa messagerie. Les floods ne remontent pas au-delà de 7 jours. Seuls les
         membres qui envoient leurs floods, convois et états à Optizzz apparaissent ici ; tout est calculé dans ce
         navigateur, avec la Clé d&apos;alliance.

@@ -411,7 +411,7 @@ export function setUpOptizzzAccount({
       const change = changedCategory(key);
       if (change) envois.changed(change.host, change.category);
       const states = changedStates(key);
-      if (states) for (const category of STATE_CATEGORIES) envois.changed(states, category);
+      if (states) for (const category of [...STATE_CATEGORIES, "hunts-log" as const]) envois.changed(states, category);
       // A convoy launched from « Envoyer un convoi » gets attached to its Demande (which then leaves, above).
       const outgoing = changedOutgoing(key);
       if (outgoing)

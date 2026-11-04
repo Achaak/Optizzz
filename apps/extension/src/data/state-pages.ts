@@ -15,6 +15,7 @@ import { readGarrison } from "@/data/garrison";
 import { loadLaunches, type Launch } from "@/data/launches";
 import { readAttacksOnWay, readReinforcementLines, reconcileLaunches, troopList } from "@/features/flood/attacks";
 import { readOngoingHunts } from "@/features/hunt-launcher/pages";
+import { huntIdOf } from "@optizzz/game/site-links/envoi-hunts";
 import { withStorageLock } from "@/utils/storage-lock";
 
 type Units = Record<string, number>;
@@ -35,8 +36,11 @@ export interface StatePages {
     materialWorkers: number;
     mushroomPerDay: number;
     taxRate: number;
-    /** Hunts in progress; their troops with Compte+ only (null without). */
-    hunts: { returnsAt: number; fieldGain: number; troops: Units | null }[];
+    /**
+     * Hunts in progress; their troops with Compte+ only (null without). `id`, the game's number for the hunt (the
+     * hunts log), is absent from parts kept before it.
+     */
+    hunts: { id?: number; returnsAt: number; fieldGain: number; troops: Units | null }[];
   };
   colonies?: {
     readAt: number;
@@ -125,11 +129,15 @@ export function readStatePages(
         materialWorkers: income.materialWorkers,
         mushroomPerDay: income.mushroomPerDay,
         taxRate: income.taxRate,
-        hunts: readOngoingHunts(doc, now).map((hunt) => ({
-          returnsAt: hunt.returnsAt.getTime(),
-          fieldGain: hunt.fieldGain,
-          troops: hunt.troops && units(Object.entries(hunt.troops)),
-        })),
+        hunts: readOngoingHunts(doc, now).map((hunt) => {
+          const id = huntIdOf(hunt.id);
+          return {
+            ...(id !== null && { id }),
+            returnsAt: hunt.returnsAt.getTime(),
+            fieldGain: hunt.fieldGain,
+            troops: hunt.troops && units(Object.entries(hunt.troops)),
+          };
+        }),
       };
   }
   if (wanted.has("colonies") && path === "/colonies.php") {

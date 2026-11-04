@@ -39,6 +39,8 @@ describe("readStatePages", () => {
     expect(read.stock?.materials).toBeGreaterThanOrEqual(0);
     expect(read.ressources?.hunts.length).toBeGreaterThan(0);
     expect(read.ressources?.hunts[0]?.returnsAt).toBeGreaterThan(NOW.getTime());
+    // The game's number for the hunt, for the hunts log.
+    expect(read.ressources?.hunts[0]?.id).toEqual(expect.any(Number));
   });
 
   it("reads only the parts wanted", () => {

@@ -66,7 +66,7 @@ Deux, décochées par défaut, dans le système d'alertes existant (`alertes.md`
 - **États** (Production, Chasses, Armée, Niveaux et chantiers) : une ligne chiffrée par Joueur et par catégorie, avec le dernier relevé et le précédent ; l'armée par unité dans une ligne à part, réservée aux Admins.
 - **Listes** (Convois, Floods) : une ligne chiffrée par élément, avec en clair seulement l'heure qui sert à l'effacer. L'armée détaillée d'un flood dans un chiffré à part, réservé aux Admins.
 - **Doublons** : une empreinte tirée de la Clé d'alliance reconnaît le même convoi ou le même flood ; le site ne voit ni la cible, ni le destinataire, ni les quantités.
-- **Conservation** (`site-optizzz.md`) : convois 90 jours ; floods et chasses jusqu'à l'arrivée plus 7 jours ; états, le dernier et le précédent. Supprimer son compte efface ses Envois.
+- **Conservation** (`site-optizzz.md`) : convois 90 jours ; floods jusqu'à l'arrivée plus 7 jours ; journal des chasses 90 jours après le retour (chantier 20) ; états, le dernier et le précédent. Supprimer son compte efface ses Envois.
 
 ## Le circuit et les Convois : réalisation (ticket 20)
 
@@ -345,6 +345,41 @@ Réalisé le 2026-11-04 d'après la maquette « C+ · Espace d'alliance · Convo
 | `apps/web/src/components/spaces/period-picker.tsx`                  | Choix de la période, « Du … au … » et ses bornes, partagé par Convois et Floods |
 
 Vérifié le 2026-11-04 avec une page de démonstration temporaire (membres et convois inventés, retirée) : chaque mesure, la ligne Alliance « partiel », un membre arrivé en cours de période, un membre choisi, le tri, le lien « Voir ses jours » de l'Équilibre, une période libre hors bornes et à l'envers (ramenée du 07/08 au 29/10, par semaine), la période libre des floods ; en clair, en sombre et à 375 px (colonne Membre figée, pas de défilement de la page). Pas essayé : l'onglet réel avec `allianceDays` et la Clé d'alliance, l'adresse qui suit les choix dans le vrai onglet, la vue Floods sur une période libre à l'écran, le collage dans Discord.
+
+## Chasses par membre (chantier 20)
+
+Décidé lors d'une session de cadrage le 2026-11-04 (`plans/lot-2026-11/20-chasses-par-membre.md`). Jusque-là, le site ne connaissait que les chasses encore dehors (état « Chasses », dernier relevé et précédent) : une chasse rentrée était oubliée.
+
+- **Le journal des chasses** (`hunts-log`) : une nouvelle catégorie en liste, une ligne chiffrée par chasse, gardée 90 jours après son retour. Elle part avec « Chasses », déjà cochée, sans case de plus ; la phrase des réglages devient « Vos chasses en cours et rentrées : retour, cm², fourmis ». Écrit dans `PRIVACY.md`, la page Confidentialité et `docs/store/fiche.md`.
+- **D'où ça vient** : les chasses lues sur `Ressources.php` (déjà gardées et relues pour l'état « Chasses »), reconnues par le numéro que le jeu leur donne (`span#chasse_<n>`), dont on tire l'empreinte. Pas les rapports de la messagerie : ils ne sont lus que quand le joueur ouvre la conversation, n'en montrent que 10 et ne portent pas ce numéro. Une chasse compte comme **rentrée à son heure de retour**. Une chasse partie et rentrée entre deux lectures de `Ressources.php` manque (rare : une chasse dure des heures, la page est relue au bout de 15 minutes).
+- **Quand part une chasse** : dès qu'elle est vue en cours, avec son retour, son gain en cm² et ses fourmis ; son chiffré ne change plus ensuite (il ne repart pas). Le site la compte rentrée à son heure, même si le membre n'ouvre plus le jeu. Une chasse disparue de la liste avant son retour est retirée.
+- **Fourmis** : le nombre total envoyé, vu par tous comme l'armée en Nombre ; seulement avec Compte+ (« Troupes en chasses »), sinon inconnu. Pas de détail par unité.
+- **Où** : un onglet « Chasses », après « Floods », avec « Statistiques | Liste », Statistiques par défaut ; vue, période et membre dans l'adresse (`?onglet=chasses&vue=liste&periode=24h&membre=Noctis`). L'onglet porte le nombre de chasses en cours.
+- **Périodes** : 24 heures, **7 jours** (par défaut) ou 30 jours ; barres par heure sur 24 heures, par jour de Paris sinon. Une période qui commence avant la plus vieille chasse connue le dit : « Chasses connues depuis le 04/11 : avant, il peut en manquer. »
+- **Statistiques** : tuiles (chasses rentrées et moyenne par jour, terrain chassé, moyenne par chasse, en cours avec les cm² attendus et le prochain retour, cm² pour 1 000 fourmis sur les chasses dont on connaît les fourmis) ; « Terrain chassé par jour » (ou par heure), le nombre de chasses écrit au-dessus de chaque barre ; « Par membre » (Chasses · Terrain · Moyenne · En cours · Dernière rentrée, triable, trié par terrain) ; « En cours » (les 3 prochains retours) ; l'encadré de couverture (« 12 membres sur 18 envoient leurs chasses »), ceux qui n'envoient pas en bas de « Par membre ».
+- **Un membre choisi** : tuiles et graphique deviennent les siens, « Par membre » devient « Ses chasses » (retour, cm², fourmis).
+- **Liste** : les chasses une par une, en cours et rentrées, filtrables par membre.
+- **Copier pour Discord** : « **Chasses 4O4 · 7 jours** (du … au …) », « 412 chasses · 1,8M cm² », une ligne par membre, puis ceux qui n'envoient pas.
+- **Mouvements** : l'onglet lit aussi le journal, mêlé aux états sans doublon (même membre, même heure de retour) ; la note « certaines déjà rentrées peuvent manquer » ne reste que pour les membres sans journal (extension pas encore à jour).
+- **Calcul** : dans le navigateur, d'après les Envois déjà ouverts ; fonctions pures dans `apps/web/src/lib/envois/hunt-stats.ts` (+ test).
+
+Réalisé le 2026-11-04. Décisions prises en codant :
+
+- **L'élément** (`packages/game/src/site-links/envoi-hunts.ts`) : `{ hunter, returnsAt, fieldGain, ants }`, identité `hunt|<serveur>|<numéro>` ; `ants` est la somme des « Troupes en chasses » (Compte+), `null` sans. Le numéro est gardé avec chaque chasse lue sur `Ressources.php` (`data/state-pages.ts`, `id`, absent des relevés d'avant : ces chasses-là ne partent pas). Relevé sur S2 : deux chasses lancées ensemble, de même gain, ont deux numéros qui ne bougent pas d'une lecture à l'autre.
+- **Le circuit** : `hunts-log` est une catégorie en liste de l'extension (`features/optizzz-account/envois.ts`), relancée par les mêmes changements que les états (`envoiStates:<host>`). Chaque chasse est **figée** dès son premier Envoi (son retour recalculé depuis le décompte bouge d'une seconde à chaque lecture) ; rien ne repart tant qu'aucune chasse n'apparaît ni ne disparaît. Une chasse sortie de la liste après son retour reste sur le site ; avant son retour, elle est retirée.
+- **Le site** : `hunts-log` part avec « Chasses » (`envoi-service.ts`), une ligne au plus 120 jours (90 jours après un retour qui peut être à quelques jours : une chasse de 104 601 cm² dure près de 4 jours). Décocher « Chasses » efface l'état, pas le journal (comme les listes) : il reste jusqu'à sa date.
+- **Vue** (`components/spaces/hunts-panel.tsx`, `hunt-stats-view.tsx`, `hunt-stats-chart.tsx`) : à 375 px, l'unité « cm² » passe sous le nombre des tuiles ; « Par membre » cache Moyenne et Dernière rentrée sous 640 px. La Liste a « En cours | Rentrées » (les 200 plus récentes).
+- **Mouvements** (`lib/envois/movements.ts`) : les chasses du journal d'abord ; celles des états qui n'y sont pas (même membre, même gain, retour à 2 minutes près) ensuite ; la note nomme les membres dont les chasses ne viennent que des états (`membersWithoutHuntsLog`).
+
+| Fichier                                                                                                             | Rôle                                              |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `packages/game/src/site-links/envoi-hunts.ts` (+ test), `envois.ts`                                                 | Élément, identité, catégorie `hunts-log`          |
+| `apps/extension/src/data/state-pages.ts`, `features/optizzz-account/envois.ts`, `background.ts`, `section.ts`       | Numéro de chaque chasse, Envoi du journal, phrase |
+| `apps/web/src/server/envois/envoi-service.ts` (+ test)                                                              | Catégorie `hunts-log`, durée                      |
+| `apps/web/src/lib/envois/hunts.ts`, `hunt-stats.ts`, `hunt-view.ts`, `movements.ts` (+ tests)                       | Ouvrir, statistiques, adresse, Mouvements         |
+| `apps/web/src/components/spaces/hunts-panel.tsx`, `hunt-stats-view.tsx`, `hunt-stats-chart.tsx`, `member-space.tsx` | Onglet « Chasses »                                |
+
+Vérifié le 2026-11-04 avec une page de démonstration temporaire (chasses inventées, retirée) : alliance entière, 24 heures, 7 et 30 jours, un membre choisi (« Ses chasses », « Chasses connues depuis le … »), la Liste, l'adresse qui suit les choix ; en clair, sombre et à 375 px. Dans le jeu, en lecture seule : le numéro `chasse_<n>` stable sur S2. Pas essayé : un vrai Espace avec la Clé d'alliance ouverte, la vraie extension qui envoie le journal (il ne partira qu'avec sa prochaine version), le collage dans Discord.
 
 ## Tickets
 
