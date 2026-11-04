@@ -30,6 +30,7 @@ import type { Absence } from "~/lib/spaces/absences";
 import { certify, excludeMember, grantAccess, withdrawAdmin } from "~/lib/spaces/access";
 import { CONVOYS_TAB } from "~/lib/envois/convoy-view";
 import { FLOODS_TAB } from "~/lib/envois/flood-view";
+import { MOVEMENTS_TAB } from "~/lib/envois/movement-view";
 import { askExtensionForMembers } from "~/lib/spaces/extension-bridge";
 import { checkMembersList, membersCheckMessage } from "~/lib/spaces/members-check";
 import {
@@ -50,6 +51,7 @@ import { DiscordPanel } from "./discord-panel";
 import { errorText } from "./errors";
 import { FloodsPanel } from "./floods-panel";
 import { LeaveSpace } from "./leave-space";
+import { MovementsPanel } from "./movements-panel";
 import { PassphraseUnlock } from "./passphrase-forms";
 import { Callout, Panel } from "./parts";
 import { SpaceSettings } from "./space-settings";
@@ -87,6 +89,7 @@ function keyChanged(member: Member, access: SpaceAccess, view: MemberView): bool
 const TABS = [
   { value: "space", label: "Espace" },
   { value: "state", label: "État" },
+  { value: "movements", label: "Mouvements" },
   { value: "demandes", label: "Demandes" },
   { value: "convoys", label: "Convois" },
   { value: "floods", label: "Floods" },
@@ -104,15 +107,17 @@ export function MemberSpace({ view }: { view: MemberView }) {
   const envois = useSpaceEnvois(view, access.keyring);
   const demandes = useSpaceDemandes(view, access.keyring, envois.items);
   const versionHidden = useKeyHandover(view, access.keyring, keys.userId);
-  // A link to the Convois or Floods tab (`?onglet=convois`) opens on it; the other tabs leave the address bare.
+  // A link to the Convois, Floods, Mouvements or Chaîne tab (`?onglet=convois`) opens on it; the other tabs leave the
+  // address bare.
   const params = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
     const asked = params.get("onglet");
     if (asked === CHAIN_TAB) return "chain";
+    if (asked === MOVEMENTS_TAB) return "movements";
     return asked === CONVOYS_TAB ? "convoys" : asked === FLOODS_TAB ? "floods" : "space";
   });
   useEffect(() => {
-    if (tab !== "convoys" && tab !== "floods" && tab !== "chain" && window.location.search)
+    if (tab !== "convoys" && tab !== "floods" && tab !== "chain" && tab !== "movements" && window.location.search)
       window.history.replaceState(null, "", window.location.pathname);
   }, [tab]);
   const server = serverById(view.space.server);
@@ -233,6 +238,25 @@ export function MemberSpace({ view }: { view: MemberView }) {
           members={view.members.map((m) => m.pseudo)}
           server={view.space.server}
           tag={view.space.tag}
+        />
+      </div>
+    );
+
+  if (tab === "movements")
+    return (
+      <div className="space-y-6">
+        {header}
+        <MovementsPanel
+          floods={envois.floods}
+          convoys={envois.convoys}
+          states={envois.states}
+          refused={envois.refused.floods + envois.refused.convoys + envois.refused.states}
+          members={view.members.map((m) => m.pseudo)}
+          me={view.members.find((m) => m.isMe)?.pseudo ?? null}
+          loading={
+            envois.loading ||
+            (access.keyring !== null && (envois.floods === null || envois.convoys === null || envois.states === null))
+          }
         />
       </div>
     );
