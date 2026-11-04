@@ -9,6 +9,7 @@ import {
   openEnvoi,
   sealEnvoi,
   sendsLabel,
+  sentCategoriesText,
   type EnvoiCrypto,
   type EnvoiRow,
 } from "./envois";
@@ -92,6 +93,11 @@ describe("the categories a Joueur sends", () => {
     expect(categoriesOf({ ...NO_ENVOIS, convoys: true, army: "count" })).toEqual(["convoys", "army-count"]);
     expect(sendsLabel(["convoys"])).toBe("Envoie : convois");
     expect(sendsLabel(["convoys", "floods", "army-units"])).toBe("Envoie : convois, floods, armée (par unité)");
+  });
+
+  it("are written alone in a table's cell", () => {
+    expect(sentCategoriesText([])).toBe("rien");
+    expect(sentCategoriesText(["floods", "production"])).toBe("production, floods");
   });
 });
 

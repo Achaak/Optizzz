@@ -115,6 +115,14 @@ export function formatPastTime(when: Date, now: Date): string {
   return `${dayMonth(when)} ${clock(when)}`;
 }
 
+/** Same, in a word where space is short: « 12 h 51 » today, « hier », « 05/10 ». */
+export function formatPastTimeShort(when: Date, now: Date): string {
+  const days = calendarDaysBetween(when, now);
+  if (days === 0) return clock(when);
+  if (days === 1) return "hier";
+  return dayMonth(when);
+}
+
 /** « 07/10 à 0 h 00 »: a date with its time, Paris time (exports, history). */
 export function formatDateTime(date: Date): string {
   return `${dayMonth(date)} à ${clock(date)}`;

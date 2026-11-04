@@ -6,6 +6,7 @@ import {
   formatEndTimeShort,
   formatGameDuration,
   formatPastTime,
+  formatPastTimeShort,
   fromParisParts,
 } from "./time-format";
 
@@ -84,6 +85,15 @@ describe("Paris time", () => {
     expect(fromParisParts({ year: 2026, month: 12, day: 1, hours: 11, minutes: 30 })).toEqual(
       new Date(Date.UTC(2026, 11, 1, 10, 30)),
     );
+  });
+});
+
+describe("formatPastTimeShort", () => {
+  const now = new Date(2026, 9, 8, 13, 0);
+  it("says when, in a word where space is short", () => {
+    expect(formatPastTimeShort(new Date(2026, 9, 8, 9, 5), now)).toBe("9 h 05");
+    expect(formatPastTimeShort(new Date(2026, 9, 7, 23, 51), now)).toBe("hier");
+    expect(formatPastTimeShort(new Date(2026, 9, 5, 12, 51), now)).toBe("05/10");
   });
 });
 

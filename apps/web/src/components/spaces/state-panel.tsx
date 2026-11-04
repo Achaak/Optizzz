@@ -7,7 +7,7 @@
 import { UNITS, unitLabel } from "@optizzz/game/army/units";
 import { formatNumber } from "@optizzz/game/format/number-format";
 import { formatEndTime, formatPastTime } from "@optizzz/game/format/time-format";
-import { BUILDINGS, RESEARCH, type BuildingKey, type ResearchKey } from "@optizzz/game/levels";
+import { BUILDINGS, RESEARCH } from "@optizzz/game/levels";
 import { parseShares } from "@optizzz/game/sharing/share-text";
 import type { MemberStates, SharedState } from "@optizzz/game/sharing/shared-state";
 import { productionPerDay } from "@optizzz/game/site-links/envoi-states";
@@ -15,11 +15,15 @@ import { useId, useMemo, useState } from "react";
 import { Segmented } from "~/components/tools/hunt/hunt-parts";
 import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import type { AllianceConvoy } from "~/lib/envois/convoys";
+import type { AllianceFlood } from "~/lib/envois/floods";
+import { tableRows } from "~/lib/envois/member-table";
 import { memberStates, type MemberState } from "~/lib/envois/states";
+import { MemberTable } from "./member-table";
 import { Callout, Panel } from "./parts";
 
 const GROUPS = [
-  { value: "summary", label: "Résumé" },
+  { value: "table", label: "Tableau" },
   { value: "production", label: "Production" },
   { value: "army", label: "Armée" },
   { value: "hunts", label: "Chasses" },
@@ -34,9 +38,6 @@ const DAY = 24 * 3600_000;
 const CHANGE_MS = DAY;
 /** Past this age, a reading is said to be old. */
 const OLD_MS = 3 * DAY;
-
-const SUMMARY_RESEARCH: ResearchKey[] = ["weapons", "shield", "attackSpeed"];
-const SUMMARY_BUILDINGS: BuildingKey[] = ["dome", "lodge"];
 
 const num = "text-right tabular-nums whitespace-nowrap";
 
@@ -76,6 +77,9 @@ export function StatePanel({
   isAdmin,
   loading,
   members,
+  convoys,
+  floods,
+  sends,
   server,
   tag,
 }: {
@@ -85,16 +89,22 @@ export function StatePanel({
   isAdmin: boolean;
   loading: boolean;
   /** The space's members, in its order. */
-  members: readonly string[];
+  members: readonly { playerId: number; pseudo: string }[];
+  /** The convoys and floods opened, for those on their way; empty while they open. */
+  convoys: readonly AllianceConvoy[];
+  floods: readonly AllianceFlood[];
+  /** What each member sends, as their extension said. */
+  sends: readonly { playerId: number; categories: string[] }[];
   server: string;
   tag: string;
 }) {
-  const [group, setGroup] = useState<Group>("summary");
+  const [group, setGroup] = useState<Group>("table");
   const [text, setText] = useState("");
   const [pasted, setPasted] = useState<SharedState[]>([]);
   const [report, setReport] = useState<string | null>(null);
   const pasteId = useId();
-  const rows = useMemo(() => memberStates(members, states ?? [], pasted), [members, states, pasted]);
+  const pseudos = useMemo(() => members.map((m) => m.pseudo), [members]);
+  const rows = useMemo(() => memberStates(pseudos, states ?? [], pasted), [pseudos, states, pasted]);
   const now = new Date();
 
   if (states === null)
@@ -109,7 +119,7 @@ export function StatePanel({
     );
 
   const read = () => {
-    const parsed = parseShares(text, { server, alliance: tag, members, now });
+    const parsed = parseShares(text, { server, alliance: tag, members: pseudos, now });
     setPasted((before) => [...before, ...parsed.states]);
     const parts = [
       parsed.states.length === 1 ? "1 état lu" : `${formatNumber(parsed.states.length)} états lus`,
@@ -127,76 +137,9 @@ export function StatePanel({
   );
 
   let table: React.ReactNode;
-  if (group === "summary") {
+  if (group === "table") {
     table = (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Membre</TableHead>
-            <TableHead className={num}>Production / jour</TableHead>
-            <TableHead className={num}>TDC</TableHead>
-            <TableHead className={num}>Ouvrières</TableHead>
-            <TableHead className={num}>Armée</TableHead>
-            {SUMMARY_RESEARCH.map((key) => (
-              <TableHead key={key} className={num}>
-                {RESEARCH.find((r) => r.key === key)?.name}
-              </TableHead>
-            ))}
-            {SUMMARY_BUILDINGS.map((key) => (
-              <TableHead key={key} className={num}>
-                {BUILDINGS.find((b) => b.key === key)?.name}
-              </TableHead>
-            ))}
-            <TableHead>Prochain chantier</TableHead>
-            <TableHead>Relevé</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => {
-            const { latest, previous, recent } = readingOf(row, now);
-            const production = latest?.production && productionPerDay(latest.production, now);
-            const next = (latest?.works ?? [])
-              .filter((w) => w.endsAt > now)
-              .sort((a, b) => a.endsAt.getTime() - b.endsAt.getTime())[0];
-            return (
-              <TableRow key={row.pseudo}>
-                {memberCell(row)}
-                <TableCell className={num}>
-                  {production ? (
-                    `${production.coloniesKnown ? "" : "≥ "}${formatNumber(production.total)}`
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell className={num}>
-                  <Value value={latest?.huntingField} before={previous?.huntingField} recent={recent} />
-                </TableCell>
-                <TableCell className={num}>
-                  <Value value={latest?.workers} before={previous?.workers} recent={recent} />
-                </TableCell>
-                <TableCell className={num}>
-                  <Value value={latest?.army?.total} before={previous?.army?.total} recent={recent} />
-                  {latest?.army?.incomplete && <span className="text-muted-foreground"> (incomplète)</span>}
-                </TableCell>
-                {SUMMARY_RESEARCH.map((key) => (
-                  <TableCell key={key} className={num}>
-                    <Value value={latest?.research?.[key]} before={previous?.research?.[key]} recent={recent} />
-                  </TableCell>
-                ))}
-                {SUMMARY_BUILDINGS.map((key) => (
-                  <TableCell key={key} className={num}>
-                    <Value value={latest?.buildings?.[key]} before={previous?.buildings?.[key]} recent={recent} />
-                  </TableCell>
-                ))}
-                <TableCell className="whitespace-nowrap">
-                  {next ? `${next.name} ${String(next.level)}, fin ${formatEndTime(next.endsAt, now)}` : ""}
-                </TableCell>
-                {readCell(row)}
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+      <MemberTable rows={tableRows({ members, merged: rows, envois: states, convoys, floods, sends, now })} now={now} />
     );
   } else if (group === "production") {
     table = (
@@ -408,7 +351,8 @@ export function StatePanel({
       <p className="text-muted-foreground">
         Ce que les membres envoient depuis l&apos;extension, et les états qu&apos;ils copient depuis «&nbsp;Mon
         état&nbsp;» et collent ci-dessous&nbsp;: pour chaque partie, le relevé le plus récent l&apos;emporte. ↑ ↓&nbsp;:
-        changé dans les dernières 24&nbsp;h.
+        changé dans les dernières 24&nbsp;h. Dans le tableau, l&apos;heure de son relevé sous chaque valeur, en gris
+        après 48&nbsp;h.
       </p>
 
       {refused > 0 && (
@@ -443,11 +387,14 @@ export function StatePanel({
       </div>
 
       <Segmented label="Données à montrer" options={GROUPS} value={group} onChange={setGroup} />
-      <div className="overflow-x-auto">{table}</div>
+      {group === "table" ? table : <div className="overflow-x-auto">{table}</div>}
 
       <p className="text-xs text-muted-foreground">
         La production par jour est la récolte, moins la taxe versée au colonisateur, plus ce que rapportent les colonies
-        (en moyenne depuis leur prise)&nbsp;; «&nbsp;≥&nbsp;» quand des colonies sont inconnues.{" "}
+        (en moyenne depuis leur prise)&nbsp;; «&nbsp;≥&nbsp;» quand des colonies sont inconnues. Un Envoi part quand le
+        membre ouvre une page du jeu, jamais sur une minuterie&nbsp;: «&nbsp;Dernier Envoi&nbsp;» dit quand son
+        extension a envoyé pour la dernière fois. Les convois et floods en route sont ceux que les membres
+        envoient&nbsp;: une attaque venue d&apos;ailleurs n&apos;apparaît pas.{" "}
         {isAdmin
           ? "Le détail des armées par unité n'est montré qu'aux Admins : optizzz.fr ne le renvoie qu'à eux (c'est le site qui le réserve, pas le chiffrement)."
           : "Le détail des armées par unité n'est montré qu'aux Admins de l'espace."}

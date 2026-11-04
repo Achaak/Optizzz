@@ -73,10 +73,16 @@ export const isSent = (choices: EnvoiChoices, category: EnvoiCategory): boolean 
         ? false
         : choices[category];
 
+/** « convois, floods », or « rien ». */
+export function sentCategoriesText(categories: readonly SentCategory[]): string {
+  const known = SENT_CATEGORIES.filter((category) => categories.includes(category));
+  return known.length === 0 ? "rien" : known.map((category) => LABELS[category]).join(", ");
+}
+
 /** « Envoie : convois, floods », or « N'envoie rien ». */
 export function sendsLabel(categories: readonly SentCategory[]): string {
-  const known = SENT_CATEGORIES.filter((category) => categories.includes(category));
-  return known.length === 0 ? "N'envoie rien" : `Envoie : ${known.map((category) => LABELS[category]).join(", ")}`;
+  const text = sentCategoriesText(categories);
+  return text === "rien" ? "N'envoie rien" : `Envoie : ${text}`;
 }
 
 export const isSentCategory = (value: unknown): value is SentCategory =>

@@ -43,6 +43,19 @@ describe("mergeMemberStates", () => {
   it("counts a reading seen twice once: no previous from the same time", () => {
     const one = { latest: state("2026-10-25T10:00:00Z", { workers: 10 }) };
     const merged = mergeMemberStates([one, { latest: { ...one.latest } }]);
-    expect(merged).toEqual({ latest: one.latest });
+    expect(merged).toEqual({ latest: one.latest, partsReadAt: { workers: one.latest.readAt } });
+  });
+
+  it("dates each part by the reading it comes from", () => {
+    const levels = { latest: state("2026-10-26T08:00:00Z", { research: { weapons: 13 } }) };
+    const production = { latest: state("2026-10-24T08:00:00Z", { huntingField: 7000, workers: 8500 }) };
+
+    const merged = mergeMemberStates([levels, production]);
+
+    expect(merged?.partsReadAt).toEqual({
+      research: at("2026-10-26T08:00:00Z"),
+      huntingField: at("2026-10-24T08:00:00Z"),
+      workers: at("2026-10-24T08:00:00Z"),
+    });
   });
 });

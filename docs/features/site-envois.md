@@ -164,6 +164,35 @@ Décisions prises en codant, sur le circuit des tickets 20 et 21 :
 
 Vérifié en local le 2026-10-26 (base Docker `optizzz_t22`) : règles et magasin du site sur Postgres (un état par Joueur, effacé au décochage, unités aux Admins seuls) ; l'onglet « État » rendu avec des états de démonstration (page temporaire, retirée), en clair, sombre et à 375 px. Pas essayé : la vraie extension dans un navigateur et le jeu (collect, relectures, vue « Partage » couverts par les tests seulement).
 
+## État : le tableau des membres (chantier 12)
+
+Décidé lors d'une session de cadrage le 2026-11-03 (`plans/lot-2026-11/12-etat-chefs.md`).
+
+- **Le Résumé devient un tableau** : une ligne par membre, des colonnes au choix. Les autres vues de « État » (Production, Armée, Chasses, Bâtiments, Recherches, Chantiers) ne changent pas.
+- **Pour tous les membres** : tous voient déjà tout (« Qui voit quoi »). Pas de colonne par unité : la vue Armée les montre déjà aux Admins.
+- **Colonnes**, en groupes dans un menu « Colonnes » (cases à cocher) ; « Membre » toujours là :
+  - Résumé : Production / jour, TDC, Ouvrières, Armée (total, « incomplète ») ;
+  - Recherches et Bâtiments : chacun ;
+  - En cours : Prochain chantier, Chasses (nombre et gain), Convois en route, Floods en route ;
+  - Envois : Envoie (catégories en mots), Dernier Envoi.
+  - **Par défaut** : Production / jour, TDC, Ouvrières, Armée, Armes, Bouclier, Vitesse d'attaque, Dôme, Loge, Prochain chantier, Envoie, Dernier Envoi. Choix gardé dans le navigateur (`localStorage`), le même pour tous les espaces, rien n'est envoyé ; bouton « Colonnes par défaut ».
+- **Âge d'un relevé, dans chaque case** : la date de la partie, courte, sous la valeur (« 13 h 36 » aujourd'hui, « hier », « 02/11 »), la date entière au survol ; valeur et date en gris au-delà de 48 h (la date écrite porte l'information, le gris la souligne, ADR 0003). ↑ ↓ sur 24 h comme avant ; plus de colonne « Relevé ». Pour cela, la fusion garde la date de chaque partie (`partsReadAt`). Envoie, Convois et Floods en route ne sont pas datés.
+- **Dernier Envoi** : le plus récent des relevés des états du membre et des lectures de ses convois et floods, une fois déchiffrés (le site ne garde aucune date en clair) ; les états collés ne comptent pas. « aucun » s'il n'a rien envoyé, gris au-delà de 48 h. Pas « Dernière activité » : un Envoi part quand le membre ouvre une page du jeu, jamais sur une minuterie, ce que dit la note du tableau.
+- **Convois en route** : « ↑ 2 · ↓ 1 », convois en route envoyés par le membre et vers lui ; au survol, ce qui arrive vers lui et la prochaine arrivée. **Floods en route** : « ↑ 3 · ↓ 1 », attaques lancées par le membre (toutes cibles) et attaques de membres qui le visent ; au survol, la prochaine arrivée. « — » quand rien. On ne voit que ce que les membres envoient : un flood venu d'ailleurs n'apparaît pas.
+- **Tri** : un clic sur un en-tête trie (décroissant, croissant, puis l'ordre de l'espace), ▼ ▲ et `aria-sort` ; une case vide reste en bas ; le tri n'est pas gardé. Convois triés sur ↓, floods sur ↑.
+- **Mobile** : le tableau défile dans sa boîte, « Membre » collé à gauche ; aucune colonne masquée.
+- **Réalisation** : le groupe s'appelle « Tableau » et remplace « Résumé » ; les colonnes de Recherches et Bâtiments suivent l'ordre du jeu (Bouclier avant Armes), défaut compris, pour qu'un choix ne déplace rien. Le menu est un `<details>` ; le choix est gardé sous `optizzz:state-columns` (lu par `useSyncExternalStore`, et gardé le temps de la page si le navigateur refuse).
+
+| Fichier                                                              | Rôle                                                                          |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `packages/game/src/sharing/shared-state.ts` (+ test)                 | `partsReadAt` : la date de chaque partie fusionnée                            |
+| `packages/game/src/format/time-format.ts` (+ test)                   | `formatPastTimeShort` : « 13 h 36 », « hier », « 02/11 »                      |
+| `packages/game/src/site-links/envois.ts` (+ test)                    | `sentCategoriesText` : « production, convois » ou « rien »                    |
+| `apps/web/src/lib/envois/member-table.ts` (+ test)                   | Colonnes, défaut, date et changement d'une case, Dernier Envoi, en route, tri |
+| `apps/web/src/components/spaces/member-table.tsx`, `state-panel.tsx` | Le tableau, son menu « Colonnes », dans l'onglet « État »                     |
+
+Vérifié le 2026-11-04 avec des états de démonstration (page temporaire, retirée), en clair, sombre et à 375 px : dates par case, gris après 48 h, colonne « Membre » collée au défilement, menu et choix gardé, tri et `aria-sort`, survols des convois et floods. Pas essayé : des Envois réels d'un espace (le passage des convois, floods et `sends` depuis `member-space.tsx` n'est couvert que par le typage).
+
 ## Statistiques des convois
 
 Décidé lors d'une session de cadrage (`/grill-me`) le 2026-11-01, d'après la maquette « C · Espace d'alliance · Convois (stats) » du canevas « Optizzz — maquettes du site », et réalisé le même jour.
