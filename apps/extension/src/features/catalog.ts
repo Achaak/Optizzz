@@ -110,6 +110,13 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "timing",
+    label: "Timing à la seconde",
+    description:
+      "Sur le formulaire d'attaque : l'heure du jeu à la seconde et un compte à rebours jusqu'au moment de cliquer pour que l'attaque arrive à la 59e seconde d'une minute (la dernière réglée), avec un son facultatif. Après l'envoi, sur Armée : la seconde d'arrivée réelle. Le clic reste le vôtre : Optizzz n'envoie jamais l'attaque.",
+    options: [],
+  },
+  {
     id: "research-advice",
     label: "Conseils",
     description:

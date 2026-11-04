@@ -1,5 +1,6 @@
 // Live scores read on the game pages. Selectors are documented in docs/research/fourmizzz-pages.md.
 import { parseGameInteger } from "../format/game-number";
+import { parseGameDuration } from "./work-queue";
 
 export interface Scores {
   /** Hunting field (TDC), cm². */
@@ -38,6 +39,17 @@ export function readProfile(doc: Document): { pseudo: string; scores: Partial<Sc
 export function findProfileStateRow(doc: Document): HTMLTableRowElement | null {
   const rows = doc.querySelectorAll<HTMLTableRowElement>(".boite_membre table:not(.tableau_score) tr");
   return [...rows].find((row) => row.cells[0]?.textContent.trim().startsWith("Etat")) ?? null;
+}
+
+/**
+ * The travel time to the player shown on Membre.php, in seconds, as the game computes it with my Attack Speed:
+ * « Temps de trajet : 10H 1m 2s ». Only shown with Compte+ (docs/research/temps-de-trajet.md); null otherwise.
+ */
+export function readProfileTravelTime(doc: Document): number | null {
+  const rows = doc.querySelectorAll<HTMLTableRowElement>(".boite_membre table:not(.tableau_score) tr");
+  const row = [...rows].find((tr) => tr.cells[0]?.textContent.trim().startsWith("Temps de trajet"));
+  const ms = row?.cells[1] ? parseGameDuration(row.cells[1].textContent) : null;
+  return ms === null ? null : Math.round(ms / 1000);
 }
 
 /**
