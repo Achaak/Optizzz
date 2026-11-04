@@ -12,6 +12,7 @@ import { chainRolesFrom, type ChainRolesRecord } from "@optizzz/game/site-links/
 import { serverById } from "@optizzz/game/servers";
 import { formatEndTime, formatEndTimeShort } from "@optizzz/game/format/time-format";
 import { CONVOY_ITEM, convoyEnvoiItems, convoysToward, type ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
+import { huntEnvoiItems } from "@optizzz/game/site-links/envoi-hunts";
 import { FLOOD_ITEM, floodEnvoiItems, floodsToward, type FloodItem } from "@optizzz/game/site-links/envoi-floods";
 import {
   ARMY_UNITS,
@@ -86,7 +87,7 @@ const PAGE_RELEVE_GAP_MS = 60_000;
 const DAY = 24 * 3600_000;
 
 /** The categories, lists then states, in the order they leave. */
-const LISTS: readonly ListCategory[] = ["convoys", "demande-convoys", "floods", ...STATE_CATEGORIES];
+const LISTS: readonly ListCategory[] = ["convoys", "demande-convoys", "floods", "hunts-log", ...STATE_CATEGORIES];
 
 export const MISSING_KEY = "Ouvrez votre espace sur optizzz.fr pour reprendre l'envoi.";
 const NO_SPACE = "Pas encore dans un Espace d'alliance sur optizzz.fr : rien ne part.";
@@ -281,6 +282,37 @@ async function floodList(server: string, origin: string, me: string, at: Date): 
 }
 
 /**
+ * The hunts log: each hunt out that Ressources.php last listed, by the game's number for it, with the ants sent when
+ * Compte+ lists them. Sent once and never sealed again (its countdown moves by a second from one reading to the next);
+ * one gone from the list before its return was cancelled, one back stays on the site 90 days.
+ */
+async function huntsLogList(server: string, origin: string, me: string, at: Date): Promise<ListBuild> {
+  const ressources = (await loadStatePages(origin)).ressources;
+  const hunts = (ressources?.hunts ?? []).flatMap((hunt) =>
+    hunt.id === undefined
+      ? []
+      : [
+          {
+            huntId: hunt.id,
+            returnsAt: new Date(hunt.returnsAt),
+            fieldGain: hunt.fieldGain,
+            ants: hunt.troops ? Object.values(hunt.troops).reduce((sum, count) => sum + count, 0) : null,
+          },
+        ],
+  );
+  const items = huntEnvoiItems({ server, me, hunts }).map(({ identity, item, expiresAt }) => ({
+    identity,
+    item,
+    detail: null,
+    observedAt: ressources?.readAt ?? at.getTime(),
+    at: item.returnsAt,
+    expiresAt,
+    frozen: true,
+  }));
+  return { items, staysWhenGone: (item) => item.at <= at.getTime() };
+}
+
+/**
  * A state of a Joueur, one row: its reading from what the game's pages showed, with the one sent before as its
  * previous (nextStateItem); the army by unit in the Admins' blob when « Par unité » is chosen. Nothing while a page it
  * needs was never read: what the site has stays.
@@ -336,6 +368,7 @@ const LIST_BUILDERS: Record<ListCategory, Builder> = {
   convoys: convoyList,
   "demande-convoys": demandeConvoyList,
   floods: floodList,
+  "hunts-log": huntsLogList,
   production: stateList("production"),
   hunts: stateList("hunts"),
   army: stateList("army"),
@@ -565,8 +598,9 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
       removed.length === 0 &&
       Object.keys(sent).length === Object.keys(previous).length &&
       Object.entries(sent).every(([fingerprint, item]) => previous[fingerprint] === item);
-    // Nor the convoys attached to Demandes when none changed (most Joueurs never attach one).
-    const quiet = isStateCategory(category) || category === "demande-convoys";
+    // Nor the convoys attached to Demandes when none changed (most Joueurs never attach one), nor the hunts log when
+    // no hunt left or was cancelled (Ressources.php is read again at every game page past 15 minutes).
+    const quiet = isStateCategory(category) || category === "demande-convoys" || category === "hunts-log";
     if (quiet && unchanged && !previousState.retry.includes(category)) return;
 
     const body: EnvoiBody = {

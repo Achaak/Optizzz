@@ -110,8 +110,11 @@ function fakeSite() {
       const category = body?.category as string;
       const checked = settings.get(1) ?? [];
       const sends = (c: string) => checked.includes(c);
-      if (!(sends(category) || (category === "army" && (sends("army-count") || sends("army-units")))))
-        return Promise.resolve(Response.json({ error: "category-off", message: "off" }, { status: 409 }));
+      const sent =
+        sends(category) ||
+        (category === "army" && (sends("army-count") || sends("army-units"))) ||
+        (category === "hunts-log" && sends("hunts"));
+      if (!sent) return Promise.resolve(Response.json({ error: "category-off", message: "off" }, { status: 409 }));
       if (body?.keyVersion !== version)
         return Promise.resolve(Response.json({ error: "stale-key", message: MISSING_KEY }, { status: 409 }));
       const removed = body.removed as string[];
@@ -848,6 +851,59 @@ describe("the Envois of the states", () => {
     expect(site.rows().filter((r) => r.category === "production")).toHaveLength(1);
     // A state is never news on Discord.
     expect(discord.announced).toEqual([]);
+  });
+
+  it("logs each hunt seen out with « Chasses », once, keeps it after its return and forgets a cancelled one", async () => {
+    const out = (id: number, returnsIn: number, fieldGain: number, troops: Record<string, number> | null) => ({
+      id,
+      returnsAt: NOW.getTime() + returnsIn,
+      fieldGain,
+      troops,
+    });
+    const hunts = (list: ReturnType<typeof out>[], at: Date) =>
+      keepStatePages(S5, {
+        ressources: {
+          readAt: at.getTime(),
+          foodWorkers: 4_000,
+          materialWorkers: 6_000,
+          mushroomPerDay: 0,
+          taxRate: 0,
+          hunts: list,
+        },
+      });
+    const first = out(139_778, 2 * 3600_000, 12_400, { JSN: 20_000, SN: 4_800 });
+    const second = out(139_779, 3 * 3600_000, 9_600, null);
+    await hunts([first, second], NOW);
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, hunts: true });
+    expect(items("hunts-log")).toHaveLength(2);
+    expect((await opened(items("hunts-log")[0]?.blob)).item).toEqual({
+      hunter: "Messor",
+      returnsAt: first.returnsAt,
+      fieldGain: 12_400,
+      ants: 24_800,
+    });
+    expect((await opened(items("hunts-log")[1]?.blob)).item).toMatchObject({ ants: null });
+
+    // Read again a minute later, the countdowns a second off: nothing leaves again.
+    now = new Date(NOW.getTime() + 60_000);
+    await hunts([{ ...first, returnsAt: first.returnsAt + 1000 }, second], now);
+    envois.changed("s5.fourmizzz.fr", "hunts-log");
+    await flush();
+    expect(posts("hunts-log")).toHaveLength(1);
+
+    // The first one back: it stays on the site. The second gone before its return: cancelled, it goes.
+    now = new Date(first.returnsAt + 60_000);
+    await hunts([], now);
+    envois.changed("s5.fourmizzz.fr", "hunts-log");
+    await flush();
+    expect(posts("hunts-log").at(-1)?.body?.removed).toHaveLength(1);
+    expect(site.rows().filter((r) => r.category === "hunts-log")).toHaveLength(1);
+  });
+
+  it("logs no hunt while « Chasses » is unchecked", async () => {
+    await service().choose("s5", "Messor", { ...NO_ENVOIS, production: true });
+    expect(posts("hunts-log")).toEqual([]);
   });
 
   it("sends nothing before the pages a state needs were read", async () => {
