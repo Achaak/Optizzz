@@ -1,12 +1,11 @@
 "use client";
 
 // The « Demandes » tab of a space (docs/features/site-demandes.md): make a Demande, the Demandes to validate (an Admin
-// or a Délégué decides), those waiting for convoys with what remains to send, and those finished in the last 90 days.
+// or a Délégué decides), those waiting for convoys with what remains to send (the ended ones: the Historique).
 // A status is written in words, never told by a colour alone (ADR 0003). « Envoyer un convoi » opens the game's
 // Convoi page, which the extension fills: the player clicks « Lancer le convoi » themself.
 import { formatCompact, formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import {
-  formatDateTime,
   formatDuration,
   formatEndTime,
   formatPastTime,
@@ -645,8 +644,6 @@ export function DemandesPanel({
               </p>
             </Notes>
           </Panel>
-
-          <FinishedPanel finished={groups.finished} />
         </div>
 
         <div className="flex min-w-0 flex-[1_1_20rem] flex-col gap-5">
@@ -674,69 +671,6 @@ export function DemandesPanel({
 /** The small print under a table. */
 function Notes({ children }: { children: React.ReactNode }) {
   return <div className="space-y-2 px-4 py-3 text-xs text-muted-foreground">{children}</div>;
-}
-
-/** The ended Demandes, folded: how many and of what kind, the list on « Afficher ». */
-function FinishedPanel({ finished }: { finished: readonly OpenedDemande[] }) {
-  const [open, setOpen] = useState(false);
-  const listId = useId();
-  const byStatus = (["closed", "refused", "cancelled"] as const)
-    .map((status) => ({ status, count: finished.filter((d) => d.status === status).length }))
-    .filter(({ count }) => count > 0)
-    .map(({ status, count }) => `${formatNumber(count)} ${STATUS_LABEL[status]}${count > 1 ? "s" : ""}`);
-  return (
-    <Panel title="Terminées (90 derniers jours)" flush>
-      <p className="px-4 py-3 text-muted-foreground">
-        {finished.length === 0 ? (
-          "Aucune Demande terminée."
-        ) : (
-          <>
-            {formatNumber(finished.length)} Demande{finished.length > 1 ? "s" : ""} terminée
-            {finished.length > 1 ? "s" : ""}
-            {byStatus.length > 0 && ` · ${byStatus.join(", ")}`} ·{" "}
-            <button
-              type="button"
-              aria-expanded={open}
-              aria-controls={listId}
-              onClick={() => setOpen(!open)}
-              className="text-[0.8125rem] font-semibold text-primary hover:underline"
-            >
-              {open ? "Masquer" : "Afficher"}
-            </button>
-          </>
-        )}
-      </p>
-      {open && finished.length > 0 && (
-        <div id={listId} className="border-t">
-          <Table className="text-[0.8125rem]">
-            <TableHeader>
-              <TableRow className={HEAD_ROW}>
-                <TableHead className={cn(HEAD, "pl-4")}>Demandeur</TableHead>
-                <TableHead className={HEAD}>Demande</TableHead>
-                <TableHead className={HEAD}>État</TableHead>
-                <TableHead className={cn(HEAD, "pr-4")}>Le</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {finished.map((d) => (
-                <TableRow key={d.id} className={ROW}>
-                  <TableCell className="pl-4 font-semibold">{d.requester}</TableCell>
-                  <TableCell className="min-w-32 whitespace-normal">{d.label}</TableCell>
-                  <TableCell>
-                    {STATUS_LABEL[d.status]}
-                    {(d.stored === "refused" || d.stored === "closed") && d.decidedByPseudo
-                      ? ` par ${d.decidedByPseudo}`
-                      : ""}
-                  </TableCell>
-                  <TableCell className="pr-4">{d.endedAt ? formatDateTime(new Date(d.endedAt)) : "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </Panel>
-  );
 }
 
 const nameOf = (key: LevelKey) => [...BUILDINGS, ...RESEARCH].find((entry) => entry.key === key)?.name ?? key;
