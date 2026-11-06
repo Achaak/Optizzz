@@ -122,6 +122,26 @@ describe("the Envois on the site", () => {
     expect(memory.rows().map((r) => r.category)).toEqual(["demande-convoys"]);
   });
 
+  it.each(["declared-convoys", "declared-floods", "declared-transits", "declared-hunts"])(
+    "keeps a %s row declared on the site without any setting, and lets its sender withdraw it",
+    async (category) => {
+      const declare = async (removed: string[] = []) =>
+        service.saveEnvoi(messor.userId, {
+          server: "s5",
+          playerId: 1,
+          category,
+          keyVersion: 1,
+          items: removed.length > 0 ? [] : [await item(1)],
+          removed,
+        });
+      await declare();
+      const [row] = memory.rows();
+      expect(row?.category).toBe(category);
+      await declare([row?.fingerprint ?? ""]);
+      expect(memory.rows()).toEqual([]);
+    },
+  );
+
   it("keeps a convoy declared on the space page without any setting, and lets its sender withdraw it", async () => {
     const declare = async (removed: string[] = []) =>
       service.saveEnvoi(messor.userId, {

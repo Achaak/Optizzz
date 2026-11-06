@@ -28,7 +28,7 @@ import {
   type MovementHour,
   type MovementKind,
 } from "~/lib/envois/movements";
-import { Callout, FIELD_LABEL, Panel } from "./parts";
+import { Callout, DeclaredTag, FIELD_LABEL, Panel } from "./parts";
 
 const KINDS: readonly { kind: MovementKind; word: string; plural: string }[] = [
   { kind: "flood", word: "Flood", plural: "Floods" },
@@ -98,6 +98,7 @@ function GroupRow({ group, open, onToggle }: { group: MovementGroup; open: boole
   const last = movements[movements.length - 1]?.at ?? 0;
   const word = KINDS.find((k) => k.kind === group.kind)?.word ?? "";
   const pending = unconfirmed(movements).length;
+  const declared = movements.filter((m) => m.declared).length;
   const detailId = useId();
   return (
     <li className="border-t">
@@ -125,6 +126,7 @@ function GroupRow({ group, open, onToggle }: { group: MovementGroup; open: boole
               ×{formatNumber(movements.length)}
             </span>
           )}
+          {declared > 0 && <DeclaredTag count={movements.length > 1 ? declared : undefined} />}
           {pending > 0 && (
             <span className="ml-1.5 rounded-full border border-dashed border-warning-border bg-warning-soft px-1.5 text-xs font-semibold">
               {movements.length === 1
@@ -166,6 +168,7 @@ function GroupRow({ group, open, onToggle }: { group: MovementGroup; open: boole
               <span className="text-muted-foreground">
                 {clock(m.at)}
                 {m.kind === "convoy" && m.unconfirmed && " · arrivé, non confirmé"}
+                {m.declared && " · déclaré"}
               </span>
               <span>{amountText([m])}</span>
             </li>

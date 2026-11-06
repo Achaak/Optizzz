@@ -1,11 +1,11 @@
 // The Demandes on a space page (docs/features/site-demandes.md): sealed here with the Clé d'alliance when made, opened
 // here to be shown, each with what the convoys attached to it cover (the members' Envois `demande-convoys`). A Demande
 // whose inside does not name its row is thrown away and counted.
+import { sealDeclaration } from "~/lib/envois/declarations";
 import type { AllianceKeyring } from "@optizzz/crypto/alliance-key";
 import {
   DECLARED_CONVOY_CATEGORY,
   DEMANDE_CONVOY_ITEM,
-  DEMANDES_KEPT_MS,
   demandeLabel,
   demandeProgress,
   openDemande,
@@ -20,7 +20,7 @@ import {
 } from "@optizzz/game/site-links/demandes";
 import type { MemberStates } from "@optizzz/game/sharing/shared-state";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
-import { openEnvoi, sealEnvoi } from "@optizzz/game/site-links/envois";
+import { openEnvoi } from "@optizzz/game/site-links/envois";
 import { comparePriorites, prioriteOf, type Priorite } from "@optizzz/game/site-links/priorite";
 import { distance, travelTime } from "@optizzz/game/travel";
 import { envoiCrypto } from "~/lib/envois/convoys";
@@ -81,23 +81,13 @@ export async function resealDemande(
  * A convoy its sender declares for a Demande, as an Envoi of their Joueur (`declared-convoys`): sealed here, its
  * fingerprint keyed from a random id (no two declarations alike), kept 90 days after its arrival.
  */
-export async function declaredConvoyEnvoi(
+export function declaredConvoyEnvoi(
   sender: { server: string; playerId: number },
   convoy: DemandeConvoy,
   keyring: AllianceKeyring,
   now: Date,
 ): Promise<{ keyVersion: number; item: { fingerprint: string; blob: string; expiresAt: number } }> {
-  const crypto = envoiCrypto(keyring);
-  const fingerprint = await crypto.fingerprint(globalThis.crypto.randomUUID());
-  const envelope = { ...sender, category: DECLARED_CONVOY_CATEGORY, fingerprint, observedAt: now.getTime() };
-  return {
-    keyVersion: Math.max(...keyring.map((k) => k.version)),
-    item: {
-      fingerprint,
-      blob: await sealEnvoi({ ...envelope, item: convoy }, crypto),
-      expiresAt: convoy.at + DEMANDES_KEPT_MS,
-    },
-  };
+  return sealDeclaration(sender, DECLARED_CONVOY_CATEGORY, convoy, keyring, now);
 }
 
 /**

@@ -25,7 +25,7 @@ import { BalanceView } from "./balance-view";
 import { ConvoyStatsView } from "./convoy-stats-view";
 import { DayTableView } from "./day-table-view";
 import { PeriodPicker } from "./period-picker";
-import { Callout, FIELD_LABEL, Panel } from "./parts";
+import { Callout, DeclaredTag, FIELD_LABEL, Panel } from "./parts";
 import { useServerAlliances } from "./use-server-alliances";
 import { useSpaceBalance } from "./use-space-balance";
 
@@ -92,7 +92,10 @@ function ConvoyList({ convoys, member, now }: { convoys: AllianceConvoy[]; membe
                   <TableCell className={c.kind === "transit" ? "font-medium" : undefined}>
                     {c.kind === "transit" ? "En route" : "Livré"}
                   </TableCell>
-                  <TableCell>{c.from}</TableCell>
+                  <TableCell>
+                    {c.from}
+                    {c.declared && <DeclaredTag />}
+                  </TableCell>
                   <TableCell>{c.to}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatNumber(c.food)}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatNumber(c.materials)}</TableCell>

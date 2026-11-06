@@ -3,7 +3,13 @@
 // browser's session (only the background reads it), storage.local until its date with « Se souvenir sur cet
 // appareil ». The highest version seen per space stays, even after « Se déconnecter ». The site's answer about the
 // spaces, what was last sent, and the relève (decrypted) in storage.session: forgotten when the browser closes.
-import { isSent, NO_ENVOIS, type EnvoiCategory, type EnvoiChoices } from "@optizzz/game/site-links/envois";
+import {
+  isSent,
+  NO_ENVOIS,
+  type DeclaredCategory,
+  type EnvoiCategory,
+  type EnvoiChoices,
+} from "@optizzz/game/site-links/envois";
 import type { ArmyUnits, DatedItem, StateCategory, StateItem } from "@optizzz/game/site-links/envoi-states";
 import type { HandedKey } from "@optizzz/game/site-links/space-bridge";
 import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
@@ -15,8 +21,8 @@ import { storage } from "wxt/utils/storage";
  * Every category of the Envois: lists of items (convoys, floods), one encrypted row each, and states (production,
  * hunts, army, levels), one encrypted row per Joueur.
  */
-/** What the extension sends; the convoys declared on the site are sent by the space page only. */
-export type ListCategory = Exclude<EnvoiCategory, "declared-convoys">;
+/** What the extension sends; what is declared on the site is sent by the space page only. */
+export type ListCategory = Exclude<EnvoiCategory, DeclaredCategory>;
 
 const CHOICES_KEY = "local:optizzzAccount:envoiChoices";
 const SESSION_KEYS = "session:optizzzAccount:allianceKeys";

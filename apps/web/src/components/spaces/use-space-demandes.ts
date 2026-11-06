@@ -40,7 +40,7 @@ export function useSpaceDemandes(view: MemberView, keyring: AllianceKeyring | nu
   const suspend = api.demandes.suspend.useMutation({ onSuccess: refresh });
   const finish = api.demandes.finish.useMutation({ onSuccess: refresh });
   // A declared convoy is an Envoi: the space's Envois are read again to count it.
-  const declare = api.envois.declareConvoy.useMutation({
+  const declare = api.envois.declare.useMutation({
     onSuccess: () => utils.envois.space.invalidate({ spaceId: view.space.id }),
   });
   const [opened, setOpened] = useState<{
@@ -94,13 +94,14 @@ export function useSpaceDemandes(view: MemberView, keyring: AllianceKeyring | nu
       if (!keyring) throw new Error("No Clé d'alliance");
       const me = { server: view.me.server, playerId: view.me.playerId };
       const { keyVersion, item } = await declaredConvoyEnvoi(me, convoy, keyring, new Date());
-      await declare.mutateAsync({ ...me, keyVersion, items: [item], removed: [] });
+      await declare.mutateAsync({ category: "declared-convoys", ...me, keyVersion, items: [item], removed: [] });
     },
     /** Withdraws a convoy the member declared. */
     async withdraw(fingerprint: string) {
       if (!keyring) throw new Error("No Clé d'alliance");
       const keyVersion = Math.max(...keyring.map((k) => k.version));
       await declare.mutateAsync({
+        category: "declared-convoys",
         server: view.me.server,
         playerId: view.me.playerId,
         keyVersion,

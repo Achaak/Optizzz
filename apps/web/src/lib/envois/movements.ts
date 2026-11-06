@@ -7,9 +7,17 @@ import type { HuntItem } from "@optizzz/game/site-links/envoi-hunts";
 import type { FloodItem } from "@optizzz/game/site-links/envoi-floods";
 import { fromParisParts, parisParts } from "@optizzz/game/format/time-format";
 
+/** Declared by hand on the page « Déclarer » (declarations.ts), not sent by an extension. */
+interface Declared {
+  declared?: true;
+}
+
+/** What the tab reads: the items of the Envois, and those a member declared. */
+type Item<T> = T & Declared;
+
 export type Movement =
-  | { kind: "flood"; at: number; from: string; to: string; take: number | null }
-  | {
+  | ({ kind: "flood"; at: number; from: string; to: string; take: number | null } & Declared)
+  | ({
       kind: "convoy";
       at: number;
       from: string;
@@ -18,8 +26,10 @@ export type Movement =
       materials: number;
       /** Arrived on its way, its delivery not read yet by its sender or its recipient. */
       unconfirmed: boolean;
-    }
-  | { kind: "hunt"; at: number; from: string; field: number };
+    } & Declared)
+  | ({ kind: "hunt"; at: number; from: string; field: number } & Declared);
+
+const declaredOf = (item: Declared): Declared => (item.declared ? { declared: true } : {});
 
 export type MovementKind = Movement["kind"];
 
@@ -32,7 +42,7 @@ const key = (pseudo: string) => pseudo.toLowerCase();
  * A convoy arrived on its way and the same convoy delivered are two Envois: the arrival is left out once a delivery
  * with the same players and loads is read within 5 minutes, each delivery matching the nearest arrival.
  */
-function convoyMovements(convoys: readonly ConvoyItem[], now: number): Movement[] {
+function convoyMovements(convoys: readonly Item<ConvoyItem>[], now: number): Movement[] {
   const same = (a: ConvoyItem, b: ConvoyItem) =>
     key(a.from) === key(b.from) && key(a.to) === key(b.to) && a.food === b.food && a.materials === b.materials;
   const arrived = convoys.filter((c) => c.kind === "transit" && c.at <= now);
@@ -53,6 +63,7 @@ function convoyMovements(convoys: readonly ConvoyItem[], now: number): Movement[
       food: c.food,
       materials: c.materials,
       unconfirmed: c.kind === "transit" && c.at <= now,
+      ...declaredOf(c),
     }));
 }
 
@@ -63,8 +74,14 @@ const SAME_HUNT_MS = 2 * 60_000;
  * The hunts of the hunts log (back ones too), then those of each member's last two states that the log does not have:
  * a hunt still out at the first reading is the same at the second, and the same as the log's.
  */
-function huntMovements(states: readonly MemberStates[], log: readonly HuntItem[]): Movement[] {
-  const logged: Movement[] = log.map((h) => ({ kind: "hunt", at: h.returnsAt, from: h.hunter, field: h.fieldGain }));
+function huntMovements(states: readonly MemberStates[], log: readonly Item<HuntItem>[]): Movement[] {
+  const logged: Movement[] = log.map((h) => ({
+    kind: "hunt",
+    at: h.returnsAt,
+    from: h.hunter,
+    field: h.fieldGain,
+    ...declaredOf(h),
+  }));
   const inLog = (from: string, at: number, field: number) =>
     logged.some(
       (m) => m.kind === "hunt" && key(m.from) === key(from) && m.field === field && Math.abs(m.at - at) <= SAME_HUNT_MS,
@@ -99,11 +116,11 @@ export function membersWithoutHuntsLog(states: readonly MemberStates[], log: rea
 
 /** Every movement the space's Envois know, in the order they arrive. */
 export function allianceMovements(input: {
-  floods: readonly FloodItem[];
-  convoys: readonly ConvoyItem[];
+  floods: readonly Item<FloodItem>[];
+  convoys: readonly Item<ConvoyItem>[];
   states: readonly MemberStates[];
   /** The hunts log; absent, the hunts come from the states only. */
-  hunts?: readonly HuntItem[];
+  hunts?: readonly Item<HuntItem>[];
   now: Date;
 }): Movement[] {
   const floods: Movement[] = input.floods.map((f) => ({
@@ -112,6 +129,7 @@ export function allianceMovements(input: {
     from: f.from,
     to: f.target,
     take: f.take,
+    ...declaredOf(f),
   }));
   return [
     ...floods,

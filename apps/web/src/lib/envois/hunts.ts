@@ -8,6 +8,8 @@ import { envoiCrypto } from "./convoys";
 export interface AllianceHunt extends HuntItem {
   fingerprint: string;
   observedAt: number;
+  /** Declared by hand on the page « Déclarer » (declarations.ts), not seen by the extension. */
+  declared?: true;
 }
 
 interface Row {

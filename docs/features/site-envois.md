@@ -25,6 +25,7 @@ Décidé lors d'une session de cadrage (`/grill-me`) le 2026-10-25 (ticket 19). 
   - **Armée** : Rien, Nombre ou Par unité (comme « Mon état ») ;
   - **Niveaux et chantiers**.
 - **Retirée : « Attaques reçues ».** Le jeu ne montre nulle part les attaques en route vers soi, et aucun rapport de défense n'a été vu (`alertes.md`, `../research/fourmizzz-pages.md`). À revoir si une source apparaît. Les floods des membres sur d'autres membres se voient quand même (« Floods en route vers l'alliance »).
+- **Déclarées sur le site, sans case à cocher** : `declared-convoys` (un convoi pour une Demande, `site-demandes.md`) et, depuis la page « Déclarer » (ADR 0010, `site-declarer.md`), `declared-floods`, `declared-transits` et `declared-hunts`. La page les ajoute aux floods, convois et chasses, marquées « déclaré », sauf quand l'extension du même membre envoie la même chose.
 - La page de l'espace montre ce que chaque membre envoie (« Envoie : convois, floods »), sans pouvoir le changer.
 
 ## Quand part un Envoi

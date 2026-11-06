@@ -113,7 +113,10 @@ export default function PrivacyPage() {
           effacée 90 jours après. Le jour voulu et «&nbsp;autofinancée&nbsp;» sont chiffrés avec le reste ; quand un
           Admin ou un Délégué suspend ou clôt la Demande d&apos;un autre, le site garde son pseudo. «&nbsp;Déclarer un
           convoi&nbsp;» envoie depuis le navigateur du membre, sur ce seul clic, un convoi chiffré comme les autres,
-          effacé 90 jours après son arrivée.
+          effacé 90 jours après son arrivée. La page «&nbsp;Déclarer&nbsp;» de l&apos;espace, pour déclarer depuis un
+          téléphone sans l&apos;extension, fait de même pour un flood, un convoi ou une chasse&nbsp;: ce que le membre
+          saisit est chiffré dans son navigateur avec la Clé d&apos;alliance, et le site ne garde que le chiffré, effacé
+          90 jours après l&apos;arrivée ou le retour.
         </p>
         <p>
           Rôles de la Chaîne de TDC&nbsp;: les Admins et les Délégués d&apos;un espace y règlent qui est grenier,
@@ -130,7 +133,9 @@ export default function PrivacyPage() {
           qu&apos;il envoie et une fois qu&apos;il a autorisé Discord dans son extension&nbsp;; ce qui est posté va
           alors à Discord, un service tiers choisi par l&apos;alliance. Quand Discord refuse un message,
           l&apos;extension n&apos;envoie au site que le code de la réponse&nbsp;: le site garde ce code, la date et le
-          pseudo du membre, montrés aux Admins jusqu&apos;au prochain enregistrement du webhook.
+          pseudo du membre, montrés aux Admins jusqu&apos;au prochain enregistrement du webhook. Un Admin peut aussi y
+          poster, depuis son navigateur et sur son clic, le lien vers la page «&nbsp;Déclarer&nbsp;», qui ne contient
+          rien de l&apos;alliance&nbsp;; le site ne le poste pas.
         </p>
         <p>
           Rappels du site sur Discord&nbsp;: un Admin peut aussi donner au site l&apos;adresse d&apos;un second webhook,

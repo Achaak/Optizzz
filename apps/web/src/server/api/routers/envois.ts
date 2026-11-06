@@ -1,6 +1,7 @@
 // The Envois of a space for its signed-in members (src/server/envois/envoi-service.ts holds the rules): encrypted rows
 // the page opens in the browser with the Clé d'alliance, what each member sends, and the newest key version.
 import { TRPCError } from "@trpc/server";
+import { DECLARED_CATEGORIES } from "@optizzz/game/site-links/envois";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { EnvoiError } from "~/server/envois/envoi-service";
@@ -25,12 +26,14 @@ async function rules<T>(work: () => Promise<T>): Promise<T> {
 
 export const envoisRouter = createTRPCRouter({
   /**
-   * A convoy its sender declares for a Demande, sealed on the page with the Clé d'alliance (or one they withdraw):
-   * the only Envoi the page writes, under the member's own Joueur.
+   * What a member declares by hand, sealed on the page with the Clé d'alliance (or withdraws): a convoy for a Demande
+   * (`declared-convoys`), or a flood, a convoy or a hunt from the page « Déclarer » (ADR 0010). The only Envois the
+   * page writes, one at a time, under the member's own Joueur.
    */
-  declareConvoy: protectedProcedure
+  declare: protectedProcedure
     .input(
       z.object({
+        category: z.enum(DECLARED_CATEGORIES),
         server: z.string().max(8),
         playerId: z.number().int(),
         keyVersion: z.number().int(),
@@ -40,9 +43,7 @@ export const envoisRouter = createTRPCRouter({
         removed: z.array(z.string().max(64)).max(1),
       }),
     )
-    .mutation(({ ctx, input }) =>
-      rules(() => envois.saveEnvoi(ctx.userId, { ...input, category: "declared-convoys" })),
-    ),
+    .mutation(({ ctx, input }) => rules(() => envois.saveEnvoi(ctx.userId, input))),
   space: protectedProcedure
     .input(z.object({ spaceId: z.string().max(64), since: z.number().int().nonnegative().optional() }))
     .query(async ({ ctx, input }) => {
