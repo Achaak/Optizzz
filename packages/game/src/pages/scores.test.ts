@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { readMembersScores, readProfile, readProfileState } from "./scores";
+import { readMembersScores, readProfile, readProfileState, readProfileTravelTime } from "./scores";
 
 const load = (path: string) => {
   const doc = document.implementation.createHTMLDocument();
@@ -62,5 +62,25 @@ describe("readProfileState", () => {
 
   it("is null without the « Etat » row", () => {
     expect(readProfileState(load("./__fixtures__/members.html"))).toBeNull();
+  });
+});
+
+describe("readProfileTravelTime", () => {
+  it("reads « Temps de trajet », shown with Compte+ (s5, 2026-10-08)", () => {
+    const doc = load("./__fixtures__/profile.html");
+    const body = doc.querySelector<HTMLTableSectionElement>(".boite_membre table tbody");
+    for (const [label, value] of [
+      ["Distance :", "29"],
+      ["Temps de trajet :", "10H 1m 2s"],
+    ]) {
+      const row = body?.insertRow();
+      row?.insertCell().append(label ?? "");
+      row?.insertCell().append(value ?? "");
+    }
+    expect(readProfileTravelTime(doc)).toBe(36_062);
+  });
+
+  it("is null when the profile does not show it (without Compte+)", () => {
+    expect(readProfileTravelTime(load("./__fixtures__/profile.html"))).toBeNull();
   });
 });

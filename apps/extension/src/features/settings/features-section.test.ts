@@ -50,6 +50,7 @@ describe("buildFeaturesSection", () => {
       "members-columns.roles",
       "profile-production",
       "flood",
+      "timing",
       "research-advice",
       "research-advice.weapons-shield",
       "research-advice.architecture",

@@ -113,7 +113,7 @@ Règles à respecter (`reglement.md`, C2 et C3) : le clic final reste celui du j
 
 ## Cadrage de la feature « Timing à la seconde »
 
-Décidé avec le joueur le 2026-11-04 (`/grilling`). Le code reste à faire (chantier 30) ; la page de feature (`docs/features/`) s'écrira avec lui.
+Décidé avec le joueur le 2026-11-04 (`/grilling`). Codé le 2026-11-04 : `../features/timing.md` (avec un écart à la décision 6, expliqué là-bas).
 
 1. **Où** : sur le formulaire d'attaque seulement (`ennemie.php?Attaquer=<id>`), un bloc juste au-dessus du bouton « Attaquer », indépendant du Plan de flood (son propre interrupteur « Timing à la seconde » dans « Fonctionnalités », il marche Plan de flood coupé, sans toucher à son encart).
 2. **Arrivée visée** : par défaut, la prochaine arrivée à :59 qu'on a encore le temps de viser (au moins 10 s de préparation), qui passe à la minute suivante quand la fenêtre est ratée. Un champ facultatif « Arrivée visée » (« 23 h 40 ») choisit la minute pour une synchro ; le bloc donne alors l'heure de départ et le compte à rebours quand elle approche. La seconde visée est toujours :59, sans réglage.

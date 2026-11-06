@@ -39,6 +39,7 @@ function details(doc: Document, place: string | null, troops: string | null): No
 
 function attackItem(doc: Document, attack: AttackLine): OnWayItem {
   return {
+    id: attack.countdown.id,
     to: attack.targetElement?.cloneNode(true) ?? doc.createTextNode(attack.target),
     details: details(doc, attack.place, attack.troops),
     arrivesAt: attack.arrivesAt,

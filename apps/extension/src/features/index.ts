@@ -30,6 +30,7 @@ import { settingsMenu } from "./settings";
 import { siteLinks } from "./site-links";
 import { tdcChainMenu } from "./tdc-chain/menu";
 import { targets } from "./targets";
+import { timing } from "./timing";
 import { watchlist } from "./watchlist";
 import { workQueue } from "./work-queue";
 
@@ -69,6 +70,8 @@ export const features: Feature[] = [
   layingBoostAdvice,
   aphidsAdviceFeature,
   attacksOnWay,
+  // After « Attaques en cours »: its verdicts go in that list's rows.
+  timing,
   probes,
   combatSimulator,
   serverMap,

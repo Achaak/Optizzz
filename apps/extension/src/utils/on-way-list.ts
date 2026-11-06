@@ -6,6 +6,8 @@ import { formatEndTime, formatGameDuration } from "@optizzz/game/format/time-for
 export type Copy = (text: string) => Promise<void>;
 
 export interface OnWayItem {
+  /** The game's id for it (`attaque_<n>`), on its row: other features find their line there. */
+  id?: string;
   /** Who it goes to (or comes from, with `incoming`): the game's link, cloned. */
   to: Node;
   /** Coming to me rather than going: « ← de X » in place of « → X ». */
@@ -105,6 +107,7 @@ export function renderOnWayList(
 
     const row = doc.createElement("div");
     row.className = "optizzz-on-way-row";
+    if (item.id) row.dataset.optizzzOnWay = item.id;
     row.append(
       span(doc, "optizzz-on-way-to", item.incoming ? "← de " : item.returning ? "← " : "→ ", item.to),
       span(doc, "optizzz-on-way-details", ...item.details),

@@ -51,6 +51,7 @@ Une fois installée, ouvrez une page du jeu : les outils apparaissent d'eux-mêm
 - **Simulateur de combat** : par-dessus le jeu, depuis la barre du haut ou l'icône de l'extension.
 - **Cibles à portée** : sur Ennemies, les joueurs attaquables triés par distance, avec trajet, état, pactes et guerres.
 - **Plan de flood** : les attaques qui prennent le plus de TDC avec votre armée ; un bouton remplit le formulaire, vous validez vous-même.
+- **Timing à la seconde** : sur le formulaire d'attaque, l'heure du jeu et le moment de cliquer pour arriver à la 59e seconde d'une minute ; après l'envoi, la seconde d'arrivée réelle. Le clic reste le vôtre.
 - **Attaques en cours** : une liste lisible avec décompte, heure d'arrivée, lieu et troupes, et un bouton pour copier chacune.
 - **Anti-sondes** : une fourmi gardée sur le Dôme et la Loge (et le Terrain si vous le voulez) pour que le rapport d'une attaque montre l'armée de l'attaquant.
 - **Production sur les profils** : ce que le TDC d'un joueur récolte par jour au plus.
