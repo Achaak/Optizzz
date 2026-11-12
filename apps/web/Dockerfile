@@ -18,7 +18,8 @@ COPY packages/game/package.json packages/game/
 COPY packages/map/package.json packages/map/
 COPY apps/web/prisma apps/web/prisma
 COPY apps/web/prisma.config.ts apps/web/
-RUN pnpm install --frozen-lockfile --filter "@optizzz/web..."
+# pnpm's metadata cache (400 MB) only speeds up the next install: left out of the images.
+RUN pnpm install --frozen-lockfile --filter "@optizzz/web..." && rm -rf /root/.cache/pnpm
 COPY packages packages
 COPY apps/web apps/web
 

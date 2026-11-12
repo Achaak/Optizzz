@@ -7,6 +7,12 @@ cd "$(dirname "$0")"
 tag="${1:?usage: deploy.sh <tag>}"
 compose() { docker compose --profile tools "$@"; }
 
+# The images of versions neither online nor asked for (a failed deploy's, say): room for the new ones before they come.
+current="$(grep '^TAG=' .env | cut -d= -f2- || true)"
+docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/achaak/optizzz-' |
+  grep -v -e ":$tag\$" ${current:+-e ":$current\$"} | xargs -r docker rmi >/dev/null || true
+docker image prune -f >/dev/null
+
 # Downloaded before .env names them: until then, the hourly ingest (ingest.sh) keeps the images it has.
 TAG="$tag" compose pull --quiet web tools
 # The tag stays in .env: the hourly ingest runs the same version as the site.
