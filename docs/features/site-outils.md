@@ -82,7 +82,12 @@ Ajouté le 2026-11-12 après le refus d'AdSense (`site-publicite.md`). Maquette 
 - À gauche, le titre, le sommaire et « Lire le guide » quand le guide de l'outil est écrit ; le texte à droite (dessous sur téléphone).
 - La publicité de l'outil vient sous ce texte, jamais à côté du formulaire. Un outil sans aide n'en a pas.
 - Briques : `apps/web/src/components/tools/tool-help.tsx` (`ToolHelp`, `HelpSection`, `Formula`) ; `ToolPage` prend l'aide en `help`.
-- Fait : simulateur de chasse (`hunt/hunt-help.tsx`, d'après `../research/chasse.md`). À faire : combat, flood, trajet, coûts.
+- Les cinq outils ont la leur, chacune dans le dossier de son outil :
+  - chasse (`hunt/hunt-help.tsx`, `../research/chasse.md`) : difficulté, durée, combat et pertes, « zéro perte », une chasse ou plusieurs ;
+  - trajet (`travel/travel-help.tsx`, `../research/temps-de-trajet.md`) : la formule et la mesure du profil du 8 oct. 2026, la Vitesse d'attaque, la distance affichée, les convois ;
+  - coûts (`costs/costs-help.tsx`, `../research/couts-des-niveaux.md`) : coût, durée, bonus, ressources ;
+  - combat (`combat/combat-help.tsx`, `../research/combat.md`) : le tableau des unités lu dans `UNITS`, les coups, les lieux, les gains, ce qui est supposé ;
+  - flood (`flood/flood-help.tsx`) : les règles, la répartition du plan et un exemple calculé par `planFlood`.
 
 ## Hors 2b
 

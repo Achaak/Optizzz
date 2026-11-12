@@ -16,7 +16,7 @@ Pages publiques seulement, et seulement quand la page a de quoi être lue : une 
 - vue d'ensemble d'un serveur, entre les graphiques et les classements ;
 - listes des joueurs et des alliances, sous le tableau, au-dessus des pages, si la liste n'est pas vide ;
 - journal d'un serveur, s'il montre des changements ;
-- outil qui a son « Comment ça marche » (le simulateur de chasse pour l'instant), sous ce texte ;
+- outils, sous leur « Comment ça marche », jamais à côté du formulaire ;
 - guides (`site-guides.md`), sous la liste et en bas d'un guide, après son pied, jamais au milieu du texte.
 
 Jamais dans les Espaces d'alliance, le compte, la connexion ni les pages légales, ni sur les pages `noindex` (fiche d'un joueur, fiche d'une alliance, Comparer), ni dans un outil sans « Comment ça marche », ni sur « À propos ».

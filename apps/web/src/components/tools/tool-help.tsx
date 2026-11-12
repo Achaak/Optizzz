@@ -89,6 +89,15 @@ export function HelpSection({
   );
 }
 
+/** A duration to the second, spelled out in an example: « 10 h 01 min 02 s », « 56 min 17 s ». */
+export function spelledDuration(totalSeconds: number): string {
+  const seconds = Math.round(totalSeconds);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const rest = `${String(minutes).padStart(hours ? 2 : 1, "0")} min ${String(seconds % 60).padStart(2, "0")} s`;
+  return hours ? `${String(hours)} h ${rest}` : rest;
+}
+
 /** A formula, as the game would compute it, one line per step. */
 export function Formula({ children }: { children: string }) {
   return (

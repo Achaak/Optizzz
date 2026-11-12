@@ -2,7 +2,7 @@
 // computed by the same functions. Server component.
 import { formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import { difficulty, foodTarget, huntDurationSeconds } from "@optizzz/game/hunt/difficulty";
-import { Formula, HelpSection, ToolHelp } from "~/components/tools/tool-help";
+import { Formula, HelpSection, spelledDuration, ToolHelp } from "~/components/tools/tool-help";
 
 const HEADINGS = [
   { id: "difficulte", title: "La difficulté" },
@@ -59,12 +59,9 @@ difficulté = (s + 1 % du TDC) × palier × 3`}</Formula>
         <Formula>{"secondes = (TDC au lancement + s) × 0,9 ^ Vitesse de chasse"}</Formula>
         <p>
           Avec la Vitesse de chasse {HUNT_SPEED}, la chasse de l&apos;exemple dure{" "}
-          <strong>
-            {Math.floor(seconds / 60)} min {String(seconds % 60).padStart(2, "0")} s
-          </strong>
-          . Vous pouvez avoir <strong>Vitesse de chasse + 1</strong> chasses en route en même temps. Lancées ensemble,
-          elles ont la même durée, reviennent dans l&apos;ordre du lancement, et chacune combat au TDC laissé par les
-          précédentes.
+          <strong>{spelledDuration(seconds)}</strong>. Vous pouvez avoir <strong>Vitesse de chasse + 1</strong> chasses
+          en route en même temps. Lancées ensemble, elles ont la même durée, reviennent dans l&apos;ordre du lancement,
+          et chacune combat au TDC laissé par les précédentes.
         </p>
       </HelpSection>
 
