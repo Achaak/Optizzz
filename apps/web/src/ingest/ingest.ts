@@ -66,9 +66,19 @@ const playersOf = async (origin: string, version: string) =>
 const alliancesOf = async (origin: string, version: string) =>
   z.array(allianceSchema).parse(await getJson(exportUrl(origin, "alliances", version)));
 
-async function inChunks<T>(rows: readonly T[], insert: (chunk: T[]) => Promise<unknown>) {
-  for (let start = 0; start < rows.length; start += CHUNK) await insert(rows.slice(start, start + CHUNK));
+async function inChunks<T>(rows: readonly T[], insert: (chunk: T[]) => Promise<unknown>, size = CHUNK) {
+  for (let start = 0; start < rows.length; start += size) await insert(rows.slice(start, start + size));
 }
+
+/**
+ * A day's rows, all or none: a day counts as stored as soon as it has a row (days.ts), so a pass cut between two
+ * chunks must leave nothing, and the day is taken again at the next pass.
+ */
+export const storePlayerDays = (db: PrismaClient, rows: Prisma.PlayerDayCreateManyInput[], size = CHUNK) =>
+  db.$transaction(
+    (tx) => inChunks(rows, (chunk) => tx.playerDay.createMany({ data: chunk, skipDuplicates: true }), size),
+    { timeout: 600_000, maxWait: 30_000 },
+  );
 
 /** Inserts or updates `players` in one statement: one array per column, unlike `createMany` and its 70 000 parameters. */
 const upsertPlayers = (tx: Prisma.TransactionClient, server: string, players: readonly Player[]) =>
@@ -260,7 +270,7 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
       technologyScore: player.technologyScore,
       trophyScore: player.trophyScore,
     }));
-    await inChunks(rows, (chunk) => db.playerDay.createMany({ data: chunk, skipDuplicates: true }));
+    await storePlayerDays(db, rows);
     report.days++;
   }
 
