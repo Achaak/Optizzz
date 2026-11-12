@@ -147,11 +147,14 @@ describe("collect", () => {
   });
 
   it("keeps the convoys delivered and received listed by the inbox, only when that option is on", async () => {
+    // The fixture's dates are those of the day it was read: later, its oldest convoys pass the month kept.
+    vi.useFakeTimers({ now: new Date(2026, 9, 19, 12, 30), toFake: ["Date"] });
     history.replaceState(null, "", "/messagerie.php");
     document.body.innerHTML = new DOMParser().parseFromString(messagerieHtml, "text/html").body.innerHTML;
     await collect.run(ctx, { "convoy.history": false });
     expect(await loadConvoyHistory(ORIGIN)).toBeNull();
     await collect.run(ctx, {});
     expect((await loadConvoyHistory(ORIGIN))?.messages).toHaveLength(5);
+    vi.useRealTimers();
   });
 });
