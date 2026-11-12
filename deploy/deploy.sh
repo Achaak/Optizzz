@@ -13,6 +13,12 @@ docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/achaak/optizz
   grep -v -e ":$tag\$" ${current:+-e ":$current\$"} | xargs -r docker rmi >/dev/null || true
 docker image prune -f >/dev/null
 
+# The previous tools image (2.4 GB) goes first: the disk does not hold two of them (deploy of 2026-11-12, « no space
+# left on device »). No container keeps it running; an hourly ingest started meanwhile pulls it back.
+docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/achaak/optizzz-tools:' | grep -v ":$tag\$" |
+  xargs -r docker rmi >/dev/null || true
+docker image prune -f >/dev/null
+
 # Downloaded before .env names them: until then, the hourly ingest (ingest.sh) keeps the images it has.
 TAG="$tag" compose pull --quiet web tools
 # The tag stays in .env: the hourly ingest runs the same version as the site.
