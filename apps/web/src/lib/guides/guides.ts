@@ -59,7 +59,9 @@ export const GUIDES: readonly GuideEntry[] = [
     description:
       "La récolte par paquets toutes les 30 minutes, la champignonnière, ce que mange l'armée selon l'endroit où elle se trouve, et la taxe d'une colonie.",
     topics: ["48 par ouvrière et par jour", "5, 10 ou 15 %"],
-    ready: false,
+    ready: true,
+    updated: "2026-11-12",
+    readingMinutes: 8,
   },
   {
     id: "combat",

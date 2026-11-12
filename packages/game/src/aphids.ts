@@ -3,7 +3,7 @@
 import { colonyTaxRate, estimateProduction } from "./production";
 
 /** Resources one worker carries: 10, plus 5 % per Étable à pucerons level (help of commerce.php). */
-const carriedPerWorker = (aphids: number) => 10 * (1 + 0.05 * aphids);
+export const carriedPerWorker = (aphids: number) => 10 * (1 + 0.05 * aphids);
 
 export function workersNeeded(resources: number, aphids: number): number {
   return Math.ceil(resources / carriedPerWorker(aphids) - 1e-9);

@@ -68,6 +68,10 @@ Refaite après le refus d'AdSense (maquette « E · Guides (liste) ») : « Comp
 
 `/guides/travel`. Plan : de quoi dépend un trajet ; la distance ; la formule et ses deux mesures dans le jeu (profil du 8 oct., attaques du 4 nov. 2026, positions sans pseudos) ; près ou loin (tableau distance × Vitesse d'attaque) ; la Vitesse d'attaque et son coût (`levelCost`) ; les convois ; lire un trajet dans le jeu ; avec Optizzz ; ce qui n'est pas vérifié. Tout est calculé par `travelTime`. Source : `../research/temps-de-trajet.md`. **À relire par le joueur.**
 
+## Guide « Nourriture et entretien » (2026-11-12)
+
+`/guides/food`. Plan : deux ressources ; la récolte des ouvrières (48 par jour, une ouvrière par cm², par paquets) ; la champignonnière ; ce que mange l'armée (tableau calculé depuis `UNITS` pour 5, 10 et 15 %) ; la famine ; la taxe de colonie (`colonyTaxRate`) ; les convois (`carriedPerWorker`, exporté pour l'occasion) ; le bilan d'une journée d'un joueur inventé ; avec Optizzz ; ce qui n'est pas vérifié. Source : `../research/ressources-et-entretien.md`. **À relire par le joueur.**
+
 ## Réalisation
 
 - **Le registre** (`apps/web/src/lib/guides/guides.ts`) : les guides dans l'ordre de lecture, par groupe (`GUIDE_GROUPS`), écrits ou « bientôt », leurs repères, leur outil, la date de mise à jour et la durée de lecture.
