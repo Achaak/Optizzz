@@ -54,6 +54,12 @@ Un sommaire en tête de page. Sources : `../research/combat.md`, `chaine-tdc.md`
 
 Refaite après le refus d'AdSense (maquette « E · Guides (liste) ») : « Comprendre Fourmizzz », l'explication des trois mentions, puis les guides en deux groupes, **Les bases** (Bien débuter, La chasse, Nourriture et entretien, Le combat, Les temps de trajet) et **En alliance** (Chaîne de TDC, Flood, Timing à la seconde). Chaque carte : numéro, durée et date une fois écrit, résumé, quelques repères ; « Bientôt » tant que le guide n'est pas écrit. Sous les groupes, « Du guide à l'outil » relie chaque guide à son outil (`tool` du registre). Les nouveaux guides s'appuient sur `../research/` (chasse, combat, trajets, ressources), avec les mêmes règles de mentions et de sources.
 
+## Guide « La chasse » (2026-11-12)
+
+`/guides/hunt`, écrit après le refus d'AdSense. Plan : ce que rapporte une chasse ; la difficulté (formule, tableau calculé par `difficulty` pour 500 à 500 000 cm²) ; la durée et les chasses à la fois (`huntDurationSeconds`) ; les proies (tableau de `PREYS`, tirage « d'après les joueurs ») ; le combat ; les pertes (demi-vie « d'après les joueurs ») ; les promotions ; bien choisir sa chasse (« zéro perte », une chasse ou plusieurs) ; avec Optizzz ; ce qui n'est pas vérifié. Source : `../research/chasse.md`, sans nommer les sites ou outils de joueurs d'où viennent certaines règles. Le tableau « zéro perte » reprend les mesures du moteur de `chasse.md` (le planificateur est trop lent pour un rendu). Le « Comment ça marche » du simulateur de chasse y mène.
+
+**À relire par le joueur**, comme le premier guide.
+
 ## Réalisation
 
 - **Le registre** (`apps/web/src/lib/guides/guides.ts`) : les guides dans l'ordre de lecture, par groupe (`GUIDE_GROUPS`), écrits ou « bientôt », leurs repères, leur outil, la date de mise à jour et la durée de lecture.

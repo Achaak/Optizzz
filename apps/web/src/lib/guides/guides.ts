@@ -47,7 +47,9 @@ export const GUIDES: readonly GuideEntry[] = [
       "Ce qui fixe la difficulté d'une chasse, sa durée et ses pertes, et pourquoi une grosse chasse rapporte souvent plus que plusieurs petites.",
     topics: ["Difficulté", "Vitesse de chasse", "Promotions"],
     tool: "hunt",
-    ready: false,
+    ready: true,
+    updated: "2026-11-12",
+    readingMinutes: 10,
   },
   {
     id: "food",
