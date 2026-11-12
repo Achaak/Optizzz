@@ -3,16 +3,23 @@
 import type { SiteToolId } from "@optizzz/game/site-links/site";
 import { cn } from "cn";
 import type { ReactNode } from "react";
+import { AdSlot } from "~/components/ad-slot";
 import { SmallLabel, PageHeader } from "~/components/panel";
 import { TOOLS } from "./tool-list";
 
-/** A tool's page: `children` is its client component, laid out with `ToolLayout`. */
-export function ToolPage({ tool, children }: { tool: SiteToolId; children: ReactNode }) {
+/**
+ * A tool's page: `children` is its client component, laid out with `ToolLayout`. Its `help` (« Comment ça marche »,
+ * `ToolHelp`) is rendered by the server, so the page has something to read before any input; the ad comes under it,
+ * never beside an empty form (docs/features/site-publicite.md).
+ */
+export function ToolPage({ tool, help, children }: { tool: SiteToolId; help?: ReactNode; children: ReactNode }) {
   const entry = TOOLS.find((candidate) => candidate.id === tool);
   return (
     <div className="space-y-6">
       <PageHeader title={entry?.title}>{entry?.description}</PageHeader>
       {children}
+      {help}
+      {help && <AdSlot />}
     </div>
   );
 }

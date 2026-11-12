@@ -74,6 +74,16 @@ Fait le 2026-10-23 (ticket 05). Ajouter un outil : sa page `apps/web/src/app/too
 
 Tant qu'aucun outil n'importe les fichiers de `apps/web/src/components/tools/`, ils sont déclarés comme points d'entrée dans `knip.json` : knip ne signale donc pas leurs exports encore inutilisés. L'entrée peut partir quand les outils s'en servent.
 
+## Aide d'un outil (« Comment ça marche »)
+
+Ajouté le 2026-11-12 après le refus d'AdSense (`site-publicite.md`). Maquette : artboard « E · Outil : « Comment ça marche » (chasse) » du canevas « Optizzz — maquettes du site ».
+
+- Sous l'outil, un texte **rendu par le serveur**, présent avant toute saisie : les règles que suit l'outil, numérotées, chacune avec sa mention (`CertaintyMark` des guides) quand elle en a une, une formule et un exemple calculé avec les fonctions de `@optizzz/game`.
+- À gauche, le titre, le sommaire et « Lire le guide » quand le guide de l'outil est écrit ; le texte à droite (dessous sur téléphone).
+- La publicité de l'outil vient sous ce texte, jamais à côté du formulaire. Un outil sans aide n'en a pas.
+- Briques : `apps/web/src/components/tools/tool-help.tsx` (`ToolHelp`, `HelpSection`, `Formula`) ; `ToolPage` prend l'aide en `help`.
+- Fait : simulateur de chasse (`hunt/hunt-help.tsx`, d'après `../research/chasse.md`). À faire : combat, flood, trajet, coûts.
+
 ## Hors 2b
 
 Prérequis et listes de plusieurs éléments dans l'outil des coûts ; ponte des ouvrières d'une recherche ; suivi d'attaques en route sur le site ; bouton de l'extension vers les trajets ou les coûts.

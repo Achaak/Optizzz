@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GUIDES, guide, guidePath, longDay } from "./guides";
+import { GUIDE_GROUPS, GUIDES, guide, guidePath, longDay } from "./guides";
 
 describe("guides", () => {
   it("gives each guide an address under /guides", () => {
@@ -9,6 +9,11 @@ describe("guides", () => {
   it("dates every written guide", () => {
     for (const entry of GUIDES.filter((candidate) => candidate.ready))
       expect(entry.updated).toMatch(/^\d{4}-\d\d-\d\d$/);
+  });
+
+  it("files every guide under a group shown on the list", () => {
+    const groups = GUIDE_GROUPS.map((group) => group.id);
+    for (const entry of GUIDES) expect(groups).toContain(entry.group);
   });
 
   it("refuses an unknown guide", () => {

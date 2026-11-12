@@ -49,6 +49,9 @@ export function SiteFooter() {
         </svg>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
           <span>Données : export public de Fourmizzz, relu chaque heure</span>
+          <Link href="/about" className="hover:text-foreground">
+            À propos
+          </Link>
           <Link href="/legal" className="hover:text-foreground">
             Mentions légales
           </Link>
