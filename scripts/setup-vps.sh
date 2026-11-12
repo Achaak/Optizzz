@@ -220,6 +220,8 @@ say "Seuls SSH, HTTP et HTTPS entrent ; Postgres n'est jamais ouvert sur Interne
 open_url "https://console.scaleway.com/instance/security-groups"
 step "Le groupe de l'instance → Inbound default policy : Drop."
 step "Règles entrantes Accept : TCP 22, TCP 80, TCP 443, UDP 443 (HTTP/3)."
+step "Chacune deux fois : plage 0.0.0.0/0 (IPv4) et plage ::/0 (IPv6)."
+note "Sans les règles ::/0, l'AAAA mène à un mur : le site semble en panne pour qui passe en IPv6."
 pause "Fait ? Entrée pour continuer"
 
 stage "Préparer la machine"
