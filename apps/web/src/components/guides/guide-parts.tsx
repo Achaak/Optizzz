@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { AdSlot } from "~/components/ad-slot";
 import { PageHeader, SmallLabel } from "~/components/panel";
 import { CHROME_STORE, FIREFOX_ADDONS } from "~/lib/extension-stores";
-import { GUIDES, guide, guidePath, longDay } from "~/lib/guides/guides";
+import { guide, guidePath, longDay, WRITTEN_GUIDES } from "~/lib/guides/guides";
 
 export type Certainty = "checked" | "players" | "unchecked";
 
@@ -125,7 +125,7 @@ function TableOfContents({ headings }: { headings: readonly GuideHeading[] }) {
 
 function GuideFooter({ id }: { id: string }) {
   const entry = guide(id);
-  const others = GUIDES.filter((candidate) => candidate.id !== id);
+  const others = WRITTEN_GUIDES.filter((candidate) => candidate.id !== id);
   return (
     <footer className="guide-footer grid gap-6 border-t pt-5 sm:grid-cols-2">
       <div className="space-y-1.5">
@@ -141,18 +141,12 @@ function GuideFooter({ id }: { id: string }) {
           <ul className="flex flex-wrap gap-2">
             {others.map((other) => (
               <li key={other.id}>
-                {other.ready ? (
-                  <Link
-                    href={guidePath(other.id)}
-                    className="block rounded-full border px-3 py-1 text-sm hover:bg-accent"
-                  >
-                    {other.shortTitle}
-                  </Link>
-                ) : (
-                  <span className="block rounded-full border px-3 py-1 text-sm text-muted-foreground">
-                    {other.shortTitle} · bientôt
-                  </span>
-                )}
+                <Link
+                  href={guidePath(other.id)}
+                  className="block rounded-full border px-3 py-1 text-sm hover:bg-accent"
+                >
+                  {other.shortTitle}
+                </Link>
               </li>
             ))}
           </ul>

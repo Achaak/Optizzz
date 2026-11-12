@@ -1,12 +1,10 @@
 import { siteToolPath } from "@optizzz/game/site-links/site";
-import { cn } from "cn";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AdSlot } from "~/components/ad-slot";
 import { CertaintyMark } from "~/components/guides/guide-parts";
 import { PageHeader, SmallLabel } from "~/components/panel";
 import { TOOLS } from "~/components/tools/tool-list";
-import { GUIDE_GROUPS, GUIDES, guidePath, longDay, type GuideEntry } from "~/lib/guides/guides";
+import { GUIDE_GROUPS, guidePath, longDay, WRITTEN_GUIDES, type GuideEntry } from "~/lib/guides/guides";
 
 export const metadata: Metadata = {
   title: "Guides",
@@ -22,22 +20,13 @@ function GuideCard({ guide, number }: { guide: GuideEntry; number: number }) {
     guide.updated && `mis à jour le ${longDay(guide.updated)}`,
   ].filter(Boolean);
   return (
-    <li
-      className={cn("relative flex flex-col gap-2 rounded-[0.875rem] bg-card p-5 shadow-panel", guide.ready && "lift")}
-    >
-      <div className="flex items-baseline justify-between gap-3">
-        <SmallLabel>{facts.join(" · ")}</SmallLabel>
-        {!guide.ready && <SmallLabel className="rounded-full border px-2">Bientôt</SmallLabel>}
-      </div>
+    <li className="lift relative flex flex-col gap-2 rounded-[0.875rem] bg-card p-5 shadow-panel">
+      <SmallLabel>{facts.join(" · ")}</SmallLabel>
       <h3 className="font-heading text-[1.75rem] leading-none font-bold uppercase">
-        {guide.ready ? (
-          // The whole card is the link: its title stretches over it.
-          <Link href={guidePath(guide.id)} className="after:absolute after:inset-0 hover:text-primary">
-            {guide.title}
-          </Link>
-        ) : (
-          guide.title
-        )}
+        {/* The whole card is the link: its title stretches over it. */}
+        <Link href={guidePath(guide.id)} className="after:absolute after:inset-0 hover:text-primary">
+          {guide.title}
+        </Link>
       </h3>
       <p className="text-sm text-muted-foreground">{guide.description}</p>
       <ul className="mt-auto flex flex-wrap gap-1.5 pt-1" aria-label="Dans ce guide">
@@ -74,7 +63,7 @@ function CertaintyLegend() {
 
 /** Each guide's tool: the guides' examples and the tools share their code. */
 function GuidesToTools() {
-  const links = GUIDES.flatMap((guide) => {
+  const links = WRITTEN_GUIDES.flatMap((guide) => {
     const tool = TOOLS.find((entry) => entry.id === guide.tool && entry.ready);
     return tool ? [{ guide, tool }] : [];
   });
@@ -110,14 +99,14 @@ export default function GuidesPage() {
   return (
     <div className="space-y-9">
       <div className="grid items-end gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1fr)_26rem]">
-        <PageHeader title="Comprendre Fourmizzz" kicker={`Guides · ${String(GUIDES.length)} guides`}>
+        <PageHeader title="Comprendre Fourmizzz" kicker={`Guides · ${String(WRITTEN_GUIDES.length)} guides`}>
           Les règles du jeu expliquées une par une, avec des exemples chiffrés sur une alliance inventée. Écrits pour un
           joueur qui connaît les bases et veut savoir pourquoi les choses se passent comme elles se passent.
         </PageHeader>
         <CertaintyLegend />
       </div>
 
-      {GUIDE_GROUPS.map((group) => (
+      {GUIDE_GROUPS.filter((group) => WRITTEN_GUIDES.some((guide) => guide.group === group.id)).map((group) => (
         <section key={group.id} aria-labelledby={`guides-${group.id}`} className="space-y-3.5">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h2 id={`guides-${group.id}`} className="font-heading text-3xl leading-none font-bold uppercase">
@@ -126,15 +115,14 @@ export default function GuidesPage() {
             <span className="text-sm text-muted-foreground">{group.description}</span>
           </div>
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {GUIDES.filter((guide) => guide.group === group.id).map((guide) => (
-              <GuideCard key={guide.id} guide={guide} number={GUIDES.indexOf(guide) + 1} />
+            {WRITTEN_GUIDES.filter((guide) => guide.group === group.id).map((guide) => (
+              <GuideCard key={guide.id} guide={guide} number={WRITTEN_GUIDES.indexOf(guide) + 1} />
             ))}
           </ul>
         </section>
       ))}
 
       <GuidesToTools />
-      <AdSlot />
     </div>
   );
 }

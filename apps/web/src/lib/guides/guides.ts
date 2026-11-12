@@ -124,6 +124,12 @@ export const GUIDES: readonly GuideEntry[] = [
   },
 ];
 
+/**
+ * The guides a reader can open. Those still to write are kept in `GUIDES` for their place and their text, but never
+ * shown: a page that announces « bientôt » looks under construction to an ad reviewer (site-publicite.md).
+ */
+export const WRITTEN_GUIDES: readonly GuideEntry[] = GUIDES.filter((entry) => entry.ready);
+
 export const guidePath = (id: string) => `/guides/${id}`;
 
 export function guide(id: string): GuideEntry {

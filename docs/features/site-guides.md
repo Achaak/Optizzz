@@ -52,7 +52,7 @@ Un sommaire en tête de page. Sources : `../research/combat.md`, `chaine-tdc.md`
 
 ## Liste des guides (2026-11-12)
 
-Refaite après le refus d'AdSense (maquette « E · Guides (liste) ») : « Comprendre Fourmizzz », l'explication des trois mentions, puis les guides en deux groupes, **Les bases** (Bien débuter, La chasse, Nourriture et entretien, Le combat, Les temps de trajet) et **En alliance** (Chaîne de TDC, Flood, Timing à la seconde). Chaque carte : numéro, durée et date une fois écrit, résumé, quelques repères ; « Bientôt » tant que le guide n'est pas écrit. Sous les groupes, « Du guide à l'outil » relie chaque guide à son outil (`tool` du registre). Les nouveaux guides s'appuient sur `../research/` (chasse, combat, trajets, ressources), avec les mêmes règles de mentions et de sources.
+Refaite après le refus d'AdSense (maquette « E · Guides (liste) ») : « Comprendre Fourmizzz », l'explication des trois mentions, puis les guides en deux groupes, **Les bases** (Bien débuter, La chasse, Nourriture et entretien, Le combat, Les temps de trajet) et **En alliance** (Chaîne de TDC, Flood, Timing à la seconde). Chaque carte : numéro, durée, date, résumé, quelques repères. Un guide pas encore écrit n'apparaît nulle part, ni dans la liste ni dans le pied des autres (`WRITTEN_GUIDES`) : une page qui annonce « bientôt » passe pour en construction auprès d'AdSense. Sous les groupes, « Du guide à l'outil » relie chaque guide à son outil (`tool` du registre). Les nouveaux guides s'appuient sur `../research/` (chasse, combat, trajets, ressources), avec les mêmes règles de mentions et de sources.
 
 ## Guide « La chasse » (2026-11-12)
 

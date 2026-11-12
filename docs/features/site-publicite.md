@@ -10,18 +10,15 @@ Décidé le 2026-10-30, après la refonte (`site-refonte.md`) : Google AdSense, 
 
 ## Où
 
-Pages publiques seulement, et seulement quand la page a de quoi être lue : une unité « display » responsive, marquée « Publicité », sa hauteur réservée.
+Seulement sur les pages faites d'un texte rédigé : une unité « display » responsive, marquée « Publicité », sa hauteur réservée.
 
-- accueil (visiteur), entre « Serveurs » et le bandeau de l'extension ;
-- vue d'ensemble d'un serveur, entre les graphiques et les classements ;
-- listes des joueurs et des alliances, sous le tableau, au-dessus des pages, si la liste n'est pas vide ;
-- journal d'un serveur, s'il montre des changements ;
+- guides (`site-guides.md`), en bas d'un guide, après son pied, jamais au milieu du texte ;
 - outils, sous leur « Comment ça marche », jamais à côté du formulaire ;
-- guides (`site-guides.md`), sous la liste et en bas d'un guide, après son pied, jamais au milieu du texte.
+- vue d'ensemble d'un serveur, entre les graphiques et les classements.
 
-Jamais dans les Espaces d'alliance, le compte, la connexion ni les pages légales, ni sur les pages `noindex` (fiche d'un joueur, fiche d'une alliance, Comparer), ni dans un outil sans « Comment ça marche », ni sur « À propos ».
+Jamais sur l'accueil ni sur la liste des guides (des pages de navigation), ni sur les listes des joueurs et des alliances ou le Journal (des données sans texte), ni dans les Espaces d'alliance, le compte, la connexion ni les pages légales, ni sur les pages `noindex` (fiche d'un joueur, fiche d'une alliance, Comparer), ni dans un outil sans « Comment ça marche », ni sur « À propos ».
 
-Refus d'AdSense du 2026-11-09 : « Annonces Google diffusées sur des pages ou écrans sans contenu d'éditeur » et « Contenu à faible valeur informative ». D'où les règles ci-dessus : une page que l'on dit soi-même sans intérêt pour un moteur (`noindex`), un outil dont le serveur ne rend qu'un formulaire et un résultat vide, une liste ou un journal vides ne portent pas d'annonce. Un outil retrouve la sienne avec son texte rendu par le serveur (`ToolPage`, prop `help`, `site-outils.md`), l'annonce sous ce texte. Le second motif se règle par le contenu : les guides, « À propos » (`site-a-propos.md`) et l'aide des outils.
+Refus d'AdSense du 2026-11-09 : « Annonces Google diffusées sur des pages ou écrans sans contenu d'éditeur » et « Contenu à faible valeur informative ». D'où les règles ci-dessus : une page que l'on dit soi-même sans intérêt pour un moteur (`noindex`), un outil dont le serveur ne rend qu'un formulaire et un résultat vide, une liste ou un journal vides ne portent pas d'annonce. Un outil retrouve la sienne avec son texte rendu par le serveur (`ToolPage`, prop `help`, `site-outils.md`), l'annonce sous ce texte. Le 2026-11-12, après relecture des règles d'AdSense (« pages en cours de construction », « pages de navigation »), les guides à venir ne sont plus montrés nulle part (`WRITTEN_GUIDES`), les annonces quittent l'accueil, la liste des guides, les listes et le Journal, et le site publie un `sitemap.xml`. Le second motif se règle par le contenu : les guides, « À propos » (`site-a-propos.md`) et l'aide des outils.
 
 ## Réglages
 

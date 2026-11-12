@@ -2,7 +2,6 @@ import { formatNumber } from "@optizzz/game/format/number-format";
 import { dayMonth, formatDateTime, parisParts } from "@optizzz/game/format/time-format";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AdSlot } from "~/components/ad-slot";
 import { JournalActivityChart } from "~/components/journal-activity-chart";
 import { JournalList } from "~/components/journal-list";
 import { ChoiceLinks, queryHref } from "~/components/list-parts";
@@ -265,9 +264,6 @@ export default async function JournalPage({ params, searchParams }: Props) {
           </nav>
         )}
       </Panel>
-
-      {/* Never beside « Aucun changement »: an ad needs the page to say something (site-publicite.md). */}
-      {lines.length > 0 && <AdSlot />}
     </div>
   );
 }

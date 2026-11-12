@@ -4,7 +4,6 @@ import { dayMonth, formatDateTime } from "@optizzz/game/format/time-format";
 import { SERVERS } from "@optizzz/game/servers";
 import { siteToolPath } from "@optizzz/game/site-links/site";
 import Link from "next/link";
-import { AdSlot } from "~/components/ad-slot";
 import { ChangeStamp } from "~/components/change-stamp";
 import { HomeSwitch } from "~/components/home/dashboard";
 import { RememberedServer, ServerRow } from "~/components/home/remembered-server";
@@ -14,7 +13,7 @@ import { AntTrail, LiveBadge, Panel, PanelLink, SmallLabel } from "~/components/
 import { Sparkline } from "~/components/sparkline";
 import { TOOLS } from "~/components/tools/tool-list";
 import { CHROME_STORE, FIREFOX_ADDONS } from "~/lib/extension-stores";
-import { GUIDES, guidePath } from "~/lib/guides/guides";
+import { guidePath, WRITTEN_GUIDES } from "~/lib/guides/guides";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { journalPage, journalPerDay, mapSketch, serverBulletin, type ServerBulletin } from "~/server/queries";
 
@@ -144,7 +143,7 @@ function ToolsPanel() {
 
 /** The written guides, in a strip: a way into the game for a new member of an alliance. */
 function GuidesStrip() {
-  const ready = GUIDES.filter((guide) => guide.ready);
+  const ready = WRITTEN_GUIDES;
   return (
     <section
       aria-labelledby="guides-title"
@@ -349,8 +348,6 @@ export default async function Home() {
       <GuidesStrip />
 
       <ServersTable bulletins={bulletins} />
-
-      <AdSlot />
 
       <section
         id="extension"
