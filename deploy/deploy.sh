@@ -7,16 +7,11 @@ cd "$(dirname "$0")"
 tag="${1:?usage: deploy.sh <tag>}"
 compose() { docker compose --profile tools "$@"; }
 
-# The images of versions neither online nor asked for (a failed deploy's, say): room for the new ones before they come.
-current="$(grep '^TAG=' .env | cut -d= -f2- || true)"
-docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/achaak/optizzz-' |
-  grep -v -e ":$tag\$" ${current:+-e ":$current\$"} | xargs -r docker rmi >/dev/null || true
-docker image prune -f >/dev/null
-
-# The previous tools image (2.4 GB) goes first: the disk does not hold two of them (deploy of 2026-11-12, « no space
-# left on device »). No container keeps it running; an hourly ingest started meanwhile pulls it back.
-docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/achaak/optizzz-tools:' | grep -v ":$tag\$" |
-  xargs -r docker rmi >/dev/null || true
+# Every image but the new version's goes before the pull: the disk (17 GB) does not hold two tools images of 2.4 GB
+# (deploy of 2026-11-12, « no space left on device »). The online site's web image stays, its container running
+# (docker rmi refuses it); the online tools image runs in no container: an hourly ingest started meanwhile pulls it back.
+docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/achaak/optizzz-' | grep -v ":$tag\$" |
+  xargs -r docker rmi >/dev/null 2>&1 || true
 docker image prune -f >/dev/null
 
 # Downloaded before .env names them: until then, the hourly ingest (ingest.sh) keeps the images it has.
