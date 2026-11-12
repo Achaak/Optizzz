@@ -70,7 +70,9 @@ export const GUIDES: readonly GuideEntry[] = [
       "Les quatorze unités, les bonus d'Armes et de Bouclier, les trois lieux d'une fourmilière et la surpuissance au premier coup.",
     topics: ["TDC, Fourmilière, Loge", "Portée 50–300 %"],
     tool: "combat",
-    ready: false,
+    ready: true,
+    updated: "2026-11-12",
+    readingMinutes: 10,
   },
   {
     id: "travel",

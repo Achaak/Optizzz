@@ -60,6 +60,10 @@ Refaite après le refus d'AdSense (maquette « E · Guides (liste) ») : « Comp
 
 **À relire par le joueur**, comme le premier guide.
 
+## Guide « Le combat » (2026-11-12)
+
+`/guides/combat`. Plan : pourquoi attaquer, et qui (portée, attaques à la fois) ; les unités (tableau de `UNITS` avec l'attaque et la défense pour 1 000 de nourriture) ; les coups ; les trois lieux ; un combat pas à pas, calculé par `battle` (1 000 Tueuses contre une Fourmilière gardée) ; ce que rapporte une victoire ; se défendre (défense contre attaque, bonus des lieux, entretien selon le lieu) ; le score « Combat » ; avec Optizzz ; ce qui n'est pas vérifié. Sources : `../research/combat.md` et `ressources-et-entretien.md`. **À relire par le joueur.**
+
 ## Réalisation
 
 - **Le registre** (`apps/web/src/lib/guides/guides.ts`) : les guides dans l'ordre de lecture, par groupe (`GUIDE_GROUPS`), écrits ou « bientôt », leurs repères, leur outil, la date de mise à jour et la durée de lecture.
