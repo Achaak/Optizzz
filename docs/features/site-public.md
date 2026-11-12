@@ -15,7 +15,7 @@ S1 à S5, les seuls qui publient leur export (S1 à S4 en HTTP seulement, S5 en 
 
 ### Ce que garde la base
 
-- **L'état courant** de chaque joueur et de chaque alliance, réécrit chaque heure : position, alliance, colonisateur, TDC, scores, vacances, banni, diplomatie. Un joueur s'identifie par serveur et id (le pseudo peut changer).
+- **L'état courant** de chaque joueur et de chaque alliance, mis à jour chaque heure (seuls les joueurs qui ont changé sont réécrits) : position, alliance, colonisateur, TDC, scores, vacances, banni, diplomatie. Un joueur s'identifie par serveur et id (le pseudo peut changer).
 - **Un relevé par jour**, celui de minuit heure de Paris, pour les courbes des scores. Le passé est repris en relevés quotidiens depuis le premier export disponible (2026-09-30 sur S2).
 - **Le Journal des Changements**, gardé pour toujours, détecté en comparant chaque relevé horaire au précédent : joueur nouveau, disparu, pseudo changé, alliance rejointe ou quittée, colonisé ou libéré, vacances, banni ou débanni ; alliance créée, disparue, pacte ou guerre ajouté ou retiré. Pas les variations de TDC ni de scores : les courbes s'en chargent. Le journal commence au premier passage du cron.
 

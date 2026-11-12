@@ -14,22 +14,51 @@ import type { GameServer } from "@optizzz/game/servers";
 import { encodeMapData } from "@optizzz/map/map-data";
 import { gzipSync } from "node:zlib";
 import { z } from "zod";
-import type { Alliance as AllianceRow, Player as PlayerRow, PrismaClient } from "~/generated/prisma/client";
+import type { Alliance as AllianceRow, Player as PlayerRow, Prisma, PrismaClient } from "~/generated/prisma/client";
 import { columnDay, dayColumn, missingDays } from "./days";
 import { diffReadings, type Reading } from "./diff";
+import { playerWrites } from "./player-writes";
 
 /** Nightly exports taken back per pass: the history comes back in a few hours, without a burst of downloads. */
 const DAYS_PER_PASS = 10;
 /** Rows per insert. */
 const CHUNK = 5000;
 
-async function getJson(url: string): Promise<unknown> {
+/** Attempts per download: the API sometimes drops the connection in the middle of S4's export. */
+const ATTEMPTS = 3;
+
+/** The message with what Node's `fetch` hides behind « fetch failed » (ECONNRESET, a socket closed…). */
+function describe(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+  const { cause } = error;
+  if (cause instanceof Error) {
+    const code = (cause as Error & { code?: string }).code;
+    return `${error.message} (${code ? `${code}: ` : ""}${cause.message})`;
+  }
+  return error.message;
+}
+
+async function getJsonOnce(url: string): Promise<unknown> {
   const response = await fetch(url, {
     headers: { "user-agent": "Optizzz (https://optizzz.fr)" },
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(120_000),
   });
   if (!response.ok) throw new Error(`Fourmizzz API: ${String(response.status)} on ${url}`);
   return response.json();
+}
+
+async function getJson(url: string): Promise<unknown> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await getJsonOnce(url);
+    } catch (error) {
+      if (attempt >= ATTEMPTS)
+        throw new Error(`${describe(error)} on ${url} (${String(ATTEMPTS)} attempts)`, {
+          cause: error,
+        });
+      await new Promise((resolve) => setTimeout(resolve, 10_000 * attempt));
+    }
+  }
 }
 
 const playersOf = async (origin: string, version: string) =>
@@ -40,6 +69,24 @@ const alliancesOf = async (origin: string, version: string) =>
 async function inChunks<T>(rows: readonly T[], insert: (chunk: T[]) => Promise<unknown>) {
   for (let start = 0; start < rows.length; start += CHUNK) await insert(rows.slice(start, start + CHUNK));
 }
+
+/** Inserts or updates `players` in one statement: one array per column, unlike `createMany` and its 70 000 parameters. */
+const upsertPlayers = (tx: Prisma.TransactionClient, server: string, players: readonly Player[]) =>
+  tx.$executeRaw`
+    INSERT INTO "public"."Player" ("server", "id", "pseudo", "alliance", "masterId", "x", "y", "field", "grade",
+      "buildingScore", "technologyScore", "trophyScore", "onHoliday", "isBanned")
+    SELECT ${server}, * FROM unnest(
+      ${players.map((p) => p.id)}::int[], ${players.map((p) => p.pseudo)}::text[],
+      ${players.map((p) => p.alliance)}::text[], ${players.map((p) => p.masterPlayerId)}::int[],
+      ${players.map((p) => p.x)}::int[], ${players.map((p) => p.y)}::int[], ${players.map((p) => p.field)}::float8[],
+      ${players.map((p) => p.grade)}::text[], ${players.map((p) => p.buildingScore)}::int[],
+      ${players.map((p) => p.technologyScore)}::int[], ${players.map((p) => p.trophyScore)}::int[],
+      ${players.map((p) => p.onHoliday)}::boolean[], ${players.map((p) => p.isBanned)}::boolean[])
+    ON CONFLICT ("server", "id") DO UPDATE SET
+      "pseudo" = EXCLUDED."pseudo", "alliance" = EXCLUDED."alliance", "masterId" = EXCLUDED."masterId",
+      "x" = EXCLUDED."x", "y" = EXCLUDED."y", "field" = EXCLUDED."field", "grade" = EXCLUDED."grade",
+      "buildingScore" = EXCLUDED."buildingScore", "technologyScore" = EXCLUDED."technologyScore",
+      "trophyScore" = EXCLUDED."trophyScore", "onHoliday" = EXCLUDED."onHoliday", "isBanned" = EXCLUDED."isBanned"`;
 
 const toPlayer = (row: PlayerRow): Player => ({
   id: row.id,
@@ -132,27 +179,12 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     const notes = before ? diffReadings(before, after) : [];
     await db.$transaction(
       async (tx) => {
-        await tx.player.deleteMany({ where: { server: server.id } });
-        await inChunks(after.players, (chunk) =>
-          tx.player.createMany({
-            data: chunk.map((player) => ({
-              server: server.id,
-              id: player.id,
-              pseudo: player.pseudo,
-              alliance: player.alliance,
-              masterId: player.masterPlayerId,
-              x: player.x,
-              y: player.y,
-              field: player.field,
-              grade: player.grade,
-              buildingScore: player.buildingScore,
-              technologyScore: player.technologyScore,
-              trophyScore: player.trophyScore,
-              onHoliday: player.onHoliday,
-              isBanned: player.isBanned,
-            })),
-          }),
-        );
+        // Only what changed since `before`, which is what the rows hold (written with its ExportRead).
+        const writes = before ? playerWrites(before.players, after.players) : { upserts: after.players, removed: [] };
+        if (!before) await tx.player.deleteMany({ where: { server: server.id } });
+        if (writes.removed.length > 0)
+          await tx.player.deleteMany({ where: { server: server.id, id: { in: writes.removed } } });
+        await inChunks(writes.upserts, (chunk) => upsertPlayers(tx, server.id, chunk));
         await tx.alliance.deleteMany({ where: { server: server.id } });
         await tx.alliance.createMany({
           data: after.alliances.map((alliance) => ({
@@ -189,8 +221,9 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
             update: { version: latest[kind] },
           });
       },
-      // S4's 216 000 players take about three minutes on the VPS's two cores; the site reads the old rows meanwhile.
-      { timeout: 600_000 },
+      // The first pass on S4 writes 216 000 players; the site reads the old rows meanwhile. `maxWait`: the pool may
+      // still be releasing the previous server's connection.
+      { timeout: 600_000, maxWait: 30_000 },
     );
     report.updated = true;
     report.changes = notes.length;
