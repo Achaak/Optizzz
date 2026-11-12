@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AllianceCrest } from "~/components/alliance-crest";
 import { notFound } from "next/navigation";
-import { AdSlot } from "~/components/ad-slot";
 import { PlusIcon } from "~/components/icons";
 import { JournalList } from "~/components/journal-list";
 import { SmallLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
@@ -235,8 +234,6 @@ export default async function PlayerPage({ params }: Props) {
           )}
         </Panel>
       </div>
-
-      <AdSlot />
     </div>
   );
 }

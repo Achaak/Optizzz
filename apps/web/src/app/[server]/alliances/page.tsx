@@ -105,7 +105,7 @@ export default async function AlliancesPage({ params, searchParams }: Props) {
         ) : (
           <p className="p-4 text-sm text-muted-foreground">Aucune alliance ne correspond.</p>
         )}
-        <AdSlot className="border-t px-4 pt-3" />
+        {alliances.length > 0 && <AdSlot className="border-t px-4 pt-3" />}
         <Pager
           path={path}
           query={{ q, tri: sort === "field" ? "" : sort }}

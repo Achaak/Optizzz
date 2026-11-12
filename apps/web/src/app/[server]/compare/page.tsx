@@ -4,7 +4,6 @@ import { dayMonth } from "@optizzz/game/format/time-format";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AdSlot } from "~/components/ad-slot";
 import { CompareAdd } from "~/components/compare-add";
 import { CompareChart, CompareKey } from "~/components/compare-chart";
 import { CloseIcon } from "~/components/icons";
@@ -244,8 +243,6 @@ export default async function ComparePage({ params, searchParams }: Props) {
           ».
         </p>
       )}
-
-      <AdSlot />
     </div>
   );
 }

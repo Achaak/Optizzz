@@ -266,7 +266,8 @@ export default async function JournalPage({ params, searchParams }: Props) {
         )}
       </Panel>
 
-      <AdSlot />
+      {/* Never beside « Aucun changement »: an ad needs the page to say something (site-publicite.md). */}
+      {lines.length > 0 && <AdSlot />}
     </div>
   );
 }

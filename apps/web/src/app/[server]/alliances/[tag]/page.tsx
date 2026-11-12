@@ -5,7 +5,6 @@ import { cn } from "cn";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { AdSlot } from "~/components/ad-slot";
 import { ValueBars } from "~/components/bars";
 import { PlusIcon } from "~/components/icons";
 import { AllianceCrest } from "~/components/alliance-crest";
@@ -217,8 +216,6 @@ export default async function AlliancePage({ params }: Props) {
           />
         </Panel>
       </div>
-
-      <AdSlot />
 
       <MembersTable server={server.id} members={memberRows} />
 

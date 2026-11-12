@@ -10,16 +10,17 @@ Décidé le 2026-10-30, après la refonte (`site-refonte.md`) : Google AdSense, 
 
 ## Où
 
-Pages publiques seulement, une unité « display » responsive, marquée « Publicité », sa hauteur réservée :
+Pages publiques seulement, et seulement quand la page a de quoi être lue : une unité « display » responsive, marquée « Publicité », sa hauteur réservée.
 
 - accueil (visiteur), entre « Serveurs » et le bandeau de l'extension ;
 - vue d'ensemble d'un serveur, entre les graphiques et les classements ;
-- listes des joueurs et des alliances, sous le tableau, au-dessus des pages ;
-- fiche d'un joueur, en bas ; fiche d'une alliance, entre les courbes et les membres ;
-- outils, sous le panneau du résultat, jamais dans le formulaire ni dans le rapport.
+- listes des joueurs et des alliances, sous le tableau, au-dessus des pages, si la liste n'est pas vide ;
+- journal d'un serveur, s'il montre des changements ;
 - guides (`site-guides.md`), sous la liste et en bas d'un guide, après son pied, jamais au milieu du texte.
 
-Jamais dans les Espaces d'alliance, le compte, la connexion ni les pages légales.
+Jamais dans les Espaces d'alliance, le compte, la connexion ni les pages légales, ni sur les pages `noindex` (fiche d'un joueur, fiche d'une alliance, Comparer), ni dans les outils.
+
+Refus d'AdSense du 2026-11-09 : « Annonces Google diffusées sur des pages ou écrans sans contenu d'éditeur » et « Contenu à faible valeur informative ». D'où les règles ci-dessus : une page que l'on dit soi-même sans intérêt pour un moteur (`noindex`), un outil dont le serveur ne rend qu'un formulaire et un résultat vide, une liste ou un journal vides ne portent pas d'annonce. Les outils retrouveront la leur quand leur page aura un texte rendu par le serveur (règles, exemple), l'annonce sous ce texte.
 
 ## Réglages
 
