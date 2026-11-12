@@ -64,6 +64,10 @@ Refaite après le refus d'AdSense (maquette « E · Guides (liste) ») : « Comp
 
 `/guides/combat`. Plan : pourquoi attaquer, et qui (portée, attaques à la fois) ; les unités (tableau de `UNITS` avec l'attaque et la défense pour 1 000 de nourriture) ; les coups ; les trois lieux ; un combat pas à pas, calculé par `battle` (1 000 Tueuses contre une Fourmilière gardée) ; ce que rapporte une victoire ; se défendre (défense contre attaque, bonus des lieux, entretien selon le lieu) ; le score « Combat » ; avec Optizzz ; ce qui n'est pas vérifié. Sources : `../research/combat.md` et `ressources-et-entretien.md`. **À relire par le joueur.**
 
+## Guide « Les temps de trajet » (2026-11-12)
+
+`/guides/travel`. Plan : de quoi dépend un trajet ; la distance ; la formule et ses deux mesures dans le jeu (profil du 8 oct., attaques du 4 nov. 2026, positions sans pseudos) ; près ou loin (tableau distance × Vitesse d'attaque) ; la Vitesse d'attaque et son coût (`levelCost`) ; les convois ; lire un trajet dans le jeu ; avec Optizzz ; ce qui n'est pas vérifié. Tout est calculé par `travelTime`. Source : `../research/temps-de-trajet.md`. **À relire par le joueur.**
+
 ## Réalisation
 
 - **Le registre** (`apps/web/src/lib/guides/guides.ts`) : les guides dans l'ordre de lecture, par groupe (`GUIDE_GROUPS`), écrits ou « bientôt », leurs repères, leur outil, la date de mise à jour et la durée de lecture.

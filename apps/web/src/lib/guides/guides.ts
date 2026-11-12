@@ -83,7 +83,9 @@ export const GUIDES: readonly GuideEntry[] = [
       "Comment la distance et la Vitesse d'attaque font la durée d'une attaque ou d'un convoi, et où la lire dans le jeu.",
     topics: ["−10 % par niveau", "Plafond ≈ 7 j 9 h"],
     tool: "travel",
-    ready: false,
+    ready: true,
+    updated: "2026-11-12",
+    readingMinutes: 6,
   },
   {
     id: "tdc-chain",
