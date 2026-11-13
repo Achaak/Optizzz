@@ -29,6 +29,9 @@ compose up -d --wait db
 compose run --rm tools pnpm db:deploy
 compose exec -T db psql -U optizzz -d optizzz -v ON_ERROR_STOP=1 --quiet <postgres/grants.sql
 compose up -d --wait --remove-orphans web caddy
+# The Caddyfile is mounted as a file: a new one copied by the deployment is not read until Caddy reloads it, and
+# « up » leaves a container whose service did not change running as it was.
+compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
 
 # The image's pages were prerendered on an empty database: rebuilt at their next visit.
 compose run --rm --no-deps tools sh -c \
