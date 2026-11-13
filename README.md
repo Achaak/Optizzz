@@ -67,7 +67,7 @@ Une fois installée, ouvrez une page du jeu : les outils apparaissent d'eux-mêm
 - **Suivis** : ce qui a changé chez les joueurs et alliances que vous suivez (alliance, TDC, guerres, pactes) depuis votre dernière visite.
 - **Partage d'alliance** : copiez votre état pour le coller sur le Discord de l'alliance, et lisez celui des autres membres.
 
-Les cartes, l'historique et les suivis s'appuient sur l'[API publique des exports](https://s5.fourmizzz.fr/developer.php) du jeu.
+Les cartes, l'historique et les suivis s'appuient sur l'[API publique des exports](https://s5.fourmizzz.fr/developer.php) du jeu ; la Carte du serveur lit par défaut ces mêmes données publiques sur [optizzz.fr](https://optizzz.fr), bien plus léger (une option la ramène à l'export du jeu).
 
 ### Apparence
 
@@ -81,7 +81,11 @@ Les formulaires du jeu ne sont envoyés que lorsque vous cliquez : une chasse n'
 
 ## Confidentialité
 
-Aucune donnée n'est collectée ni envoyée ailleurs que vers Fourmizzz. Vos réglages restent dans votre navigateur, et le partage d'alliance passe uniquement par votre copier-coller. Voir [PRIVACY.md](PRIVACY.md).
+Par défaut, l'extension ne parle qu'à Fourmizzz, à une exception près : la Carte du serveur lit les positions publiques des joueurs sur optizzz.fr, sans compte ni cookie (une option la ramène à l'export du jeu). Vos réglages restent dans votre navigateur, et le partage d'alliance passe par votre copier-coller.
+
+Rien d'autre ne part sans vous : un bouton « Ouvrir sur optizzz.fr » ouvre un outil du site avec votre saisie, écrite dans la partie de l'adresse que le navigateur n'envoie pas ; et si vous liez l'extension à un Compte Optizzz, elle envoie à l'Espace de votre alliance ce que vous avez coché, chiffré dans votre navigateur avec une clé que le site ne connaît pas.
+
+Le détail est dans [PRIVACY.md](PRIVACY.md).
 
 ## Développement
 
