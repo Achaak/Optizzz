@@ -26,6 +26,11 @@ SQL
 trap record EXIT
 
 mkdir -p backups
+# After the ingest or a deployment under way (deploy.sh), never with them.
+exec 9>.lock
+flock -w 3000 9
+# What a failed run left: a partial dump is not a backup, and the purge below only knows *.dump.
+rm -f backups/*.part
 dump="backups/optizzz-$(date -u +%Y-%m-%dT%H%MZ).dump"
 docker compose exec -T db pg_dump -U optizzz -d optizzz --format=custom >"$dump.part"
 mv "$dump.part" "$dump"

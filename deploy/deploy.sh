@@ -4,12 +4,17 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# One at a time with the hourly ingest and the backup (ingest.sh, backup.sh): an ingest started during the pull
+# brought the previous tools image back on a disk that does not hold two, and a migration waits on its transaction.
+exec 9>.lock
+flock -w 2400 9 || { echo "Another task still holds the lock after 40 minutes." >&2; exit 1; }
+
 tag="${1:?usage: deploy.sh <tag>}"
 compose() { docker compose --profile tools "$@"; }
 
 # Every image but the new version's goes before the pull: the disk (17 GB) does not hold two tools images of 2.4 GB
 # (deploy of 2026-11-12, « no space left on device »). The online site's web image stays, its container running
-# (docker rmi refuses it); the online tools image runs in no container: an hourly ingest started meanwhile pulls it back.
+# (docker rmi refuses it); the online tools image runs in no container.
 docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/achaak/optizzz-' | grep -v ":$tag\$" |
   xargs -r docker rmi >/dev/null 2>&1 || true
 docker image prune -f >/dev/null

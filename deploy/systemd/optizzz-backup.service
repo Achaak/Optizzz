@@ -8,3 +8,4 @@ Requires=docker.service
 Type=oneshot
 User=optizzz
 ExecStart=/opt/optizzz/backup.sh
+TimeoutStartSec=1h
