@@ -429,12 +429,30 @@ describe("the Envois of the convoys", () => {
     expect((await envois.status())[0]?.problem).toBeNull();
   });
 
+  it("drops the player's problem an older version kept, and sends again at the next game page", async () => {
+    await keysHanded([KEY_1]);
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
+    const { "optizzzAccount:sent": sent } = await fakeBrowser.storage.local.get("optizzzAccount:sent");
+    const problem = "Le jeu ouvert dans ce navigateur est celui d'un autre Joueur : rien ne part pour celui-ci.";
+    const joueurs = sent as Record<string, Record<string, unknown>>;
+    await fakeBrowser.storage.local.set({
+      "optizzzAccount:sent": { ...joueurs, "s5:messor": { ...joueurs["s5:messor"], problem } },
+    });
+    expect((await envois.status())[0]?.problem).toBeNull();
+    const before = site.posts().length;
+    await envois.releve("page");
+    expect(site.posts().length).toBeGreaterThan(before);
+  });
+
   it("sends at the next game page once the game is back on the Joueur's account", async () => {
     await keysHanded([KEY_1]);
     await storeCurrentPlayer(S5, "Lasius");
     const envois = service();
     await envois.choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
-    expect((await envois.status())[0]?.problem).toMatch(/autre Joueur/);
+    expect((await envois.status())[0]?.problem).toBe(
+      "Le jeu ouvert sur S5 dans ce navigateur est celui de Lasius : rien ne part pour Messor.",
+    );
     await storeCurrentPlayer(S5, "Messor");
     await envois.releve("page");
     expect(site.rows()).toHaveLength(1);

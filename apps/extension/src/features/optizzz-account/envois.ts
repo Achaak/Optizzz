@@ -93,10 +93,20 @@ const LISTS: readonly ListCategory[] = ["convoys", "demande-convoys", "floods", 
 export const MISSING_KEY = "Ouvrez votre espace sur optizzz.fr pour reprendre l'envoi.";
 const NO_SPACE = "Pas encore dans un Espace d'alliance sur optizzz.fr : rien ne part.";
 const UNREACHABLE = "optizzz.fr n'a pas répondu : l'envoi repartira à la prochaine page du jeu.";
-const OTHER_PLAYER = "Le jeu ouvert dans ce navigateur est celui d'un autre Joueur : rien ne part pour celui-ci.";
-/** No game page of this server was read in this browser yet: the logged-in player is not known. */
-const noGamePlayer = (server: string) =>
-  `Ouvrez une page du jeu sur ${serverById(server)?.name ?? server} avec ce compte : l'envoi partira alors.`;
+/**
+ * The game's logged-in player on this server is not the Joueur (or not known yet: no game page of this server was read
+ * in this browser). Worked out when shown, never kept: it goes away as soon as the game shows the Joueur.
+ */
+const playerProblem = (server: string, pseudo: string, current: string | null): string | null => {
+  const name = serverById(server)?.name ?? server;
+  if (current === null) return `Ouvrez une page du jeu sur ${name} avec ce compte : l'envoi partira alors.`;
+  if (sameName(current, pseudo)) return null;
+  return `Le jeu ouvert sur ${name} dans ce navigateur est celui de ${current} : rien ne part pour ${pseudo}.`;
+};
+/** What versions before 1.16.2 kept as the Joueur's problem: dropped, and the categories sent again at a game page. */
+const keptPlayerProblem = (problem: string | null) =>
+  problem === "Le jeu ouvert dans ce navigateur est celui d'un autre Joueur : rien ne part pour celui-ci." ||
+  (problem?.startsWith("Ouvrez une page du jeu sur ") ?? false);
 
 /** A convoy of the alliance on its way to the player, for commerce.php and the notification. */
 interface AllianceConvoyToMe {
@@ -555,12 +565,11 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     // What is kept for this server is the game's logged-in player: another Joueur's data never goes under this name.
     // Not this Joueur (yet): the category leaves again at the next game page, once the game shows them.
     const current = await loadCurrentPlayer(origin);
-    if (current?.toLowerCase() !== pseudo.toLowerCase()) {
-      const problem = current === null ? noGamePlayer(server) : OTHER_PLAYER;
+    if (playerProblem(server, pseudo, current) !== null) {
       return updateSent(joueur, (state) => ({
         ...state,
         retry: [...state.retry.filter((c) => c !== category), category],
-        problem,
+        problem: keptPlayerProblem(state.problem) ? null : state.problem,
       }));
     }
 
@@ -834,7 +843,8 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
       players = await refreshSpaces();
       for (const player of players ?? []) {
         const state = await loadSent(joueurKey(player.server, player.pseudo));
-        if (state.retry.length > 0) await sendLists(player.server, player.pseudo, state.retry);
+        if (keptPlayerProblem(state.problem)) await sendLists(player.server, player.pseudo);
+        else if (state.retry.length > 0) await sendLists(player.server, player.pseudo, state.retry);
       }
     }
     const bySpace = new Map<string, SpacePlayer[]>();
@@ -963,12 +973,15 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
         const sending = categories.length > 0;
         const keys = space ? await usableKeys(space.id, space.version.version) : null;
         const keyMissing = space !== undefined && space !== null && !keys;
+        const origin = originOf(server);
+        const notJoueur = playerProblem(server, pseudo, origin ? await loadCurrentPlayer(origin) : null);
+        const kept = keptPlayerProblem(state.problem) ? null : state.problem;
         return {
           server,
           pseudo,
           choices,
           spaceName: space?.name ?? null,
-          problem: !sending ? null : !space ? NO_SPACE : keyMissing ? MISSING_KEY : state.problem,
+          problem: !sending ? null : !space ? NO_SPACE : keyMissing ? MISSING_KEY : (notJoueur ?? kept),
           lastSentAt: state.lastSentAt,
           discord: space && keys ? await discord.status({ spaceId: space.id, categories, crypto: crypto(keys) }) : null,
         };
