@@ -94,6 +94,9 @@ export const MISSING_KEY = "Ouvrez votre espace sur optizzz.fr pour reprendre l'
 const NO_SPACE = "Pas encore dans un Espace d'alliance sur optizzz.fr : rien ne part.";
 const UNREACHABLE = "optizzz.fr n'a pas répondu : l'envoi repartira à la prochaine page du jeu.";
 const OTHER_PLAYER = "Le jeu ouvert dans ce navigateur est celui d'un autre Joueur : rien ne part pour celui-ci.";
+/** No game page of this server was read in this browser yet: the logged-in player is not known. */
+const noGamePlayer = (server: string) =>
+  `Ouvrez une page du jeu sur ${serverById(server)?.name ?? server} avec ce compte : l'envoi partira alors.`;
 
 /** A convoy of the alliance on its way to the player, for commerce.php and the notification. */
 interface AllianceConvoyToMe {
@@ -550,8 +553,16 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     const keys = await usableKeys(space.id, space.version.version);
     if (!keys) return setProblem(joueur, MISSING_KEY);
     // What is kept for this server is the game's logged-in player: another Joueur's data never goes under this name.
+    // Not this Joueur (yet): the category leaves again at the next game page, once the game shows them.
     const current = await loadCurrentPlayer(origin);
-    if (current?.toLowerCase() !== pseudo.toLowerCase()) return setProblem(joueur, OTHER_PLAYER);
+    if (current?.toLowerCase() !== pseudo.toLowerCase()) {
+      const problem = current === null ? noGamePlayer(server) : OTHER_PLAYER;
+      return updateSent(joueur, (state) => ({
+        ...state,
+        retry: [...state.retry.filter((c) => c !== category), category],
+        problem,
+      }));
+    }
 
     const at = now();
     const cipher = crypto(keys);

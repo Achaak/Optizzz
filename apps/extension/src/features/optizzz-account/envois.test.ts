@@ -115,7 +115,8 @@ function fakeSite() {
       const sent =
         sends(category) ||
         (category === "army" && (sends("army-count") || sends("army-units"))) ||
-        (category === "hunts-log" && sends("hunts"));
+        (category === "hunts-log" && sends("hunts")) ||
+        (category === "demande-convoys" && sends("convoys"));
       if (!sent) return Promise.resolve(Response.json({ error: "category-off", message: "off" }, { status: 409 }));
       if (body?.keyVersion !== version)
         return Promise.resolve(Response.json({ error: "stale-key", message: MISSING_KEY }, { status: 409 }));
@@ -411,6 +412,33 @@ describe("the Envois of the convoys", () => {
     await storeCurrentPlayer(S5, "Lasius");
     await service().choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
     expect(site.posts()).toEqual([]);
+  });
+
+  it("waits for a game page when this browser never saw the game's player, then sends at the next one", async () => {
+    await keysHanded([KEY_1]);
+    await fakeBrowser.storage.local.remove("optizzzAccount:player:s5.fourmizzz.fr");
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
+    expect(site.rows()).toEqual([]);
+    expect((await envois.status())[0]?.problem).toBe(
+      "Ouvrez une page du jeu sur S5 avec ce compte : l'envoi partira alors.",
+    );
+    await storeCurrentPlayer(S5, "Messor");
+    await envois.releve("page");
+    expect(site.rows()).toHaveLength(1);
+    expect((await envois.status())[0]?.problem).toBeNull();
+  });
+
+  it("sends at the next game page once the game is back on the Joueur's account", async () => {
+    await keysHanded([KEY_1]);
+    await storeCurrentPlayer(S5, "Lasius");
+    const envois = service();
+    await envois.choose("s5", "Messor", { ...NO_ENVOIS, convoys: true });
+    expect((await envois.status())[0]?.problem).toMatch(/autre Joueur/);
+    await storeCurrentPlayer(S5, "Messor");
+    await envois.releve("page");
+    expect(site.rows()).toHaveLength(1);
+    expect((await envois.status())[0]?.problem).toBeNull();
   });
 });
 
