@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
+import { storage } from "wxt/utils/storage";
 import armeeS5Html from "../flood/__fixtures__/armee-attacks-s5.html?raw";
 import { renderAttacksOnWay } from "../attacks-on-way/mount";
 import { checkTimedLaunches, labelTimedAttacks, loadTimedAttacks, queueTimedLaunch } from "./sent";
@@ -70,6 +71,51 @@ describe("checkTimedLaunches", () => {
     await checkTimedLaunches(origin, sessionStorage, later);
     expect(later.urls).toHaveLength(1);
     expect(await loadTimedAttacks(origin, serverDate)).toEqual([]);
+  });
+
+  it("reads nothing when what the page left is not a timed launch", async () => {
+    sessionStorage.setItem(
+      "optizzz-timing-queue",
+      // The malformed launch last: the clock of the latest one sets the wait.
+      JSON.stringify([
+        { target: 5 },
+        "x",
+        null,
+        {
+          target: "Cible_1",
+          aimedAt: arrival,
+          sentAt: serverDate,
+          clock: { offsetMs: 0, errorMs: 200, oneWayMs: "1e12" },
+        },
+      ]),
+    );
+    const io = fakeIo();
+    await checkTimedLaunches(origin, sessionStorage, io);
+    expect(io.waits).toEqual([]);
+    expect(io.urls).toEqual([]);
+  });
+
+  it("takes twenty launches at most", async () => {
+    const launches = Array.from({ length: 25 }, () => ({
+      target: "Nobody",
+      aimedAt: arrival,
+      clock,
+      sentAt: serverDate - 2000,
+    }));
+    sessionStorage.setItem("optizzz-timing-queue", JSON.stringify(launches));
+    await checkTimedLaunches(origin, sessionStorage, fakeIo());
+    expect(JSON.parse(sessionStorage.getItem("optizzz-timing-queue") ?? "[]")).toHaveLength(20);
+  });
+
+  it("drops the verdicts past their date when it stores a new one", async () => {
+    await storage.setItem("local:timing:s5.fourmizzz.fr:attacks", [
+      { attackId: 1, aimedAt: 0, arrivesAt: serverDate - 2 * 60 * 60_000 },
+    ]);
+    queueTimedLaunch(sessionStorage, { target: "Cible_1", aimedAt: arrival, clock, sentAt: serverDate - 2000 });
+    await checkTimedLaunches(origin, sessionStorage, fakeIo());
+    const stored = await storage.getItem<{ arrivesAt: number }[]>("local:timing:s5.fourmizzz.fr:attacks");
+    expect(stored).toHaveLength(1);
+    expect(stored?.[0]?.arrivesAt).toBe(arrival);
   });
 });
 

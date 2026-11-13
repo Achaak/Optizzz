@@ -35,10 +35,33 @@ const KEEP_AFTER_MS = 60 * 60_000;
 
 const attacksKey = (origin: string) => `local:timing:${new URL(origin).host}:attacks` as const;
 
+/** More cannot be sent between two page loads: anything beyond is not ours. */
+const MAX_QUEUED = 20;
+
+const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+
+/** The tab's sessionStorage is the game's page too: only what has the shape of a launch is taken. */
+const isTimedLaunch = (value: unknown): value is TimedLaunch => {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  const clock = v.clock as Record<string, unknown> | null | undefined;
+  return (
+    typeof v.target === "string" &&
+    v.target.length <= 100 &&
+    isFiniteNumber(v.aimedAt) &&
+    isFiniteNumber(v.sentAt) &&
+    typeof clock === "object" &&
+    clock !== null &&
+    isFiniteNumber(clock.offsetMs) &&
+    isFiniteNumber(clock.errorMs) &&
+    isFiniteNumber(clock.oneWayMs)
+  );
+};
+
 function readQueue(session: Storage): TimedLaunch[] {
   try {
     const parsed: unknown = JSON.parse(session.getItem(QUEUE_KEY) ?? "[]");
-    return Array.isArray(parsed) ? (parsed as TimedLaunch[]) : [];
+    return Array.isArray(parsed) ? parsed.filter(isTimedLaunch).slice(-MAX_QUEUED) : [];
   } catch {
     return [];
   }
@@ -92,7 +115,9 @@ export async function checkTimedLaunches(origin: string, session: Storage, io: C
       }
       return now - launch.sentAt < FIND_WITHIN_MS;
     });
-    if (found.length > 0) await storage.setItem(attacksKey(origin), [...stored, ...found]);
+    // The verdicts past their date go with the write: nothing else ever removes them.
+    const kept = stored.filter((attack) => attack.arrivesAt + KEEP_AFTER_MS > serverDate);
+    if (found.length > 0 || kept.length < stored.length) await storage.setItem(attacksKey(origin), [...kept, ...found]);
     writeQueue(session, left);
   });
 }
