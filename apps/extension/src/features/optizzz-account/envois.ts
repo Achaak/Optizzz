@@ -54,12 +54,13 @@ import {
   storeChoices,
   storeKeys,
   storeReleve,
-  storeSent,
   storeSpaces,
+  updateSent,
   type ListCategory,
   type ReleveRow,
   type SentItem,
   type SentItems,
+  type SentState,
   type SpacePlayer,
 } from "@/data/envois";
 import { loadLaunches } from "@/data/launches";
@@ -470,8 +471,7 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
   }
 
   async function setProblem(joueur: string, problem: string | null, retry?: ListCategory[]) {
-    const state = await loadSent(joueur);
-    await storeSent(joueur, { ...state, problem, ...(retry && { retry }) });
+    await updateSent(joueur, (state) => ({ ...state, problem, ...(retry && { retry }) }));
   }
 
   /**
@@ -629,15 +629,17 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
       await api.saveSettings(server, player.playerId, categoriesOf(await loadChoices(server, pseudo)));
       result = await api.sendEnvoi(body);
     }
-    const state = await loadSent(joueur);
-    const retry = state.retry.filter((c) => c !== category);
+    const others = (state: SentState) => state.retry.filter((c) => c !== category);
     if (result.ok) {
-      await storeSent(joueur, {
-        ...state,
-        lists: { ...state.lists, [category]: sent },
-        lastSentAt: at.getTime(),
-        retry,
-        problem: retry.length > 0 ? state.problem : null,
+      await updateSent(joueur, (state) => {
+        const retry = others(state);
+        return {
+          ...state,
+          lists: { ...state.lists, [category]: sent },
+          lastSentAt: at.getTime(),
+          retry,
+          problem: retry.length > 0 ? state.problem : null,
+        };
       });
       await announceList({
         category,
@@ -657,11 +659,11 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
       await refreshSpaces();
       return setProblem(joueur, MISSING_KEY);
     }
-    await storeSent(joueur, {
+    await updateSent(joueur, (state) => ({
       ...state,
-      retry: [...retry, category],
+      retry: [...others(state), category],
       problem: result.error ? result.message : UNREACHABLE,
-    });
+    }));
   }
 
   /** Every checked list category of a Joueur, one after the other. */
@@ -708,15 +710,17 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     );
     // A state unchecked went from the site with its choice: checked again, it leaves in full.
     const joueur = joueurKey(server, pseudo);
-    const state = await loadSent(joueur);
     const forgotten = STATE_CATEGORIES.filter((category) => !isSent(choices, category) || start.includes(category));
-    if (forgotten.some((category) => state.lists[category]))
-      await storeSent(joueur, {
-        ...state,
-        lists: Object.fromEntries(
-          Object.entries(state.lists).filter(([category]) => !forgotten.includes(category as StateCategory)),
-        ),
-      });
+    await updateSent(joueur, (state) =>
+      forgotten.some((category) => state.lists[category])
+        ? {
+            ...state,
+            lists: Object.fromEntries(
+              Object.entries(state.lists).filter(([category]) => !forgotten.includes(category as StateCategory)),
+            ),
+          }
+        : state,
+    );
     await sendLists(server, pseudo, start);
     if (!LISTS.some((category) => isSent(choices, category))) await setProblem(joueur, null, []);
   }

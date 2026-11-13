@@ -16,6 +16,7 @@ import type { ConvoyItem } from "@optizzz/game/site-links/envoi-convoys";
 import type { FloodItem } from "@optizzz/game/site-links/envoi-floods";
 import type { DemandeConvoy } from "@optizzz/game/site-links/demandes";
 import { storage } from "wxt/utils/storage";
+import { withStorageLock } from "@/utils/storage-lock";
 
 /**
  * Every category of the Envois: lists of items (convoys, floods), one encrypted row each, and states (production,
@@ -172,9 +173,18 @@ export async function loadSent(joueur: string): Promise<SentState> {
   };
 }
 
-export async function storeSent(joueur: string, state: SentState): Promise<void> {
-  const all = (await storage.getItem<Partial<Record<string, SentState>>>(SENT_KEY)) ?? {};
-  await storage.setItem(SENT_KEY, { ...all, [joueur]: state });
+/**
+ * Changes what is kept for a Joueur, one change at a time: several categories are sent at the same moment, and
+ * each one writes its own part without erasing the others'.
+ */
+export function updateSent(joueur: string, update: (state: SentState) => SentState): Promise<void> {
+  return withStorageLock(SENT_KEY, async () => {
+    const state = await loadSent(joueur);
+    const next = update(state);
+    if (next === state) return;
+    const all = (await storage.getItem<Partial<Record<string, SentState>>>(SENT_KEY)) ?? {};
+    await storage.setItem(SENT_KEY, { ...all, [joueur]: next });
+  });
 }
 
 // ── The relève: each space's Envois, opened, with the cursor of the last relève.
@@ -208,7 +218,9 @@ export async function loadReleve(spaceId: string): Promise<SpaceReleve | null> {
   return { ...releve, rows: Object.fromEntries(rows) as SpaceReleve["rows"] };
 }
 
-export async function storeReleve(spaceId: string, releve: SpaceReleve): Promise<void> {
-  const all = (await storage.getItem<Partial<Record<string, SpaceReleve>>>(RELEVE_KEY)) ?? {};
-  await storage.setItem(RELEVE_KEY, { ...all, [spaceId]: releve });
+export function storeReleve(spaceId: string, releve: SpaceReleve): Promise<void> {
+  return withStorageLock(RELEVE_KEY, async () => {
+    const all = (await storage.getItem<Partial<Record<string, SpaceReleve>>>(RELEVE_KEY)) ?? {};
+    await storage.setItem(RELEVE_KEY, { ...all, [spaceId]: releve });
+  });
 }
