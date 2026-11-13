@@ -432,10 +432,10 @@ export function envoiService({ now, fetch, permitted, crypto, notify, later, dis
     return kept && (await permitted()) ? kept : null;
   }
 
-  /** The token was removed from /account: the extension forgets it, and the Clé d'alliance with it. */
+  /** The token was removed from /account: the extension forgets it, and everything « Se déconnecter » forgets. */
   async function unlinked() {
     await forgetLink();
-    await forgetKeys();
+    await forget();
   }
 
   /** The Demandes (demandes.ts): their relève, and what the game's pages ask of them. */

@@ -7,7 +7,7 @@ import { loadChainRoles } from "@/data/chain-roles";
 import { keepConvoyMessages } from "@/data/convoy-history";
 import { storeConvoys, storeIncomingConvoys } from "@/data/convoys";
 import { loadKeys, storeKeys } from "@/data/envois";
-import { storeAttachedPlayers, storeCurrentPlayer, storeLink } from "@/data/optizzz-account";
+import { loadLink, storeAttachedPlayers, storeCurrentPlayer, storeLink } from "@/data/optizzz-account";
 import type { DiscordService } from "./discord";
 import { armyFromKeys } from "@optizzz/game/army/units";
 import { writeLaunches } from "@/data/launches";
@@ -57,6 +57,7 @@ function fakeSite() {
   let version = 1;
   let inSpace = true;
   let offline = false;
+  let revoked = false;
   const settings = new Map<number, string[]>();
   let rows: {
     id: string;
@@ -75,6 +76,7 @@ function fakeSite() {
     const body = typeof init.body === "string" ? (JSON.parse(init.body) as Record<string, unknown>) : null;
     calls.push({ path: pathname, method, body });
     if (offline) return Promise.reject(new TypeError("Failed to fetch"));
+    if (revoked) return Promise.resolve(new Response(null, { status: 401 }));
     if (pathname === "/api/extension/spaces")
       return Promise.resolve(
         Response.json({
@@ -153,6 +155,7 @@ function fakeSite() {
     setVersion: (v: number) => (version = v),
     setInSpace: (v: boolean) => (inSpace = v),
     setOffline: (v: boolean) => (offline = v),
+    setRevoked: (v: boolean) => (revoked = v),
     setChainRoles: (rows: typeof chainRoles) => (chainRoles = rows),
   };
 }
@@ -546,6 +549,22 @@ describe("the relève", () => {
     // « Se déconnecter » forgets the spaces too: the chain is the player's again.
     expect(await loadChainRoles(SPACE)).toBeNull();
     expect((await service().chainRoles(S5)).problem).toBe("no-space");
+  });
+
+  it("forgets the chain's roles and the link when the site no longer knows the token", async () => {
+    const record: ChainRolesRecord = { roles: { "1": { kind: "granary", rank: 1 } }, keep: { "2": 1_500 } };
+    const blob = await fakeCrypto([KEY_1]).encrypt(chainRolesText(record, SPACE));
+    site.setChainRoles([{ spaceId: SPACE, blob, revision: 3 }]);
+    await service().releve("page");
+    await storeKeys(SPACE, [KEY_1], null);
+    await service().releve("alarm");
+    expect(await loadChainRoles(SPACE)).not.toBeNull();
+
+    site.setRevoked(true);
+    await service().releve("alarm");
+    expect(await loadChainRoles(SPACE)).toBeNull();
+    expect(await loadKeys(SPACE, NOW)).toBeNull();
+    expect(await loadLink()).toBeNull();
   });
 
   it("tells the game's page why it shows nothing", async () => {
