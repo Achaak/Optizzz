@@ -80,3 +80,6 @@ jobs:
           scp -r deploy/compose.yml deploy/Caddyfile deploy/deploy.sh deploy/ingest.sh deploy/backup.sh \
             deploy/postgres deploy/systemd "$VPS:/opt/optizzz/"
           ssh "$VPS" /opt/optizzz/deploy.sh "${{ github.sha }}"
+      # Through Caddy and HTTPS, as a visitor: deploy.sh only knows the container answers on the VPS itself.
+      - name: The site answers, its database included
+        run: curl --fail --silent --show-error --retry 5 --retry-delay 5 --retry-all-errors https://optizzz.fr/api/health
