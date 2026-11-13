@@ -48,7 +48,7 @@ out, and why, is in the two sections that follow.
 | [013](013-lock-envoi-bookkeeping.md)           | Envois sent at the same time no longer overwrite each other's record                 | P1       | S-M    | —          | DONE   |
 | [014](014-validate-timing-queue.md)            | The timing queue read from the game's page is checked, old verdicts are dropped      | P2       | S      | —          | DONE   |
 | [015](015-revoked-token-forgets-everything.md) | A token removed on the site makes the extension forget as much as « Se déconnecter » | P2       | S      | 013        | DONE   |
-| [016](016-security-headers.md)                 | The site answers with the basic security headers                                     | P2       | S      | —          | TODO   |
+| [016](016-security-headers.md)                 | The site answers with the basic security headers                                     | P2       | S      | —          | DONE   |
 | [017](017-health-check-and-rollback.md)        | A deployment that cannot reach its database fails, and going back is written down    | P2       | S-M    | —          | TODO   |
 | [018](018-ingest-server-tests.md)              | The cron's pass over a server is tested end to end against a database                | P2       | M      | (009)      | DONE   |
 | [019](019-shadcn-dev-dependency.md)            | The shadcn CLI is a development dependency of the site                               | P3       | S      | —          | TODO   |

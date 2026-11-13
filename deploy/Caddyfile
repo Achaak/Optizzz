@@ -1,6 +1,14 @@
 # HTTPS for optizzz.fr (Let's Encrypt certificates, renewed by Caddy). No access log: the site keeps no IP address.
 optizzz.fr {
 	encode zstd gzip
+	# HTTPS only for a year; no guessing of content types; never inside another site's frame (the account and the
+	# Espaces d'alliance); the path of a page is not told to other sites.
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
 	reverse_proxy web:3000
 }
 
