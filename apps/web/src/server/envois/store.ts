@@ -59,7 +59,8 @@ export interface EnvoiStore {
   /**
    * Writes the Joueur's items of a category in a space: a new fingerprint is added, a known one replaced only when its
    * blob or its detail changed (its `updatedAt` then moves to `now`, which the relève follows), and the fingerprints `removed` go.
-   * Rows past their `expiresAt` in the space go too. Returns how many fingerprints were new.
+   * Rows past their `expiresAt` in the space go too. Returns how many fingerprints were new. Nothing is added, and
+   * `"full"` comes back, when the Joueur would then have more than `limit` rows of this category in the space.
    */
   writeItems(
     spaceId: string,
@@ -68,7 +69,8 @@ export interface EnvoiStore {
     items: ItemInput[],
     removed: string[],
     now: Date,
-  ): Promise<number>;
+    limit: number,
+  ): Promise<number | "full">;
   /**
    * A Joueur's states unchecked: the rows of `removed` go (in every space), and the Admins' blob of `withoutDetail`
    * (their `updatedAt` then moves to `now`, for the relève).

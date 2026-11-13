@@ -5,7 +5,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient } from "~/generated/prisma/client";
-import { envoiService } from "./envoi-service";
+import { EnvoiError, envoiService } from "./envoi-service";
 import { prismaEnvoiStore } from "./prisma-store";
 
 const url = process.env.TEST_DATABASE_URL;
@@ -102,6 +102,50 @@ describe.skipIf(!url)("the Envois' store on Postgres", () => {
     const spaces = await service.spacesOf(a.userId);
     expect(spaces.players[0]?.space?.version).toMatchObject({ version: 1, createdByPseudo: a.pseudo });
     expect(spaces.players[0]?.space?.members.map((m) => m.categories)).toEqual([["convoys"], ["convoys"]]);
+  });
+
+  it("refuses an Envoi that would pass the ceiling of rows kept, and keeps what was there", async () => {
+    const keyring = await createAllianceKeyring();
+    // One blob for every item: encrypting 6 000 of them would make the test slow.
+    const blob = await encryptData("convoi", keyring);
+    const batch = (from: number) =>
+      Array.from({ length: 2000 }, (_, i) => ({
+        fingerprint: fp(from + i),
+        blob,
+        expiresAt: now.getTime() + 90 * DAY,
+      }));
+    const send = (items: unknown[], removed: string[] = []) =>
+      service.saveEnvoi(a.userId, {
+        server: "s5",
+        playerId: a.playerId,
+        category: "convoys",
+        keyVersion: 1,
+        items,
+        removed,
+      });
+    // a's convoys of the first test go, so that the three batches fill the ceiling exactly.
+    await send(batch(1000), [fp(1), fp(2)]);
+    await send(batch(3000));
+    await send(batch(5000));
+    const before = (await service.readEnvois(a.userId, { spaceId })).items.length;
+    const error: unknown = await send([{ fingerprint: fp(7000), blob, expiresAt: now.getTime() + 90 * DAY }]).catch(
+      (e: unknown) => e,
+    );
+    expect(error).toBeInstanceOf(EnvoiError);
+    expect((error as EnvoiError).code).toBe("invalid");
+    expect((await service.readEnvois(a.userId, { spaceId })).items).toHaveLength(before);
+    await send(
+      [],
+      batch(1000).map((i) => i.fingerprint),
+    );
+    await send(
+      [],
+      batch(3000).map((i) => i.fingerprint),
+    );
+    await send(
+      [],
+      batch(5000).map((i) => i.fingerprint),
+    );
   });
 
   it("keeps a flood's army apart, rewrites it when it alone changes, and hands it to the Admins only", async () => {

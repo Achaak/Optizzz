@@ -63,7 +63,7 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
         update: { categories },
       });
     },
-    async writeItems(spaceId, player, category, items, removed, now) {
+    async writeItems(spaceId, player, category, items, removed, now, limit) {
       const mine = { spaceId, server: player.server, playerId: player.playerId, category };
       return db.$transaction(async (tx) => {
         await tx.envoiItem.deleteMany({ where: { spaceId, expiresAt: { lte: now } } });
@@ -78,6 +78,7 @@ export function prismaEnvoiStore(db: PrismaClient): EnvoiStore {
           ).map((r) => [r.fingerprint, r]),
         );
         const added = items.filter((i) => !known.has(i.fingerprint));
+        if (added.length > 0 && (await tx.envoiItem.count({ where: mine })) + added.length > limit) return "full";
         // Two Envois of the same Joueur at once: the second insert of a fingerprint is skipped, not an error.
         const created =
           added.length > 0

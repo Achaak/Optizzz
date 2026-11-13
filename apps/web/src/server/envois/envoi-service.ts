@@ -30,6 +30,8 @@ interface CategoryRules {
   detail: string | null;
   /** A state is one row per Joueur (docs/features/site-envois.md, « Ce que garde le site »). */
   maxItems: number;
+  /** Rows kept for a Joueur at most: several requests with new fingerprints never pile up past it. */
+  maxStored: number;
 }
 
 /**
@@ -38,24 +40,36 @@ interface CategoryRules {
  */
 const CATEGORIES = {
   // 90 days after an arrival that may be a few days ahead.
-  convoys: { settings: ["convoys"], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
+  convoys: { settings: ["convoys"], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS, maxStored: 3 * MAX_ITEMS },
   // 7 days after an arrival at most 30 days ahead (the longest trip the flood plan notes), and the army sent.
-  floods: { settings: ["floods"], longest: 40 * DAY, detail: "floods", maxItems: MAX_ITEMS },
+  floods: { settings: ["floods"], longest: 40 * DAY, detail: "floods", maxItems: MAX_ITEMS, maxStored: 3 * MAX_ITEMS },
   // One row per hunt seen out (envoi-hunts.ts), with « Chasses »: 90 days after a return that may be days ahead.
-  "hunts-log": { settings: ["hunts"], longest: 120 * DAY, detail: null, maxItems: MAX_ITEMS },
+  "hunts-log": { settings: ["hunts"], longest: 120 * DAY, detail: null, maxItems: MAX_ITEMS, maxStored: 3 * MAX_ITEMS },
   // A state not sent again for 90 days goes; the army by unit only while « Par unité » is chosen.
-  production: { settings: ["production"], longest: 100 * DAY, detail: null, maxItems: 1 },
-  hunts: { settings: ["hunts"], longest: 100 * DAY, detail: null, maxItems: 1 },
-  army: { settings: ["army-count", "army-units"], longest: 100 * DAY, detail: "army-units", maxItems: 1 },
-  levels: { settings: ["levels"], longest: 100 * DAY, detail: null, maxItems: 1 },
+  production: { settings: ["production"], longest: 100 * DAY, detail: null, maxItems: 1, maxStored: 4 },
+  hunts: { settings: ["hunts"], longest: 100 * DAY, detail: null, maxItems: 1, maxStored: 4 },
+  army: { settings: ["army-count", "army-units"], longest: 100 * DAY, detail: "army-units", maxItems: 1, maxStored: 4 },
+  levels: { settings: ["levels"], longest: 100 * DAY, detail: null, maxItems: 1, maxStored: 4 },
   // The convoys launched for a Demande (docs/features/site-demandes.md): with « Convois », 90 days after the arrival.
-  "demande-convoys": { settings: ["convoys"], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
+  "demande-convoys": {
+    settings: ["convoys"],
+    longest: 100 * DAY,
+    detail: null,
+    maxItems: MAX_ITEMS,
+    maxStored: 3 * MAX_ITEMS,
+  },
   // A convoy its sender declares for a Demande on the space page: an explicit act, without a setting.
-  "declared-convoys": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
+  "declared-convoys": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS, maxStored: 3 * MAX_ITEMS },
   // What a member declares on the page « Déclarer » (ADR 0010): a flood, a convoy for no Demande, a hunt.
-  "declared-floods": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
-  "declared-transits": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
-  "declared-hunts": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS },
+  "declared-floods": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS, maxStored: 3 * MAX_ITEMS },
+  "declared-transits": {
+    settings: [],
+    longest: 100 * DAY,
+    detail: null,
+    maxItems: MAX_ITEMS,
+    maxStored: 3 * MAX_ITEMS,
+  },
+  "declared-hunts": { settings: [], longest: 100 * DAY, detail: null, maxItems: MAX_ITEMS, maxStored: 3 * MAX_ITEMS },
 } satisfies Record<string, CategoryRules>;
 
 /** The states, whose row goes as soon as their category is unchecked. */
@@ -222,7 +236,9 @@ export function envoiService(store: EnvoiStore, now: () => Date = () => new Date
         throw new EnvoiError("category-off", "« Par unité » n'est pas choisi pour ce Joueur : rien n'est gardé.");
       const newest = Math.max(0, ...space.versions.map((v) => v.version));
       if (keyVersion !== newest) throw STALE_KEY();
-      const added = await store.writeItems(space.id, player, category, items, removed, at);
+      const added = await store.writeItems(space.id, player, category, items, removed, at, rules.maxStored);
+      if (added === "full")
+        throw new EnvoiError("invalid", "Envoi refusé : trop de lignes sont déjà gardées pour cette catégorie.");
       // New flood rows: « Nouveaux floods sur l'espace … », content-free (docs/features/site-discord.md).
       if (category === "floods" && added > 0) remind(space.id, "floods");
     },

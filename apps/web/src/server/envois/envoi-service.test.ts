@@ -181,6 +181,25 @@ describe("the Envois on the site", () => {
     expect(memory.rows().map((r) => r.fingerprint)).toEqual([fp(2)]);
   });
 
+  it("refuses an Envoi that would pass the ceiling of rows kept, and keeps what was there", async () => {
+    await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["convoys"] });
+    // One blob for every item: encrypting 6 000 of them would make the test slow.
+    const blob = (await item(0)).blob;
+    const batch = (from: number) =>
+      Array.from({ length: 2000 }, (_, i) => ({
+        fingerprint: fp(from + i),
+        blob,
+        expiresAt: now.getTime() + 90 * DAY,
+      }));
+    for (const from of [0, 2000, 4000]) await send(messor, batch(from));
+    expect((await failure(send(messor, [await item(6000)]))).code).toBe("invalid");
+    expect((await service.readEnvois(messor.userId, { spaceId: SPACE })).items).toHaveLength(6000);
+
+    await send(messor, [], [fp(0)]);
+    await send(messor, [await item(6000)]);
+    expect((await service.readEnvois(messor.userId, { spaceId: SPACE })).items).toHaveLength(6000);
+  });
+
   it("refuses an Envoi under an older version of the Clé d'alliance, or whose blob names another version", async () => {
     await service.saveSettings(messor.userId, { server: "s5", playerId: 1, categories: ["convoys"] });
     memory.addVersion(SPACE, { version: 2, createdAt: NOW, createdByPseudo: "Lasius" });
@@ -410,6 +429,14 @@ describe("the Envois on the site", () => {
       await choose(messor, ["production"]);
       const two = [await state("a"), { ...(await state("b")), fingerprint: fp(8) }];
       expect((await failure(sendState(messor, "production", two))).code).toBe("invalid");
+    });
+
+    it("never keeps more than a few rows of a state", async () => {
+      await choose(messor, ["production"]);
+      for (const n of [1, 2, 3, 4])
+        await sendState(messor, "production", [{ ...(await state(`production ${String(n)}`)), fingerprint: fp(n) }]);
+      const fifth = { ...(await state("production 5")), fingerprint: fp(5) };
+      expect((await failure(sendState(messor, "production", [fifth]))).code).toBe("invalid");
     });
 
     it("take the army as a number or by unit, the units only « Par unité », for the Admins only", async () => {

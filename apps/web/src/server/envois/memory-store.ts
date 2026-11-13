@@ -51,12 +51,15 @@ export function memoryEnvoiStore() {
       settings.set(key(player), [...categories]);
       return Promise.resolve();
     },
-    writeItems: (spaceId, player, category, items, removed, now) => {
+    writeItems: (spaceId, player, category, items, removed, now, limit) => {
       rows = rows.filter(
         (r) =>
           r.expiresAt > now &&
           !(r.spaceId === spaceId && same(r, player) && r.category === category && removed.includes(r.fingerprint)),
       );
+      const mine = rows.filter((r) => r.spaceId === spaceId && same(r, player) && r.category === category);
+      const fresh = items.filter((item) => !mine.some((r) => r.fingerprint === item.fingerprint));
+      if (mine.length + fresh.length > limit) return Promise.resolve("full" as const);
       let added = 0;
       for (const item of items) {
         const known = rows.find(
