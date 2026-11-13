@@ -44,7 +44,7 @@ out, and why, is in the two sections that follow.
 | [009](009-ingest-atomic-player-day.md)         | A nightly export is stored whole or not at all                                       | P1       | S      | —          | DONE   |
 | [010](010-cap-envoi-rows.md)                   | A Joueur cannot store more Envoi rows than a real extension ever sends               | P1       | S      | —          | DONE   |
 | [011](011-serialize-deploy-ingest-backup.md)   | A deployment, the hourly ingest and the backup never run at the same time            | P1       | S      | —          | DONE   |
-| [012](012-trpc-limits-and-error-log.md)        | tRPC bounds a request, hides internal errors and logs them                           | P1       | S      | —          | TODO   |
+| [012](012-trpc-limits-and-error-log.md)        | tRPC bounds a request, hides internal errors and logs them                           | P1       | S      | —          | DONE   |
 | [013](013-lock-envoi-bookkeeping.md)           | Envois sent at the same time no longer overwrite each other's record                 | P1       | S-M    | —          | TODO   |
 | [014](014-validate-timing-queue.md)            | The timing queue read from the game's page is checked, old verdicts are dropped      | P2       | S      | —          | TODO   |
 | [015](015-revoked-token-forgets-everything.md) | A token removed on the site makes the extension forget as much as « Se déconnecter » | P2       | S      | 013        | TODO   |

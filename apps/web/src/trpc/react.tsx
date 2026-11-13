@@ -5,6 +5,7 @@ import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { useState } from "react";
 import SuperJSON from "superjson";
+import { MAX_BATCH } from "~/server/api/limits";
 import type { AppRouter } from "~/server/api/root";
 
 export const api = createTRPCReact<AppRouter>();
@@ -13,7 +14,7 @@ export const api = createTRPCReact<AppRouter>();
 export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { staleTime: 60_000 } } }));
   const [trpcClient] = useState(() =>
-    api.createClient({ links: [httpBatchLink({ transformer: SuperJSON, url: "/api/trpc" })] }),
+    api.createClient({ links: [httpBatchLink({ transformer: SuperJSON, url: "/api/trpc", maxItems: MAX_BATCH })] }),
   );
   return (
     <QueryClientProvider client={queryClient}>

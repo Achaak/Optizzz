@@ -5,6 +5,7 @@ import superjson from "superjson";
 import { ZodError, z } from "zod";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
+import { publicMessage } from "./limits";
 
 export const createTRPCContext = (opts: { headers: Headers }) => ({ db, ...opts });
 
@@ -12,6 +13,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => ({
     ...shape,
+    message: publicMessage(error.code, shape.message),
     data: { ...shape.data, zodError: error.cause instanceof ZodError ? z.flattenError(error.cause) : null },
   }),
 });
