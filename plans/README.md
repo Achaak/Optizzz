@@ -51,7 +51,7 @@ out, and why, is in the two sections that follow.
 | [016](016-security-headers.md)                 | The site answers with the basic security headers                                     | P2       | S      | —          | DONE   |
 | [017](017-health-check-and-rollback.md)        | A deployment that cannot reach its database fails, and going back is written down    | P2       | S-M    | —          | DONE   |
 | [018](018-ingest-server-tests.md)              | The cron's pass over a server is tested end to end against a database                | P2       | M      | (009)      | DONE   |
-| [019](019-shadcn-dev-dependency.md)            | The shadcn CLI is a development dependency of the site                               | P3       | S      | —          | TODO   |
+| [019](019-shadcn-dev-dependency.md)            | The shadcn CLI is a development dependency of the site                               | P3       | S      | —          | DONE   |
 | [020](020-readme-privacy-paragraph.md)         | The README says what the extension really sends, like PRIVACY.md                     | P2       | S      | —          | TODO   |
 
 ### Dependency notes
@@ -65,6 +65,8 @@ out, and why, is in the two sections that follow.
 - 009, 010 and 018 need a local Postgres to be verified (`TEST_DATABASE_URL`); without it their database tests
   only run in CI.
 - 013, 014 and 015 change the extension: they reach players with the next extension release.
+- 019 done: `pnpm audit --prod` went from 21 advisories (4 low, 12 moderate, 5 high) to 11 (2 low, 5 moderate,
+  4 high), none through shadcn.
 
 ### Decisions the owner must take before a plan can be written
 
