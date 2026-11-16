@@ -67,11 +67,14 @@ model Alliance {
   @@schema("public")
 }
 
-/// A player's scores on one Paris day, read from that day's first export (the nightly one): the curves.
+/// A player's scores from the Paris day `day` (its nightly export) to the day before `until`: a row only when something
+/// changed, the nights between repeat it (ServerDay lists them). `until` is the first night that no longer shows these
+/// scores (changed, or the player gone from the export); null while the latest night still does.
 model PlayerDay {
   server          String
   playerId        Int
-  day             DateTime @db.Date
+  day             DateTime  @db.Date
+  until           DateTime? @db.Date
   alliance        String?
   field           Float
   buildingScore   Int
@@ -79,7 +82,18 @@ model PlayerDay {
   trophyScore     Int
 
   @@id([server, playerId, day])
-  @@index([server, day])
+  @@index([server, until])
+  @@schema("public")
+}
+
+/// A night stored for the curves: the first export of a Paris day, its players counted and their TDC summed.
+model ServerDay {
+  server  String
+  day     DateTime @db.Date
+  players Int
+  field   Float
+
+  @@id([server, day])
   @@schema("public")
 }
 

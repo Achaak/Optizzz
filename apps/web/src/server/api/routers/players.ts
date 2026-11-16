@@ -2,6 +2,7 @@ import { SERVERS, serverById } from "@optizzz/game/servers";
 import { z } from "zod";
 import { columnDay } from "~/ingest/days";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { playerNights } from "~/server/player-nights";
 
 /** Servers in the order of the menu, for the results. */
 const ORDER = new Map(SERVERS.map((server, index) => [server.id, index]));
@@ -59,14 +60,9 @@ export const playersRouter = createTRPCRouter({
       if (!player) return null;
       const [above, days] = await Promise.all([
         ctx.db.player.count({ where: { server: input.server, field: { gt: player.field } } }),
-        ctx.db.playerDay.findMany({
-          where: { server: input.server, playerId: input.id },
-          orderBy: { day: "desc" },
-          take: 8,
-          select: { field: true },
-        }),
+        playerNights(ctx.db, input.server, [input.id], null),
       ]);
-      return { ...player, rank: above + 1, weekAgo: days.length === 8 ? days[7]?.field : undefined };
+      return { ...player, rank: above + 1, weekAgo: days.length >= 8 ? days.at(-8)?.field : undefined };
     }),
 
   /**
@@ -98,11 +94,7 @@ export const playersRouter = createTRPCRouter({
         select: { id: true, pseudo: true },
       });
       const since = new Date(Date.now() - (input.days + 1) * 24 * 3600_000);
-      const days = await ctx.db.playerDay.findMany({
-        where: { server: input.server, playerId: { in: ids }, day: { gte: since } },
-        select: { playerId: true, day: true, field: true, alliance: true },
-        orderBy: { day: "asc" },
-      });
+      const days = await playerNights(ctx.db, input.server, ids, since);
       return players.map((player) => ({
         id: player.id,
         pseudo: player.pseudo,

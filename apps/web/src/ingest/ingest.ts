@@ -71,12 +71,51 @@ async function inChunks<T>(rows: readonly T[], insert: (chunk: T[]) => Promise<u
 }
 
 /**
- * A day's rows, all or none: a day counts as stored as soon as it has a row (days.ts), so a pass cut between two
- * chunks must leave nothing, and the day is taken again at the next pass.
+ * A night of the curves, all or none, after the latest night stored on `server`: a new row for each player whose
+ * scores changed since (or new, or back), `until` on the rows no longer true (changed or gone), and the night in
+ * ServerDay. A night counts as stored as soon as it is in ServerDay, so a pass cut half-way must leave nothing.
  */
-export const storePlayerDays = (db: PrismaClient, rows: Prisma.PlayerDayCreateManyInput[], size = CHUNK) =>
+export const storeNight = (db: PrismaClient, server: string, day: string, players: readonly Player[], size = CHUNK) =>
   db.$transaction(
-    (tx) => inChunks(rows, (chunk) => tx.playerDay.createMany({ data: chunk, skipDuplicates: true }), size),
+    async (tx) => {
+      const date = dayColumn(day);
+      const latest = await tx.serverDay.findFirst({
+        where: { server },
+        orderBy: { day: "desc" },
+        select: { day: true },
+      });
+      if (latest && columnDay(latest.day) >= day)
+        throw new Error(`${server}: the night ${day} is not after the latest stored (${columnDay(latest.day)})`);
+      await tx.$executeRaw`
+        CREATE TEMP TABLE night ("playerId" int PRIMARY KEY, alliance text, field float8, "buildingScore" int,
+          "technologyScore" int, "trophyScore" int) ON COMMIT DROP`;
+      await inChunks(
+        players,
+        (chunk) => tx.$executeRaw`
+          INSERT INTO night SELECT * FROM unnest(
+            ${chunk.map((p) => p.id)}::int[], ${chunk.map((p) => p.alliance)}::text[],
+            ${chunk.map((p) => p.field)}::float8[], ${chunk.map((p) => p.buildingScore)}::int[],
+            ${chunk.map((p) => p.technologyScore)}::int[], ${chunk.map((p) => p.trophyScore)}::int[])`,
+        size,
+      );
+      await tx.$executeRaw`
+        UPDATE "public"."PlayerDay" d SET "until" = ${date}::date
+        WHERE d.server = ${server} AND d."until" IS NULL AND NOT EXISTS (
+          SELECT 1 FROM night n WHERE n."playerId" = d."playerId" AND n.alliance IS NOT DISTINCT FROM d.alliance
+            AND n.field = d.field AND n."buildingScore" = d."buildingScore"
+            AND n."technologyScore" = d."technologyScore" AND n."trophyScore" = d."trophyScore")`;
+      await tx.$executeRaw`
+        INSERT INTO "public"."PlayerDay" (server, "playerId", day, alliance, field, "buildingScore", "technologyScore",
+          "trophyScore")
+        SELECT ${server}, n."playerId", ${date}::date, n.alliance, n.field, n."buildingScore", n."technologyScore",
+          n."trophyScore"
+        FROM night n
+        WHERE NOT EXISTS (SELECT 1 FROM "public"."PlayerDay" d
+          WHERE d.server = ${server} AND d."playerId" = n."playerId" AND d."until" IS NULL)`;
+      await tx.serverDay.create({
+        data: { server, day: date, players: players.length, field: players.reduce((sum, p) => sum + p.field, 0) },
+      });
+    },
     { timeout: 600_000, maxWait: 30_000 },
   );
 
@@ -252,32 +291,25 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     });
   }
 
-  // A GROUP BY in SQL: Prisma's `distinct` would download every row and drop the doubles in memory.
-  const storedPlayerDays = await db.playerDay.groupBy({ by: ["day"], where: { server: server.id } });
+  const latestNight = await db.serverDay.findFirst({
+    where: { server: server.id },
+    orderBy: { day: "desc" },
+    select: { day: true },
+  });
   for (const { day, version } of missingDays(
     versions.players,
-    new Set(storedPlayerDays.map((row) => columnDay(row.day))),
+    latestNight ? columnDay(latestNight.day) : null,
     now,
     DAYS_PER_PASS,
   )) {
-    const rows = (await players(version, false)).map((player) => ({
-      server: server.id,
-      playerId: player.id,
-      day: dayColumn(day),
-      alliance: player.alliance,
-      field: player.field,
-      buildingScore: player.buildingScore,
-      technologyScore: player.technologyScore,
-      trophyScore: player.trophyScore,
-    }));
-    await storePlayerDays(db, rows);
+    await storeNight(db, server.id, day, await players(version, false));
     report.days++;
   }
 
-  const storedAllianceDays = await db.allianceDay.groupBy({ by: ["day"], where: { server: server.id } });
+  const latestAllianceDay = await db.allianceDay.aggregate({ where: { server: server.id }, _max: { day: true } });
   for (const { day, version } of missingDays(
     versions.alliances,
-    new Set(storedAllianceDays.map((row) => columnDay(row.day))),
+    latestAllianceDay._max.day ? columnDay(latestAllianceDay._max.day) : null,
     now,
     DAYS_PER_PASS,
   )) {

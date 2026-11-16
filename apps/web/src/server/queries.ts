@@ -6,6 +6,7 @@ import type { JournalEntry, Prisma } from "~/generated/prisma/client";
 import type { CompareKind, CompareMetric } from "~/lib/compare";
 import { bracketRange, FIELD_BRACKETS, journalGroupOf, kindsOf, type JournalGroup } from "~/lib/server-stats";
 import { db } from "~/server/db";
+import { playerNightRanks, playerNights } from "~/server/player-nights";
 
 export const PAGE_SIZE = 50;
 
@@ -48,12 +49,7 @@ export async function serverBulletin(server: string) {
     db.player.count({ where: { server } }),
     db.alliance.count({ where: { server } }),
     db.player.count({ where: { server, masterId: { not: null } } }),
-    db.playerDay.groupBy({
-      by: ["day"],
-      where: { server, day: { gte: since } },
-      _count: { _all: true },
-      orderBy: { day: "asc" },
-    }),
+    db.serverDay.findMany({ where: { server, day: { gte: since } }, orderBy: { day: "asc" } }),
     // The latest of the diplomacy: what a visitor of the home page cares for first.
     db.journalEntry.findMany({
       where: {
@@ -69,7 +65,7 @@ export async function serverBulletin(server: string) {
     players,
     alliances,
     colonized,
-    playersPerDay: perDay.map((row) => ({ day: row.day, players: row._count._all })),
+    playersPerDay: perDay.map((row) => ({ day: row.day, players: row.players })),
     journal: journal.map(toLine),
   };
 }
@@ -99,13 +95,7 @@ export async function serverSummary(server: string) {
     db.player.aggregate({ where: { server }, _sum: { field: true } }),
     db.player.findMany({ where: { server }, orderBy: { field: "desc" }, take: 10 }),
     db.alliance.findMany({ where: { server }, orderBy: { totalField: "desc" }, take: 10 }),
-    db.playerDay.groupBy({
-      by: ["day"],
-      where: { server },
-      _count: { _all: true },
-      _sum: { field: true },
-      orderBy: { day: "asc" },
-    }),
+    db.serverDay.findMany({ where: { server }, orderBy: { day: "asc" } }),
     db.journalEntry.findMany({
       where: { server, ...NOT_MEMBERSHIP },
       orderBy: { at: "desc" },
@@ -123,7 +113,7 @@ export async function serverSummary(server: string) {
     field: field._sum.field ?? 0,
     topPlayers,
     topAlliances,
-    playersPerDay: perDay.map((row) => ({ day: row.day, players: row._count._all, field: row._sum.field ?? 0 })),
+    playersPerDay: perDay.map((row) => ({ day: row.day, players: row.players, field: row.field })),
     journal: journal.map(toLine),
     brackets: FIELD_BRACKETS.map((bracket, index) => ({ label: bracket.label, players: brackets[index] ?? 0 })),
     journalDays,
@@ -214,17 +204,13 @@ export async function playerPage(server: string, id: number) {
   const [master, colonies, days, journal] = await Promise.all([
     player?.masterId ? db.player.findUnique({ where: { server_id: { server, id: player.masterId } } }) : null,
     db.player.findMany({ where: { server, masterId: id }, orderBy: { pseudo: "asc" } }),
-    db.playerDay.findMany({ where: { server, playerId: id }, orderBy: { day: "asc" } }),
+    playerNights(db, server, [id], null),
     db.journalEntry.findMany({ where: { server, playerId: id }, orderBy: { at: "desc" }, take: 100 }),
   ]);
   const [rank, ranks] = player
     ? await Promise.all([
         db.player.count({ where: { server, field: { gt: player.field } } }),
-        db.$queryRaw<{ day: Date; rank: bigint }[]>`
-          SELECT d.day, (SELECT count(*) FROM "PlayerDay" o WHERE o.server = d.server AND o.day = d.day AND o.field > d.field) + 1 AS rank
-          FROM "PlayerDay" d
-          WHERE d.server = ${server} AND d."playerId" = ${id}
-          ORDER BY d.day`,
+        playerNightRanks(db, server, [id], null),
       ])
     : [null, []];
   return {
@@ -235,7 +221,7 @@ export async function playerPage(server: string, id: number) {
     journal: journal.map(toLine),
     /** By TDC on the server, 1 first. */
     rank: rank === null ? null : rank + 1,
-    ranks: ranks.map((row) => ({ day: row.day, rank: Number(row.rank) })),
+    ranks: ranks.map((row) => ({ day: row.day, rank: row.rank })),
   };
 }
 
@@ -337,7 +323,12 @@ export async function alliancePage(server: string, tag: string, field: number) {
   const [before, masters] = await Promise.all([
     weekBefore
       ? db.playerDay.findMany({
-          where: { server, day: weekBefore, playerId: { in: members.map((member) => member.id) } },
+          where: {
+            server,
+            playerId: { in: members.map((member) => member.id) },
+            day: { lte: weekBefore },
+            OR: [{ until: null }, { until: { gt: weekBefore } }],
+          },
           select: { playerId: true, field: true },
         })
       : [],
@@ -410,19 +401,8 @@ export async function compared(
     const playerIds = ids.map(Number);
     const [players, days, ranks] = await Promise.all([
       db.player.findMany({ where: { server, id: { in: playerIds } } }),
-      metric === "rank"
-        ? []
-        : db.playerDay.findMany({
-            where: { server, playerId: { in: playerIds }, day: after },
-            orderBy: { day: "asc" },
-          }),
-      metric === "rank"
-        ? db.$queryRaw<{ id: number; day: Date; rank: bigint }[]>`
-            SELECT d."playerId" AS id, d.day, (SELECT count(*) FROM "PlayerDay" o WHERE o.server = d.server AND o.day = d.day AND o.field > d.field) + 1 AS rank
-            FROM "PlayerDay" d
-            WHERE d.server = ${server} AND d."playerId" = ANY(${playerIds}) AND d.day >= ${since ?? new Date(0)}
-            ORDER BY d.day`
-        : [],
+      metric === "rank" ? [] : playerNights(db, server, playerIds, since),
+      metric === "rank" ? playerNightRanks(db, server, playerIds, since) : [],
     ]);
     return Promise.all(
       playerIds.flatMap((id) => {
@@ -439,7 +419,7 @@ export async function compared(
               now: metric === "rank" ? rankNow : Math.round(PLAYER_SCORE[metric](player)),
               points:
                 metric === "rank"
-                  ? ranks.filter((row) => row.id === id).map((row) => ({ day: row.day, value: Number(row.rank) }))
+                  ? ranks.filter((row) => row.id === id).map((row) => ({ day: row.day, value: row.rank }))
                   : days
                       .filter((row) => row.playerId === id)
                       .map((row) => ({ day: row.day, value: Math.round(PLAYER_SCORE[metric](row)) })),
@@ -495,6 +475,6 @@ export function findPlayerByPseudo(server: string, pseudo: string) {
 
 /** The day of the latest nightly reading of the server, for the Comparer's periods. */
 export async function lastDay(server: string): Promise<Date | null> {
-  const last = await db.playerDay.findFirst({ where: { server }, orderBy: { day: "desc" }, select: { day: true } });
+  const last = await db.serverDay.findFirst({ where: { server }, orderBy: { day: "desc" }, select: { day: true } });
   return last?.day ?? null;
 }

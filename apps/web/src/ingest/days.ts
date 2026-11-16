@@ -9,18 +9,19 @@ export interface DayVersion {
 }
 
 /**
- * The days of `versions` not yet in `stored`, oldest first, at most `limit` of them: a first run takes back the
- * history a few days at a time instead of downloading every export at once.
+ * The days of `versions` after `latest` (the latest day stored, null for none), oldest first, at most `limit` of
+ * them: a first run takes back the history a few days at a time instead of downloading every export at once. Never a
+ * day before `latest`: a night's rows only say what changed since the previous night stored.
  */
 export function missingDays(
   versions: readonly string[],
-  stored: ReadonlySet<string>,
+  latest: string | null,
   now: Date,
   limit: number,
 ): DayVersion[] {
   return dailyVersions(versions, null, now)
     .map((version) => ({ day: parisDayOf(versionDate(version)), version }))
-    .filter(({ day }) => !stored.has(day))
+    .filter(({ day }) => latest === null || day > latest)
     .slice(0, limit);
 }
 
