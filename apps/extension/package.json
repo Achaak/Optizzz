@@ -1,6 +1,6 @@
 {
   "name": "@optizzz/extension",
-  "version": "1.16.2",
+  "version": "1.16.3",
   "private": true,
   "description": "Extension navigateur d'aide au jeu Fourmizzz.",
   "type": "module",
