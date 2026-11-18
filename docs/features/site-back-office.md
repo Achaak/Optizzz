@@ -1,6 +1,6 @@
 # Back office du site
 
-Une page `/admin` pour voir ce qui se passe sur le site. Proposée le 2026-11-02 avec trois maquettes : Vue d'ensemble, Collecte et sauvegardes, Comptes et Espaces (rangée « D · Back office » du canevas des maquettes du site). Livrés : l'accès, la santé du cron et des sauvegardes (lot 1), la Vue d'ensemble (lot 2), Comptes et Espaces (lot 3).
+Une page `/admin` pour voir ce qui se passe sur le site. Proposée le 2026-11-02 avec trois maquettes : Vue d'ensemble, Collecte et sauvegardes, Comptes et Espaces (rangée « D · Back office » du canevas des maquettes du site). Livrés : l'accès, la santé du cron et des sauvegardes (lot 1), la Vue d'ensemble (lot 2), Comptes et Espaces (lot 3), puis Audience (2026-11-18).
 
 ## Accès
 
@@ -42,7 +42,11 @@ Le format de `report` est décrit et relu par des schémas zod dans `apps/web/sr
 - **Comptes**, les plus récents d'abord, 50 par page : adresse masquée (`a•••@gmail.com`), Joueurs rattachés (serveur et pseudo), extensions liées, Clé de chiffrement créée ou non, création, dernière connexion.
 - Ni contenu chiffré ni adresse en entier. Logique : `apps/web/src/lib/admin/accounts.ts` (testée).
 
-Seul l'administrateur lit ces données ; rien n'est envoyé ailleurs. Aucune mesure d'audience n'est ajoutée.
+## Audience (`/admin/audience`)
+
+Les pages vues du compteur du site, sans rien sur les visiteurs : voir [site-audience.md](site-audience.md).
+
+Seul l'administrateur lit ces données ; rien n'est envoyé ailleurs.
 
 ## Lots suivants (proposés)
 

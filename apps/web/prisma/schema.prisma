@@ -163,6 +163,21 @@ model JobRun {
   @@schema("public")
 }
 
+/// The page views counter (docs/features/site-audience.md): views of one page on one Paris day. Nothing about the
+/// visitor. In « accounts » because the site writes it, and the site writes nowhere else (ADR 0008).
+model PageView {
+  /// The Paris calendar day.
+  day    DateTime @db.Date
+  /// The route: « /tools/combat », « /[server]/players/[id] », « /api/[server]/map » (the extension's map reads).
+  page   String
+  /// « s5 » on a server's pages, else empty.
+  server String   @default("")
+  views  Int      @default(0)
+
+  @@id([day, page, server])
+  @@schema("accounts")
+}
+
 // ── Optizzz accounts (Better Auth, magic link). Deleting a user cascades to everything it owns; later
 // tickets (declared Players, keys, Alliance Spaces) hang their tables off User with onDelete: Cascade too.
 

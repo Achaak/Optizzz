@@ -10,10 +10,16 @@ export default function PrivacyPage() {
       <section className="space-y-2">
         <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Ce que le site sait de vous</h2>
         <p>
-          Sans Compte Optizzz, le site lui-même ne pose aucun cookie et ne mesure pas l&apos;audience. Le serveur du
-          site, à Amsterdam chez Scaleway (Union européenne), ne garde pas de journal des visites : votre adresse IP
-          sert à vous répondre, sans être enregistrée (la limite des demandes de lien de connexion la garde une minute
-          en mémoire).
+          Sans Compte Optizzz, le site lui-même ne pose aucun cookie. Le serveur du site, à Amsterdam chez Scaleway
+          (Union européenne), ne garde pas de journal des visites : votre adresse IP sert à vous répondre, sans être
+          enregistrée (la limite des demandes de lien de connexion la garde une minute en mémoire).
+        </p>
+        <p>
+          Pour savoir quelles pages servent, le site compte les pages vues : quand une page s&apos;affiche, votre
+          navigateur envoie son chemin, sans cookie, et le site ajoute 1 au nombre de cette page pour ce jour. Le
+          compteur ne garde que le jour et le type de page («&nbsp;fiche d&apos;un joueur&nbsp;» sur S5, jamais quel
+          joueur) : ni votre adresse IP, ni votre navigateur, ni un identifiant, rien qui permette de vous reconnaître
+          ou de suivre vos visites. Les lectures de la carte par l&apos;extension sont comptées de la même façon.
         </p>
         <p>
           Ce que vous choisissez sur la carte d&apos;un serveur ou saisissez dans un outil (armées, niveaux…) reste dans

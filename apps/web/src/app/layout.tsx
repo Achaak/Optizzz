@@ -2,6 +2,7 @@ import "~/styles/globals.css";
 
 import type { Metadata } from "next";
 import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { PageViewBeacon } from "~/components/page-view-beacon";
 import { SiteFooter, SiteHeader } from "~/components/site-header";
 import Script from "next/script";
 import { ADS_CONSENT_SCRIPT } from "~/lib/ads";
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SiteHeader />
           <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
           <SiteFooter />
+          <PageViewBeacon />
         </TRPCReactProvider>
       </body>
     </html>

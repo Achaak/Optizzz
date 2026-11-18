@@ -111,8 +111,8 @@ export default function AboutPage() {
         <Part id="about-not" title="Ce que le site ne fait pas">
           <ul>
             <li>
-              Pas de mesure d&apos;audience. Le seul cookie que pose le site est celui de la connexion à un Compte
-              Optizzz.
+              Aucun suivi des visiteurs : le site compte seulement les pages vues, sans rien garder de vous. Le seul
+              cookie qu&apos;il pose est celui de la connexion à un Compte Optizzz.
             </li>
             <li>
               Des annonces <strong>non personnalisées</strong> sur quelques pages publiques, jamais dans les Espaces ni

@@ -5,9 +5,22 @@ import type { AdminAlert } from "./job-runs";
 
 /** New accounts per Paris day over the last `days` days, oldest first, today included. */
 export function dailyCounts(dates: readonly Date[], now: Date, days: number): { label: string; value: number }[] {
+  return dailySums(
+    dates.map((date) => ({ date, value: 1 })),
+    now,
+    days,
+  );
+}
+
+/** The values summed per Paris day over the last `days` days, oldest first, today included. */
+export function dailySums(
+  entries: readonly { date: Date; value: number }[],
+  now: Date,
+  days: number,
+): { label: string; value: number }[] {
   const DAY = 24 * 60 * 60_000;
   const counts = new Map<string, number>();
-  for (const date of dates) counts.set(dayMonth(date), (counts.get(dayMonth(date)) ?? 0) + 1);
+  for (const { date, value } of entries) counts.set(dayMonth(date), (counts.get(dayMonth(date)) ?? 0) + value);
   // From today's Paris noon, in steps of 24 h: a day of 23 or 25 hours never lands twice on the same Paris day.
   const noon = fromParisParts({ ...parisParts(now), hours: 12, minutes: 0 }).getTime();
   return Array.from({ length: days }, (_, i) => {
