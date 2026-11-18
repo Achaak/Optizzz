@@ -258,8 +258,18 @@ export function armyFood(army: Army): number {
   return food;
 }
 
-/** A unit's name compared loosely: apostrophes alike, and no plural « s » (Armee.php writes « Naines d’Elites »). */
-const looseName = (name: string) => name.replace(/'/g, "’").trim().toLowerCase().replace(/s\b/g, "");
+/**
+ * A unit's name compared loosely: apostrophes alike, no accents and no plural « s »
+ * (Armee.php writes « Naines d’Elites », the hunt report « Naines d’Élites »).
+ */
+const looseName = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/'/g, "’")
+    .trim()
+    .toLowerCase()
+    .replace(/s\b/g, "");
 
 /** Unit key from its name as the game writes it, singular or plural; `undefined` when unknown. */
 export function unitKeyOf(name: string): string | undefined {

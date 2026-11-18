@@ -18,6 +18,11 @@ describe("unitKeyOf", () => {
     expect(unitKeyOf("jsn")).toBe("JSN");
     expect(unitKeyOf("Fourmi volante")).toBeUndefined();
   });
+
+  it("ignores accents: the hunt report writes « Naines d’Élites »", () => {
+    expect(unitKeyOf("Naines d’Élites")).toBe("NE");
+    expect(unitKeyOf("Soldates d’Elite")).toBe("SE");
+  });
 });
 
 describe("unitLabel", () => {
