@@ -21,12 +21,13 @@ docker image prune -f >/dev/null
 
 # Downloaded before .env names them: until then, the hourly ingest (ingest.sh) keeps the images it has.
 TAG="$tag" compose pull --quiet web tools
-# The tag stays in .env: the hourly ingest runs the same version as the site.
-{ grep -v '^TAG=' .env || true; echo "TAG=$tag"; } >.env.new
-cat .env.new >.env && rm .env.new
 
 compose up -d --wait db
-compose run --rm tools pnpm db:deploy
+TAG="$tag" compose run --rm tools pnpm db:deploy
+# The tag goes to .env once its migrations are in: the hourly ingest runs the same version as the site, and a failed
+# migration leaves the previous version whole (2026-11-16: the new ingest ran for two days beside the old site).
+{ grep -v '^TAG=' .env || true; echo "TAG=$tag"; } >.env.new
+cat .env.new >.env && rm .env.new
 compose exec -T db psql -U optizzz -d optizzz -v ON_ERROR_STOP=1 --quiet <postgres/grants.sql
 compose up -d --wait --remove-orphans web caddy
 # The Caddyfile is mounted as a file: a new one copied by the deployment is not read until Caddy reloads it, and

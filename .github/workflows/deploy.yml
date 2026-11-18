@@ -73,6 +73,8 @@ jobs:
           install -m 700 -d ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" >~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
           echo "${{ secrets.VPS_KNOWN_HOSTS }}" >~/.ssh/known_hosts
+          # A migration prints nothing for minutes: without keepalives the idle link dropped after 15 (2026-11-16).
+          printf 'ServerAliveInterval 30\nServerAliveCountMax 10\n' >~/.ssh/config
       - name: Copy deploy/ and run deploy.sh
         env:
           VPS: optizzz@${{ secrets.VPS_HOST }}
