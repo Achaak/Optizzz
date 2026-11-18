@@ -32,6 +32,11 @@ export const collect: Feature = {
     const path = location.pathname.toLowerCase();
     const now = new Date();
 
+    // Optizzz account: the header's pseudo, for the offer « Rattacher Pseudo (S5) » (sent only on that click) and for
+    // the Envois, which leave only for the game's logged-in player. Kept first: nothing below that fails may hold it.
+    const pseudo = on("optizzz-account") ? readLoggedInPseudo(document) : null;
+    if (pseudo) await storeCurrentPlayer(origin, pseudo);
+
     // End times: the « Prochaines fins » box, and the end notifications of the alerts.
     if (on("end-times") || on("alerts", "notifications")) {
       const kind = sourceOf(location.pathname, location.search);
@@ -49,7 +54,6 @@ export const collect: Feature = {
 
     // The Convois Envoi of the logged-in player, checked in « Compte Optizzz »: their convoys both ways and the
     // inbox's history, as this page shows them (docs/features/site-envois.md). Sent by the background, encrypted.
-    const pseudo = on("optizzz-account") ? readLoggedInPseudo(document) : null;
     const sendsConvoysHere =
       pseudo !== null &&
       (path === "/commerce.php" || path === "/messagerie.php") &&
@@ -92,10 +96,9 @@ export const collect: Feature = {
       }
     }
 
-    // Optizzz account: the header's pseudo, for the offer « Rattacher Pseudo (S5) » (sent only on that click), and the
-    // last list of the alliance's members, kept here for the Alliance Spaces: nothing of either leaves the browser.
+    // Optizzz account: the last list of the alliance's members, kept here for the Alliance Spaces: it never leaves the
+    // browser.
     if (on("optizzz-account")) {
-      if (pseudo) await storeCurrentPlayer(origin, pseudo);
       if (path === "/alliance.php" && location.search === "?Membres") {
         const members = readAllianceMembers(document, now);
         if (members) await storeAllianceMembers(origin, members);

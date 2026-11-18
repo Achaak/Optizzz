@@ -37,4 +37,16 @@ describe("withStorageLock", () => {
     await expect(withStorageLock("k", () => Promise.resolve(42))).resolves.toBe(42);
     expect(request).toHaveBeenCalledWith("optizzz:k", expect.any(Function));
   });
+
+  it("leaves navigator.locks aside in a Firefox content script, where every request is refused", async () => {
+    const request = vi.fn(() => Promise.reject(new Error('Permission denied to access property "then"')));
+    vi.spyOn(navigator, "locks", "get").mockReturnValue({ request } as never);
+    vi.stubGlobal("wrappedJSObject", {});
+    try {
+      await expect(withStorageLock("k", () => Promise.resolve(42))).resolves.toBe(42);
+      expect(request).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
