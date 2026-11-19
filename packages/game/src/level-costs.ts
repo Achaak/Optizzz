@@ -73,7 +73,8 @@ export const LEVEL_BASES: Readonly<Record<LevelKey, LevelBase>> = {
   poison: { cost: research(250_000, 40_000_000, 15_000_000), seconds: 50_000, slowdowns: [] },
 };
 
-const isBuilding = (key: LevelKey): key is BuildingKey => BUILDINGS.some((building) => building.key === key);
+/** Whether `key` is built on construction.php (else researched on laboratoire.php). */
+export const isBuilding = (key: LevelKey): key is BuildingKey => BUILDINGS.some((building) => building.key === key);
 
 /** The building or research the game names `name` (accents and apostrophes aside); null when unknown. */
 export const levelKeyOf = (name: string): LevelKey | null =>

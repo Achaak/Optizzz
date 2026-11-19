@@ -138,6 +138,7 @@ describe("unlockCost", () => {
     expect(unlockCost([{ name: "Salle de combat", level: 1 }], s5)).toEqual({
       requirements: [],
       cost: cost(0),
+      duration: 0,
       complete: true,
     });
   });
@@ -147,6 +148,8 @@ describe("unlockCost", () => {
     expect(unlockCost([{ name: "Salle de combat", level: 3 }], s5)).toEqual({
       requirements: [{ name: "Salle de combat", level: 3, from: 1, neededBy: null }],
       cost: cost(600 + 1_200),
+      // The rows show no time.
+      duration: null,
       complete: true,
     });
   });
@@ -194,7 +197,54 @@ describe("unlockCost", () => {
     expect(unlockCost([{ name: "Poison", level: 4 }], s5)).toEqual({
       requirements: [],
       cost: cost(0),
+      duration: 0,
       complete: false,
     });
+  });
+});
+
+describe("unlockCost's duration", () => {
+  /** Times in milliseconds, as the rows show them for their next level. */
+  const timed: LevelRow[] = [
+    { name: "Laboratoire", level: 3, cost: cost(11_200), duration: 1_000, requirements: [] },
+    { name: "Salle de combat", level: 1, cost: cost(600), duration: 100, requirements: [] },
+    {
+      name: "Caserne",
+      level: 0,
+      cost: cost(800),
+      duration: 200,
+      requirements: [{ name: "Salle de combat", level: 1 }],
+    },
+    {
+      name: "Génétique",
+      level: 0,
+      cost: cost(10_000, 3_000, 1_000),
+      duration: 100,
+      requirements: [{ name: "Laboratoire", level: 4 }],
+    },
+  ];
+
+  it("adds up the levels of one queue, each longer than the one before", () => {
+    // Caserne 1 and 2 (× 1,6), and Salle de combat 2 that Caserne 2 needs: all on Construction, one after the other.
+    expect(unlockCost([{ name: "Caserne", level: 2 }], timed).duration).toBe(200 + 320 + 100);
+  });
+
+  it("runs Construction and Laboratoire side by side, each level after its requirements", () => {
+    // Laboratoire 4 [0, 1 000], then 5 [1 000, 2 600]; Génétique 1 [1 000, 1 100], Génétique 2 waits for
+    // Laboratoire 5 [2 600, 2 770]; Salle de combat 2 [2 600, 2 700]: after the Laboratoire, which was asked first.
+    expect(
+      unlockCost(
+        [
+          { name: "Génétique", level: 2 },
+          { name: "Salle de combat", level: 2 },
+        ],
+        timed,
+      ).duration,
+    ).toBe(2_770);
+  });
+
+  it("is unknown when a row shows no time", () => {
+    const untimed = timed.map((row) => (row.name === "Laboratoire" ? { ...row, duration: undefined } : row));
+    expect(unlockCost([{ name: "Génétique", level: 1 }], untimed).duration).toBeNull();
   });
 });

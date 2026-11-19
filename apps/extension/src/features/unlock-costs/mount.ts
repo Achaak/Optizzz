@@ -1,7 +1,9 @@
 // A block under each locked unit of Reine.php, and under each row of construction.php or laboratoire.php whose next
-// level waits for a requirement: the levels to reach, then what they cost. See docs/features/cout-deblocage.md.
+// level waits for a requirement: the levels to reach, then what they cost and how long they take. See
+// docs/features/cout-deblocage.md.
 import type { UnlockCost, UnlockStep } from "@optizzz/game/requirements";
 import { formatAmount, formatNumber, isCompacted } from "@optizzz/game/format/number-format";
+import { formatDuration } from "@optizzz/game/format/time-format";
 import { sameName } from "@optizzz/game/levels";
 import { placeInRow } from "@/utils/row-extras";
 
@@ -9,9 +11,8 @@ export const UNLOCK_STYLE = `
 .optizzz-unlock { margin-top: var(--optizzz-space-3); display: grid; grid-template-columns: auto 1fr; gap: var(--optizzz-space-2) var(--optizzz-space-3); align-items: baseline; }
 .optizzz-unlock .optizzz-tag { grid-row: span 2; align-self: start; }
 .optizzz-unlock-steps, .optizzz-unlock-cost { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--optizzz-space-1) var(--optizzz-space-5); }
-.optizzz-unlock-amount { white-space: nowrap; }
 .optizzz-unlock-nested { color: var(--optizzz-text-muted); }
-.optizzz-unlock-amount { display: inline-flex; align-items: center; gap: var(--optizzz-space-2); }
+.optizzz-unlock-amount { display: inline-flex; align-items: center; gap: var(--optizzz-space-2); white-space: nowrap; }
 .optizzz-unlock-amount img { width: 16px; height: 16px; }`;
 
 /** The game's own icons: the game look swaps them for sharper ones. */
@@ -20,6 +21,20 @@ const RESOURCES = [
   { key: "food", label: "nourriture", icon: "/images/icone/icone_pomme.png" },
   { key: "materials", label: "matériaux", icon: "/images/icone/icone_bois.png" },
 ] as const;
+const TIME_ICON = "/images/icone/icone_sablier.gif";
+
+const DAY = 86_400_000;
+/** Up to 30 days as the other tools write it (« 2 j 5 h »), then in days, then in years. */
+export function formatUnlockDuration(ms: number): string {
+  if (ms <= 30 * DAY) return formatDuration(ms);
+  const days = Math.ceil(ms / DAY);
+  if (days < 2 * 365) return `${formatNumber(days)} j`;
+  return `${formatNumber(Math.round(days / 365))} ans`;
+}
+
+const TIME_TITLE =
+  "Temps : Construction et Laboratoire travaillent côte à côte, chacun un niveau à la fois, et un niveau commence " +
+  "quand ceux qu'il demande sont finis. Les chantiers en cours ne sont pas comptés : à partir de files libres.";
 
 const TITLE =
   "Optizzz : les niveaux manquants de chaque prérequis, et ceux de leurs propres prérequis, au coût que montrent " +
@@ -79,19 +94,29 @@ export function mountUnlockCost(description: Element, unlock: UnlockCost, rowLev
   const cost = doc.createElement("div");
   cost.className = "optizzz-unlock-cost";
   if (!unlock.complete) cost.append("au moins");
-  for (const { key, label, icon } of amounts) {
-    const value = unlock.cost[key];
-    const amount = doc.createElement("span");
-    amount.className = "optizzz-unlock-amount";
+  /** An icon (named for screen readers) and a figure in bold. */
+  const amount = (icon: string, label: string, text: string, title = "") => {
+    const element = doc.createElement("span");
+    element.className = "optizzz-unlock-amount";
     const image = doc.createElement("img");
     image.src = icon;
     image.alt = label;
     image.title = label;
     const figure = doc.createElement("strong");
-    figure.textContent = formatAmount(value).replace(/ /g, "\u00a0");
-    if (isCompacted(value)) figure.title = `${formatNumber(value)} ${label}`;
-    amount.append(image, figure);
-    cost.append(amount);
+    figure.textContent = text;
+    if (title) figure.title = title;
+    element.append(image, figure);
+    return element;
+  };
+  for (const { key, label, icon } of amounts) {
+    const value = unlock.cost[key];
+    const title = isCompacted(value) ? `${formatNumber(value)} ${label}` : "";
+    cost.append(amount(icon, label, formatAmount(value).replace(/ /g, "\u00a0"), title));
+  }
+  if (unlock.duration !== null && unlock.duration > 0) {
+    const time = amount(TIME_ICON, "temps", formatUnlockDuration(unlock.duration).replace(/ /g, "\u00a0"));
+    time.title = TIME_TITLE;
+    cost.append(time);
   }
 
   block.append(tag, steps, cost);

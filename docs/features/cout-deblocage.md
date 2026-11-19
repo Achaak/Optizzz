@@ -4,7 +4,7 @@ Idée d'un joueur (Hardware) le 2026-11-19 : sur la Reine, mettre sous les unit�
 
 ## But
 
-Savoir ce qu'il reste à payer (ouvrières, nourriture, matériaux) pour débloquer une unité, ou le niveau suivant d'un bâtiment ou d'une recherche, sans additionner soi-même les niveaux manquants de chaque prérequis.
+Savoir ce qu'il reste à payer (ouvrières, nourriture, matériaux), et en combien de temps, pour débloquer une unité, ou le niveau suivant d'un bâtiment ou d'une recherche, sans additionner soi-même les niveaux manquants de chaque prérequis.
 
 ## Comportement
 
@@ -17,7 +17,8 @@ Savoir ce qu'il reste à payer (ouvrières, nourriture, matériaux) pour débloq
   - Les niveaux à faire, du niveau actuel au niveau demandé, ceux qu'un prérequis demande à son tour entre parenthèses après lui : « **Acide** 0 → 5 (Armes 7 → 10, Génétique 0 → 8) · **Caserne** 0 → 13 (Salle de combat 1 → 13) ». Un prérequis demandé deux fois est rangé sous celui qui le demande le plus haut.
   - Le coût, ouvrières, nourriture et matériaux, chacun avec l'icône du jeu (nommée pour les lecteurs d'écran) et en gras ; les montants nuls sont omis, les nombres arrondis suivent le réglage « Nombres arrondis » (le nombre exact au survol).
   - Sur Construction et Laboratoire, l'infobulle dit quel niveau attend (« Pour lancer le niveau 9 ») : le « Requis » du jeu juste au-dessus le dit déjà.
-  - Aucune durée : la construction et le laboratoire travaillent en parallèle, un total induirait en erreur.
+  - Le temps, après le coût, avec le sablier du jeu (demandé le 2026-11-19) : jusqu'à 30 jours comme les autres outils (« 2 j 5 h »), puis en jours (« 412 j »), puis en années (« 12 ans »).
+- **Temps** : Construction et Laboratoire travaillent côte à côte, chacun un niveau à la fois, dans l'ordre sur une ligne ; un niveau commence quand ceux qu'il demande sont finis (Génétique 2 attend Laboratoire 5), et une file prend d'abord un niveau qu'une autre attend. Chaque niveau dure ce que la ligne affiche (bonus d'Architecture ou de la Salle d'analyse compris), grandi comme la table des niveaux le dit. Les chantiers en cours ne sont pas comptés : le calcul part de files libres, et un niveau en cours compte comme fini.
 - **Inconnu** : un prérequis absent des deux pages, ou une page qui ne répond pas, et le coût est écrit « au moins ».
 - **Données** : la Reine relit `construction.php` et `laboratoire.php` en arrière-plan (`fetchGamePage`, requête partagée avec les autres features) ; Construction relit le Laboratoire et inversement. Un niveau en cours compte comme fait.
 - Entrée « Coût du déblocage » dans « Fonctionnalités », avec une option par page : la Reine, Construction et Laboratoire.
@@ -29,10 +30,10 @@ Savoir ce qu'il reste à payer (ouvrières, nourriture, matériaux) pour débloq
 
 ## Code
 
-| Fichier                                             | Rôle                                                                    |
-| --------------------------------------------------- | ----------------------------------------------------------------------- |
-| `packages/game/src/requirements.ts`                 | `unlockCost` : niveaux à faire et coût, prérequis des prérequis compris |
-| `packages/game/src/pages/level-rows.ts`             | Les « Requis » d'une ligne, remplis ou non                              |
-| `packages/game/src/pages/queen.ts`                  | `readLockedUnits` : les unités verrouillées de la Reine                 |
-| `apps/extension/src/features/unlock-costs/mount.ts` | Texte et ligne                                                          |
-| `apps/extension/src/features/unlock-costs/index.ts` | Les trois pages, relecture des deux autres                              |
+| Fichier                                             | Rôle                                                                           |
+| --------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `packages/game/src/requirements.ts`                 | `unlockCost` : niveaux à faire, coût et temps, prérequis des prérequis compris |
+| `packages/game/src/pages/level-rows.ts`             | Les « Requis » d'une ligne, remplis ou non                                     |
+| `packages/game/src/pages/queen.ts`                  | `readLockedUnits` : les unités verrouillées de la Reine                        |
+| `apps/extension/src/features/unlock-costs/mount.ts` | Texte et ligne                                                                 |
+| `apps/extension/src/features/unlock-costs/index.ts` | Les trois pages, relecture des deux autres                                     |

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { UnlockCost } from "@optizzz/game/requirements";
-import { mountUnlockCost } from "./mount";
+import { formatUnlockDuration, mountUnlockCost } from "./mount";
 
 const cost = (materials: number, food = 0, workers = 0) => ({ food, materials, workers });
 /** The text with plain spaces: the numbers' are non-breaking. */
@@ -18,6 +18,7 @@ const concierge: UnlockCost = {
     { name: "Laboratoire", level: 18, from: 16, neededBy: "Génétique" },
   ],
   cost: cost(616_600, 93_000, 31_000),
+  duration: 3 * 3_600_000 + 25 * 60_000,
   complete: true,
 };
 
@@ -38,11 +39,12 @@ describe("mountUnlockCost", () => {
   it("shows each resource with the game's icon, named for screen readers", () => {
     const { line } = mount(concierge);
     const amounts = [...(line?.querySelectorAll(".optizzz-unlock-amount") ?? [])];
-    expect(amounts.map((amount) => plain(amount.textContent))).toEqual(["31 000", "93 000", "616 600"]);
+    expect(amounts.map((amount) => plain(amount.textContent))).toEqual(["31 000", "93 000", "616 600", "3 h 25"]);
     expect(amounts.map((amount) => amount.querySelector("img")?.getAttribute("alt"))).toEqual([
       "ouvrières",
       "nourriture",
       "matériaux",
+      "temps",
     ]);
     expect(amounts[1]?.querySelector("img")?.getAttribute("src")).toBe("/images/icone/icone_pomme.png");
   });
@@ -52,6 +54,7 @@ describe("mountUnlockCost", () => {
       {
         requirements: [{ name: "Salle de combat", level: 3, from: 1, neededBy: null }],
         cost: cost(1_800),
+        duration: null,
         complete: true,
       },
       9,
@@ -66,12 +69,21 @@ describe("mountUnlockCost", () => {
   });
 
   it("writes nothing when nothing could be costed", () => {
-    expect(mount({ requirements: [], cost: cost(0), complete: false }).line).toBeNull();
+    expect(mount({ requirements: [], cost: cost(0), duration: 0, complete: false }).line).toBeNull();
   });
 
   it("adds the line once, replacing the previous one", () => {
     const { description } = mount(concierge);
     mountUnlockCost(description, concierge, null);
     expect(description.querySelectorAll(".optizzz-unlock")).toHaveLength(1);
+  });
+});
+
+describe("formatUnlockDuration", () => {
+  const day = 86_400_000;
+  it("writes up to 30 days like the other tools, then days, then years", () => {
+    expect(plain(formatUnlockDuration(2 * day + 5 * 3_600_000))).toBe("2 j 5 h");
+    expect(plain(formatUnlockDuration(412 * day))).toBe("412 j");
+    expect(plain(formatUnlockDuration(12.4 * 365 * day))).toBe("12 ans");
   });
 });

@@ -1,7 +1,7 @@
 // What the missing levels of requirements (« Requis : Laboratoire niveau 10 ») cost, theirs included, each grown from
 // the one shown as the level-costs table says; and the next level of a row with them. See
 // docs/features/conseils-recherche.md and docs/features/cout-deblocage.md.
-import { levelKeyOf, levelsAhead } from "./level-costs";
+import { isBuilding, levelKeyOf, levelsAhead, levelsFrom } from "./level-costs";
 import { sameName } from "./levels";
 import type { Cost } from "./pages/resources";
 
@@ -16,6 +16,8 @@ export interface LevelRow {
   /** Highest level shown, those under way included: the row shows the cost of the level after. */
   level: number;
   cost: Cost;
+  /** Milliseconds the next level takes, the player's bonus included; unknown when absent. */
+  duration?: number;
   /** What the row's next level needs, reached or not (« Requis : Laboratoire niveau 10 »). */
   requirements: Requirement[];
 }
@@ -52,6 +54,11 @@ export interface UnlockCost {
   requirements: UnlockStep[];
   /** Every missing level of them, added up. */
   cost: Cost;
+  /**
+   * Milliseconds until the last of them is done, Construction and Laboratoire working side by side from now, each
+   * level after the levels it needs; null when a row shows no time.
+   */
+  duration: number | null;
   /** False when a requirement could not be costed: on none of the rows given, or unknown to the level table. */
   complete: boolean;
 }
@@ -94,6 +101,10 @@ export function unlockCost(needed: readonly Requirement[], rows: readonly LevelR
     if (levels?.length) cost = add(cost, levels[levels.length - 1]?.cost ?? cost);
   }
   return {
+    duration: schedule(
+      [...targets].map(([source, { level }]) => ({ source, level })),
+      rows,
+    ),
     requirements: [...targets].map(([source, { level, neededBy }]) => ({
       name: source.name,
       level,
@@ -103,6 +114,67 @@ export function unlockCost(needed: readonly Requirement[], rows: readonly LevelR
     cost,
     complete,
   };
+}
+
+/** One level to do: on which row, how long, and the levels it waits for. */
+interface Job {
+  row: LevelRow;
+  level: number;
+  duration: number;
+  building: boolean;
+  needs: { row: LevelRow; level: number }[];
+}
+
+/**
+ * When the last of the levels up to each target is done: each queue (Construction, Laboratoire) does one level at a
+ * time, in order on a row, a level once those it needs are done. A queue takes first a level that another one waits
+ * for. The game's own queues are taken as free. Null when a row shows no time.
+ */
+function schedule(targets: readonly { source: LevelRow; level: number }[], rows: readonly LevelRow[]): number | null {
+  const jobs: Job[] = [];
+  for (const { source, level } of targets) {
+    const key = levelKeyOf(source.name);
+    if (!key || source.duration === undefined) return null;
+    const count = level - source.level;
+    const shown = { cost: source.cost, duration: source.duration };
+    levelsFrom(key, source.level + 1, shown, count).forEach(({ duration }, index) => {
+      const gained = index;
+      const needs = source.requirements.flatMap((requirement) => {
+        const row = rows.find((candidate) => sameName(candidate.name, requirement.name));
+        const needed = requirement.level + gained;
+        return row && needed > row.level ? [{ row, level: needed }] : [];
+      });
+      jobs.push({ row: source, level: source.level + 1 + index, duration, building: isBuilding(key), needs });
+    });
+  }
+  const finished = new Map<LevelRow, Map<number, number>>();
+  const doneAt = (row: LevelRow, level: number) => (level <= row.level ? 0 : finished.get(row)?.get(level));
+  const free = { building: 0, research: 0 };
+  const pending = [...jobs];
+  let end = 0;
+  while (pending.length > 0) {
+    // The next level of each row, ready when the levels it needs are done.
+    const ready = pending.flatMap((job) => {
+      if (doneAt(job.row, job.level - 1) === undefined) return [];
+      const after = [doneAt(job.row, job.level - 1), ...job.needs.map((need) => doneAt(need.row, need.level))];
+      if (after.some((time) => time === undefined)) return [];
+      const queue = job.building ? free.building : free.research;
+      return [{ job, start: Math.max(queue, ...(after as number[])) }];
+    });
+    const awaited = (job: Job) =>
+      pending.some((other) => other.needs.some((need) => need.row === job.row && need.level >= job.level));
+    const [next] = ready.sort((a, b) => a.start - b.start || Number(awaited(b.job)) - Number(awaited(a.job)));
+    if (!next) break;
+    const { job, start } = next;
+    const at = start + job.duration;
+    if (!finished.has(job.row)) finished.set(job.row, new Map());
+    finished.get(job.row)?.set(job.level, at);
+    if (job.building) free.building = at;
+    else free.research = at;
+    end = Math.max(end, at);
+    pending.splice(pending.indexOf(job), 1);
+  }
+  return end;
 }
 
 /** What the next level of `row` costs, the missing levels of its requirements included. */

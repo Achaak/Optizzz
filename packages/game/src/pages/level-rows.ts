@@ -19,10 +19,11 @@ export function readRequirements(description: Element): Requirement[] {
 /** The rows of the given pages, with what each next level needs, and where to put a line. */
 export function readLevelRows(docs: readonly Document[]): (LevelRow & { description: Element })[] {
   return docs.flatMap((doc) =>
-    readTimedRows(doc).map(({ name, level, cost, description }) => ({
+    readTimedRows(doc).map(({ name, level, cost, duration, description }) => ({
       name,
       level,
       cost,
+      duration,
       description,
       requirements: readRequirements(description),
     })),
