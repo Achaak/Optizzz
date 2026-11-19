@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { costWithRequirements, type LevelRow } from "./requirements";
+import { costWithRequirements, unlockCost, type LevelRow } from "./requirements";
 
 const cost = (materials: number, food = 0, workers = 0) => ({ food, materials, workers });
 /** S5 on 2026-10-17: Couveuse 11, Solarium 9, Technique de ponte 9 (needs Laboratoire 10), Laboratoire 9. */
@@ -96,12 +96,105 @@ describe("costWithRequirements", () => {
     });
   });
 
-  it("is incomplete when a requirement misses several levels with requirements of its own", () => {
+  it("raises a requirement's own requirements one level per level it gains", () => {
     const far = stable.map((row) =>
       row.name === "Etable à pucerons"
         ? { ...row, requirements: [{ name: "Communication avec les animaux", level: 9 }] }
         : row,
     );
-    expect(costWithRequirements(named("Etable à pucerons", far), far).complete).toBe(false);
+    // Communication 9 needs Laboratoire 9: Communication 8 needs Laboratoire 8.
+    expect(costWithRequirements(named("Etable à pucerons", far), far)).toMatchObject({
+      requirements: [
+        { name: "Communication avec les animaux", level: 9 },
+        { name: "Laboratoire", level: 9 },
+      ],
+      cost: cost(48_000 + 64_000 + 128_000 + 358_400 + 716_800, 25_600 + 51_200, 10_240 + 20_480),
+      complete: true,
+    });
+  });
+});
+
+/** S5 on 2026-11-19: what the Reine's locked units wait for, and the rows they lean on. */
+const s5: LevelRow[] = [
+  { name: "Laboratoire", level: 16, cost: cost(45_875_200), requirements: [] },
+  { name: "Salle de combat", level: 1, cost: cost(600), requirements: [] },
+  { name: "Caserne", level: 0, cost: cost(800), requirements: [{ name: "Salle de combat", level: 1 }] },
+  { name: "Armes", level: 7, cost: cost(25_600, 38_400, 10_240), requirements: [{ name: "Laboratoire", level: 9 }] },
+  { name: "Génétique", level: 0, cost: cost(10_000, 3_000, 1_000), requirements: [{ name: "Laboratoire", level: 4 }] },
+  {
+    name: "Acide",
+    level: 0,
+    cost: cost(300_000, 100_000, 5_000),
+    requirements: [
+      { name: "Armes", level: 6 },
+      { name: "Génétique", level: 4 },
+      { name: "Laboratoire", level: 8 },
+    ],
+  },
+];
+
+describe("unlockCost", () => {
+  it("costs nothing when every requirement is reached", () => {
+    expect(unlockCost([{ name: "Salle de combat", level: 1 }], s5)).toEqual({
+      requirements: [],
+      cost: cost(0),
+      complete: true,
+    });
+  });
+
+  it("adds the missing levels of a requirement", () => {
+    // Soldate Naine: Salle de combat 3, levels 2 and 3.
+    expect(unlockCost([{ name: "Salle de combat", level: 3 }], s5)).toEqual({
+      requirements: [{ name: "Salle de combat", level: 3, from: 1, neededBy: null }],
+      cost: cost(600 + 1_200),
+      complete: true,
+    });
+  });
+
+  it("raises the requirements of a requirement with it", () => {
+    // Naine d'Élite: Caserne 4, which needs Salle de combat 4.
+    expect(unlockCost([{ name: "Caserne", level: 4 }], s5)).toMatchObject({
+      requirements: [
+        { name: "Caserne", level: 4, from: 0, neededBy: null },
+        { name: "Salle de combat", level: 4, from: 1, neededBy: "Caserne" },
+      ],
+      cost: cost(800 + 1_600 + 3_200 + 6_400 + 600 + 1_200 + 2_400),
+    });
+  });
+
+  it("counts a requirement asked twice once, at the highest level", () => {
+    // Artilleuse d'élite: Acide 5 needs Armes 10, Génétique 8 and Laboratoire 12; Génétique 8 needs Laboratoire 11.
+    const unlock = unlockCost(
+      [
+        { name: "Acide", level: 5 },
+        { name: "Caserne", level: 1 },
+      ],
+      s5,
+    );
+    expect(unlock.requirements).toEqual([
+      { name: "Acide", level: 5, from: 0, neededBy: null },
+      { name: "Caserne", level: 1, from: 0, neededBy: null },
+      { name: "Armes", level: 10, from: 7, neededBy: "Acide" },
+      { name: "Génétique", level: 8, from: 0, neededBy: "Acide" },
+    ]);
+    const acid = 300_000 * 31;
+    const weapons = 25_600 * 7;
+    const genetics = 10_000 * 255;
+    expect(unlock.cost).toEqual(
+      cost(
+        acid + weapons + genetics + 800,
+        100_000 * 31 + 38_400 * 7 + 3_000 * 255,
+        5_000 * 31 + 10_240 * 7 + 1_000 * 255,
+      ),
+    );
+    expect(unlock.complete).toBe(true);
+  });
+
+  it("is incomplete when a requirement is on neither page", () => {
+    expect(unlockCost([{ name: "Poison", level: 4 }], s5)).toEqual({
+      requirements: [],
+      cost: cost(0),
+      complete: false,
+    });
   });
 });

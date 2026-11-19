@@ -1,6 +1,6 @@
-// What the next level of a row of construction.php or laboratoire.php costs, the missing levels of its requirements
-// (« Requis : Laboratoire niveau 10 ») included, each grown from the one shown as the level-costs table says. See
-// docs/features/conseils-recherche.md.
+// What the missing levels of requirements (« Requis : Laboratoire niveau 10 ») cost, theirs included, each grown from
+// the one shown as the level-costs table says; and the next level of a row with them. See
+// docs/features/conseils-recherche.md and docs/features/cout-deblocage.md.
 import { levelKeyOf, levelsAhead } from "./level-costs";
 import { sameName } from "./levels";
 import type { Cost } from "./pages/resources";
@@ -16,7 +16,7 @@ export interface LevelRow {
   /** Highest level shown, those under way included: the row shows the cost of the level after. */
   level: number;
   cost: Cost;
-  /** What the row's next level is missing (« Requis : Laboratoire niveau 10 »). */
+  /** What the row's next level needs, reached or not (« Requis : Laboratoire niveau 10 »). */
   requirements: Requirement[];
 }
 
@@ -40,49 +40,79 @@ const add = (a: Cost, b: Cost): Cost => ({
   workers: a.workers + b.workers,
 });
 
-/** A requirement of a requirement is costed this deep at most: the game's chains are short. */
-const MAX_DEPTH = 3;
+/** A requirement to raise: from the level it is at (under way included) to the level asked. */
+export interface UnlockStep extends Requirement {
+  from: number;
+  /** The requirement that asks for it at this level; null for one asked first. */
+  neededBy: string | null;
+}
 
-/** What the missing levels of `row`'s requirements cost, theirs included. */
-function requirementsCost(
-  row: LevelRow,
-  rows: readonly LevelRow[],
-  depth: number,
-): Pick<LevelCost, "cost" | "complete" | "requirements"> {
-  let cost: Cost = { food: 0, materials: 0, workers: 0 };
+export interface UnlockCost {
+  /** The levels to reach, in the order found: those asked first, then the requirements they need in turn. */
+  requirements: UnlockStep[];
+  /** Every missing level of them, added up. */
+  cost: Cost;
+  /** False when a requirement could not be costed: on none of the rows given, or unknown to the level table. */
+  complete: boolean;
+}
+
+/** A chain longer than this is a mistake in the rows: the game's chains are three or four requirements long. */
+const MAX_STEPS = 100;
+
+/**
+ * What reaching every one of `needed` costs, the requirements they need in turn included, from the levels the rows
+ * show. A row shows what its next level needs; each level more needs each requirement one level higher
+ * (docs/research/fourmizzz-pages.md, « Prérequis »). A requirement asked twice is costed once, at the highest level.
+ */
+export function unlockCost(needed: readonly Requirement[], rows: readonly LevelRow[]): UnlockCost {
+  const targets = new Map<LevelRow, { level: number; neededBy: string | null }>();
   let complete = true;
-  const requirements: Requirement[] = [];
-  for (const requirement of row.requirements) {
+  const queue: { name: string; level: number; neededBy: string | null }[] = needed.map((requirement) => ({
+    ...requirement,
+    neededBy: null,
+  }));
+  for (let step = 0; step < MAX_STEPS && queue.length > 0; step++) {
+    const requirement = queue.shift();
+    if (!requirement) break;
     const source = rows.find((candidate) => sameName(candidate.name, requirement.name));
-    const key = source && levelKeyOf(source.name);
-    const missing = source ? requirement.level - source.level : 0;
-    if (!source || !key) complete = false;
-    if (!source || !key || missing <= 0) continue;
-    const levels = levelsAhead(key, source.level + 1, { cost: source.cost, duration: 0 }, missing).at(-1);
-    if (levels) cost = add(cost, levels.cost);
-    requirements.push(requirement);
-    if (source.requirements.length === 0) continue;
-    // The row shows what its next level needs: the levels after may need more.
-    if (missing > 1 || depth >= MAX_DEPTH) complete = false;
-    if (depth >= MAX_DEPTH) continue;
-    const own = requirementsCost(source, rows, depth + 1);
-    cost = add(cost, own.cost);
-    complete &&= own.complete;
-    for (const nested of own.requirements) {
-      if (!requirements.some((known) => sameName(known.name, nested.name))) requirements.push(nested);
+    if (!source || !levelKeyOf(source.name)) {
+      complete = false;
+      continue;
+    }
+    if (requirement.level <= (targets.get(source)?.level ?? source.level)) continue;
+    targets.set(source, { level: requirement.level, neededBy: requirement.neededBy });
+    const gained = requirement.level - (source.level + 1);
+    for (const own of source.requirements) {
+      queue.push({ name: own.name, level: own.level + gained, neededBy: source.name });
     }
   }
-  return { cost, complete, requirements };
+  if (queue.length > 0) complete = false;
+  let cost: Cost = { food: 0, materials: 0, workers: 0 };
+  for (const [source, { level }] of targets) {
+    const key = levelKeyOf(source.name);
+    const levels = key && levelsAhead(key, source.level + 1, { cost: source.cost, duration: 0 }, level - source.level);
+    if (levels?.length) cost = add(cost, levels[levels.length - 1]?.cost ?? cost);
+  }
+  return {
+    requirements: [...targets].map(([source, { level, neededBy }]) => ({
+      name: source.name,
+      level,
+      from: source.level,
+      neededBy,
+    })),
+    cost,
+    complete,
+  };
 }
 
 /** What the next level of `row` costs, the missing levels of its requirements included. */
 export function costWithRequirements(row: LevelRow, rows: readonly LevelRow[]): LevelCost {
-  const own = requirementsCost(row, rows, 1);
+  const own = unlockCost(row.requirements, rows);
   const cost = add(row.cost, own.cost);
   return {
     name: row.name,
     level: row.level + 1,
-    requirements: own.requirements,
+    requirements: own.requirements.map(({ name, level }) => ({ name, level })),
     cost,
     total: cost.food + cost.materials,
     complete: own.complete,

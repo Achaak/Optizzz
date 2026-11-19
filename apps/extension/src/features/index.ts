@@ -31,6 +31,7 @@ import { siteLinks } from "./site-links";
 import { tdcChainMenu } from "./tdc-chain/menu";
 import { targets } from "./targets";
 import { timing } from "./timing";
+import { unlockCosts } from "./unlock-costs";
 import { watchlist } from "./watchlist";
 import { workQueue } from "./work-queue";
 
@@ -69,6 +70,7 @@ export const features: Feature[] = [
   speedUpAdvice,
   layingBoostAdvice,
   aphidsAdviceFeature,
+  unlockCosts,
   attacksOnWay,
   // After « Attaques en cours »: its verdicts go in that list's rows.
   timing,

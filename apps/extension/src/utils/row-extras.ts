@@ -1,8 +1,12 @@
-// What Optizzz adds in the description of a row of construction.php or laboratoire.php, always in the same order,
-// whichever feature draws first or redraws later.
+// What Optizzz adds in the description of a row of construction.php, laboratoire.php or Reine.php, always in the
+// same order, whichever feature draws first or redraws later.
 
-/** First to last: when it can be paid, then the advice lines, then the advice block, then the next levels. */
+/**
+ * First to last: what unlocking it costs, when it can be paid, then the advice lines, then the advice block, then the
+ * next levels.
+ */
 const ORDER = [
+  "optizzz-unlock",
   "optizzz-forecast",
   "optizzz-speed-up",
   "optizzz-laying-boost",

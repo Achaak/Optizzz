@@ -117,6 +117,16 @@ export const featureCatalog = [
     options: [],
   },
   {
+    id: "unlock-costs",
+    label: "Coût du déblocage",
+    description:
+      "Ce qu'il reste à payer pour débloquer une unité, un bâtiment ou une recherche : les niveaux manquants de ses prérequis, et ceux de leurs propres prérequis.",
+    options: [
+      { id: "queen", label: "Sous les unités verrouillées de la Reine" },
+      { id: "levels", label: "Sous les niveaux verrouillés de Construction et Laboratoire" },
+    ],
+  },
+  {
     id: "research-advice",
     label: "Conseils",
     description:

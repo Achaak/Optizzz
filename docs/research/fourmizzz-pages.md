@@ -101,6 +101,14 @@ Relevé le 2026-10-19 sur S5 (`construction.php`, `laboratoire.php`) et recoupé
 - Tutoriel des constructions : l'Étable à pucerons « augmente la capacité de transport des fourmis de 1% lors des pillages et de 5% lors du commerce à chaque niveau » ; elle ajoute aussi 1 % à la taxe des colonies (`ressources-et-entretien.md`).
 - La ligne « Requis » montre ce que demande le **niveau suivant** seulement.
 
+## Prérequis
+
+Relevé le 2026-11-19 sur S5 et S2 (GET de `Reine.php`, `construction.php`, `laboratoire.php`, rien envoyé). Le bloc « Requis: » est un petit tableau dans `div#descriptionCompleteN` (un `a.cliquable3` par prérequis, `verificationOK` s'il est rempli, `verificationNonOK` sinon), le même sur les trois pages. Une ligne sans prérequis n'a pas de bloc (Champignonnière, Salle de combat). Feature : `../features/cout-deblocage.md`.
+
+- **Unités** (les mêmes sur les deux serveurs) : Jeune Soldate Naine : Salle de combat 1 · Soldate Naine : Salle de combat 3 · Naine d'Élite : Caserne 4 · Jeune Soldate : Salle de combat 7 · Soldate : Caserne 9 · Concierge : Génétique 5, Salle de combat 10 · Artilleuse : Acide 1, Salle de combat 11 · Artilleuse d'élite : Acide 5, Caserne 13 · Soldate d'élite : Caserne 17 · Tank : Génétique 15, Caserne 23 · Tueuse : Poison 4, Salle de combat 25 · Tueuse d'élite : Poison 7, Caserne 28. L'ouvrière n'en a pas.
+- **Un niveau de plus, un niveau de plus** : le niveau N d'une ligne demande son prérequis au niveau N + k, k fixe. Vu à deux niveaux différents (S5 et S2) : Technique de ponte, Architecture, Communication, Salle d'analyse → Laboratoire N ; Bouclier Thoracique, Armes → Laboratoire N + 1 ; Vitesse de chasse, Vitesse d'attaque → Laboratoire N + 2 ; Dôme → Architecture N + 1 ; Loge Impériale → Architecture N + 2 ; Étable à pucerons → Communication N + 2.
+- Vus au niveau 1 seulement (k supposé fixe aussi) : Caserne → Salle de combat N ; Génétique → Laboratoire N + 3 ; Acide → Armes N + 5, Génétique N + 3, Laboratoire N + 7 ; Poison → Armes N + 12, Génétique N + 9, Laboratoire N + 14 ; Étable à cochenilles → Communication N + 9.
+
 ## Temps des chantiers
 
 - **Architecture** (construction) et **Salle d'analyse** (recherche) : chaque niveau multiplie le temps par 0,9 (« réduit de 10 % par niveau » s'entend du temps courant), déduit le 2026-10-16 sur S5 des temps du niveau 0 qui retombent alors sur des valeurs rondes. Architecture 7 (0,9⁷ = 0,478) : Étable à cochenilles 72 s (150), Caserne 96 s (200), Dôme 3m 11s (400), Loge Impériale 3m 59s (500). Salle d'analyse 3 (0,9³ = 0,729) : Génétique 2m 11s (180), Acide 2H 1m 30s (10 000 exactement), Poison 10H 7m 30s (50 000 exactement). Les lectures `1 / (1 + 0,1 n)` et `1 − 0,1 n` ne donnent pas de valeurs rondes.
