@@ -9,19 +9,19 @@ import { readMembersScores, readProfile } from "@optizzz/game/pages/scores";
 import { ProfileHistory } from "@/features/history/ProfileHistory";
 import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles, type Toggles } from "@/features/toggles";
-import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
+import { allianceViewHashes, isMembersPage, showsAllianceView } from "@/utils/alliance-views";
 import "@/theme/theme.css";
 import "@/utils/history-chart/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
-const isHistoryPage = () => location.search === "?Membres" && location.hash === HISTORY_HASH;
+const isHistoryPage = () => isMembersPage() && location.hash === HISTORY_HASH;
 
 // The game fills #alliance over AJAX after load: the view is mounted next to it (never inside)
 // and the members table is awaited before reading live scores.
 const MEMBERS_TABLE_TIMEOUT_MS = 15_000;
 
 async function mountAllianceView(ctx: ContentScriptContext, toggles: Toggles) {
-  if (location.search !== "?Membres") return;
+  if (!isMembersPage()) return;
   const allianceContent = document.querySelector<HTMLElement>("#alliance");
   if (!allianceContent) return;
 

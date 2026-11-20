@@ -16,6 +16,7 @@ import { readCapacities, readIncome, readStock } from "@optizzz/game/pages/resou
 import { isEnabled } from "../toggles";
 import { readLoggedInPseudo } from "@optizzz/game/pages/alliance";
 import { readAllianceMembers, storeAllianceMembers } from "@/data/alliance-members";
+import { isMembersPage } from "@/utils/alliance-views";
 import { storeCurrentPlayer } from "@/data/optizzz-account";
 
 /**
@@ -99,7 +100,7 @@ export const collect: Feature = {
     // Optizzz account: the last list of the alliance's members, kept here for the Alliance Spaces: it never leaves the
     // browser.
     if (on("optizzz-account")) {
-      if (path === "/alliance.php" && location.search === "?Membres") {
+      if (isMembersPage()) {
         const members = readAllianceMembers(document, now);
         if (members) await storeAllianceMembers(origin, members);
       }

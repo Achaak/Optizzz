@@ -5,12 +5,12 @@ import { MAP_HASH } from "@/features/alliance-map/menu";
 import { readLoggedInPseudo, readMembersHuntingField } from "@optizzz/game/pages/alliance";
 import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles } from "@/features/toggles";
-import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
+import { allianceViewHashes, isMembersPage, showsAllianceView } from "@/utils/alliance-views";
 import "@/theme/theme.css";
 import "@/features/alliance-map/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
-const isMapPage = () => location.search === "?Membres" && location.hash === MAP_HASH;
+const isMapPage = () => isMembersPage() && location.hash === MAP_HASH;
 
 // The game fills #alliance over AJAX after load, replacing its content: the map is mounted
 // next to it (never inside) and the members table is awaited before reading live fields.
@@ -23,7 +23,7 @@ export default defineContentScript({
     const toggles = await loadToggles();
     applyCompactNumbers(toggles);
     if (!isEnabled(toggles, "alliance-map")) return;
-    if (location.search !== "?Membres") return;
+    if (!isMembersPage()) return;
     const allianceContent = document.querySelector<HTMLElement>("#alliance");
     if (!allianceContent) return;
 

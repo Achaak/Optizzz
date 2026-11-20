@@ -19,6 +19,12 @@ const VIEWS = [
 export const allianceViewHashes = (toggles: Toggles): string[] =>
   VIEWS.filter((view) => view.on(toggles)).map((view) => view.hash);
 
+/**
+ * Whether the URL is the members page, alliance.php?Membres, whatever else its query holds: the game adds a `jt` token
+ * to its links when they are clicked (alliance.php?Membres&jt=…#carte).
+ */
+export const isMembersPage = (url: Pick<URL, "pathname" | "search"> = location): boolean =>
+  url.pathname.toLowerCase() === "/alliance.php" && new URLSearchParams(url.search).has("Membres");
+
 /** Whether the current page shows one of the Optizzz alliance views rather than the members table. */
-export const showsAllianceView = (hashes: readonly string[]) =>
-  location.search === "?Membres" && hashes.includes(location.hash);
+export const showsAllianceView = (hashes: readonly string[]) => isMembersPage() && hashes.includes(location.hash);

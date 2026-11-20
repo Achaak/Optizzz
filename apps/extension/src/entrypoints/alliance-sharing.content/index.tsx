@@ -8,7 +8,7 @@ import { MyState } from "@/features/alliance-sharing/MyState";
 import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles, type Toggles } from "@/features/toggles";
 import { readAllianceTag, readLoggedInPseudo, readMembersHuntingField } from "@optizzz/game/pages/alliance";
-import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
+import { allianceViewHashes, isMembersPage, showsAllianceView } from "@/utils/alliance-views";
 import "@/theme/theme.css";
 import "@/features/alliance-sharing/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
@@ -52,7 +52,7 @@ async function mountMyState(ctx: ContentScriptContext) {
 
 /** « Partage » on alliance.php?Membres#partage, in place of the members table. */
 async function mountAllianceSharing(ctx: ContentScriptContext, toggles: Toggles) {
-  if (location.search !== "?Membres") return;
+  if (!isMembersPage()) return;
   const allianceContent = document.querySelector<HTMLElement>("#alliance");
   if (!allianceContent) return;
   const alliance = readAllianceTag(document);

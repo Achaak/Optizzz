@@ -14,6 +14,7 @@ import {
   removeMembersColumns,
   type MembersColumnsContext,
 } from "./mount";
+import { isMembersPage } from "@/utils/alliance-views";
 import { rolesOfMembers } from "./roles";
 import { tripsFrom } from "./trips";
 
@@ -24,7 +25,7 @@ import { tripsFrom } from "./trips";
 export const membersColumns: Feature = {
   id: "members-columns",
   toggle: "members-columns",
-  matches: (url) => url.pathname.toLowerCase() === "/alliance.php" && url.search === "?Membres",
+  matches: (url) => isMembersPage(url),
   async run(ctx, toggles) {
     const myPseudo = readLoggedInPseudo(document);
     const allianceContent = document.getElementById("alliance");

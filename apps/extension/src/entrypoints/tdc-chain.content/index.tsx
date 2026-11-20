@@ -5,12 +5,12 @@ import { CHAIN_HASH } from "@/features/tdc-chain/menu";
 import { TdcChain } from "@/features/tdc-chain/TdcChain";
 import { applyCompactNumbers } from "@/features/compact-numbers";
 import { isEnabled, loadToggles } from "@/features/toggles";
-import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
+import { allianceViewHashes, isMembersPage, showsAllianceView } from "@/utils/alliance-views";
 import "@/theme/theme.css";
 import "@/features/tdc-chain/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
-const isChainPage = () => location.search === "?Membres" && location.hash === CHAIN_HASH;
+const isChainPage = () => isMembersPage() && location.hash === CHAIN_HASH;
 
 // The game fills #alliance over AJAX after load: the view is mounted next to it (never inside)
 // and the members table is awaited before reading live fields.
@@ -23,7 +23,7 @@ export default defineContentScript({
     const toggles = await loadToggles();
     applyCompactNumbers(toggles);
     if (!isEnabled(toggles, "tdc-chain")) return;
-    if (location.search !== "?Membres") return;
+    if (!isMembersPage()) return;
     const allianceContent = document.querySelector<HTMLElement>("#alliance");
     if (!allianceContent) return;
 

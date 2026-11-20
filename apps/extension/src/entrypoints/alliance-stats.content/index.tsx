@@ -19,14 +19,14 @@ import {
 import { readAlliancesRanking } from "@optizzz/game/pages/alliances-ranking";
 import { readStock } from "@optizzz/game/pages/resources";
 import { readMembersScores } from "@optizzz/game/pages/scores";
-import { allianceViewHashes, showsAllianceView } from "@/utils/alliance-views";
+import { allianceViewHashes, isMembersPage, showsAllianceView } from "@/utils/alliance-views";
 import { fetchGamePage } from "@/utils/game-page";
 import "@/theme/theme.css";
 import "@/utils/history-chart/style.css";
 import "@/features/alliance-stats/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
-const isStatsPage = () => location.search === "?Membres" && location.hash === STATS_HASH;
+const isStatsPage = () => isMembersPage() && location.hash === STATS_HASH;
 
 // The game fills #alliance over AJAX after load: the view is mounted next to it (never inside)
 // and the members table is awaited before reading live scores.
@@ -44,7 +44,7 @@ async function readMyRanking(tag: string): Promise<AllianceRanking | null> {
 }
 
 async function mountStatsView(ctx: ContentScriptContext, toggles: Toggles) {
-  if (location.search !== "?Membres") return;
+  if (!isMembersPage()) return;
   const allianceContent = document.querySelector<HTMLElement>("#alliance");
   if (!allianceContent) return;
   const myTag = readAllianceTag(document);
