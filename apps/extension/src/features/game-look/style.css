@@ -574,6 +574,8 @@ html.optizzz-game-look {
     & :is(td, th) {
       border-bottom: 1px solid var(--look-line);
       vertical-align: middle;
+      /* 16 columns with Optizzz's: at 10px a side the table left the game's 1 002px frame (2026-11-20) */
+      padding-inline: 6px;
     }
 
     & tr:last-child > td {

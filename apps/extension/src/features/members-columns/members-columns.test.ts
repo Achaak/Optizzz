@@ -131,10 +131,24 @@ describe("addMembersColumns", () => {
       now,
     );
     // The percentage in the tooltip: on the line, it pushed « 7 j » out of the game's frame.
-    expect(column(doc, 0).slice(0, 4)).toEqual(["Aujourd'hui", "▲ +100", "0", "—"]);
-    expect(column(doc, 1).slice(0, 4)).toEqual(["7 j", "▼ −150", "—", "—"]);
+    // « Auj. »: the game's look writes the headers in capitals, « AUJOURD'HUI » made the column twice as wide.
+    expect(column(doc, 0).slice(0, 4)).toEqual(["Auj.", "+100 ▲", "0", "—"]);
+    expect(column(doc, 1).slice(0, 4)).toEqual(["7 j", "−150 ▼", "—", "—"]);
     const alphaToday = doc.querySelectorAll<HTMLTableCellElement>(`td.${COLUMN_CLASS}`)[0];
     expect(alphaToday?.title).toBe("+10 % depuis l'export de minuit (1 000 → 1 100)");
+  });
+
+  it("writes the moves short, whatever « Nombres arrondis » says, the exact numbers in the tooltip", () => {
+    const doc = membersPage();
+    addMembersColumns(
+      doc,
+      { myPseudo: "Me", evolution: new Map([["alpha", { live: 2_989_391, midnight: 2_697_223, weekAgo: 1_820_719 }]]) },
+      now,
+    );
+    expect(column(doc, 0)[1]).toBe("+292K ▲");
+    expect(column(doc, 1)[1]).toBe("+1,17M ▲");
+    const alphaWeek = doc.querySelectorAll<HTMLTableCellElement>(`td.${COLUMN_CLASS}`)[1];
+    expect(alphaWeek?.title).toBe("+64,2 % depuis l'export de minuit il y a 7 jours (1 820 719 → 2 989 391)");
   });
 
   it("sorts « 7 j » from the biggest fall up, then the other way, the unknown last", () => {
@@ -234,11 +248,11 @@ describe("column picker", () => {
       Rang: false,
       Pseudo: true,
       Terrain: true,
-      Technologie: true,
-      Fourmiliere: true,
+      "Tech.": true,
+      "Fourm.": true,
       Etat: false,
       Trajet: true,
-      "Aujourd'hui": false,
+      "Auj.": false,
       "7 j": true,
     });
     // Rang, the two cells under « Etat », Aujourd'hui.
@@ -264,6 +278,32 @@ describe("column picker", () => {
     ]);
     boxes[0]?.click();
     expect(chosen).toEqual([new Set(["technology", "grade"])]);
+  });
+
+  it("shortens the game's « Technologie » and « Fourmiliere » headers, the full word in their tooltip", () => {
+    const doc = membersPage();
+    addMembersColumns(doc, withEverything(), now);
+    const header = (text: string) =>
+      [...(table(doc)?.rows[0]?.cells ?? [])].find((cell) => cell.textContent.trim() === text);
+    expect(header("Tech.")?.title).toBe("Technologie");
+    expect(header("Fourm.")?.title).toBe("Fourmilière");
+    // Once only: the columns added again keep the short headers.
+    removeMembersColumns(doc);
+    addMembersColumns(doc, withEverything(), now);
+    expect(header("Tech.")).toBeDefined();
+  });
+
+  it("is built again when Optizzz's columns come after it", () => {
+    const doc = membersPage();
+    addMembersColumns(doc, { myPseudo: "Me", trips: { byPseudo: tripsFrom(players, "Me", 3) } }, now);
+    addColumnPicker(doc, new Set(), () => undefined);
+    // The nightly exports arrive: « Aujourd'hui » and « 7 j » are added.
+    removeMembersColumns(doc);
+    addMembersColumns(doc, withEverything(), now);
+    addColumnPicker(doc, new Set(), () => undefined);
+    const labels = [...doc.querySelectorAll(".optizzz-columns-picker label")].map((label) => label.textContent.trim());
+    expect(labels).toContain("7 j");
+    expect(doc.querySelectorAll(".optizzz-columns-picker")).toHaveLength(1);
   });
 
   it("is added once, above the table", () => {

@@ -1,6 +1,6 @@
 import { rolesTopDown } from "@/features/tdc-chain/role-styles";
 import { roleKey, roleLabel, rungPlaceArrow, rungPlaceText } from "@optizzz/game/tdc-chain/roles";
-import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
+import { formatCompact, formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
 import type { MemberRole } from "./roles";
 import type { MemberTrip } from "./trips";
@@ -135,21 +135,24 @@ function evolutionText(from: number, to: number, since: string): { text: string;
   const delta = to - from;
   const percent = from > 0 ? (delta / from) * 100 : 0;
   const sign = delta > 0 ? "+" : delta < 0 ? "−" : "";
-  const arrow = delta > 0 ? "▲ " : delta < 0 ? "▼ " : "";
+  // The arrow after the number (asked for on 2026-11-20): right-aligned, the numbers line up on their sign.
+  const arrow = delta > 0 ? " ▲" : delta < 0 ? " ▼" : "";
   return {
     // The percentage in the tooltip: on the line, the two columns pushed the table out of the game's frame.
-    text: `${arrow}${sign}${formatAmount(Math.abs(delta))}`,
-    title: `${sign}${formatDecimal(Math.abs(percent))} % ${since} (${formatAmount(from)} → ${formatAmount(to)})`,
+    // Always short, whatever « Nombres arrondis » says: « ▲ +1 168 672 » made the column twice as wide.
+    text: `${sign}${formatCompact(Math.abs(delta))}${arrow}`,
+    title: `${sign}${formatDecimal(Math.abs(percent))} % ${since} (${formatNumber(from)} → ${formatNumber(to)})`,
   };
 }
 
 function evolutionColumn(evolution: Map<string, MemberEvolution>, which: "today" | "week") {
   return {
     kind: which,
-    title: which === "today" ? "Aujourd'hui" : "7 j",
+    // « Auj. »: the game's look writes the headers in capitals, « AUJOURD'HUI » made the column twice as wide.
+    title: which === "today" ? "Auj." : "7 j",
     hint:
       which === "today"
-        ? "TDC en direct moins celui de l'export de minuit. Cliquez pour trier."
+        ? "Aujourd'hui : TDC en direct moins celui de l'export de minuit. Cliquez pour trier."
         : "TDC en direct moins celui de l'export de minuit il y a 7 jours. Cliquez pour trier.",
     fill: (cell, pseudo) => {
       const member = evolution.get(pseudo.toLowerCase());
@@ -196,7 +199,9 @@ function sortBy(table: HTMLTableElement, header: HTMLTableCellElement, position:
  */
 export function addMembersColumns(doc: Document, context: MembersColumnsContext, now: Date) {
   const table = doc.querySelector<HTMLTableElement>("#tabMembresAlliance");
-  if (!table || table.querySelector(`.${COLUMN_CLASS}`)) return;
+  if (!table) return;
+  shortenGameHeaders(table);
+  if (table.querySelector(`.${COLUMN_CLASS}`)) return;
   const columns: Column[] = [
     ...(context.trips ? [tripColumn(context, context.trips, now)] : []),
     ...(context.roles ? [roleColumn(context.roles)] : []),
@@ -244,12 +249,33 @@ export const HIDDEN_CLASS = "optizzz-hidden-column";
 /** A column that can be hidden: the game's, by its header, or one Optizzz adds. */
 export type HideableColumn = "grade" | "technology" | "building" | "state" | Column["kind"];
 
-const GAME_COLUMNS: { id: HideableColumn; header: string; label: string }[] = [
-  { id: "grade", header: "rang", label: "Rang" },
-  { id: "technology", header: "technologie", label: "Technologie" },
-  { id: "building", header: "fourmiliere", label: "Fourmilière" },
-  { id: "state", header: "etat", label: "État" },
+/** `headers`: the game's, then the short one Optizzz writes in its place. */
+const GAME_COLUMNS: { id: HideableColumn; headers: string[]; label: string; short?: string }[] = [
+  { id: "grade", headers: ["rang"], label: "Rang" },
+  { id: "technology", headers: ["technologie", "tech."], label: "Technologie", short: "Tech." },
+  { id: "building", headers: ["fourmiliere", "fourm."], label: "Fourmilière", short: "Fourm." },
+  { id: "state", headers: ["etat"], label: "État" },
 ];
+
+/**
+ * « Tech. » and « Fourm. » for the game's « Technologie » and « Fourmiliere », the full word in the tooltip: the game's
+ * look writes the headers in capitals, and these two made their 3-digit columns 115px wide.
+ */
+function shortenGameHeaders(table: HTMLTableElement) {
+  const headerRow = [...table.rows].find((row) => row.querySelector(":scope > th"));
+  for (const header of headerRow?.cells ?? []) {
+    const column = GAME_COLUMNS.find((game) => game.short && game.headers[0] === plainText(header.textContent));
+    if (!column?.short) continue;
+    // The text itself, inside the game's sort link when it added one.
+    const walker = header.ownerDocument.createTreeWalker(header, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.textContent?.trim()) continue;
+      node.textContent = column.short;
+      break;
+    }
+    header.title = column.label;
+  }
+}
 
 const OPTIZZZ_COLUMNS: { id: Column["kind"]; label: string }[] = [
   { id: "trips", label: "Trajet" },
@@ -273,7 +299,7 @@ function gameColumns(table: HTMLTableElement): Map<HideableColumn, { header: HTM
   for (const header of headerRow?.cells ?? []) {
     if (header.classList.contains(COLUMN_CLASS)) continue;
     const span = Math.max(1, header.colSpan);
-    const column = GAME_COLUMNS.find((game) => game.header === plainText(header.textContent));
+    const column = GAME_COLUMNS.find((game) => game.headers.includes(plainText(header.textContent)));
     if (column) columns.set(column.id, { header, cells: Array.from({ length: span }, (_, i) => start + i) });
     start += span;
   }
@@ -304,16 +330,24 @@ export function hideMembersColumns(doc: Document, hidden: ReadonlySet<string>) {
 export function addColumnPicker(doc: Document, hidden: ReadonlySet<string>, onChange: (hidden: Set<string>) => void) {
   const table = doc.querySelector<HTMLTableElement>("#tabMembresAlliance");
   if (!table) return;
-  if (table.previousElementSibling?.classList.contains("optizzz-columns-picker")) return;
-  for (const old of doc.querySelectorAll(".optizzz-columns-picker")) old.remove();
   const current = new Set(hidden);
   const game = gameColumns(table);
   const choices = [
     ...GAME_COLUMNS.filter((column) => game.has(column.id)),
     ...OPTIZZZ_COLUMNS.filter((column) => table.querySelector(`th.optizzz-members-${column.id}`)),
   ];
+  const ids = choices.map((choice) => choice.id).join(" ");
+  // Built again when columns came since (« Aujourd'hui » and « 7 j » wait for the nightly exports).
+  const existing = table.previousElementSibling;
+  if (existing instanceof HTMLElement && existing.classList.contains("optizzz-columns-picker")) {
+    if (existing.dataset.columns === ids) return;
+  }
+  const wasOpen = doc.querySelector<HTMLDetailsElement>(".optizzz-columns-picker")?.open ?? false;
+  for (const old of doc.querySelectorAll(".optizzz-columns-picker")) old.remove();
   const picker = doc.createElement("details");
   picker.className = "optizzz-columns-picker";
+  picker.dataset.columns = ids;
+  picker.open = wasOpen;
   const summary = doc.createElement("summary");
   summary.textContent = "Colonnes";
   picker.append(summary);

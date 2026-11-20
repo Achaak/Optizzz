@@ -79,7 +79,7 @@ jobs:
         env:
           VPS: optizzz@${{ secrets.VPS_HOST }}
         run: |
-          scp -r deploy/compose.yml deploy/Caddyfile deploy/deploy.sh deploy/ingest.sh deploy/backup.sh \
+          scp -r deploy/compose.yml deploy/Caddyfile deploy/deploy.sh deploy/ingest.sh deploy/backup.sh deploy/backfill.sh \
             deploy/postgres deploy/systemd "$VPS:/opt/optizzz/"
           ssh "$VPS" /opt/optizzz/deploy.sh "${{ github.sha }}"
       # Through Caddy and HTTPS, as a visitor: deploy.sh only knows the container answers on the VPS itself.
