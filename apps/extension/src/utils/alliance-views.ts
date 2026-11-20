@@ -4,6 +4,7 @@ import { MAP_HASH } from "@/features/alliance-map/menu";
 import { SHARING_HASH } from "@/features/alliance-sharing/menu";
 import { STATS_HASH } from "@/features/alliance-stats/menu";
 import { HISTORY_HASH } from "@/features/history/menu";
+import { RECRUITMENT_HASH } from "@/features/recruitment/menu";
 import { CHAIN_HASH } from "@/features/tdc-chain/menu";
 import { isEnabled, type Toggles } from "@/features/toggles";
 
@@ -13,6 +14,7 @@ const VIEWS = [
   { hash: HISTORY_HASH, on: (toggles: Toggles) => isEnabled(toggles, "history", "alliance") },
   { hash: STATS_HASH, on: (toggles: Toggles) => isEnabled(toggles, "alliance-stats", "alliance") },
   { hash: SHARING_HASH, on: (toggles: Toggles) => isEnabled(toggles, "alliance-sharing") },
+  { hash: RECRUITMENT_HASH, on: (toggles: Toggles) => isEnabled(toggles, "recruitment") },
 ];
 
 /** Hashes of the alliance views switched on: a link to a view switched off shows the members table. */

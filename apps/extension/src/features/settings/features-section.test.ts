@@ -59,6 +59,7 @@ describe("buildFeaturesSection", () => {
       "alliance-analysis.bloc",
       "alliance-analysis.colonies",
       "alliance-analysis.floods",
+      "recruitment",
       "flood",
       "timing",
       "unlock-costs",
@@ -102,7 +103,10 @@ describe("buildFeaturesSection", () => {
       "compact-numbers.game",
       "compact-numbers.extension",
     ]);
-    expect(boxes.filter((box) => !box.checked).map((box) => box.dataset.toggle)).toEqual(["compact-numbers"]);
+    expect(boxes.filter((box) => !box.checked).map((box) => box.dataset.toggle)).toEqual([
+      "recruitment",
+      "compact-numbers",
+    ]);
     // The options of a feature off by default wait for it, ready to be on with it.
     expect(boxes.filter((box) => box.disabled).map((box) => box.dataset.toggle)).toEqual([
       "compact-numbers.game",
@@ -152,11 +156,11 @@ describe("buildFeaturesSection", () => {
     const count = () => section.querySelector(".features-count")?.textContent;
     expect(count()).toMatch(/^\d+ sur \d+ activées$/);
     const [on, all] = (count() ?? "").split(" sur ").map((part) => parseInt(part, 10));
-    // « Nombres arrondis » is off by default.
-    expect(on).toBe((all ?? 0) - 2);
+    // « Recrutement » and « Nombres arrondis » are off by default.
+    expect(on).toBe((all ?? 0) - 3);
 
     click(checkbox(section, "work-queue"));
-    expect(count()).toBe(`${String((all ?? 0) - 1)} sur ${String(all)} activées`);
+    expect(count()).toBe(`${String((all ?? 0) - 2)} sur ${String(all)} activées`);
   });
 
   it("filters the features by name, description or option, accents aside", () => {

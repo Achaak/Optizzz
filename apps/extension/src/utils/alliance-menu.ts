@@ -9,6 +9,7 @@ const ENTRY_ORDER = [
   "optizzz-history",
   "optizzz-alliance-stats",
   "optizzz-alliance-sharing",
+  "optizzz-recruitment",
 ] as const;
 
 /** Display order of the Optizzz entries of the Fourmilière menu, after « Ma Fourmilière ». */

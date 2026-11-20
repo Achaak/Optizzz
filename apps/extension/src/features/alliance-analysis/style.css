@@ -85,3 +85,15 @@
   margin: 0;
   padding-left: var(--optizzz-space-5);
 }
+
+.recruitment-filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--optizzz-space-1);
+  font-size: var(--optizzz-font-size-small);
+  color: var(--optizzz-text-muted);
+}
+
+.recruitment-filter input {
+  width: 9rem;
+}

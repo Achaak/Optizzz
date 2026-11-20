@@ -4,6 +4,8 @@ import { createRoot, type Root } from "react-dom/client";
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
 import { AllianceAnalysis } from "@/features/alliance-analysis/AllianceAnalysis";
 import { AllianceBox } from "@/features/alliance-stats/AllianceBox";
+import { RECRUITMENT_HASH } from "@/features/recruitment/menu";
+import { Recruitment } from "@/features/recruitment/Recruitment";
 import { AllianceStats } from "@/features/alliance-stats/AllianceStats";
 import { STATS_HASH } from "@/features/alliance-stats/menu";
 import { addCurveColumn, followRanking, RANKING_COLUMN_STYLE } from "@/features/alliance-stats/ranking";
@@ -142,6 +144,34 @@ async function mountAllianceBox(ctx: ContentScriptContext, statsView: boolean) {
   ui.mount();
 }
 
+/** The « Recrutement » view, in place of the members table while the hash is #recrutement (docs/features/recrutement.md). */
+async function mountRecruitmentView(ctx: ContentScriptContext, toggles: Toggles) {
+  const allianceContent = document.querySelector<HTMLElement>("#alliance");
+  const myTag = readAllianceTag(document);
+  if (!isMembersPage() || !allianceContent || !myTag) return;
+  const ui = await createShadowRootUi<Root>(ctx, {
+    name: "optizzz-recruitment",
+    position: "inline",
+    anchor: allianceContent,
+    append: "before",
+    onMount(container) {
+      const root = createRoot(container);
+      root.render(<Recruitment origin={location.origin} myTag={myTag} />);
+      return root;
+    },
+    onRemove: (root) => root?.unmount(),
+  });
+  // Mounted when first opened, then only shown or hidden, as the statistics.
+  const update = () => {
+    const visible = isMembersPage() && location.hash === RECRUITMENT_HASH;
+    if (visible && !ui.mounted) ui.mount();
+    if (ui.mounted) ui.shadowHost.hidden = !visible;
+    allianceContent.style.display = showsAllianceView(allianceViewHashes(toggles)) ? "none" : "";
+  };
+  update();
+  ctx.addEventListener(window, "hashchange", update);
+}
+
 /** Face-à-face, Bloc diplomatique and Colonies, under the « Progression » box (docs/features/analyse-alliances.md). */
 async function mountAllianceAnalysis(ctx: ContentScriptContext, toggles: Toggles) {
   const tag = new URLSearchParams(location.search).get("alliance");
@@ -230,6 +260,7 @@ export default defineContentScript({
     const statsView = isEnabled(toggles, "alliance-stats", "alliance");
     if (location.pathname === "/alliance.php") {
       if (statsView) await mountStatsView(ctx, toggles);
+      if (isEnabled(toggles, "recruitment")) await mountRecruitmentView(ctx, toggles);
     } else if (location.pathname === "/classement.php") {
       if (isEnabled(toggles, "alliance-stats", "ranking")) await mountRankingChart(ctx, statsView);
     } else {

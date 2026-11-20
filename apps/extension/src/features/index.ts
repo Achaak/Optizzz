@@ -23,6 +23,7 @@ import { membersColumns } from "./members-columns";
 import { probes } from "./probes";
 import { profileProduction } from "./profile-production";
 import { playerAnalysis } from "./player-analysis";
+import { recruitmentMenu } from "./recruitment/menu";
 import { aphidsAdviceFeature, layingBoostAdvice, researchAdviceFeature, speedUpAdvice } from "./research-advice";
 import { resourceForecast } from "./resource-forecast";
 import { safeReload } from "./safe-reload";
@@ -68,6 +69,7 @@ export const features: Feature[] = [
   profileProduction,
   // After the production rows: its rows go under them.
   playerAnalysis,
+  recruitmentMenu,
   floodPlanner,
   researchAdviceFeature,
   speedUpAdvice,

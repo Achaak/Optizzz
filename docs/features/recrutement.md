@@ -21,13 +21,15 @@ Trouver des joueurs à recruter pour son alliance : sans alliance, actifs, qui p
 
 Feature « Recrutement » dans « Fonctionnalités », **coupée par défaut** (elle ne sert qu'aux chefs).
 
-## Fichiers prévus
+## Fichiers
 
-| Fichier                                           | Rôle                                      |
-| ------------------------------------------------- | ----------------------------------------- |
-| `packages/game/src/analysis/recruits.ts` (+ test) | Liste, centre de l'alliance, filtres, tri |
-| `apps/extension/src/features/recruitment/`        | Entrée de menu et vue                     |
+| Fichier                                                   | Rôle                                                               |
+| --------------------------------------------------------- | ------------------------------------------------------------------ |
+| `packages/game/src/analysis/recruits.ts` (+ test)         | Liste, centre de l'alliance, filtres, tri                          |
+| `apps/extension/src/features/recruitment/menu.ts`         | Entrée « Recrutement » du menu d'alliance, après « Partage »       |
+| `apps/extension/src/features/recruitment/Recruitment.tsx` | La vue, montée par le script des Statistiques d'alliance           |
+| `apps/extension/src/features/recruitment/settings.ts`     | Filtres mémorisés par serveur (`local:recruitment:<host>:filters`) |
 
 ## Ordre
 
-Lot 4, après les analyses des joueurs et des alliances.
+Lot 4 (fait le 2026-11-20). Le gain sur 7 j vient de la nuit d'il y a 7 jours (8 nuits de l'Historique, aujourd'hui compris) ; une nuit manquante laisse le gain inconnu (« — »). Les inactifs probables sont ceux de `analyse-joueurs.md`, d'après les mêmes nuits. Le tri par défaut est le gain décroissant ; un clic sur un en-tête trie par cette colonne (Distance et Pseudo d'abord croissants).
