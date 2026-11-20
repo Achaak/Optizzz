@@ -16,6 +16,7 @@ const analysis: PlayerAnalysis = {
       others: [{ id: 2, pseudo: "Lunaire", alliance: "AP" }],
       alliance: "AP",
       sureness: "sure",
+      inside: false,
     },
   ],
 };

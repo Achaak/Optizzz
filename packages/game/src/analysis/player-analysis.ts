@@ -17,6 +17,8 @@ export const floodLineSchema = z.object({
   /** The alliance the attackers, or else the candidates, share. */
   alliance: z.string().nullable(),
   sureness: z.enum(["sure", "combination", "candidates", "unknown"]),
+  /** Between two members of the same alliance: the TDC chain, not a war. Missing before 2026-11-20. */
+  inside: z.boolean().default(false),
 });
 
 export const playerAnalysisSchema = z.object({
@@ -45,8 +47,13 @@ export function floodWhen(line: Pick<FloodLine, "since" | "at">, now: Date): str
 const withAlliance = (player: FloodLine["others"][number]) =>
   player.alliance ? `${player.pseudo} (${player.alliance})` : player.pseudo;
 
-/** Who probably took the loss, or whom the player took from, as sure as the match is. */
+/** Who probably took the loss, or whom the player took from, as sure as the match is; the TDC chain said. */
 export function floodText(line: FloodLine): string {
+  const text = otherSide(line);
+  return line.inside ? `${text} · dans l'alliance (chaîne de TDC)` : text;
+}
+
+function otherSide(line: FloodLine): string {
   const names = line.others.map((player) => player.pseudo);
   const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} et ${names.at(-1) ?? ""}` : (names[0] ?? "");
   if (line.direction === "taken") {
@@ -59,7 +66,10 @@ export function floodText(line: FloodLine): string {
     case "combination":
       return `probablement par ${list}`;
     case "candidates":
-      return line.alliance ? `par l'alliance ${line.alliance}, sans savoir qui` : `candidats : ${names.join(", ")}`;
+      // The site keeps 20 candidates at most: up to 20 players of every alliance, which said nothing.
+      return line.alliance
+        ? `par l'alliance ${line.alliance}, sans savoir qui`
+        : `coupable inconnu · ${names.length >= 20 ? "20 joueurs ou plus" : `${String(names.length)} ${names.length > 1 ? "joueurs" : "joueur"}`} à portée ${names.length > 1 ? "ont" : "a"} gagné dans l'heure`;
     case "unknown":
       return "coupable inconnu";
   }
@@ -72,3 +82,28 @@ export const SURENESS_TITLES: Record<FloodLine["sureness"], string> = {
   candidates: "Candidats : des joueurs à portée ont gagné dans l'heure, aucune somme ne correspond.",
   unknown: "Aucun joueur à portée n'a gagné dans l'heure.",
 };
+
+/** Whether a loss has a culprit: matched, or the candidates all of one alliance. */
+const hasCulprit = (line: FloodLine) =>
+  line.sureness === "sure" ||
+  line.sureness === "combination" ||
+  (line.sureness === "candidates" && line.alliance !== null);
+
+/** « 91 pertes en 30 jours : 54 dans l'alliance, 3 par d'autres alliances, 34 sans coupable sûr · 14 floods pris ». */
+export function floodSummary(lines: readonly FloodLine[], period: string): string {
+  if (lines.length === 0) return `Aucun flood probable en ${period}.`;
+  const lost = lines.filter((line) => line.direction === "lost");
+  const taken = lines.length - lost.length;
+  const inside = lost.filter((line) => line.inside).length;
+  const others = lost.filter((line) => !line.inside && hasCulprit(line)).length;
+  const unknown = lost.length - inside - others;
+  const plural = (count: number, one: string, many: string) => `${String(count)} ${count > 1 ? many : one}`;
+  const parts = [
+    inside > 0 && `${String(inside)} dans l'alliance`,
+    others > 0 && `${String(others)} par d'autres alliances`,
+    unknown > 0 && `${String(unknown)} sans coupable sûr`,
+  ].filter(Boolean);
+  const losses = lost.length > 0 ? `${plural(lost.length, "perte", "pertes")} en ${period} : ${parts.join(", ")}` : "";
+  const took = taken > 0 ? plural(taken, "flood pris", "floods pris") : "";
+  return [losses, lost.length > 0 ? took : took && `${took} en ${period}`].filter(Boolean).join(" · ");
+}

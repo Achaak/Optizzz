@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { floodText, floodWhen, type FloodLine } from "./player-analysis";
+import { floodSummary, floodText, floodWhen, type FloodLine } from "./player-analysis";
 
 const line = (fields: Partial<FloodLine>): FloodLine => ({
   since: "2026-11-20T12:05:00.000Z",
@@ -9,6 +9,7 @@ const line = (fields: Partial<FloodLine>): FloodLine => ({
   others: [],
   alliance: null,
   sureness: "unknown",
+  inside: false,
   ...fields,
 });
 const lunaire = { id: 1, pseudo: "Lunaire", alliance: "AP" };
@@ -32,12 +33,41 @@ describe("floodText", () => {
     expect(floodText(line({ sureness: "candidates", others: [lunaire, bzz], alliance: "AP" }))).toBe(
       "par l'alliance AP, sans savoir qui",
     );
+    // Up to 20 players of every alliance said nothing: counted, not listed.
     expect(floodText(line({ sureness: "candidates", others: [lunaire, { ...bzz, alliance: null }] }))).toBe(
-      "candidats : Lunaire, Bzz",
+      "coupable inconnu · 2 joueurs à portée ont gagné dans l'heure",
+    );
+    const twenty = Array.from({ length: 20 }, (_, i) => ({ id: i, pseudo: `P${String(i)}`, alliance: null }));
+    expect(floodText(line({ sureness: "candidates", others: twenty }))).toBe(
+      "coupable inconnu · 20 joueurs ou plus à portée ont gagné dans l'heure",
     );
     expect(floodText(line({}))).toBe("coupable inconnu");
     expect(floodText(line({ direction: "taken", sureness: "sure", others: [lunaire] }))).toBe(
       "probablement pris à Lunaire (AP)",
     );
+  });
+
+  it("says a flood between two members of the same alliance is the TDC chain", () => {
+    expect(floodText(line({ sureness: "sure", others: [lunaire], alliance: "AP", inside: true }))).toBe(
+      "probablement par Lunaire (AP) · dans l'alliance (chaîne de TDC)",
+    );
+  });
+});
+
+describe("floodSummary", () => {
+  it("counts the losses by who took them, then the floods taken", () => {
+    const lines = [
+      line({ sureness: "sure", others: [lunaire], alliance: "AP", inside: true }),
+      line({ sureness: "combination", others: [lunaire, bzz], alliance: "AP", inside: true }),
+      line({ sureness: "sure", others: [{ id: 3, pseudo: "Grop", alliance: "4O4" }], alliance: "4O4" }),
+      line({ sureness: "candidates", others: [lunaire, bzz], alliance: "AP", inside: true }),
+      line({ sureness: "candidates", others: [lunaire] }),
+      line({}),
+      line({ direction: "taken", sureness: "sure", others: [lunaire] }),
+    ];
+    expect(floodSummary(lines, "30 jours")).toBe(
+      "6 pertes en 30 jours : 3 dans l'alliance, 1 par d'autres alliances, 2 sans coupable sûr · 1 flood pris",
+    );
+    expect(floodSummary([], "7 j")).toBe("Aucun flood probable en 7 j.");
   });
 });

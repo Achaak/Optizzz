@@ -1,6 +1,12 @@
 "use client";
 // A player's probable floods over 30 days (docs/features/analyse-joueurs.md), lost and taken, filterable.
-import { floodText, floodWhen, SURENESS_TITLES, type FloodLine } from "@optizzz/game/analysis/player-analysis";
+import {
+  floodSummary,
+  floodText,
+  floodWhen,
+  SURENESS_TITLES,
+  type FloodLine,
+} from "@optizzz/game/analysis/player-analysis";
 import { formatNumber } from "@optizzz/game/format/number-format";
 import { useState } from "react";
 import { Panel } from "~/components/panel";
@@ -10,7 +16,10 @@ const SURENESS = { sure: "sûr", combination: "combinaison", candidates: "candid
 
 export function FloodsPanel({ floods, now }: { floods: FloodLine[]; now: string }) {
   const [shown, setShown] = useState<"all" | "lost" | "taken">("all");
-  const lines = floods.filter((line) => shown === "all" || line.direction === shown);
+  const insideCount = floods.filter((line) => line.inside).length;
+  // A chain's hunter or granary is flooded by its own alliance all day: hidden at first when it is most of them.
+  const [hideChain, setHideChain] = useState(insideCount > floods.length / 2);
+  const lines = floods.filter((line) => (shown === "all" || line.direction === shown) && !(hideChain && line.inside));
   const filter = (value: typeof shown, label: string, count: number) => (
     <button
       type="button"
@@ -36,8 +45,24 @@ export function FloodsPanel({ floods, now }: { floods: FloodLine[]; now: string 
         </div>
       }
     >
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4.5 pb-2 text-sm">
+        <p className="m-0 font-medium">{floodSummary(floods, "30 jours")}</p>
+        {insideCount > 0 && (
+          <label className="flex items-center gap-2 text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={hideChain}
+              onChange={(event) => setHideChain(event.currentTarget.checked)}
+              className="size-4"
+            />
+            Masquer la chaîne ({formatNumber(insideCount)})
+          </label>
+        )}
+      </div>
       {lines.length === 0 ? (
-        <p className="px-4.5 pb-4 text-sm text-muted-foreground">Aucun flood probable relevé.</p>
+        <p className="px-4.5 pb-4 text-sm text-muted-foreground">
+          {floods.length > 0 ? "Rien à montrer avec ces filtres." : "Aucun flood probable relevé."}
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

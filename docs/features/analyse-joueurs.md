@@ -48,9 +48,10 @@ Un gain arrive au retour d'une chasse ou à l'arrivée d'un flood, des heures ap
 
 Règle d'appariement : `site-analyse.md` (trois passes : un pour un, combinaisons de 2 à 4, candidats).
 
-- Une ligne par perte ou par gain apparié, la plus récente d'abord : « **aujourd'hui entre 13 h et 14 h** · −1 248 300 · probablement par Pseudo » ; « · probablement par Pseudo et Autre » ; « · par l'alliance ABC, sans savoir qui » ; « · candidats : X, Y, Z » ; « · coupable inconnu ». Dans l'autre sens : « +1 248 300 · probablement pris à Pseudo ».
+- Une ligne par perte ou par gain apparié, la plus récente d'abord : « **aujourd'hui entre 13 h et 14 h** · −1 248 300 · probablement par Pseudo » ; « · probablement par Pseudo et Autre » ; « · par l'alliance ABC, sans savoir qui » ; « · coupable inconnu · 12 joueurs à portée ont gagné dans l'heure » (depuis le 2026-11-20 : la liste des candidats, jusqu'à 20 joueurs de toutes les alliances, ne disait rien) ; « · coupable inconnu ». Entre deux membres de la même alliance, la ligne finit par « · dans l'alliance (chaîne de TDC) ». Dans l'autre sens : « +1 248 300 · probablement pris à Pseudo ».
 - Le mot « probable » partout ; l'infobulle de chaque ligne dit sa sûreté (« un seul joueur à portée a gagné la même chose », « une seule combinaison de joueurs à portée fait la somme », « plusieurs possibilités »).
-- Jeu : les 3 dernières sur 7 jours, « Tout voir sur optizzz.fr » ; site : 30 jours, filtrables (pris / perdus).
+- En tête, un résumé : « 91 pertes en 30 jours : 54 dans l'alliance, 3 par d'autres alliances, 34 sans coupable sûr · 14 floods pris ».
+- Jeu : le résumé de la semaine, puis les 3 dernières lignes hors de la chaîne de TDC (toutes, s'il n'y a que la chaîne), « Tout voir sur optizzz.fr ». Site : 30 jours, filtrables (pris / perdus) et « Masquer la chaîne », cochée d'office quand la chaîne fait plus de la moitié des lignes : un chasseur ou un grenier est floodé par sa propre alliance toute la journée (Peanut, S5, le 2026-11-20 : 54 de ses 91 pertes).
 
 ## Rang relatif
 

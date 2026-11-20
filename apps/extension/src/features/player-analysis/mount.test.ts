@@ -63,7 +63,13 @@ describe("mountAnalysisRows", () => {
 
 describe("mountAnalysisBox", () => {
   const grid = () => Array.from({ length: 7 }, () => Array<number>(24).fill(0));
-  const flood = (hour: number, amount: number, sureness: "sure" | "unknown", direction: "lost" | "taken" = "lost") => ({
+  const flood = (
+    hour: number,
+    amount: number,
+    sureness: "sure" | "unknown",
+    direction: "lost" | "taken" = "lost",
+    inside = false,
+  ) => ({
     since: `2026-11-20T${String(hour - 1).padStart(2, "0")}:05:00.000Z`,
     at: `2026-11-20T${String(hour).padStart(2, "0")}:05:00.000Z`,
     direction,
@@ -71,6 +77,7 @@ describe("mountAnalysisBox", () => {
     others: sureness === "sure" ? [{ id: 2, pseudo: "Lunaire", alliance: "AP" }] : [],
     alliance: sureness === "sure" ? "AP" : null,
     sureness,
+    inside,
   });
   const now = new Date("2026-11-20T18:00:00Z");
   const box = (doc: Document) => doc.querySelector(".optizzz-analysis");
@@ -101,9 +108,29 @@ describe("mountAnalysisBox", () => {
       "aujourd'hui entre 4 h et 5 h · ▼ −1 000 · coupable inconnu",
       "aujourd'hui entre 3 h et 4 h · ▲ +94 210 · probablement pris à Lunaire (AP)",
     ]);
+    expect(box(doc)?.textContent).toContain(
+      "3 pertes en 7 j : 1 par d'autres alliances, 2 sans coupable sûr · 1 flood pris",
+    );
     expect(box(doc)?.textContent).toContain("Tout voir sur optizzz.fr (4 sur 30 jours)");
     expect(box(doc)?.textContent).toContain("Progresse plus vite que 80 % des 214 joueurs de sa taille sur 7 j.");
     expect(box(doc)?.querySelector<HTMLAnchorElement>("a")?.href).toBe("https://optizzz.fr/s5/players/42");
+  });
+
+  it("leaves the TDC chain out of the 3 lines, while counting it in the summary", () => {
+    const doc = profile();
+    mountAnalysisBox(doc, {
+      analysis: {
+        days: 28,
+        quietHours: null,
+        grid: { rises: grid(), falls: grid() },
+        floods: [flood(6, 300, "sure", "lost", true), flood(5, 128_400, "sure"), flood(4, 200, "sure", "lost", true)],
+      },
+      rank: null,
+      siteHref: "https://optizzz.fr/s5/players/42",
+      now,
+    });
+    expect(lines(doc)).toEqual(["aujourd'hui entre 5 h et 6 h · ▼ −128 400 · probablement par Lunaire (AP)"]);
+    expect(box(doc)?.textContent).toContain("3 pertes en 7 j : 2 dans l'alliance, 1 par d'autres alliances");
   });
 
   it("says when the site does not answer, and keeps the rank", () => {

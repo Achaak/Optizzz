@@ -1,12 +1,14 @@
 // The payload of a player's hourly analysis, for its page and its public route (docs/features/site-analyse.md).
 import { activityGrid, quietHours } from "@optizzz/game/analysis/activity";
 import type { FloodSureness } from "@optizzz/game/analysis/floods";
+import { sameTag } from "@optizzz/game/diplomacy";
 import type { FloodLine, PlayerAnalysis } from "@optizzz/game/analysis/player-analysis";
 
 interface StoredFlood {
   since: Date;
   at: Date;
   victimId: number;
+  victimAlliance: string | null;
   amount: number;
   attackers: number[];
   candidates: number[];
@@ -38,6 +40,8 @@ function floodLines(id: number, floods: readonly StoredFlood[], players: readonl
       others: lost ? named(flood.attackers.length > 0 ? flood.attackers : flood.candidates) : named([flood.victimId]),
       alliance: lost ? flood.alliance : (byId.get(flood.victimId)?.alliance ?? null),
       sureness: flood.sureness as FloodSureness,
+      // The attackers (or the candidates) of the victim's own alliance: the TDC chain.
+      inside: flood.alliance !== null && flood.victimAlliance !== null && sameTag(flood.alliance, flood.victimAlliance),
     };
   });
 }

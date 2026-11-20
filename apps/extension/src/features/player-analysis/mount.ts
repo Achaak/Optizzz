@@ -2,6 +2,7 @@
 import type { Inactivity } from "@optizzz/game/analysis/inactivity";
 import type { RelativeRank } from "@optizzz/game/analysis/peers";
 import {
+  floodSummary,
   floodText,
   floodWhen,
   quietHoursText,
@@ -175,8 +176,11 @@ export function mountAnalysisBox(doc: Document, { analysis, rank, siteHref, now 
     box.append(heading);
     if (week.length === 0) paragraph("Aucun flood probable relevé.", "optizzz-note");
     else {
+      paragraph(floodSummary(week, "7 j"));
+      // The TDC chain's floods are counted, not shown: a hunter of the chain would see nothing else.
+      const outside = week.filter((line) => !line.inside);
       const list = doc.createElement("ul");
-      for (const line of week.slice(0, BOX_FLOODS)) {
+      for (const line of (outside.length > 0 ? outside : week).slice(0, BOX_FLOODS)) {
         const item = doc.createElement("li");
         const when = doc.createElement("strong");
         when.textContent = floodWhen(line, now);
