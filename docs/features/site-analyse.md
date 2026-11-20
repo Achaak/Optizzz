@@ -20,8 +20,8 @@ Sur les seuls joueurs dont le TDC a bougé entre deux exports, et seulement quan
 
 1. **Pertes** : baisse de plus de 1 % de son TDC. **Gains** : toute hausse.
 2. **Candidats** d'une perte : les gagnants dont la victime était à portée au début de l'heure (`inRange`, 50 % inclus, 300 % exclu).
-3. **Passe 1, un pour un** : une perte et un gain égaux à 2 % près, chacun n'ayant que l'autre comme candidat → `sure`.
-4. **Passe 2, plusieurs pour un** : pour une perte restante, une combinaison de 2 à 4 gagnants restants dont la somme fait la perte à 2 % près ; pour un gain restant, de même avec 2 à 4 perdants. Une seule combinaison → `combination`. Les combinaisons ne sont cherchées qu'entre les 20 plus gros mouvements plausibles (un gain qui ne dépasse pas la perte, une perte qui ne dépasse pas le gain) : sans limite, des milliards de sommes par heure sur S2.
+3. **Passe 1, un pour un** : une perte et un gain exactement égaux (au cm² : l'attaquant gagne ce que la victime perd ; 2 % de marge jusqu'au 2026-11-20), chacun n'ayant que l'autre comme candidat → `sure`.
+4. **Passe 2, plusieurs pour un** : pour une perte restante, une combinaison de 2 à 4 gagnants restants dont la somme fait exactement la perte ; pour un gain restant, de même avec 2 à 4 perdants dont la somme fait exactement le gain. Une seule combinaison → `combination`. Les combinaisons ne sont cherchées qu'entre les 20 plus gros mouvements plausibles (un gain qui ne dépasse pas la perte, une perte qui ne dépasse pas le gain) : sans limite, des milliards de sommes par heure sur S2.
 5. **Passe 3** : ce qui reste avec au moins un candidat → `candidates` ; sans candidat → `unknown`.
 6. Si tous les candidats d'une perte sont de la même alliance, elle est notée (« par l'alliance ABC, sans savoir qui »), quelle que soit la sûreté.
 
@@ -34,6 +34,8 @@ Un gain mêlé de chasses ne correspond à rien : la perte reste sans coupable p
 Les deux tables partent vides au déploiement (2026-11-20). L'API de Fourmizzz garde ses exports horaires : `pnpm backfill` (sur le VPS : `deploy/backfill.sh`, en arrière-plan) relit ceux des 30 derniers jours, jusqu'au dernier export lu par le cron, et écrit chaque heure comme le cron (`writeHour`, partagée). Une heure qui a déjà des mouvements est sautée : la reprise peut tourner à côté du cron, qui n'écrit que les heures suivantes, et se relancer. Deux secondes entre deux téléchargements.
 
 Relevé le 2026-11-20 : S5 publie un export par heure depuis un mois (732 sur 30 jours, 0,43 Mo chacun, ≈ 315 Mo) ; S1 à S4 seulement depuis le 14/11 environ (≈ 135 chacun ; 8,5, 4,3, 10 et 44 Mo, soit ≈ 1,1 Go, 580 Mo, 1,4 Go et 5,9 Go). Les pages suivent au passage suivant du cron.
+
+Depuis le 2026-11-20, un flood n'est apparié qu'au cm² près (l'attaquant gagne exactement ce que la victime perd) ; les floods trouvés avant avec 2 % de marge se recalculent sans rien télécharger : `pnpm backfill -- --floods` (`./backfill.sh --floods` sur le VPS) relit les mouvements de `PlayerHour` (le TDC et son écart donnent celui d'avant) et remplace les floods de chaque heure. Les alliances sont alors celles du jour, celles des relevés n'étant pas gardées.
 
 ## Route publique
 

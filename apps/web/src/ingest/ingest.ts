@@ -1,6 +1,6 @@
 // One pass of the hourly cron over a server: the current state, the Journal and the nightly scores — see
 // docs/features/site-public.md.
-import { probableFloods } from "@optizzz/game/analysis/floods";
+import { probableFloods, type HourPlayer } from "@optizzz/game/analysis/floods";
 import { versionDate } from "@optizzz/game/export-versions";
 import {
   allianceSchema,
@@ -198,10 +198,24 @@ export async function writeHour(
   await inChunks(fieldMoves(before.players, after.players), (chunk) =>
     db.playerHour.createMany({ data: chunk.map((move) => ({ server, since, at, ...move })), skipDuplicates: true }),
   );
-  const victimAlliance = new Map(before.players.map((player) => [player.id, player.alliance]));
-  // Over a longer gap (the cron missed passes) the sums mix too many moves to match anything.
-  const floods =
-    at.getTime() - since.getTime() <= MAX_FLOOD_GAP_MS ? probableFloods(before.players, after.players) : [];
+  await writeFloods(db, server, since, at, before.players, after.players);
+}
+
+/**
+ * The probable floods between two readings, when they are at most 3 hours apart: over a longer gap (the cron missed
+ * passes) the sums mix too many moves to match anything. Only the players whose field moved matter.
+ */
+export async function writeFloods(
+  db: Pick<PrismaClient, "probableFlood">,
+  server: string,
+  since: Date,
+  at: Date,
+  before: readonly HourPlayer[],
+  after: readonly HourPlayer[],
+): Promise<number> {
+  if (at.getTime() - since.getTime() > MAX_FLOOD_GAP_MS) return 0;
+  const victimAlliance = new Map(before.map((player) => [player.id, player.alliance]));
+  const floods = probableFloods(before, after);
   await inChunks(floods, (chunk) =>
     db.probableFlood.createMany({
       data: chunk.map((flood) => ({
@@ -218,6 +232,7 @@ export async function writeHour(
       })),
     }),
   );
+  return floods.length;
 }
 
 export interface PassReport {

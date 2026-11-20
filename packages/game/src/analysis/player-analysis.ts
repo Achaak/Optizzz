@@ -67,8 +67,8 @@ export function floodText(line: FloodLine): string {
 
 /** The tooltip of a flood line: why it is that sure. */
 export const SURENESS_TITLES: Record<FloodLine["sureness"], string> = {
-  sure: "Sûr : un seul joueur à portée a gagné ce qu'il a perdu, à 2 % près.",
-  combination: "Combinaison : une seule combinaison de 2 à 4 joueurs à portée fait la somme, à 2 % près.",
+  sure: "Sûr : un seul joueur à portée a gagné exactement ce qu'il a perdu.",
+  combination: "Combinaison : une seule combinaison de 2 à 4 joueurs à portée fait exactement la somme.",
   candidates: "Candidats : des joueurs à portée ont gagné dans l'heure, aucune somme ne correspond.",
   unknown: "Aucun joueur à portée n'a gagné dans l'heure.",
 };

@@ -1,11 +1,12 @@
 // Takes back the hourly moves and probable floods of the last 30 days (docs/features/site-analyse.md, « Reprise »):
-// `pnpm backfill` for every server, `-- --server s5` for some. On the VPS: deploy/backfill.sh. It can run beside the
+// `pnpm backfill` for every server, `-- --server s5` for some; `-- --floods` only finds the floods again from the
+// stored moves, without downloading anything (after a change of the rule). On the VPS: deploy/backfill.sh. It can run beside the
 // hourly cron and again: an hour already written is skipped. The pages catch up at the cron's next pass.
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { SERVERS, serverById } from "@optizzz/game/servers";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { backfillHourly } from "../src/ingest/backfill";
+import { backfillHourly, recomputeFloods } from "../src/ingest/backfill";
 
 const ids = process.argv.slice(2).flatMap((arg, i, args) => (arg === "--server" && args[i + 1] ? [args[i + 1]] : []));
 const servers =
@@ -21,10 +22,16 @@ const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not set");
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
+const floodsOnly = process.argv.includes("--floods");
 let failed = false;
 for (const server of servers) {
   const start = Date.now();
   try {
+    if (floodsOnly) {
+      const found = await recomputeFloods(db, server, new Date());
+      console.log(`${server.name}: ${String(found.floods)} floods over ${String(found.hours)} hours`);
+      continue;
+    }
     const report = await backfillHourly(db, server, new Date(), { log: (line) => console.log(line) });
     console.log(
       `${server.name}: ${String(report.hours)} hours written, ${String(report.skipped)} already there, ${String(Math.round((Date.now() - start) / 60_000))} min`,

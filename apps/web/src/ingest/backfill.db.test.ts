@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { PrismaClient } from "~/generated/prisma/client";
-import { backfillHourly } from "./backfill";
+import { backfillHourly, recomputeFloods } from "./backfill";
 
 const url = process.env.TEST_DATABASE_URL;
 
@@ -100,5 +100,60 @@ describe.skipIf(!url)("taking back the hourly moves on Postgres", () => {
     expect(report).toEqual({ hours: 0, skipped: 3 });
     expect(await db.playerHour.count(where)).toBe(4);
     expect(await db.probableFlood.count(where)).toBe(1);
+  });
+});
+
+describe.skipIf(!url)("finding the floods again from the stored moves on Postgres", () => {
+  const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url ?? "" }) });
+  const id = `t${randomUUID().slice(0, 6)}`;
+  const where = { where: { server: id } };
+  const since = new Date("2026-11-01T00:00:00Z");
+  const at = new Date("2026-11-01T01:00:00Z");
+
+  afterAll(async () => {
+    await db.playerHour.deleteMany(where);
+    await db.probableFlood.deleteMany(where);
+    await db.player.deleteMany(where);
+    await db.$disconnect();
+  });
+
+  it("replaces each hour's floods by those its moves give now, the alliances of today", async () => {
+    await db.player.createMany({
+      data: [1, 2, 3].map((playerId) => ({
+        server: id,
+        id: playerId,
+        pseudo: `P${String(playerId)}`,
+        alliance: playerId === 2 ? "AP" : null,
+        x: 0,
+        y: 0,
+        field: 1,
+        buildingScore: 1,
+        technologyScore: 1,
+        trophyScore: 1,
+        onHoliday: false,
+        isBanned: false,
+      })),
+    });
+    // 1 loses 1 000; 2 wins exactly 1 000, 3 wins 1 010: only 2 took it.
+    await db.playerHour.createMany({
+      data: [
+        { server: id, playerId: 1, since, at, field: 9000, delta: -1000 },
+        { server: id, playerId: 2, since, at, field: 6000, delta: 1000 },
+        { server: id, playerId: 3, since, at, field: 6010, delta: 1010 },
+      ],
+    });
+    // Found before with the 2 % margin: 3 among the candidates, no attacker.
+    await db.probableFlood.create({
+      data: { server: id, since, at, victimId: 1, amount: 1000, candidates: [2, 3], sureness: "candidates" },
+    });
+    const report = await recomputeFloods(
+      db,
+      { id, name: "Test", origin: "https://exports.test" },
+      new Date("2026-11-02T00:00:00Z"),
+    );
+    expect(report).toEqual({ hours: 1, floods: 1 });
+    expect(await db.probableFlood.findMany(where)).toMatchObject([
+      { victimId: 1, amount: 1000, attackers: [2], alliance: "AP", sureness: "sure" },
+    ]);
   });
 });

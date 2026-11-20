@@ -28,8 +28,7 @@ export interface ProbableFlood {
 
 /** A loss under this share of the field is not counted (a hunt's losses, the colony tax). */
 const MIN_LOSS = 0.01;
-/** Two sums agree within this share of the one matched. */
-const TOLERANCE = 0.02;
+/** The attacker wins exactly what the victim loses: two sums agree only to the cm² (half a cm² for float noise). */
 /** The largest combination tried: 2 to 4 players. */
 const MAX_COMBINATION = 4;
 /** The plausible gains (or losses) a combination is looked for among: beyond, too many sums for the cron. */
@@ -43,7 +42,7 @@ interface Move {
   alliance: string | null;
 }
 
-const close = (value: number, target: number) => Math.abs(value - target) <= target * TOLERANCE;
+const close = (value: number, target: number) => Math.abs(value - target) < 0.5;
 
 /** The one combination of 2 to 4 of `pool` (biggest first) whose amounts make `target`; null when none or several. */
 function uniqueCombination(pool: readonly Move[], target: number): Move[] | null {
@@ -58,7 +57,7 @@ function uniqueCombination(pool: readonly Move[], target: number): Move[] | null
     if (chosen.length === MAX_COMBINATION) return;
     for (let i = start; i < pool.length; i++) {
       const next = pool[i];
-      if (!next || sum + next.amount > target * (1 + TOLERANCE)) continue;
+      if (!next || sum + next.amount > target + 0.5) continue;
       search(i + 1, [...chosen, next], sum + next.amount);
     }
   };
@@ -119,7 +118,7 @@ export function probableFloods(before: readonly HourPlayer[], after: readonly Ho
   for (const loss of losses) {
     if (resolved.has(loss.id)) continue;
     const pool = (candidatesOf.get(loss.id) ?? [])
-      .filter((gain) => !used.has(gain.id) && gain.amount <= loss.amount * (1 + TOLERANCE))
+      .filter((gain) => !used.has(gain.id) && gain.amount <= loss.amount)
       .sort((a, b) => b.amount - a.amount)
       .slice(0, MAX_CANDIDATES);
     const combination = uniqueCombination(pool, loss.amount);
@@ -132,7 +131,7 @@ export function probableFloods(before: readonly HourPlayer[], after: readonly Ho
   for (const gain of gains) {
     if (used.has(gain.id)) continue;
     const pool = (lossesOf.get(gain.id) ?? [])
-      .filter((loss) => !resolved.has(loss.id) && loss.amount <= gain.amount * (1 + TOLERANCE))
+      .filter((loss) => !resolved.has(loss.id) && loss.amount <= gain.amount)
       .sort((a, b) => b.amount - a.amount)
       .slice(0, MAX_CANDIDATES);
     const combination = uniqueCombination(pool, gain.amount);

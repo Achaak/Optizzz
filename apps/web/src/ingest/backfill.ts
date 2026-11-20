@@ -4,7 +4,7 @@ import { versionDate } from "@optizzz/game/export-versions";
 import { exportUrl, versionsSchema, type Player } from "@optizzz/game/exports";
 import type { GameServer } from "@optizzz/game/servers";
 import type { PrismaClient } from "~/generated/prisma/client";
-import { getJson, HOURLY_DAYS, playersOf, writeHour } from "./ingest";
+import { getJson, HOURLY_DAYS, playersOf, writeFloods, writeHour } from "./ingest";
 
 export interface BackfillReport {
   /** Hours written. */
@@ -59,6 +59,53 @@ export async function backfillHourly(
       log(`${server.name}: ${version} (${String(report.hours)} hours)`);
     }
     before = after;
+  }
+  return report;
+}
+
+export interface RecomputeReport {
+  /** Hours whose floods were found again. */
+  hours: number;
+  floods: number;
+}
+
+/**
+ * Finds the probable floods of the last 30 days again from the moves stored in PlayerHour, without downloading
+ * anything: each row holds a field and its move, so the field before. For the hours stored before a change of the
+ * rule (the 2 % margin dropped on 2026-11-20). The alliances are today's, the readings' being no longer kept.
+ */
+export async function recomputeFloods(db: PrismaClient, server: GameServer, now: Date): Promise<RecomputeReport> {
+  const from = new Date(now.getTime() - HOURLY_DAYS * 24 * 3_600_000);
+  const [moves, players] = await Promise.all([
+    db.playerHour.findMany({
+      where: { server: server.id, at: { gte: from } },
+      select: { playerId: true, since: true, at: true, field: true, delta: true },
+      orderBy: { at: "asc" },
+    }),
+    db.player.findMany({ where: { server: server.id }, select: { id: true, alliance: true } }),
+  ]);
+  const alliance = new Map(players.map((player) => [player.id, player.alliance]));
+  const hours = new Map<number, typeof moves>();
+  for (const move of moves) hours.set(move.at.getTime(), [...(hours.get(move.at.getTime()) ?? []), move]);
+  const report: RecomputeReport = { hours: 0, floods: 0 };
+  for (const hour of hours.values()) {
+    const [first] = hour;
+    if (!first) continue;
+    const before = hour.map((move) => ({
+      id: move.playerId,
+      field: move.field - move.delta,
+      alliance: alliance.get(move.playerId) ?? null,
+    }));
+    const after = hour.map((move) => ({
+      id: move.playerId,
+      field: move.field,
+      alliance: alliance.get(move.playerId) ?? null,
+    }));
+    await db.$transaction(async (tx) => {
+      await tx.probableFlood.deleteMany({ where: { server: server.id, at: first.at } });
+      report.floods += await writeFloods(tx, server.id, first.since, first.at, before, after);
+    });
+    report.hours++;
   }
   return report;
 }

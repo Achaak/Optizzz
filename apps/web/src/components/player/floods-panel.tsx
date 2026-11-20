@@ -83,9 +83,9 @@ export function FloodsPanel({ floods, now }: { floods: FloodLine[]; now: string 
         </div>
       )}
       <p className="px-4.5 pt-2 pb-4 text-xs text-muted-foreground">
-        Une baisse de plus de 1 % rapprochée des hausses des joueurs dont il était à portée, à 2 % près. Un gain mêlé de
-        chasses ne correspond à rien : la perte reste alors sans coupable. Calculé d&apos;après l&apos;export public de
-        Fourmizzz, relevé chaque heure.
+        Une baisse de plus de 1 % rapprochée des hausses des joueurs dont il était à portée : l&apos;attaquant gagne
+        exactement ce que la victime perd, au cm² près. Un gain mêlé de chasses ne correspond à rien : la perte reste
+        alors sans coupable. Calculé d&apos;après l&apos;export public de Fourmizzz, relevé chaque heure.
       </p>
     </Panel>
   );

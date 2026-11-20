@@ -18,10 +18,20 @@ const floodsOf = (players: ReturnType<typeof moved>[]) => {
 
 describe("probableFloods", () => {
   it("is sure when one player in range won what the victim lost", () => {
-    // 10 000 is 200 % of 5 000: in range. 1 010 is within 2 % of 1 000.
-    expect(floodsOf([moved(1, 10_000, 9000), moved(2, 5000, 6010), moved(3, 8000, 8000)])).toEqual([
+    // 10 000 is 200 % of 5 000: in range. The attacker wins exactly what the victim loses.
+    expect(floodsOf([moved(1, 10_000, 9000), moved(2, 5000, 6000), moved(3, 8000, 8000)])).toEqual([
       { victimId: 1, amount: 1000, attackers: [2], candidates: [2], alliance: null, sureness: "sure" },
     ]);
+  });
+
+  it("matches only the exact amount: a gain one cm² off is something else (a hunt back as well)", () => {
+    expect(floodsOf([moved(1, 10_000, 9000), moved(2, 5000, 6001)])).toEqual([
+      { victimId: 1, amount: 1000, attackers: [], candidates: [2], alliance: null, sureness: "candidates" },
+    ]);
+    // Nor a combination one cm² off: 1 200 + 799.
+    expect(floodsOf([moved(1, 20_000, 18_000), moved(2, 10_000, 11_200), moved(3, 10_000, 10_799)])[0]?.sureness).toBe(
+      "candidates",
+    );
   });
 
   it("finds the one combination of players in range whose gains make the loss", () => {
