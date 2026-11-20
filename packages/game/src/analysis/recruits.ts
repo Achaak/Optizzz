@@ -8,12 +8,21 @@ export interface RecruitFilters {
   maxField: number | null;
   /** In squares from the alliance's centre. */
   maxDistance: number | null;
+  /** The Anthill score (Fourmilière). */
+  minBuilding: number | null;
+  maxBuilding: number | null;
+  /** The Technology score. */
+  minTechnology: number | null;
+  maxTechnology: number | null;
 }
 
 export interface Recruit {
   id: number;
   pseudo: string;
   field: number;
+  /** Fourmilière and Technologie scores, from the last export. */
+  building: number;
+  technology: number;
   /** The field's growth over 7 nights, 0.25 for +25 %; null for a player not in the export then. */
   gain: number | null;
   /** From the alliance's centre, in squares; null without a centre. */
@@ -58,6 +67,10 @@ export function recruits({ players, tag, weekAgo, inactive, filters }: RecruitsI
     const squares = center ? distance(player, center) : null;
     if (filters.minField !== null && player.field < filters.minField) return [];
     if (filters.maxField !== null && player.field > filters.maxField) return [];
+    if (filters.minBuilding !== null && player.buildingScore < filters.minBuilding) return [];
+    if (filters.maxBuilding !== null && player.buildingScore > filters.maxBuilding) return [];
+    if (filters.minTechnology !== null && player.technologyScore < filters.minTechnology) return [];
+    if (filters.maxTechnology !== null && player.technologyScore > filters.maxTechnology) return [];
     if (filters.maxDistance !== null && (squares === null || squares > filters.maxDistance)) return [];
     const before = weekAgo.get(player.id);
     const master = player.masterPlayerId === null ? undefined : byId.get(player.masterPlayerId);
@@ -66,6 +79,8 @@ export function recruits({ players, tag, weekAgo, inactive, filters }: RecruitsI
         id: player.id,
         pseudo: player.pseudo,
         field: player.field,
+        building: player.buildingScore,
+        technology: player.technologyScore,
         gain: before === undefined || before <= 0 ? null : (player.field - before) / before,
         distance: squares,
         master: master ? { pseudo: master.pseudo, alliance: master.alliance } : null,

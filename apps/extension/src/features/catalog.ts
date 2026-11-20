@@ -130,9 +130,8 @@ export const featureCatalog = [
     id: "recruitment",
     label: "Recrutement",
     description:
-      "Entrée « Recrutement » du menu d'alliance : les joueurs sans alliance, actifs, qui progressent le plus vite, avec leur distance au centre de votre alliance.",
+      "Entrée « Recrutement » du menu d'alliance : les joueurs sans alliance, actifs, qui progressent le plus vite, avec leur distance au centre de votre alliance, leur Fourmilière et leur Technologie.",
     options: [],
-    offByDefault: true,
   },
   {
     id: "flood",

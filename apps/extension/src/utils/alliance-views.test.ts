@@ -3,13 +3,14 @@ import { allianceViewHashes, isMembersPage, showsAllianceView } from "./alliance
 
 describe("alliance views", () => {
   it("lists only the views switched on", () => {
-    expect(allianceViewHashes({})).toEqual(["#carte", "#chaine", "#historique", "#stats", "#partage"]);
+    expect(allianceViewHashes({})).toEqual(["#carte", "#chaine", "#historique", "#stats", "#partage", "#recrutement"]);
     expect(
       allianceViewHashes({
         "alliance-map": false,
         "history.alliance": false,
         "alliance-stats": false,
         "alliance-sharing": false,
+        recruitment: false,
       }),
     ).toEqual(["#chaine"]);
   });

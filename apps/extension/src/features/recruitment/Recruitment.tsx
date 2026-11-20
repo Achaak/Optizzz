@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { loadPlayersExport, type PlayersExport } from "@/data/exports";
 import { inactivityOf, loadRecentNights, INACTIVITY_DAYS } from "@/data/nights";
 import type { Snapshot } from "@/features/history/api";
-import { recruits, type Recruit } from "@optizzz/game/analysis/recruits";
+import { recruits, type Recruit, type RecruitFilters } from "@optizzz/game/analysis/recruits";
 import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
 import { NumberField } from "@/utils/NumberField";
 import { useStoredSettings } from "@/utils/useStoredSettings";
@@ -16,7 +16,7 @@ interface Props {
   myTag: string;
 }
 
-type SortKey = "gain" | "field" | "distance" | "pseudo";
+type SortKey = "gain" | "field" | "building" | "technology" | "distance" | "pseudo";
 
 const PAGE_SIZE = 50;
 
@@ -100,6 +100,12 @@ export function Recruitment({ origin, myTag }: Props) {
     </label>
   );
 
+  const filter = (label: string, key: keyof RecruitFilters) =>
+    field(label, filters[key], (value) => {
+      updateFilters((current) => ({ ...current, [key]: value }));
+      setShown(PAGE_SIZE);
+    });
+
   return (
     <div className="optizzz-panel recruitment">
       <h2 className="optizzz-panel-title">Joueurs à recruter pour {myTag}</h2>
@@ -111,18 +117,13 @@ export function Recruitment({ origin, myTag }: Props) {
         .
       </p>
       <div className="optizzz-toolbar">
-        {field("TDC minimum", filters.minField, (minField) => {
-          updateFilters((current) => ({ ...current, minField }));
-          setShown(PAGE_SIZE);
-        })}
-        {field("TDC maximum", filters.maxField, (maxField) => {
-          updateFilters((current) => ({ ...current, maxField }));
-          setShown(PAGE_SIZE);
-        })}
-        {field("Distance maximum (cases)", filters.maxDistance, (maxDistance) => {
-          updateFilters((current) => ({ ...current, maxDistance }));
-          setShown(PAGE_SIZE);
-        })}
+        {filter("TDC minimum", "minField")}
+        {filter("TDC maximum", "maxField")}
+        {filter("Fourmilière minimum", "minBuilding")}
+        {filter("Fourmilière maximum", "maxBuilding")}
+        {filter("Technologie minimum", "minTechnology")}
+        {filter("Technologie maximum", "maxTechnology")}
+        {filter("Distance maximum (cases)", "maxDistance")}
       </div>
       {rows.length === 0 ? (
         <p className="optizzz-note">Personne ne correspond à ces filtres.</p>
@@ -133,6 +134,8 @@ export function Recruitment({ origin, myTag }: Props) {
               <tr>
                 {header("pseudo", "Pseudo", false)}
                 {header("field", "TDC")}
+                {header("building", "Fourmilière")}
+                {header("technology", "Technologie")}
                 {header("gain", "Gain 7 j")}
                 {header("distance", "Distance")}
                 <th>Colonisé par</th>
@@ -145,6 +148,8 @@ export function Recruitment({ origin, myTag }: Props) {
                     <a href={`Membre.php?Pseudo=${encodeURIComponent(row.pseudo)}`}>{row.pseudo}</a>
                   </td>
                   <td className="optizzz-num">{formatAmount(row.field)}</td>
+                  <td className="optizzz-num">{formatAmount(row.building)}</td>
+                  <td className="optizzz-num">{formatAmount(row.technology)}</td>
                   <td className="optizzz-num">{gainText(row.gain)}</td>
                   <td className="optizzz-num">{row.distance === null ? "—" : formatDecimal(row.distance)}</td>
                   <td>
