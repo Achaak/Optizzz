@@ -28,6 +28,7 @@ Voir en courbes le TDC et les scores (Fourmilière, Technologie, Combat) dans le
 - **Vue d'alliance** : entrée « Progression » du menu d'alliance (« Historique » jusqu'au 2026-10-16, renommée pour la distinguer des Statistiques d'alliance), après « Chaîne » (ou « Carte », ou « Membres »), `alliance.php?Membres#historique` ; remplace le tableau des membres tant que le hash est `#historique`.
   - Une ligne par membre coché ; par défaut moi seul (en gras). Case « Moyenne de l'alliance » (pointillés) : moyenne des membres actuels présents à chaque export.
   - Tableau « Progression sur la période » : chaque membre, valeur de début, maintenant (« Dernier export » sur l'onglet Combat, absent du tableau Membres), gain et %, triable sur toutes ces colonnes (gain décroissant par défaut) ; les en-têtes sont des boutons, la colonne active porte ▲ ou ▼. La case de chaque ligne affiche sa courbe.
+  - Colonne « Rang parmi sa taille » (cadrée le 2026-11-20, `analyse-joueurs.md`) : le % de gain du membre comparé aux joueurs qui avaient entre la moitié et le double de son TDC au début de la période.
   - Le bandeau « Depuis le … » date le début des courbes affichées (un membre arrivé plus tard commence plus tard).
   - Titre « Progression des membres de TAG ». Sous le titre, un sélecteur « L'alliance / Chaque membre » mène aux Statistiques d'alliance (`statistiques-alliance.md`) quand elles sont allumées.
   - Sans alliance dans le dernier export : un message. Export injoignable : un message en clair, le détail en console.

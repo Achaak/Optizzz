@@ -22,6 +22,8 @@ Décidée lors d'une session de cadrage (`/grill-me`) le 2026-10-07. Chaque feat
 15. **Suivis** : suivre des joueurs et des alliances, ce qui a changé depuis la dernière visite, relevé chaque heure depuis l'export public, résumé dans le popup et notifications ; voir `suivis.md` (cadré le 2026-10-17).
 16. **Modèles de ponte** (`Reine.php`) : une ponte d'armée habituelle (plusieurs unités, quantités fixes ou répartition sur une durée) mémorisée et lancée en un clic ; voir `laying-templates.md` (cadré le 2026-10-18).
 
+17. **Analyse des joueurs et des alliances** (cadrée le 2026-11-20) : portée dans les deux sens, inactif probable, quand le TDC bouge, floods probables, rang relatif (`analyse-joueurs.md`) ; face-à-face, bloc diplomatique, colonies, floods par alliance (`analyse-alliances.md`) ; colonne « Évolution » des Membres (`colonnes-membres.md`) ; recrutement (`recrutement.md`) ; TDC horaire sur le site (`site-analyse.md`). En quatre lots : ce qui tient dans le cache de l'extension, les alliances, l'horaire sur le site, le recrutement.
+
 ## Décisions transverses
 
 - **Modèle d'armée partagé** : `packages/game/src/army/` (unités, proies, combat), sorti du lanceur de chasse ; combat, ponte, rapports et chasse s'en servent.

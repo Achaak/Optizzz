@@ -27,7 +27,7 @@ Suivre des joueurs et des alliances (cibles et rivaux d'abord, alliés aussi) et
 
 - Bouton « Suivis » dans la barre du haut du jeu : une page par-dessus le jeu (`apps/extension/src/utils/page-dialog.ts`, comme la Carte du serveur), aussi ouvrable dans un onglet. Une notification ou le popup y mènent par `Reine.php#optizzz-suivis`.
 - Deux tableaux, **Joueurs** et **Alliances**, les lignes avec du nouveau d'abord :
-  - joueur : pseudo (lien vers le profil), alliance, TDC et écart depuis « vu », état (vacances, banni, n'existe plus), distance et trajet depuis chez moi (vitesse d'attaque connue), changements non vus ;
+  - joueur : pseudo (lien vers le profil), alliance, TDC et écart depuis « vu », état (vacances, banni, n'existe plus, et la pastille « inactif 5 j » de `analyse-joueurs.md` depuis le 2026-11-20), distance et trajet depuis chez moi (vitesse d'attaque connue), changements non vus ;
   - alliance : tag (lien vers sa page), membres, TDC total et écart, changements non vus.
 - Titre « Suivis · S5 ». Par ligne : « Vu » (si du nouveau), « Retirer » (aussitôt, avec « Annuler » dans le message, qui remet l'entrée et son repère). En haut : le champ d'ajout, « Tout marquer comme vu (N) », puis la date du dernier relevé (absente tant que la liste est vide). Liste vide : comment ajouter.
 
