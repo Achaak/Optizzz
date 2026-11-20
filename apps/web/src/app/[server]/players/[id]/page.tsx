@@ -14,7 +14,12 @@ import { buttonVariants } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { serverOfPath } from "~/lib/game-server";
 import { ordinal, trendText } from "~/lib/server-stats";
-import { playerPage } from "~/server/queries";
+import { playerHourly, playerPage, playerPeerRank, playerReach } from "~/server/queries";
+import { probableInactivity } from "@optizzz/game/analysis/inactivity";
+import { quietHoursText } from "@optizzz/game/analysis/player-analysis";
+import { ActivityPanel } from "~/components/player/activity-panel";
+import { FloodsPanel } from "~/components/player/floods-panel";
+import { playerAnalysisOf } from "~/lib/analysis/player-analysis";
 
 export const revalidate = 3600;
 // Built at the first visit, then kept until the cron's next pass.
@@ -57,8 +62,21 @@ export default async function PlayerPage({ params }: Props) {
   const server = serverOfPath(segment, `/players/${id}`);
   const playerId = idOf(id);
   if (playerId === null) notFound();
-  const { player, master, colonies, days, journal, rank, ranks } = await playerPage(server.id, playerId);
+  const [{ player, master, colonies, days, journal, rank, ranks }, hourly, peerRank] = await Promise.all([
+    playerPage(server.id, playerId),
+    playerHourly(server.id, playerId),
+    playerPeerRank(server.id, playerId),
+  ]);
   if (!player && journal.length === 0) notFound();
+  const reach = player ? await playerReach(server.id, player.field) : null;
+  const analysis = playerAnalysisOf(playerId, hourly);
+  const inactivity =
+    player && !player.onHoliday && !player.isBanned
+      ? probableInactivity(
+          days.map((day) => ({ field: day.field, building: day.buildingScore, technology: day.technologyScore })),
+        )
+      : null;
+  const now = new Date();
   const points = (pick: (day: (typeof days)[number]) => number) =>
     days.map((day) => ({ day: dayMonth(day.day), value: Math.round(pick(day)) }));
   const states = player
@@ -193,6 +211,79 @@ export default async function PlayerPage({ params }: Props) {
           <ScoreChart small label="Combat" unit="en Combat" points={points((day) => day.trophyScore)} />
         </Panel>
       </div>
+
+      {player && (
+        <>
+          <StatGrid label="Analyse">
+            <Stat
+              label="Portée"
+              value={`${formatNumber(reach?.attackers ?? 0)} joueurs`}
+              hint={`peuvent l'attaquer · en a ${formatNumber(reach?.targets ?? 0)} à sa portée`}
+            />
+            <Stat
+              label="État"
+              value={inactivity ? "Inactif" : "Actif"}
+              hint={
+                inactivity
+                  ? `probablement, depuis ${formatNumber(inactivity.days)} j${inactivity.onlyLosses ? " : rien n'a bougé sauf des pertes" : ""}`
+                  : "son TDC ou ses scores ont monté ces 3 dernières nuits"
+              }
+            />
+            <Stat
+              label="Plage calme habituelle"
+              value={analysis.quietHours ? quietHoursText(analysis.quietHours) : "—"}
+              hint={analysis.quietHours ? "aucune hausse 3 jours sur 4" : "pas de plage nette"}
+            />
+            <Stat
+              label="Rang relatif sur 7 j"
+              value={peerRank ? `${formatNumber(Math.round((peerRank.faster / peerRank.peers) * 100))} %` : "—"}
+              hint={
+                peerRank
+                  ? `progresse plus vite que ${formatNumber(peerRank.faster)} des ${formatNumber(peerRank.peers)} joueurs de sa taille`
+                  : "moins de 10 joueurs de sa taille"
+              }
+            />
+          </StatGrid>
+          <p className="text-sm text-muted-foreground">
+            Calculé d&apos;après l&apos;export public de Fourmizzz, relevé chaque heure.
+          </p>
+          <ActivityPanel analysis={analysis} />
+          <FloodsPanel floods={analysis.floods} now={now.toISOString()} />
+          {reach && reach.alliances.length > 0 && (
+            <Panel flush title="Alliances qui l'ont le plus à portée">
+              <Table>
+                <TableHeader>
+                  <TableRow className={HEAD}>
+                    <TableHead className="pl-4 text-muted-foreground">Alliance</TableHead>
+                    <TableHead className="text-right text-muted-foreground">
+                      Membres qui peuvent l&apos;attaquer
+                    </TableHead>
+                    <TableHead className="pr-4 text-right text-muted-foreground">
+                      Membres qu&apos;il peut attaquer
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reach.alliances.map((row) => (
+                    <TableRow key={row.alliance}>
+                      <TableCell className="pl-4">
+                        <Link
+                          href={`/${server.id}/alliances/${encodeURIComponent(row.alliance ?? "")}`}
+                          className="font-semibold hover:underline"
+                        >
+                          {row.alliance}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-right">{formatNumber(row.attackers)}</TableCell>
+                      <TableCell className="pr-4 text-right">{formatNumber(row.targets)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Panel>
+          )}
+        </>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel

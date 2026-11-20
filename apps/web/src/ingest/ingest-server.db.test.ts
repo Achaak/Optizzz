@@ -87,6 +87,8 @@ describe.skipIf(!url)("the cron's pass over a server on Postgres", () => {
     await db.journalEntry.deleteMany(where);
     await db.exportRead.deleteMany(where);
     await db.mapFile.deleteMany(where);
+    await db.playerHour.deleteMany(where);
+    await db.probableFlood.deleteMany(where);
     await db.$disconnect();
   });
 
@@ -165,6 +167,35 @@ describe.skipIf(!url)("the cron's pass over a server on Postgres", () => {
     const days = await db.playerDay.groupBy({ by: ["day"], where: { server: server.id } });
     expect(await db.playerDay.count(where)).toBe(6);
     expect(days).toHaveLength(2);
+    expect(unknown).toEqual([]);
+  });
+
+  it("keeps the hour's moves of the field and its probable floods, 30 days long", async () => {
+    // Left from 40 days before: purged by the pass.
+    const old = new Date("2026-09-23T10:00:00Z");
+    await db.playerHour.create({
+      data: { server: server.id, playerId: 4, at: old, since: old, field: 1, delta: 1 },
+    });
+    await db.probableFlood.create({
+      data: { server: server.id, since: old, at: old, victimId: 4, amount: 1, sureness: "unknown" },
+    });
+    // Player 1 loses 10 of 100 (10 %); player 2, in range (100 is 50 % of 200), wins them.
+    published["202611020105"] = {
+      players: [player(1, "BBB", 90), player(2, null, 210), player(4, null)],
+      alliances: [alliance("AAA", 0), alliance("BBB", 1)],
+    };
+    await ingestServer(db, server, new Date("2026-11-02T03:00:00Z"));
+    const hours = await db.playerHour.findMany({ ...where, orderBy: { playerId: "asc" } });
+    expect(
+      hours.map((row) => [row.playerId, row.field, row.delta, row.since.toISOString(), row.at.toISOString()]),
+    ).toEqual([
+      [1, 90, -10, "2026-11-02T00:05:00.000Z", "2026-11-02T01:05:00.000Z"],
+      [2, 210, 10, "2026-11-02T00:05:00.000Z", "2026-11-02T01:05:00.000Z"],
+    ]);
+    const floods = await db.probableFlood.findMany(where);
+    expect(floods).toMatchObject([
+      { victimId: 1, victimAlliance: "BBB", amount: 10, attackers: [2], alliance: null, sureness: "sure" },
+    ]);
     expect(unknown).toEqual([]);
   });
 });

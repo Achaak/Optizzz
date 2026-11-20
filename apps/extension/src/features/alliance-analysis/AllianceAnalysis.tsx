@@ -1,5 +1,7 @@
 // Face-à-face, Bloc diplomatique and Colonies under an alliance's page. See docs/features/analyse-alliances.md.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import type { AllianceFloods } from "@optizzz/game/analysis/alliance-floods";
+import { loadAllianceFloods } from "@/data/site-analysis";
 import { loadAlliancesExport, loadPlayersExport, type AlliancesExport, type PlayersExport } from "@/data/exports";
 import { loadLevelsOf } from "@/data/levels";
 import { blocText, diplomaticBloc } from "@optizzz/game/analysis/bloc";
@@ -22,7 +24,7 @@ interface Props {
   myPseudo: string | null;
   /** My live field, from the page header. */
   myField: number | null;
-  show: { faceOff: boolean; bloc: boolean; colonies: boolean };
+  show: { faceOff: boolean; bloc: boolean; colonies: boolean; floods: boolean };
 }
 
 const squares = (value: number) => `${formatAmount(Math.round(value))} ${Math.round(value) > 1 ? "cases" : "case"}`;
@@ -190,12 +192,88 @@ function ColonyLinks({
   );
 }
 
+const balance = (taken: number, lost: number) => {
+  const value = taken - lost;
+  return value === 0 ? "0" : `${value > 0 ? "▲ +" : "▼ −"}${formatCompact(Math.abs(value))}`;
+};
+
+/** The alliance's probable floods over 7 days, by other alliance, read on optizzz.fr. */
+function FloodsBox({ floods }: { floods: AllianceFloods | null }) {
+  const row = (key: string, name: ReactNode, taken: number, lost: number, count: number, muted = false) => (
+    <tr key={key} className={muted ? "optizzz-muted" : undefined}>
+      <td>{name}</td>
+      <td className="optizzz-num">{formatCompact(taken)}</td>
+      <td className="optizzz-num">{formatCompact(lost)}</td>
+      <td className="optizzz-num">{balance(taken, lost)}</td>
+      <td className="optizzz-num">{formatAmount(count)}</td>
+    </tr>
+  );
+  return (
+    <details className="optizzz-panel optizzz-disclosure" open>
+      <summary className="optizzz-panel-title">Floods probables sur 7 j</summary>
+      {!floods ? (
+        <p className="optizzz-note">Floods indisponibles (optizzz.fr ne répond pas).</p>
+      ) : floods.rows.length === 0 && floods.unknown.count === 0 && floods.inside.count === 0 ? (
+        <p className="optizzz-note">Aucun flood probable relevé sur 7 jours.</p>
+      ) : (
+        <div className="optizzz-scroll">
+          <table className="optizzz-table optizzz-table--dense">
+            <thead>
+              <tr>
+                <th>Alliance adverse</th>
+                <th className="optizzz-num">Pris</th>
+                <th className="optizzz-num">Perdu</th>
+                <th className="optizzz-num">Solde</th>
+                <th className="optizzz-num">Floods</th>
+              </tr>
+            </thead>
+            <tbody>
+              {floods.rows.map((other) =>
+                row(
+                  other.opponent,
+                  other.kind === "alliance" ? (
+                    <a href={`classementAlliance.php?alliance=${encodeURIComponent(other.opponent)}`}>
+                      {other.opponent}
+                    </a>
+                  ) : (
+                    other.opponent
+                  ),
+                  other.taken,
+                  other.lost,
+                  other.count,
+                ),
+              )}
+              {floods.unknown.count > 0 &&
+                row("unknown", "inconnu", floods.unknown.taken, floods.unknown.lost, floods.unknown.count, true)}
+              {floods.inside.count > 0 &&
+                row(
+                  "inside",
+                  "Dans l'alliance (chaîne de TDC)",
+                  floods.inside.amount,
+                  floods.inside.amount,
+                  floods.inside.count,
+                  true,
+                )}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="optizzz-note">
+        Calculé par optizzz.fr d'après l'export public de Fourmizzz, relevé chaque heure. Les floods sans alliance
+        adverse sûre comptent dans « inconnu ».
+      </p>
+    </details>
+  );
+}
+
 const alliancePart = (alliance: string | null) => (alliance ? `(${alliance})` : "(sans alliance)");
 
 export function AllianceAnalysis({ origin, tag, myTag, myPseudo, myField, show }: Props) {
   const [players, setPlayers] = useState<PlayersExport | null>(null);
   const [alliances, setAlliances] = useState<AlliancesExport | null>(null);
   const [attackSpeed, setAttackSpeed] = useState<number | null>(null);
+  /** Undefined while read; null when the site does not answer. */
+  const [floods, setFloods] = useState<AllianceFloods | null | undefined>(undefined);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -212,7 +290,8 @@ export function AllianceAnalysis({ origin, tag, myTag, myPseudo, myField, show }
         (levels) => setAttackSpeed(levels.attackSpeed),
         () => setAttackSpeed(null),
       );
-  }, [origin, show.bloc, show.faceOff]);
+    if (show.floods) void loadAllianceFloods(origin, tag).then(setFloods);
+  }, [origin, tag, show.bloc, show.faceOff, show.floods]);
 
   const bloc = useMemo(
     () => (alliances ? diplomaticBloc(tag, alliances.alliances, myTag) : null),
@@ -288,6 +367,7 @@ export function AllianceAnalysis({ origin, tag, myTag, myPseudo, myField, show }
           </p>
         </details>
       )}
+      {show.floods && floods !== undefined && <FloodsBox floods={floods} />}
       {show.colonies && colonies && (
         <details className="optizzz-panel optizzz-disclosure" open>
           <summary className="optizzz-panel-title">Colonies</summary>

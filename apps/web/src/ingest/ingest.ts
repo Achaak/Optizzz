@@ -1,5 +1,6 @@
 // One pass of the hourly cron over a server: the current state, the Journal and the nightly scores — see
 // docs/features/site-public.md.
+import { probableFloods } from "@optizzz/game/analysis/floods";
 import { versionDate } from "@optizzz/game/export-versions";
 import {
   allianceSchema,
@@ -166,6 +167,22 @@ const toAlliance = (row: AllianceRow): Alliance => ({
   diplomacy: diplomacySchema.parse(row.diplomacy),
 });
 
+/** Days the hourly moves and floods are kept. */
+const HOURLY_DAYS = 30;
+/** Two readings further apart than this: no probable flood is looked for between them. */
+const MAX_FLOOD_GAP_MS = 3 * 3_600_000;
+
+/** The players whose field moved between two readings: their new field and the move. */
+export function fieldMoves(before: readonly Player[], after: readonly Player[]) {
+  const was = new Map(before.map((player) => [player.id, player.field]));
+  return after.flatMap((player) => {
+    const field = was.get(player.id);
+    return field === undefined || field === player.field
+      ? []
+      : [{ playerId: player.id, field: player.field, delta: player.field - field }];
+  });
+}
+
 export interface PassReport {
   /** The current state was replaced by a newer export. */
   updated: boolean;
@@ -263,6 +280,37 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
               })),
             }),
           );
+        if (before) {
+          // The hour's moves of the field and its probable floods (docs/features/site-analyse.md).
+          const since = versionDate(before.version);
+          const at = versionDate(after.version);
+          await inChunks(fieldMoves(before.players, after.players), (chunk) =>
+            tx.playerHour.createMany({
+              data: chunk.map((move) => ({ server: server.id, since, at, ...move })),
+              skipDuplicates: true,
+            }),
+          );
+          const victimAlliance = new Map(before.players.map((player) => [player.id, player.alliance]));
+          // Over a longer gap (the cron missed passes) the sums mix too many moves to match anything.
+          const floods =
+            at.getTime() - since.getTime() <= MAX_FLOOD_GAP_MS ? probableFloods(before.players, after.players) : [];
+          await inChunks(floods, (chunk) =>
+            tx.probableFlood.createMany({
+              data: chunk.map((flood) => ({
+                server: server.id,
+                since,
+                at,
+                victimId: flood.victimId,
+                victimAlliance: victimAlliance.get(flood.victimId) ?? null,
+                amount: flood.amount,
+                attackers: flood.attackers,
+                candidates: flood.candidates,
+                alliance: flood.alliance,
+                sureness: flood.sureness,
+              })),
+            }),
+          );
+        }
         for (const kind of ["players", "alliances"] as const)
           await tx.exportRead.upsert({
             where: { server_kind: { server: server.id, kind } },
@@ -277,6 +325,11 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
     report.updated = true;
     report.changes = notes.length;
   }
+
+  // The hourly rows are kept 30 days: enough for 4 weeks of « Quand son TDC bouge ».
+  const kept = new Date(now.getTime() - HOURLY_DAYS * 24 * 3_600_000);
+  await db.playerHour.deleteMany({ where: { server: server.id, at: { lt: kept } } });
+  await db.probableFlood.deleteMany({ where: { server: server.id, at: { lt: kept } } });
 
   // The map's file follows the current state; written again when missing (a server read before the map existed).
   const map = await db.mapFile.findUnique({ where: { server: server.id }, select: { version: true } });

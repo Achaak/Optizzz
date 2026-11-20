@@ -6,7 +6,11 @@ import { readStock } from "@optizzz/game/pages/resources";
 import { readProfile } from "@optizzz/game/pages/scores";
 import type { Feature } from "../feature";
 import { isEnabled } from "../toggles";
-import { mountAnalysisRows, type ProfileAnalysis } from "./mount";
+import { ANALYSIS_BOX_STYLE, mountAnalysisBox, mountAnalysisRows, type ProfileAnalysis } from "./mount";
+import { loadPlayerAnalysis } from "@/data/site-analysis";
+import { periodRanks } from "@/features/history/series";
+import { serverById } from "@optizzz/game/servers";
+import { SITE_ORIGIN } from "@/utils/site";
 
 const samePseudo = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
@@ -24,7 +28,8 @@ export const playerAnalysis: Feature = {
     if (!profile || !me || samePseudo(profile.pseudo, me)) return;
     const showReach = isEnabled(toggles, "player-analysis", "reach");
     const showInactivity = isEnabled(toggles, "player-analysis", "inactivity");
-    if (!showReach && !showInactivity) return;
+    const showBox = isEnabled(toggles, "player-analysis", "panel");
+    if (!showReach && !showInactivity && !showBox) return;
 
     const players = (await loadPlayersExport(location.origin)).players;
     const player = players.find((candidate) => samePseudo(candidate.pseudo, profile.pseudo));
@@ -46,13 +51,32 @@ export const playerAnalysis: Feature = {
     }
     mountAnalysisRows(document, analysis);
 
-    if (showInactivity && player && !player.onHoliday && !player.isBanned) {
-      try {
-        analysis.inactivity = inactivityOf(await loadRecentNights(location.origin), player.id, profile.scores);
-        mountAnalysisRows(document, analysis);
-      } catch (error) {
-        console.warn("[Optizzz] player analysis: nightly exports unavailable", error);
-      }
+    if (!player) return;
+    const nights =
+      showInactivity || showBox
+        ? await loadRecentNights(location.origin).catch((error: unknown) => {
+            console.warn("[Optizzz] player analysis: nightly exports unavailable", error);
+            return null;
+          })
+        : null;
+    if (showInactivity && nights && !player.onHoliday && !player.isBanned) {
+      analysis.inactivity = inactivityOf(nights, player.id, profile.scores);
+      mountAnalysisRows(document, analysis);
+    }
+    const server = serverById(location.hostname.split(".")[0] ?? "");
+    if (showBox && server) {
+      const unavailable = new Set(
+        players.filter((other) => other.onHoliday || other.isBanned).map((other) => other.id),
+      );
+      const style = document.createElement("style");
+      style.textContent = ANALYSIS_BOX_STYLE;
+      document.head.append(style);
+      mountAnalysisBox(document, {
+        analysis: await loadPlayerAnalysis(location.origin, player.id),
+        rank: nights ? (periodRanks(nights, [player.id], unavailable).get(player.id) ?? null) : null,
+        siteHref: `${SITE_ORIGIN}/${server.id}/players/${String(player.id)}`,
+        now: new Date(),
+      });
     }
   },
 };

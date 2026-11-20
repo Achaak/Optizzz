@@ -178,14 +178,36 @@ const PLAYER_ORDER: Record<PlayerSort, Prisma.PlayerOrderByWithRelationInput> = 
   pseudo: { pseudo: "asc" },
 };
 
+/**
+ * The players whose scores have not changed for at least 3 nights (their nightly row opened 3 nights before the last
+ * one or earlier), neither on holiday nor banned: the probably inactive, but for those who only lost TDC meanwhile.
+ */
+async function probablyInactiveIds(server: string): Promise<number[]> {
+  const last = await db.serverDay.findFirst({ where: { server }, orderBy: { day: "desc" }, select: { day: true } });
+  if (!last) return [];
+  const cutoff = new Date(last.day.getTime() - 3 * 24 * 3_600_000);
+  const rows = await db.playerDay.findMany({
+    where: { server, until: null, day: { lte: cutoff } },
+    select: { playerId: true },
+  });
+  return rows.map((row) => row.playerId);
+}
+
 export async function listPlayers(
   server: string,
-  { q, alliance, sort, page }: { q: string; alliance: string; sort: PlayerSort; page: number },
+  {
+    q,
+    alliance,
+    sort,
+    page,
+    inactive = false,
+  }: { q: string; alliance: string; sort: PlayerSort; page: number; inactive?: boolean },
 ) {
   const where: Prisma.PlayerWhereInput = {
     server,
     ...(q && { pseudo: { contains: q, mode: "insensitive" } }),
     ...(alliance && { alliance: { equals: alliance, mode: "insensitive" } }),
+    ...(inactive && { id: { in: await probablyInactiveIds(server) }, onHoliday: false, isBanned: false }),
   };
   const [total, players] = await Promise.all([
     db.player.count({ where }),
@@ -528,3 +550,107 @@ export async function faceOffMembers(server: string, tag: string, other: string)
       }));
   return { ours: of(other), theirs: of(tag) };
 }
+
+/** Days of hourly moves the grid adds up: 4 weeks. */
+const GRID_DAYS = 28;
+/** Days of probable floods shown. */
+const FLOOD_DAYS = 30;
+
+/**
+ * A player's hourly analysis (docs/features/site-analyse.md): the moves of its field over 4 weeks, its probable floods
+ * over 30 days with the pseudos of the other side, and since when the server is read hourly.
+ */
+export async function playerHourly(server: string, id: number, now = new Date()) {
+  const gridSince = new Date(now.getTime() - GRID_DAYS * 24 * 3_600_000);
+  const floodSince = new Date(now.getTime() - FLOOD_DAYS * 24 * 3_600_000);
+  const [moves, first, floods] = await Promise.all([
+    db.playerHour.findMany({
+      where: { server, playerId: id, at: { gte: gridSince } },
+      select: { since: true, at: true, delta: true },
+    }),
+    db.playerHour.findFirst({ where: { server }, orderBy: { at: "asc" }, select: { at: true } }),
+    db.probableFlood.findMany({
+      where: { server, at: { gte: floodSince }, OR: [{ victimId: id }, { attackers: { has: id } }] },
+      orderBy: { at: "desc" },
+    }),
+  ]);
+  const others = [...new Set(floods.flatMap((flood) => [flood.victimId, ...flood.attackers, ...flood.candidates]))];
+  const players = await db.player.findMany({
+    where: { server, id: { in: others } },
+    select: { id: true, pseudo: true, alliance: true },
+  });
+  const read = first ? Math.min(GRID_DAYS, Math.ceil((now.getTime() - first.at.getTime()) / (24 * 3_600_000))) : 0;
+  return { moves, floods, players, days: read };
+}
+
+/**
+ * How a player stands against the server: how many can attack it and how many it can attack (50 % included, 300 %
+ * excluded), and the alliances with the most members either way.
+ */
+export async function playerReach(server: string, field: number) {
+  const rows = await db.$queryRaw<{ alliance: string | null; attackers: bigint; targets: bigint }[]>`
+    SELECT alliance,
+      count(*) FILTER (WHERE field <= 2 * ${field}::float8 AND field > ${field}::float8 / 3) AS attackers,
+      count(*) FILTER (WHERE field * 2 >= ${field}::float8 AND field < 3 * ${field}::float8) AS targets
+    FROM "Player"
+    WHERE server = ${server} AND NOT "onHoliday" AND NOT "isBanned" AND field <> ${field}::float8
+    GROUP BY alliance`;
+  const counted = rows.map((row) => ({
+    alliance: row.alliance,
+    attackers: Number(row.attackers),
+    targets: Number(row.targets),
+  }));
+  return {
+    attackers: counted.reduce((total, row) => total + row.attackers, 0),
+    targets: counted.reduce((total, row) => total + row.targets, 0),
+    alliances: counted
+      .filter((row) => row.alliance !== null && row.attackers + row.targets > 0)
+      .sort((a, b) => b.attackers - a.attackers || b.targets - a.targets)
+      .slice(0, 5),
+  };
+}
+
+/**
+ * The player's growth over the last 7 nights against the players of its size (half to twice its field then), still
+ * playing: neither on holiday, banned, nor flat all the week (the site's stand-in for the probably inactive).
+ */
+export async function playerPeerRank(server: string, id: number) {
+  const nights = await db.serverDay.findMany({ where: { server }, orderBy: { day: "desc" }, take: 8 });
+  const weekAgo = nights.at(7)?.day;
+  if (!weekAgo) return null;
+  const rows = await db.$queryRaw<{ peers: bigint; faster: bigint; own: number | null }[]>`
+    WITH past AS (
+      SELECT d."playerId" AS id, d.field, d."buildingScore", d."technologyScore" FROM "PlayerDay" d
+      WHERE d.server = ${server} AND d.day <= ${weekAgo}::date AND (d.until IS NULL OR d.until > ${weekAgo}::date)
+    ), growth AS (
+      SELECT past.id, past.field AS start, (p.field - past.field) / past.field AS rate,
+        p."onHoliday" OR p."isBanned"
+          OR (p.field = past.field AND p."buildingScore" = past."buildingScore"
+            AND p."technologyScore" = past."technologyScore") AS out
+      FROM past JOIN "Player" p ON p.server = ${server} AND p.id = past.id
+      WHERE past.field > 0
+    ), me AS (SELECT start, rate FROM growth WHERE id = ${id})
+    SELECT
+      (SELECT rate FROM me) AS own,
+      count(*) FILTER (WHERE g.id <> ${id} AND NOT g.out) AS peers,
+      count(*) FILTER (WHERE g.id <> ${id} AND NOT g.out AND g.rate < (SELECT rate FROM me)) AS faster
+    FROM growth g
+    WHERE g.start * 2 >= (SELECT start FROM me) AND g.start <= 2 * (SELECT start FROM me)`;
+  const row = rows[0];
+  if (row?.own == null || Number(row.peers) < 10) return null;
+  return { faster: Number(row.faster), peers: Number(row.peers) };
+}
+
+/** An alliance's probable floods over the last 7 days, as stored, for `floodsByAlliance`. */
+export const allianceFloodRows = (server: string, tag: string, now = new Date()) =>
+  db.probableFlood.findMany({
+    where: {
+      server,
+      at: { gte: new Date(now.getTime() - 7 * 24 * 3_600_000) },
+      OR: [
+        { victimAlliance: { equals: tag, mode: "insensitive" } },
+        { alliance: { equals: tag, mode: "insensitive" } },
+      ],
+    },
+    select: { victimAlliance: true, alliance: true, amount: true, sureness: true },
+  });

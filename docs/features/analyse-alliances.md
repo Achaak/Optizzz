@@ -65,4 +65,4 @@ Feature « Analyse des alliances » dans « Fonctionnalités », allumée par d�
 
 ## Ordre
 
-Lot 2 (fait le 2026-11-20) : Face-à-face, Bloc, Colonies, dans le jeu puis sur le site. Floods probables au lot 3, après `site-analyse.md`.
+Lot 2 (fait le 2026-11-20) : Face-à-face, Bloc, Colonies, dans le jeu puis sur le site. Lot 3 (fait le 2026-11-20) : Floods probables, sur la fiche du site et, lus sur `/api/[server]/alliances/[tag]/floods`, dans le jeu (option « Floods probables par alliance » ; la requête dit quelle page d'alliance est ouverte, comme le disent `PRIVACY.md` et la fiche du store).

@@ -89,4 +89,4 @@ Feature « Analyse des joueurs » dans « Fonctionnalités », allumée par déf
 
 ## Ordre
 
-Lot 1 (cache de l'extension, fait le 2026-11-20) : Portée, Inactif probable (profil, Cibles, Suivis), Rang relatif. Tant que l'encart « Analyse » n'existe pas, le rang relatif est une phrase sous « Sur la période » de l'encart « Progression », sur l'onglet TDC, et la ligne « Activité » n'apparaît que pour un inactif probable (« son TDC a monté hier à 21 h » attend les données horaires). Lot 3 (après `site-analyse.md`) : la plage calme et les floods dans l'encart.
+Lot 1 (fait le 2026-11-20) : Portée, Inactif probable (profil, Cibles, Suivis), Rang relatif. Lot 3 (fait le 2026-11-20) : l'encart « Analyse », avec la plage calme, les floods de la semaine et le rang relatif, qui quitte alors l'encart « Progression » (il reste en colonne dans la Progression des membres). La ligne « Activité » n'apparaît que pour un inactif probable. Option « Encart « Analyse » » : la requête au site dit quel profil est ouvert (son numéro) : écrit dans `PRIVACY.md` et la fiche du store le 2026-11-20 (« Une seconde : l'analyse horaire »), sans changer `data_collection_permissions`.

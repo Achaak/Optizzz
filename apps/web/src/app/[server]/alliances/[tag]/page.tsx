@@ -22,7 +22,10 @@ import { CopyLinkButton } from "~/components/tools/copy-link-button";
 import { buttonVariants } from "~/components/ui/button";
 import { serverOfPath } from "~/lib/game-server";
 import { ordinal, percentOf, trendText } from "~/lib/server-stats";
-import { allianceAnalysis, alliancePage, findAlliance } from "~/server/queries";
+import { allianceAnalysis, allianceFloodRows, alliancePage, findAlliance } from "~/server/queries";
+import { floodsByAlliance } from "@optizzz/game/analysis/alliance-floods";
+import type { FloodSureness } from "@optizzz/game/analysis/floods";
+import { AllianceFloodsPanel } from "~/components/alliance/floods-panel";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -58,10 +61,16 @@ export default async function AlliancePage({ params }: Props) {
   if (!alliance) notFound();
   // The export's own case for the tag: « /s5/alliances/abc » goes to « …/ABC ».
   if (alliance.tag !== tag) permanentRedirect(`/${server.id}/alliances/${encodeURIComponent(alliance.tag)}`);
-  const [{ members, days, journal, rank, ranks, weekAgo, masters, serverField }, analysis] = await Promise.all([
-    alliancePage(server.id, alliance.tag, alliance.totalField),
-    allianceAnalysis(server.id),
-  ]);
+  const [{ members, days, journal, rank, ranks, weekAgo, masters, serverField }, analysis, floodRows] =
+    await Promise.all([
+      alliancePage(server.id, alliance.tag, alliance.totalField),
+      allianceAnalysis(server.id),
+      allianceFloodRows(server.id, alliance.tag),
+    ]);
+  const floods = floodsByAlliance(
+    floodRows.map((row) => ({ ...row, sureness: row.sureness as FloodSureness })),
+    alliance.tag,
+  );
   // No « my alliance » on a public page: the bloc's ratio is the extension's.
   const bloc = diplomaticBloc(
     alliance.tag,
@@ -233,6 +242,7 @@ export default async function AlliancePage({ params }: Props) {
       <FaceOffPanel server={server.id} tag={alliance.tag} />
       {bloc && <BlocPanel server={server.id} bloc={bloc} />}
       <ColoniesPanel server={server.id} colonies={colonies} />
+      <AllianceFloodsPanel server={server.id} floods={floods} />
 
       <Panel
         flush

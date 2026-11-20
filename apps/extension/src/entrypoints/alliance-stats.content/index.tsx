@@ -151,8 +151,9 @@ async function mountAllianceAnalysis(ctx: ContentScriptContext, toggles: Toggles
     faceOff: isEnabled(toggles, "alliance-analysis", "face-off"),
     bloc: isEnabled(toggles, "alliance-analysis", "bloc"),
     colonies: isEnabled(toggles, "alliance-analysis", "colonies"),
+    floods: isEnabled(toggles, "alliance-analysis", "floods"),
   };
-  if (!show.faceOff && !show.bloc && !show.colonies) return;
+  if (!show.faceOff && !show.bloc && !show.colonies && !show.floods) return;
   const ui = await createShadowRootUi<Root>(ctx, {
     name: "optizzz-alliance-analysis",
     position: "inline",

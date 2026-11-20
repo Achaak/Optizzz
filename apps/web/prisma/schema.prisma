@@ -86,6 +86,44 @@ model PlayerDay {
   @@schema("public")
 }
 
+/// A move of a player's hunting field between two hourly exports (`since`, `at`): a row only when it moved. Kept 30
+/// days, for « Quand son TDC bouge » (docs/features/site-analyse.md).
+model PlayerHour {
+  server   String
+  playerId Int
+  at       DateTime
+  since    DateTime
+  field    Float
+  delta    Float
+
+  @@id([server, playerId, at])
+  @@index([server, at])
+  @@schema("public")
+}
+
+/// A loss of more than 1 % between two hourly exports, with who probably took it (`attackers`, or else `candidates`,
+/// by player id) and the alliances of the moment. Kept 30 days (docs/features/site-analyse.md).
+model ProbableFlood {
+  id             Int      @id @default(autoincrement())
+  server         String
+  since          DateTime
+  at             DateTime
+  victimId       Int
+  victimAlliance String?
+  amount         Float
+  attackers      Int[]
+  candidates     Int[]
+  /// The alliance the attackers, or else the candidates, share.
+  alliance       String?
+  /// sure, combination, candidates or unknown.
+  sureness       String
+
+  @@index([server, victimId, at])
+  @@index([server, at])
+  @@index([attackers], type: Gin)
+  @@schema("public")
+}
+
 /// A night stored for the curves: the first export of a Paris day, its players counted and their TDC summed.
 model ServerDay {
   server  String

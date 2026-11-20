@@ -111,6 +111,7 @@ export const featureCatalog = [
     options: [
       { id: "reach", label: "Portée, pour vous et votre alliance" },
       { id: "inactivity", label: "Inactif probable (profil, Cibles, Suivis)" },
+      { id: "panel", label: "Encart « Analyse » sur les profils (plage calme et floods, lus sur optizzz.fr)" },
     ],
   },
   {
@@ -122,6 +123,7 @@ export const featureCatalog = [
       { id: "face-off", label: "Face-à-face avec votre alliance" },
       { id: "bloc", label: "Bloc diplomatique" },
       { id: "colonies", label: "Colonies" },
+      { id: "floods", label: "Floods probables par alliance (lus sur optizzz.fr)" },
     ],
   },
   {

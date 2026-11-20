@@ -35,10 +35,12 @@ export default async function PlayersPage({ params, searchParams }: Props) {
   const alliance = textOf(query.alliance);
   const sort = choiceOf(query.tri, SORTS);
   const page = pageOf(query.page);
-  const { total, players } = await listPlayers(server.id, { q, alliance, sort, page });
+  const inactive = textOf(query.inactifs) === "1";
+  const { total, players } = await listPlayers(server.id, { q, alliance, sort, page, inactive });
   const path = `/${server.id}/players`;
-  const kept = { q, alliance, tri: sort === "field" ? "" : sort };
-  const sortHref = (choice: PlayerSort) => queryHref(path, { q, alliance, tri: choice === "field" ? "" : choice });
+  const kept = { q, alliance, tri: sort === "field" ? "" : sort, inactifs: inactive ? "1" : "" };
+  const sortHref = (choice: PlayerSort) =>
+    queryHref(path, { q, alliance, tri: choice === "field" ? "" : choice, inactifs: inactive ? "1" : "" });
   const head = (label: string, choice: PlayerSort, className?: string) => (
     <SortableHead label={label} sort={choice} current={sort} href={sortHref(choice)} className={className} />
   );
@@ -59,6 +61,10 @@ export default async function PlayersPage({ params, searchParams }: Props) {
           <FilterField label="Alliance">
             <Input name="alliance" defaultValue={alliance} placeholder="Tag" className="h-9 w-28" />
           </FilterField>
+          <label className="flex h-9 items-center gap-2 self-end text-sm">
+            <input type="checkbox" name="inactifs" value="1" defaultChecked={inactive} className="size-4" />
+            Inactifs probables
+          </label>
           {sort !== "field" && <input type="hidden" name="tri" value={sort} />}
         </FilterBar>
         {players.length > 0 ? (
