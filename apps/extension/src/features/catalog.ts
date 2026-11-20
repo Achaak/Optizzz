@@ -114,6 +114,17 @@ export const featureCatalog = [
     ],
   },
   {
+    id: "alliance-analysis",
+    label: "Analyse des alliances",
+    description:
+      "Sur la page d'une alliance : qui peut prendre qui entre elle et la vôtre, ses pactes et ceux de ses alliés, ses guerres, et les colonies qu'elle tient ou subit.",
+    options: [
+      { id: "face-off", label: "Face-à-face avec votre alliance" },
+      { id: "bloc", label: "Bloc diplomatique" },
+      { id: "colonies", label: "Colonies" },
+    ],
+  },
+  {
     id: "flood",
     label: "Plan de flood",
     description:

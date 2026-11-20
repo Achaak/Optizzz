@@ -1,0 +1,87 @@
+/* What the alliance analysis adds to the design system. See docs/features/analyse-alliances.md. */
+
+.alliance-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--optizzz-space-4);
+  margin-top: var(--optizzz-space-4);
+}
+
+.alliance-analysis caption {
+  text-align: left;
+  font-weight: bold;
+  padding: var(--optizzz-space-2) 0;
+}
+
+.bloc-graph {
+  margin: var(--optizzz-space-3) 0;
+}
+
+.bloc-graph svg {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+}
+
+.bloc-edge {
+  stroke: var(--optizzz-title);
+  stroke-width: 3;
+}
+
+.bloc-edge--ally {
+  stroke-width: 1.5;
+  stroke-opacity: 0.45;
+}
+
+/* Wars: dashed, a shape and not only a colour (ADR 0003). */
+.bloc-edge--war {
+  stroke: var(--optizzz-text-muted);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+}
+
+.bloc-node rect {
+  fill: var(--optizzz-surface);
+  stroke: var(--optizzz-title);
+  stroke-width: 2;
+}
+
+.bloc-node--center rect {
+  fill: var(--optizzz-title);
+}
+
+.bloc-node--center text {
+  fill: var(--optizzz-surface);
+}
+
+.bloc-node--ally rect {
+  stroke: var(--optizzz-border);
+  stroke-dasharray: 3 3;
+  stroke-width: 1;
+}
+
+.bloc-node--war rect {
+  stroke: var(--optizzz-text-muted);
+  stroke-dasharray: 7 6;
+}
+
+.bloc-node text {
+  fill: var(--optizzz-text);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.bloc-node .bloc-detail {
+  font-size: 10px;
+  font-weight: normal;
+}
+
+.bloc-node--center .bloc-detail {
+  fill: var(--optizzz-surface);
+}
+
+.colony-tree {
+  margin: 0;
+  padding-left: var(--optizzz-space-5);
+}

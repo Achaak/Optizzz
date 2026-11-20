@@ -9,7 +9,7 @@ Juger une autre alliance face à la sienne : qui peut prendre qui, avec qui elle
 ## Où
 
 - **Jeu** : sur la page d'une alliance (`classementAlliance.php?alliance=TAG`), sous l'encart « Progression » des Statistiques d'alliance, quatre encarts repliables : Face-à-face, Bloc diplomatique, Colonies, Floods probables. Face-à-face seulement sur une autre alliance que la mienne ; les trois autres sur toute alliance, la mienne comprise.
-- **Site** : la fiche alliance (`/[server]/alliances/[tag]`), mêmes sections. Face-à-face y a un champ « Face-à-face avec… » (tag), prérempli par l'alliance de mon Espace d'alliance quand je suis connecté.
+- **Site** : la fiche alliance (`/[server]/alliances/[tag]`), mêmes sections, après le tableau des membres. Face-à-face y a un champ « Face-à-face avec… » (tag), prérempli par l'alliance de mon Espace d'alliance sur ce serveur quand je suis connecté. Pour que la fiche reste statique (reconstruite chaque heure), le champ lit la route `/api/[server]/alliances/[tag]/face-off?with=TAG` (gardée 10 minutes) ; le rapport avec « votre alliance » du Bloc n'est que dans le jeu.
 - Données : dernier export (état courant de la base sur le site), TDC en direct de mon alliance dans le jeu (tableau Membres mémorisé, le mien dans l'en-tête).
 
 ## Face-à-face
@@ -26,6 +26,7 @@ Juger une autre alliance face à la sienne : qui peut prendre qui, avec qui elle
 - Pactes lus dans les deux sens, tags sans la casse, guerres contre soi-même ignorées (`../research/fourmizzz-api-exports.md`).
 - **TDC du bloc** = l'alliance et ses pactes directs : « Avec ses 3 pactes, ce bloc pèse 41,2 M de TDC, 3,4 fois votre alliance. » (comparaison seulement quand j'ai une alliance).
 - Dans le jeu : le graphe, la liste des pactes et guerres (tag, type de pacte, TDC, membres) et le total.
+- **Graphe** : `blocLayout`, partagé par le jeu et le site, dans une boîte de 640 × 420. Pactes directs sur la moitié haute d'un premier cercle, pactes des alliés sur un second cercle, répartis régulièrement dans l'ordre de l'allié d'où ils viennent (groupés près de lui, ils s'empilaient), guerres sur la moitié basse, sur deux rayons au-delà de 4. Au plus 8 alliances par cercle ; les autres ne sont que dans le tableau (« N autres alliances ne tiennent que dans le tableau »).
 
 ## Colonies
 
@@ -33,7 +34,8 @@ Juger une autre alliance face à la sienne : qui peut prendre qui, avec qui elle
   1. **Membres colonisés par l'extérieur** : membre, maître, alliance du maître.
   2. **Colonies tenues hors de l'alliance** : maître (membre), colonie, alliance de la colonie.
   3. **Colonisations entre membres** : le nombre, dépliable.
-- **Arbre** maître → colonie → colonie seulement quand une chaîne a plus d'un niveau.
+- Chaque liste montre 10 lignes, puis « Voir les N autres » (une alliance de S2 tient 950 colonies hors de l'alliance, relevé du 2026-11-20).
+- **Arbre** maître → colonie → colonie seulement quand une chaîne a plus d'un niveau. Sous le maître du haut, seules les colonies qui ont leurs propres colonies sont dessinées ; les autres sont comptées (« et 37 autres colonies directes »).
 - Sur la fiche joueur du site : son maître et ses colonies.
 
 ## Floods probables par alliance
@@ -49,16 +51,18 @@ Règle d'appariement : `site-analyse.md`.
 
 Feature « Analyse des alliances » dans « Fonctionnalités », allumée par défaut, options « Face-à-face », « Bloc diplomatique », « Colonies », « Floods probables ».
 
-## Fichiers prévus
+## Fichiers
 
-| Fichier                                           | Rôle                                           |
-| ------------------------------------------------- | ---------------------------------------------- |
-| `packages/game/src/analysis/face-off.ts` (+ test) | Portées croisées, TDC exposé, distance médiane |
-| `packages/game/src/analysis/bloc.ts` (+ test)     | Pactes sur deux cercles, guerres, TDC du bloc  |
-| `packages/game/src/analysis/colonies.ts` (+ test) | Les trois listes et l'arbre                    |
-| `apps/extension/src/features/alliance-analysis/`  | Encarts de la page d'alliance                  |
-| `apps/web/src/components/alliance/`               | Sections de la fiche alliance                  |
+| Fichier                                                                 | Rôle                                                       |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `packages/game/src/analysis/face-off.ts` (+ test)                       | Portées croisées, TDC exposé, distance médiane             |
+| `packages/game/src/analysis/bloc.ts` (+ test)                           | Pactes sur deux cercles, guerres, TDC du bloc, son graphe  |
+| `packages/game/src/analysis/colonies.ts` (+ test)                       | Les trois listes et les chaînes                            |
+| `apps/extension/src/features/alliance-analysis/`                        | Encarts de la page d'alliance, montés par `alliance-stats` |
+| `apps/web/src/components/alliance/`                                     | Sections de la fiche alliance                              |
+| `apps/web/src/app/api/[server]/alliances/[tag]/face-off/route.ts`       | Le face-à-face lu par le champ de la fiche                 |
+| `apps/web/src/server/queries.ts` (`allianceAnalysis`, `faceOffMembers`) | Alliances, colonies et membres lus dans la base            |
 
 ## Ordre
 
-Lot 2 : Face-à-face, Bloc, Colonies, dans le jeu puis sur le site. Floods probables au lot 3, après `site-analyse.md`.
+Lot 2 (fait le 2026-11-20) : Face-à-face, Bloc, Colonies, dans le jeu puis sur le site. Floods probables au lot 3, après `site-analyse.md`.

@@ -478,3 +478,53 @@ export async function lastDay(server: string): Promise<Date | null> {
   const last = await db.serverDay.findFirst({ where: { server }, orderBy: { day: "desc" }, select: { day: true } });
   return last?.day ?? null;
 }
+
+/**
+ * What the alliance page's analysis needs (docs/features/analyse-alliances.md): every alliance of the server for the
+ * diplomatic bloc, and every player taking part in a colony, with their masters, for the colonies.
+ */
+export async function allianceAnalysis(server: string) {
+  const [alliances, colonies] = await Promise.all([
+    db.alliance.findMany({ where: { server } }),
+    db.player.findMany({
+      where: { server, masterId: { not: null } },
+      select: { id: true, pseudo: true, alliance: true, masterId: true },
+    }),
+  ]);
+  const colonyIds = new Set(colonies.map((player) => player.id));
+  const masterIds = [...new Set(colonies.flatMap((player) => (player.masterId === null ? [] : [player.masterId])))];
+  const masters = await db.player.findMany({
+    where: { server, id: { in: masterIds.filter((id) => !colonyIds.has(id)) } },
+    select: { id: true, pseudo: true, alliance: true, masterId: true },
+  });
+  return {
+    alliances,
+    /** For `allianceColonies`: the colonies and their masters, as the export names them. */
+    colonyPlayers: [...colonies, ...masters].map(({ masterId, ...player }) => ({
+      ...player,
+      masterPlayerId: masterId,
+    })),
+  };
+}
+
+/** The two alliances' members, for their face-off: position, live field of the last reading, on holiday or banned. */
+export async function faceOffMembers(server: string, tag: string, other: string) {
+  const members = await db.player.findMany({
+    where: {
+      server,
+      OR: [{ alliance: { equals: tag, mode: "insensitive" } }, { alliance: { equals: other, mode: "insensitive" } }],
+    },
+    select: { pseudo: true, alliance: true, field: true, x: true, y: true, onHoliday: true, isBanned: true },
+  });
+  const of = (which: string) =>
+    members
+      .filter((member) => member.alliance?.toLowerCase() === which.toLowerCase())
+      .map(({ pseudo, field, x, y, onHoliday, isBanned }) => ({
+        pseudo,
+        field,
+        x,
+        y,
+        unavailable: onHoliday || isBanned,
+      }));
+  return { ours: of(other), theirs: of(tag) };
+}

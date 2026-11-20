@@ -1,3 +1,5 @@
+import { diplomaticBloc } from "@optizzz/game/analysis/bloc";
+import { allianceColonies } from "@optizzz/game/analysis/colonies";
 import { allianceSchema } from "@optizzz/game/exports";
 import { formatDecimal, formatNumber } from "@optizzz/game/format/number-format";
 import { dayMonth } from "@optizzz/game/format/time-format";
@@ -8,6 +10,9 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { ValueBars } from "~/components/bars";
 import { PlusIcon } from "~/components/icons";
 import { AllianceCrest } from "~/components/alliance-crest";
+import { BlocPanel } from "~/components/alliance/bloc-panel";
+import { ColoniesPanel } from "~/components/alliance/colonies-panel";
+import { FaceOffPanel } from "~/components/alliance/face-off-panel";
 import { JournalList } from "~/components/journal-list";
 import { MembersTable, type MemberRow } from "~/components/members-table";
 import { SmallLabel, PageHeader, Panel, PanelLink } from "~/components/panel";
@@ -17,7 +22,7 @@ import { CopyLinkButton } from "~/components/tools/copy-link-button";
 import { buttonVariants } from "~/components/ui/button";
 import { serverOfPath } from "~/lib/game-server";
 import { ordinal, percentOf, trendText } from "~/lib/server-stats";
-import { alliancePage, findAlliance } from "~/server/queries";
+import { allianceAnalysis, alliancePage, findAlliance } from "~/server/queries";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -53,11 +58,17 @@ export default async function AlliancePage({ params }: Props) {
   if (!alliance) notFound();
   // The export's own case for the tag: « /s5/alliances/abc » goes to « …/ABC ».
   if (alliance.tag !== tag) permanentRedirect(`/${server.id}/alliances/${encodeURIComponent(alliance.tag)}`);
-  const { members, days, journal, rank, ranks, weekAgo, masters, serverField } = await alliancePage(
-    server.id,
+  const [{ members, days, journal, rank, ranks, weekAgo, masters, serverField }, analysis] = await Promise.all([
+    alliancePage(server.id, alliance.tag, alliance.totalField),
+    allianceAnalysis(server.id),
+  ]);
+  // No « my alliance » on a public page: the bloc's ratio is the extension's.
+  const bloc = diplomaticBloc(
     alliance.tag,
-    alliance.totalField,
+    analysis.alliances.map((other) => ({ ...other, diplomacy: diplomacySchema.parse(other.diplomacy) })),
+    null,
   );
+  const colonies = allianceColonies(alliance.tag, analysis.colonyPlayers);
   const diplomacy = diplomacySchema.parse(alliance.diplomacy);
   const points = (pick: (day: (typeof days)[number]) => number) =>
     days.map((day) => ({ day: dayMonth(day.day), value: Math.round(pick(day)) }));
@@ -218,6 +229,10 @@ export default async function AlliancePage({ params }: Props) {
       </div>
 
       <MembersTable server={server.id} members={memberRows} />
+
+      <FaceOffPanel server={server.id} tag={alliance.tag} />
+      {bloc && <BlocPanel server={server.id} bloc={bloc} />}
+      <ColoniesPanel server={server.id} colonies={colonies} />
 
       <Panel
         flush
