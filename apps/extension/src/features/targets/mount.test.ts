@@ -147,6 +147,26 @@ describe("mountTargets", () => {
     expect(pseudos()).toEqual(["Petit", "Gros", "Moyen"]);
   });
 
+  it("marks the probable inactive, and sorts them first by the « État » header, the longest first", () => {
+    const active = player("Actif", { x: 1 });
+    const sleeper = player("Dormeur", { x: 2 });
+    const longSleeper = player("Endormi", { x: 3 });
+    const { rows, pseudos, header } = setup([active, sleeper, longSleeper], {
+      inactivity: new Map([
+        [sleeper.id, { days: 3, onlyLosses: false }],
+        [longSleeper.id, { days: 6, onlyLosses: true }],
+      ]),
+    });
+    const stateOf = (pseudo: string) =>
+      rows()
+        .find((cells) => cells[0] === pseudo)
+        ?.at(-2);
+    expect(stateOf("Actif")).toBe("libre ?");
+    expect(stateOf("Dormeur")).toBe("libre ? · inactif 3 j");
+    header("État");
+    expect(pseudos()).toEqual(["Endormi", "Dormeur", "Actif"]);
+  });
+
   it("shows the 50 nearest, then 50 more on demand", () => {
     const many = Array.from({ length: 120 }, (_, i) => player(`J${String(i)}`, { x: i }));
     const { rows, click, doc } = setup(many);

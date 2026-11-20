@@ -1,4 +1,5 @@
 // The rows of the « Suivis » view, from the list, the journal and the latest exports.
+import type { Inactivity } from "@optizzz/game/analysis/inactivity";
 import type { Alliance, Player } from "@optizzz/game/exports";
 import { watchKey, type WatchEntry, type WatchKey } from "@/data/watchlist";
 import { sameTag } from "@optizzz/game/diplomacy";
@@ -28,6 +29,8 @@ export interface PlayerRow extends Row {
   alliance: string | null;
   onHoliday: boolean;
   isBanned: boolean;
+  /** Probably inactive (« Analyse des joueurs »), null when not or unknown. */
+  inactivity: Inactivity | null;
   /** From my nest; null when I am not known. */
   distance: number | null;
   travelSeconds: number | null;
@@ -47,13 +50,15 @@ export interface RowsInput {
   /** The player logged in, for the distances. */
   me: string | null;
   attackSpeed: number | undefined;
+  /** The probable inactive, by player id, once the nightly exports are loaded. */
+  inactivity?: ReadonlyMap<number, Inactivity> | null;
 }
 
 /** New first, then by name. */
 const byInterest = <T extends Row & { name: string }>(a: T, b: T) =>
   Number(b.isNew) - Number(a.isNew) || a.name.localeCompare(b.name, "fr");
 
-export function buildRows({ entries, journal, players, alliances, me, attackSpeed }: RowsInput): {
+export function buildRows({ entries, journal, players, alliances, me, attackSpeed, inactivity }: RowsInput): {
   players: PlayerRow[];
   alliances: AllianceRow[];
 } {
@@ -81,6 +86,7 @@ export function buildRows({ entries, journal, players, alliances, me, attackSpee
         gone: !player,
         onHoliday: player?.onHoliday ?? false,
         isBanned: player?.isBanned ?? false,
+        inactivity: inactivity?.get(entry.id) ?? null,
         distance: squares,
         travelSeconds: squares === null || attackSpeed === undefined ? null : travelTime(squares, attackSpeed),
         changes,

@@ -1,6 +1,6 @@
 import { rolesTopDown } from "@/features/tdc-chain/role-styles";
 import { roleKey, roleLabel, rungPlaceArrow, rungPlaceText } from "@optizzz/game/tdc-chain/roles";
-import { formatDecimal } from "@optizzz/game/format/number-format";
+import { formatAmount, formatDecimal } from "@optizzz/game/format/number-format";
 import { formatDuration, formatEndTime } from "@optizzz/game/format/time-format";
 import type { MemberRole } from "./roles";
 import type { MemberTrip } from "./trips";
@@ -18,6 +18,7 @@ export const MEMBERS_COLUMNS_STYLE = `
 th.${COLUMN_CLASS} a { cursor: pointer; }
 #tabMembresAlliance .optizzz-members-trips { text-align: right; white-space: nowrap; }
 #tabMembresAlliance .optizzz-members-roles { text-align: left; }
+#tabMembresAlliance .optizzz-members-today, #tabMembresAlliance .optizzz-members-week { text-align: right; white-space: nowrap; }
 #tabMembresAlliance .optizzz-members-none { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
 #tabMembresAlliance tr.${ME_CLASS} > td { background-color: var(--optizzz-surface-tint); }
 #tabMembresAlliance tr.${ME_CLASS} > td:first-child { box-shadow: inset 3px 0 0 var(--optizzz-title); }
@@ -38,11 +39,20 @@ export interface MembersColumnsContext {
   trips?: { byPseudo: Map<string, MemberTrip> | null; missing?: string };
   /** The « Rôle » column: each member's chain role and its bubble, by lowercase nickname; absent when switched off. */
   roles?: Map<string, MemberRole>;
+  /** The « Aujourd'hui » and « 7 j » columns, by lowercase nickname; absent when switched off. */
+  evolution?: Map<string, MemberEvolution>;
+}
+
+/** A member's live field, and its field at the last midnight export and at the one a week before; null: unknown. */
+export interface MemberEvolution {
+  live: number;
+  midnight: number | null;
+  weekAgo: number | null;
 }
 
 interface Column {
   /** Class of its cells: `optizzz-members-<kind>`. */
-  kind: "trips" | "roles";
+  kind: "trips" | "roles" | "today" | "week";
   title: string;
   hint: string;
   /** Fills the cell of a member and gives its sort value; null when unknown, always last. */
@@ -116,6 +126,37 @@ function roleColumn(roles: Map<string, MemberRole>) {
   } satisfies Column;
 }
 
+/** « ▲ +100 (+10 %) »: an arrow beside the sign, the colour never alone (ADR 0003). */
+function evolutionText(from: number, to: number): string {
+  const delta = to - from;
+  const percent = from > 0 ? (delta / from) * 100 : 0;
+  const sign = delta > 0 ? "+" : delta < 0 ? "−" : "";
+  const arrow = delta > 0 ? "▲ " : delta < 0 ? "▼ " : "";
+  return `${arrow}${sign}${formatAmount(Math.abs(delta))} (${sign}${formatDecimal(Math.abs(percent))} %)`;
+}
+
+function evolutionColumn(evolution: Map<string, MemberEvolution>, which: "today" | "week") {
+  return {
+    kind: which,
+    title: which === "today" ? "Aujourd'hui" : "7 j",
+    hint:
+      which === "today"
+        ? "TDC en direct moins celui de l'export de minuit. Cliquez pour trier."
+        : "TDC en direct moins celui de l'export de minuit il y a 7 jours. Cliquez pour trier.",
+    fill: (cell, pseudo) => {
+      const member = evolution.get(pseudo.toLowerCase());
+      const from = which === "today" ? member?.midnight : member?.weekAgo;
+      if (!member || from === null || from === undefined) {
+        cell.textContent = "—";
+        cell.title = "Pas dans l'export de ce jour-là : nouveau membre ?";
+        return null;
+      }
+      cell.textContent = evolutionText(from, member.live);
+      return from > 0 ? (member.live - from) / from : 0;
+    },
+  } satisfies Column;
+}
+
 /** Orders the members' rows by the column's values, and shows the arrow on its header only. */
 function sortBy(table: HTMLTableElement, header: HTMLTableCellElement, position: number, descending: boolean) {
   // The header row has spanning cells: a column is found by its place among the Optizzz ones.
@@ -145,6 +186,9 @@ export function addMembersColumns(doc: Document, context: MembersColumnsContext,
   const columns: Column[] = [
     ...(context.trips ? [tripColumn(context, context.trips, now)] : []),
     ...(context.roles ? [roleColumn(context.roles)] : []),
+    ...(context.evolution
+      ? [evolutionColumn(context.evolution, "today"), evolutionColumn(context.evolution, "week")]
+      : []),
   ];
   for (const [position, column] of columns.entries()) {
     for (const row of table.rows) {

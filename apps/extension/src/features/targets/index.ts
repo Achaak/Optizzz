@@ -1,5 +1,7 @@
 import { storage } from "wxt/utils/storage";
 import { loadAlliancesExport, loadPlayersExport } from "@/data/exports";
+import { inactivityOf, loadRecentNights } from "@/data/nights";
+import type { Inactivity } from "@optizzz/game/analysis/inactivity";
 import { readLoggedInPseudo } from "@optizzz/game/pages/alliance";
 import type { Feature } from "../feature";
 import { loadGarrison } from "@/data/garrison";
@@ -96,7 +98,7 @@ export const targets: Feature = {
       return;
     }
     const [playersExport, alliancesExport] = exports;
-    mountTargets(
+    const box = mountTargets(
       document,
       {
         me: { pseudo, field: stock.huntingField },
@@ -113,5 +115,21 @@ export const targets: Feature = {
       },
       () => new Date(),
     );
+    if (box && isEnabled(toggles, "player-analysis", "inactivity")) {
+      loadRecentNights(location.origin).then(
+        (nights) => {
+          const inactivity = new Map<number, Inactivity>();
+          for (const player of playersExport.players) {
+            if (player.onHoliday || player.isBanned) continue;
+            const found = inactivityOf(nights, player.id);
+            if (found) inactivity.set(player.id, found);
+          }
+          box.setInactivity(inactivity);
+        },
+        (error: unknown) => {
+          console.warn("[Optizzz] targets: nightly exports unavailable, no inactivity", error);
+        },
+      );
+    }
   },
 };

@@ -93,6 +93,7 @@ export const featureCatalog = [
     options: [
       { id: "trips", label: "Trajet" },
       { id: "roles", label: "Rôle dans la chaîne (si « Chaîne de TDC » est activée)" },
+      { id: "evolution", label: "Évolution du TDC : aujourd'hui et sur 7 jours" },
     ],
   },
   {
@@ -101,6 +102,16 @@ export const featureCatalog = [
     description:
       "Sur le profil d'un joueur, une ligne « Production max » : ce que son TDC récolte par jour avec toutes les ouvrières qu'il peut employer, taxe de colonie déduite s'il est soumis.",
     options: [],
+  },
+  {
+    id: "player-analysis",
+    label: "Analyse des joueurs",
+    description:
+      "Sur le profil d'un joueur : qui peut attaquer qui, entre vous et avec votre alliance, et s'il est probablement inactif. Aussi dans les Cibles à portée et les Suivis.",
+    options: [
+      { id: "reach", label: "Portée, pour vous et votre alliance" },
+      { id: "inactivity", label: "Inactif probable (profil, Cibles, Suivis)" },
+    ],
   },
   {
     id: "flood",

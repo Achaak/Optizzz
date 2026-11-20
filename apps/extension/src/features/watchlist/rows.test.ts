@@ -66,6 +66,19 @@ describe("buildRows", () => {
     expect(rows.players.find((row) => row.pseudo === "Banni")?.changes).toEqual([banned]);
   });
 
+  it("gives a player's probable inactivity when it is known", () => {
+    const rows = buildRows({
+      ...base,
+      players: [player(1, "Dormeur"), player(2, "Actif")],
+      entries: [watched(1, "Dormeur"), watched(2, "Actif")],
+      inactivity: new Map([[1, { days: 4, onlyLosses: false }]]),
+    });
+    expect(rows.players.map((row) => [row.pseudo, row.inactivity])).toEqual([
+      ["Actif", null],
+      ["Dormeur", { days: 4, onlyLosses: false }],
+    ]);
+  });
+
   it("counts an alliance's members from the players export", () => {
     const rows = buildRows({
       ...base,

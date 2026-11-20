@@ -7,7 +7,16 @@ import { Controls, LoadingNote } from "@/utils/history-chart/controls";
 import { METRICS } from "./metrics";
 import { formatGain, formatPercent } from "@/utils/history-chart/format";
 import { HistoryChart } from "@/utils/history-chart/HistoryChart";
-import { averageSeries, periodProgress, playerSeries, type Progress } from "./series";
+import {
+  averageSeries,
+  periodProgress,
+  periodRanks,
+  playerSeries,
+  rankPercent,
+  rankText,
+  type Progress,
+} from "./series";
+import type { RelativeRank } from "@optizzz/game/analysis/peers";
 import { readHistorySettings, writeHistorySettings } from "./settings";
 import { useHistory } from "./useHistory";
 import { useStoredSettings } from "@/utils/useStoredSettings";
@@ -23,16 +32,24 @@ interface Props {
   allianceView: boolean;
 }
 
-type SortKey = "pseudo" | "first" | "last" | "gain" | "percent";
+type SortKey = "pseudo" | "first" | "last" | "gain" | "percent" | "rank";
 
 interface Row {
   id: number;
   pseudo: string;
   progress: Progress | null;
+  /** Among the players of its size, on the TDC only. */
+  rank: RelativeRank | null;
 }
 
 const sortValue = (row: Row, key: SortKey): number | string =>
-  key === "pseudo" ? row.pseudo.toLowerCase() : (row.progress?.[key] ?? -Infinity);
+  key === "pseudo"
+    ? row.pseudo.toLowerCase()
+    : key === "rank"
+      ? row.rank
+        ? row.rank.faster / row.rank.peers
+        : -Infinity
+      : (row.progress?.[key] ?? -Infinity);
 
 export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, allianceView }: Props) {
   const host = new URL(origin).host;
@@ -80,14 +97,32 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, 
     return [...players, { name: "Moyenne de l'alliance", points: average, dashed: true }];
   }, [selected, members, seriesOf, me?.id, settings?.showAverage, snapshots, memberIds, metric, live]);
 
+  // The rank among the players of its size: on the TDC only, those on holiday or banned left out.
+  const ranks = useMemo(() => {
+    if (metric !== "field" || !playersExport) return null;
+    const unavailable = new Set(
+      playersExport.players.filter((player) => player.onHoliday || player.isBanned).map((player) => player.id),
+    );
+    return periodRanks(
+      snapshots,
+      members.map((m) => m.id),
+      unavailable,
+    );
+  }, [metric, playersExport, snapshots, members]);
+
   const rows = useMemo<Row[]>(() => {
-    const unsorted = members.map((m) => ({ id: m.id, pseudo: m.pseudo, progress: periodProgress(seriesOf(m.id)) }));
+    const unsorted = members.map((m) => ({
+      id: m.id,
+      pseudo: m.pseudo,
+      progress: periodProgress(seriesOf(m.id)),
+      rank: ranks?.get(m.id) ?? null,
+    }));
     const direction = sort.descending ? -1 : 1;
     return unsorted.sort((a, b) => {
       const [x, y] = [sortValue(a, sort.key), sortValue(b, sort.key)];
       return x < y ? -direction : x > y ? direction : 0;
     });
-  }, [members, seriesOf, sort]);
+  }, [members, seriesOf, sort, ranks]);
 
   const toggle = (id: number) =>
     updateSettings((current) => ({
@@ -161,6 +196,7 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, 
             {sortHeader("last", metric === "trophy" ? "Dernier export" : "Maintenant")}
             {sortHeader("gain", "Gain")}
             {sortHeader("percent", "%")}
+            {ranks && sortHeader("rank", "Rang parmi sa taille")}
           </tr>
         </thead>
         <tbody>
@@ -183,6 +219,11 @@ export function AllianceHistory({ origin, loggedInPseudo, liveScores, liveTime, 
                 {row.progress ? formatGain(row.progress.gain) : "—"}
               </td>
               <td className="optizzz-num">{row.progress ? formatPercent(row.progress.percent) : "—"}</td>
+              {ranks && (
+                <td className="optizzz-num" title={row.rank ? rankText(row.rank) : "Moins de 10 joueurs de sa taille."}>
+                  {row.rank ? rankPercent(row.rank) : "—"}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { versionDate } from "@optizzz/game/export-versions";
 import { loadAlliancesExport, loadPlayersExport, type AlliancesExport, type PlayersExport } from "@/data/exports";
 import { loadStoredLevels } from "@/data/levels";
+import { inactivityOf, loadRecentNights } from "@/data/nights";
+import type { Inactivity } from "@optizzz/game/analysis/inactivity";
+import { isEnabled, loadToggles } from "@/features/toggles";
 import {
   addToWatchlist,
   loadWatchlist,
@@ -100,6 +103,7 @@ export function Watchlist({ origin }: Props) {
   const [me, setMe] = useState<string | null>(null);
   const [attackSpeed, setAttackSpeed] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  const [inactivity, setInactivity] = useState<ReadonlyMap<number, Inactivity> | null>(null);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<{ text: string; danger: boolean; undo?: () => void } | null>(null);
   const { journal, lastReading } = useReadings(host);
@@ -124,6 +128,31 @@ export function Watchlist({ origin }: Props) {
     });
   }, [origin, host]);
 
+  // The probable inactive among the watched players, from the nightly exports (« Analyse des joueurs »).
+  const watchedIds = useMemo(
+    () => (entries ?? []).flatMap((entry) => (entry.kind === "player" ? [entry.id] : [])).join(","),
+    [entries],
+  );
+  useEffect(() => {
+    if (!watchedIds) return;
+    const run = { cancelled: false };
+    void (async () => {
+      if (!isEnabled(await loadToggles(), "player-analysis", "inactivity")) return;
+      const nights = await loadRecentNights(origin);
+      const found = new Map<number, Inactivity>();
+      for (const id of watchedIds.split(",").map(Number)) {
+        const inactive = inactivityOf(nights, id);
+        if (inactive) found.set(id, inactive);
+      }
+      if (!run.cancelled) setInactivity(found);
+    })().catch((e: unknown) => {
+      console.warn("[Optizzz] watch list: nightly exports unavailable, no inactivity", e);
+    });
+    return () => {
+      run.cancelled = true;
+    };
+  }, [origin, watchedIds]);
+
   const rows = useMemo(
     () =>
       entries && playersExport
@@ -134,9 +163,10 @@ export function Watchlist({ origin }: Props) {
             alliances: alliancesExport?.alliances ?? null,
             me,
             attackSpeed,
+            inactivity,
           })
         : null,
-    [entries, journal, playersExport, alliancesExport, me, attackSpeed],
+    [entries, journal, playersExport, alliancesExport, me, attackSpeed, inactivity],
   );
 
   /** Pseudos and tags starting with what is typed: the whole server would be 20 000 options on S2. */
@@ -303,6 +333,15 @@ export function Watchlist({ origin }: Props) {
                           {row.gone && <span className="optizzz-text-danger"> · n'existe plus</span>}
                           {row.isBanned && <span className="optizzz-text-danger"> · compte banni</span>}
                           {row.onHoliday && <span className="optizzz-muted"> · en vacances</span>}
+                          {row.inactivity && !row.onHoliday && !row.isBanned && (
+                            <span
+                              className="optizzz-muted"
+                              title={`Inactif probable : rien n'a monté depuis ${formatAmount(row.inactivity.days)} nuits.`}
+                            >
+                              {" "}
+                              · inactif {formatAmount(row.inactivity.days)} j
+                            </span>
+                          )}
                         </td>
                         <td>{row.alliance ?? <span className="optizzz-muted">—</span>}</td>
                         <td className="optizzz-num">{row.field === null ? "—" : <Amount value={row.field} />}</td>

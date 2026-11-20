@@ -1,3 +1,4 @@
+import type { Inactivity } from "@optizzz/game/analysis/inactivity";
 import type { Army } from "@optizzz/game/army/units";
 import { planAttacks } from "@optizzz/game/flood";
 import { afterOnWay, type OnWay } from "@/data/on-way";
@@ -33,6 +34,8 @@ export interface TargetsContext extends TargetsInput {
   protectedMe?: boolean;
   /** The members' floods on their way, from the Envois: « déjà visée par Pseudo, arrivée 18 h 12 ». */
   allianceFloods?: readonly FloodItem[] | null;
+  /** The probable inactive, by player id (« Analyse des joueurs »): « inactif 5 j » in the state. */
+  inactivity?: ReadonlyMap<number, Inactivity> | null;
 }
 
 export interface FloodSettings {
@@ -49,7 +52,7 @@ export interface FloodSettings {
 
 const PAGE_SIZE = 50;
 
-type SortKey = "distance" | "field" | "flood";
+type SortKey = "distance" | "field" | "flood" | "inactive";
 
 const COLUMNS: { title: string; sort?: SortKey; flood?: boolean }[] = [
   { title: "Pseudo" },
@@ -62,7 +65,7 @@ const COLUMNS: { title: string; sort?: SortKey; flood?: boolean }[] = [
   // The trip grows with the distance: same order.
   { title: "Trajet", sort: "distance" },
   { title: "Arrivée" },
-  { title: "État" },
+  { title: "État", sort: "inactive" },
   { title: "" },
 ];
 
@@ -197,10 +200,12 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     }
     return floods.get(target.id) ?? null;
   };
+  const inactiveDays = (target: Target) => context.inactivity?.get(target.id)?.days ?? 0;
   const sorts: Record<SortKey, (a: Target, b: Target) => number> = {
     distance: (a, b) => a.distance - b.distance,
     field: (a, b) => b.field - a.field,
     flood: (a, b) => (floodOf(b) ?? -1) - (floodOf(a) ?? -1),
+    inactive: (a, b) => inactiveDays(b) - inactiveDays(a) || a.distance - b.distance,
   };
 
   const sortHeaders: { th: HTMLTableCellElement; key: SortKey }[] = [];
@@ -283,10 +288,22 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
     const aimed = context.allianceFloods
       ? aimedAt(target.pseudo, context.me.pseudo, now, context.allianceFloods)
       : null;
-    const state = cell(row, [stateText(target), aimed].filter(Boolean).join(" · "));
+    const inactivity = context.inactivity?.get(target.id);
+    const inactive = inactivity ? `inactif ${formatAmount(inactivity.days)} j` : null;
+    const state = cell(row, [stateText(target), inactive, aimed].filter(Boolean).join(" · "));
     state.className = "optizzz-targets-state";
     if (target.state === "free" && !target.stateLive) {
       state.title = "D'après l'export : pas dans le tableau du jeu, sa protection débutant est inconnue.";
+    }
+    if (inactivity) {
+      state.title = [
+        state.title,
+        `Inactif probable : rien n'a monté depuis ${formatAmount(inactivity.days)} nuits${
+          inactivity.onlyLosses ? ", son TDC a seulement baissé" : ""
+        }.`,
+      ]
+        .filter(Boolean)
+        .join("\n");
     }
 
     const action = cell(row);
@@ -335,4 +352,11 @@ export function mountTargets(doc: Document, context: TargetsContext, clock: () =
   box.append(summary, protectedMe, note, filters, empty, table);
   anchor.before(box);
   render();
+  return {
+    /** The probable inactive, once the nightly exports are loaded: the box is shown before. */
+    setInactivity(inactivity: ReadonlyMap<number, Inactivity>) {
+      context.inactivity = inactivity;
+      render();
+    },
+  };
 }

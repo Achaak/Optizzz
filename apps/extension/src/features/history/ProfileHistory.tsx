@@ -6,7 +6,7 @@ import { METRICS } from "./metrics";
 import { formatGain, formatPercent } from "@/utils/history-chart/format";
 import { HistoryChart } from "@/utils/history-chart/HistoryChart";
 import { HISTORY_LINK } from "./menu";
-import { periodProgress, playerSeries } from "./series";
+import { periodProgress, periodRanks, playerSeries, rankText } from "./series";
 import { readHistorySettings, writeHistorySettings } from "./settings";
 import { useHistory } from "./useHistory";
 import { useStoredSettings } from "@/utils/useStoredSettings";
@@ -34,6 +34,14 @@ export function ProfileHistory({ origin, loggedInPseudo, profile, liveTime, alli
     [player, snapshots, metric, liveTime, profile.scores],
   );
   const progress = periodProgress(points);
+  // The rank among the players of its size: on the TDC only, those on holiday or banned left out.
+  const rank = useMemo(() => {
+    if (metric !== "field" || !player || !playersExport) return null;
+    const unavailable = new Set(
+      playersExport.players.filter((other) => other.onHoliday || other.isBanned).map((other) => other.id),
+    );
+    return periodRanks(snapshots, [player.id], unavailable).get(player.id) ?? null;
+  }, [metric, player, playersExport, snapshots]);
   const moves = useMemo(
     () =>
       player
@@ -91,6 +99,7 @@ export function ProfileHistory({ origin, loggedInPseudo, profile, liveTime, alli
           </>
         )}
       </p>
+      {rank && <p className="summary">{rankText(rank)}</p>}
       {snapshots.length > 0 &&
         (moves.length > 0 ? (
           <>

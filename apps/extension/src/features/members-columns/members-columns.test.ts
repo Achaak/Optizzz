@@ -108,6 +108,42 @@ describe("addMembersColumns", () => {
     expect(header(doc)?.classList.contains("reverseSort")).toBe(true);
   });
 
+  it("adds « Aujourd'hui » and « 7 j »: the live field against midnight and a week ago, « — » when unknown", () => {
+    const doc = membersPage();
+    addMembersColumns(
+      doc,
+      {
+        myPseudo: "Me",
+        evolution: new Map([
+          ["alpha", { live: 1100, midnight: 1000, weekAgo: 1250 }],
+          ["me", { live: 500, midnight: 500, weekAgo: null }],
+        ]),
+      },
+      now,
+    );
+    expect(column(doc, 0).slice(0, 4)).toEqual(["Aujourd'hui", "▲ +100 (+10 %)", "0 (0 %)", "—"]);
+    expect(column(doc, 1).slice(0, 4)).toEqual(["7 j", "▼ −150 (−12 %)", "—", "—"]);
+  });
+
+  it("sorts « 7 j » from the biggest fall up, then the other way, the unknown last", () => {
+    const doc = membersPage();
+    addMembersColumns(
+      doc,
+      {
+        myPseudo: "Me",
+        evolution: new Map([
+          ["alpha", { live: 1100, midnight: 1000, weekAgo: 1000 }],
+          ["me", { live: 500, midnight: 500, weekAgo: 1000 }],
+        ]),
+      },
+      now,
+    );
+    clickHeader(doc, 1);
+    expect(pseudos(doc).slice(0, 2)).toEqual(["Me", "Alpha"]);
+    clickHeader(doc, 1);
+    expect(pseudos(doc).slice(0, 2)).toEqual(["Alpha", "Me"]);
+  });
+
   it("adds a « Rôle » column with the role's colour, sorted from the granaries down", () => {
     const doc = membersPage();
     const roles = rolesOfMembers(players, "Me", new Map(), {

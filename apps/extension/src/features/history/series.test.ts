@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Snapshot } from "./api";
-import { averageSeries, periodProgress, playerSeries } from "./series";
+import { averageSeries, periodProgress, periodRanks, playerSeries, rankText } from "./series";
 
 const scores = (field: number) => ({ field, building: 30, technology: 15, trophy: 0 });
 
@@ -73,5 +73,39 @@ describe("averageSeries", () => {
       { time: Date.parse("2026-10-07T22:00:00Z"), value: 115, live: false },
       { time: now.getTime(), value: 150, live: true },
     ]);
+  });
+});
+
+describe("periodRanks", () => {
+  /** Four nights where each player goes linearly from `start` to `end`. */
+  const nights = (players: readonly { id: number; start: number; end: number }[]): Snapshot[] =>
+    [0, 1, 2, 3].map((night) => ({
+      version: `2026101${String(night)}2200`,
+      players: new Map(
+        players.map(({ id, start, end }) => [id, scores(Math.round(start + ((end - start) * night) / 3))]),
+      ),
+      alliances: new Map(),
+    }));
+
+  it("ranks each member against the players of its size who still play, over the period", () => {
+    const history = nights([
+      // +10 %.
+      { id: 1, start: 1000, end: 1100 },
+      // 12 peers from +0,5 % to +11,5 %: it beats the ten up to +9,5 %.
+      ...Array.from({ length: 12 }, (_, i) => ({ id: i + 2, start: 1000, end: 1005 + i * 10 })),
+      // Nothing moved for 3 nights: probably inactive, left out.
+      { id: 50, start: 1000, end: 1000 },
+      // On holiday or banned in the last export: left out.
+      { id: 51, start: 1000, end: 2000 },
+    ]);
+    expect(periodRanks(history, [1], new Set([51])).get(1)).toEqual({ faster: 10, peers: 12 });
+  });
+});
+
+describe("rankText", () => {
+  it("says how many players of its size it grew faster than, in %", () => {
+    expect(rankText({ faster: 171, peers: 214 })).toBe(
+      "Progresse plus vite que 80 % des 214 joueurs de sa taille sur la période.",
+    );
   });
 });

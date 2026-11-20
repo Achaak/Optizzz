@@ -22,6 +22,7 @@ import { layingPlanner } from "./laying-planner";
 import { membersColumns } from "./members-columns";
 import { probes } from "./probes";
 import { profileProduction } from "./profile-production";
+import { playerAnalysis } from "./player-analysis";
 import { aphidsAdviceFeature, layingBoostAdvice, researchAdviceFeature, speedUpAdvice } from "./research-advice";
 import { resourceForecast } from "./resource-forecast";
 import { safeReload } from "./safe-reload";
@@ -65,6 +66,8 @@ export const features: Feature[] = [
   targets,
   membersColumns,
   profileProduction,
+  // After the production rows: its rows go under them.
+  playerAnalysis,
   floodPlanner,
   researchAdviceFeature,
   speedUpAdvice,

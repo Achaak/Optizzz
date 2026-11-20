@@ -74,16 +74,19 @@ La grille entière n'est que sur le site.
 
 Feature « Analyse des joueurs » dans « Fonctionnalités », allumée par défaut, options « Portée », « Inactif probable » (profil, Cibles, Suivis), « Encart Analyse ».
 
-## Fichiers prévus
+## Fichiers
 
-| Fichier                                             | Rôle                                            |
-| --------------------------------------------------- | ----------------------------------------------- |
-| `packages/game/src/analysis/inactivity.ts` (+ test) | Inactif probable d'après une suite de nuits     |
-| `packages/game/src/analysis/peers.ts` (+ test)      | Joueurs de sa taille, rang relatif              |
-| `packages/game/src/analysis/reach.ts` (+ test)      | Portée dans les deux sens, membres à portée     |
-| `apps/extension/src/data/site-analysis.ts` (+ test) | Lecture de la route publique du site, zod       |
-| `apps/extension/src/features/player-analysis/`      | Lignes d'« Informations » et encart « Analyse » |
+| Fichier                                                         | Rôle                                                                  |
+| --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `packages/game/src/analysis/reach.ts` (+ test)                  | Portée dans les deux sens, membres à portée, attaquant le plus proche |
+| `packages/game/src/analysis/inactivity.ts` (+ test)             | Inactif probable d'après une suite de nuits                           |
+| `packages/game/src/analysis/peers.ts` (+ test)                  | Joueurs de sa taille, rang relatif                                    |
+| `apps/extension/src/data/nights.ts`                             | Les 8 dernières nuits (cache de l'Historique), inactivité d'un joueur |
+| `apps/extension/src/features/player-analysis/mount.ts` (+ test) | Lignes « Portée », « Votre alliance », « Activité » sous « Etat »     |
+| `apps/extension/src/features/player-analysis/index.ts`          | Export, TDC en direct, nuits                                          |
+| `apps/extension/src/features/history/series.ts` (+ test)        | `periodRanks`, `rankText` : rang relatif dans la Progression          |
+| `apps/extension/src/data/site-analysis.ts` (lot 3)              | Lecture de la route publique du site, zod                             |
 
 ## Ordre
 
-Lot 1 (cache de l'extension) : Portée, Inactif probable, Rang relatif. Lot 3 (après `site-analyse.md`) : la plage calme et les floods dans l'encart.
+Lot 1 (cache de l'extension, fait le 2026-11-20) : Portée, Inactif probable (profil, Cibles, Suivis), Rang relatif. Tant que l'encart « Analyse » n'existe pas, le rang relatif est une phrase sous « Sur la période » de l'encart « Progression », sur l'onglet TDC, et la ligne « Activité » n'apparaît que pour un inactif probable (« son TDC a monté hier à 21 h » attend les données horaires). Lot 3 (après `site-analyse.md`) : la plage calme et les floods dans l'encart.
