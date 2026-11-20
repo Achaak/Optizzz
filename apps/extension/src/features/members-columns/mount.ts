@@ -18,6 +18,10 @@ export const MEMBERS_COLUMNS_STYLE = `
 th.${COLUMN_CLASS} a { cursor: pointer; }
 #tabMembresAlliance .optizzz-members-trips { text-align: right; white-space: nowrap; }
 #tabMembresAlliance .optizzz-members-roles { text-align: left; }
+#tabMembresAlliance .optizzz-hidden-column { display: none; }
+.optizzz-columns-picker { margin: 0 0 var(--optizzz-space-3); font-size: var(--optizzz-font-size-small); text-align: left; }
+.optizzz-columns-picker summary { cursor: pointer; font-weight: 600; }
+.optizzz-columns-picker label { display: inline-flex; align-items: center; gap: var(--optizzz-space-2); margin: var(--optizzz-space-2) var(--optizzz-space-4) 0 0; cursor: pointer; }
 #tabMembresAlliance .optizzz-members-today, #tabMembresAlliance .optizzz-members-week { text-align: right; white-space: nowrap; }
 #tabMembresAlliance .optizzz-members-none { color: var(--optizzz-text-muted); font-size: var(--optizzz-font-size-small); }
 #tabMembresAlliance tr.${ME_CLASS} > td { background-color: var(--optizzz-surface-tint); }
@@ -127,12 +131,16 @@ function roleColumn(roles: Map<string, MemberRole>) {
 }
 
 /** « ▲ +100 (+10 %) »: an arrow beside the sign, the colour never alone (ADR 0003). */
-function evolutionText(from: number, to: number): string {
+function evolutionText(from: number, to: number, since: string): { text: string; title: string } {
   const delta = to - from;
   const percent = from > 0 ? (delta / from) * 100 : 0;
   const sign = delta > 0 ? "+" : delta < 0 ? "−" : "";
   const arrow = delta > 0 ? "▲ " : delta < 0 ? "▼ " : "";
-  return `${arrow}${sign}${formatAmount(Math.abs(delta))} (${sign}${formatDecimal(Math.abs(percent))} %)`;
+  return {
+    // The percentage in the tooltip: on the line, the two columns pushed the table out of the game's frame.
+    text: `${arrow}${sign}${formatAmount(Math.abs(delta))}`,
+    title: `${sign}${formatDecimal(Math.abs(percent))} % ${since} (${formatAmount(from)} → ${formatAmount(to)})`,
+  };
 }
 
 function evolutionColumn(evolution: Map<string, MemberEvolution>, which: "today" | "week") {
@@ -151,7 +159,13 @@ function evolutionColumn(evolution: Map<string, MemberEvolution>, which: "today"
         cell.title = "Pas dans l'export de ce jour-là : nouveau membre ?";
         return null;
       }
-      cell.textContent = evolutionText(from, member.live);
+      const { text, title } = evolutionText(
+        from,
+        member.live,
+        which === "today" ? "depuis l'export de minuit" : "depuis l'export de minuit il y a 7 jours",
+      );
+      cell.textContent = text;
+      cell.title = title;
       return from > 0 ? (member.live - from) / from : 0;
     },
   } satisfies Column;
@@ -222,6 +236,101 @@ export function addMembersColumns(doc: Document, context: MembersColumnsContext,
     },
     { capture: true },
   );
+}
+
+/** Marks the cells of a hidden column, the game's or Optizzz's. */
+export const HIDDEN_CLASS = "optizzz-hidden-column";
+
+/** A column that can be hidden: the game's, by its header, or one Optizzz adds. */
+export type HideableColumn = "grade" | "technology" | "building" | "state" | Column["kind"];
+
+const GAME_COLUMNS: { id: HideableColumn; header: string; label: string }[] = [
+  { id: "grade", header: "rang", label: "Rang" },
+  { id: "technology", header: "technologie", label: "Technologie" },
+  { id: "building", header: "fourmiliere", label: "Fourmilière" },
+  { id: "state", header: "etat", label: "État" },
+];
+
+const OPTIZZZ_COLUMNS: { id: Column["kind"]; label: string }[] = [
+  { id: "trips", label: "Trajet" },
+  { id: "roles", label: "Rôle" },
+  { id: "today", label: "Aujourd'hui" },
+  { id: "week", label: "7 j" },
+];
+
+const plainText = (text: string) =>
+  text
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+/** The game's header cells by column, with the body cells under each: its header merges some of them (colspan). */
+function gameColumns(table: HTMLTableElement): Map<HideableColumn, { header: HTMLTableCellElement; cells: number[] }> {
+  const columns = new Map<HideableColumn, { header: HTMLTableCellElement; cells: number[] }>();
+  const headerRow = [...table.rows].find((row) => row.querySelector(":scope > th"));
+  let start = 0;
+  for (const header of headerRow?.cells ?? []) {
+    if (header.classList.contains(COLUMN_CLASS)) continue;
+    const span = Math.max(1, header.colSpan);
+    const column = GAME_COLUMNS.find((game) => game.header === plainText(header.textContent));
+    if (column) columns.set(column.id, { header, cells: Array.from({ length: span }, (_, i) => start + i) });
+    start += span;
+  }
+  return columns;
+}
+
+/** Hides the columns in `hidden` and shows the others, again after each change of the table. */
+export function hideMembersColumns(doc: Document, hidden: ReadonlySet<string>) {
+  const table = doc.querySelector<HTMLTableElement>("#tabMembresAlliance");
+  if (!table) return;
+  for (const [id, { header, cells }] of gameColumns(table)) {
+    const hide = hidden.has(id);
+    header.classList.toggle(HIDDEN_CLASS, hide);
+    for (const row of table.rows) {
+      if (row.querySelector(":scope > th")) continue;
+      for (const index of cells) row.cells[index]?.classList.toggle(HIDDEN_CLASS, hide);
+    }
+  }
+  for (const { id } of OPTIZZZ_COLUMNS)
+    for (const cell of table.querySelectorAll(`.optizzz-members-${id}`))
+      cell.classList.toggle(HIDDEN_CLASS, hidden.has(id));
+}
+
+/**
+ * « Colonnes », above the members table: a box per column that can be hidden (the game's Rang, Technologie,
+ * Fourmilière and État, and those Optizzz added), ticked when shown. `onChange` gets the new hidden set.
+ */
+export function addColumnPicker(doc: Document, hidden: ReadonlySet<string>, onChange: (hidden: Set<string>) => void) {
+  const table = doc.querySelector<HTMLTableElement>("#tabMembresAlliance");
+  if (!table) return;
+  if (table.previousElementSibling?.classList.contains("optizzz-columns-picker")) return;
+  for (const old of doc.querySelectorAll(".optizzz-columns-picker")) old.remove();
+  const current = new Set(hidden);
+  const game = gameColumns(table);
+  const choices = [
+    ...GAME_COLUMNS.filter((column) => game.has(column.id)),
+    ...OPTIZZZ_COLUMNS.filter((column) => table.querySelector(`th.optizzz-members-${column.id}`)),
+  ];
+  const picker = doc.createElement("details");
+  picker.className = "optizzz-columns-picker";
+  const summary = doc.createElement("summary");
+  summary.textContent = "Colonnes";
+  picker.append(summary);
+  for (const { id, label } of choices) {
+    const box = doc.createElement("input");
+    box.type = "checkbox";
+    box.checked = !current.has(id);
+    box.addEventListener("change", () => {
+      if (box.checked) current.delete(id);
+      else current.add(id);
+      onChange(new Set(current));
+    });
+    const wrapper = doc.createElement("label");
+    wrapper.append(box, ` ${label}`);
+    picker.append(wrapper);
+  }
+  table.before(picker);
 }
 
 /** Takes the columns away, to add them again with new data. */

@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { Player } from "@optizzz/game/exports";
 import membersHtml from "@optizzz/game/pages/__fixtures__/members.html?raw";
-import { addMembersColumns, COLUMN_CLASS, ME_CLASS, removeMembersColumns, type MembersColumnsContext } from "./mount";
+import {
+  addColumnPicker,
+  addMembersColumns,
+  COLUMN_CLASS,
+  HIDDEN_CLASS,
+  hideMembersColumns,
+  ME_CLASS,
+  removeMembersColumns,
+  type MembersColumnsContext,
+} from "./mount";
 import { rolesOfMembers } from "./roles";
 import { tripsFrom } from "./trips";
 
@@ -121,8 +130,11 @@ describe("addMembersColumns", () => {
       },
       now,
     );
-    expect(column(doc, 0).slice(0, 4)).toEqual(["Aujourd'hui", "▲ +100 (+10 %)", "0 (0 %)", "—"]);
-    expect(column(doc, 1).slice(0, 4)).toEqual(["7 j", "▼ −150 (−12 %)", "—", "—"]);
+    // The percentage in the tooltip: on the line, it pushed « 7 j » out of the game's frame.
+    expect(column(doc, 0).slice(0, 4)).toEqual(["Aujourd'hui", "▲ +100", "0", "—"]);
+    expect(column(doc, 1).slice(0, 4)).toEqual(["7 j", "▼ −150", "—", "—"]);
+    const alphaToday = doc.querySelectorAll<HTMLTableCellElement>(`td.${COLUMN_CLASS}`)[0];
+    expect(alphaToday?.title).toBe("+10 % depuis l'export de minuit (1 000 → 1 100)");
   });
 
   it("sorts « 7 j » from the biggest fall up, then the other way, the unknown last", () => {
@@ -194,5 +206,72 @@ describe("addMembersColumns", () => {
     expect(doc.querySelectorAll(`.${COLUMN_CLASS}, .${ME_CLASS}`)).toHaveLength(0);
     addMembersColumns(doc, withTrips(), now);
     expect(column(doc)[0]).toBe("Trajet");
+  });
+});
+
+describe("column picker", () => {
+  const withEverything = (): MembersColumnsContext => ({
+    myPseudo: "Me",
+    trips: { byPseudo: tripsFrom(players, "Me", 3) },
+    evolution: new Map([["alpha", { live: 1100, midnight: 1000, weekAgo: 1000 }]]),
+  });
+  /** Whether each header shows, by its text. */
+  const headers = (doc: Document) =>
+    Object.fromEntries(
+      [...(table(doc)?.rows[0]?.cells ?? [])]
+        .filter((cell) => cell.textContent.trim())
+        .map((cell) => [cell.textContent.trim(), !cell.classList.contains(HIDDEN_CLASS)]),
+    );
+  const alphaCells = (doc: Document) =>
+    [...(table(doc)?.rows[1]?.cells ?? [])].filter((cell) => !cell.classList.contains(HIDDEN_CLASS)).length;
+
+  it("hides the columns asked, the game's and Optizzz's, merged header cells included", () => {
+    const doc = membersPage();
+    addMembersColumns(doc, withEverything(), now);
+    const before = alphaCells(doc);
+    hideMembersColumns(doc, new Set(["grade", "state", "today"]));
+    expect(headers(doc)).toEqual({
+      Rang: false,
+      Pseudo: true,
+      Terrain: true,
+      Technologie: true,
+      Fourmiliere: true,
+      Etat: false,
+      Trajet: true,
+      "Aujourd'hui": false,
+      "7 j": true,
+    });
+    // Rang, the two cells under « Etat », Aujourd'hui.
+    expect(alphaCells(doc)).toBe(before - 4);
+    hideMembersColumns(doc, new Set());
+    expect(alphaCells(doc)).toBe(before);
+  });
+
+  it("lists the columns that can be hidden, ticked when shown, and says the new choice on a click", () => {
+    const doc = membersPage();
+    addMembersColumns(doc, withEverything(), now);
+    const chosen: Set<string>[] = [];
+    addColumnPicker(doc, new Set(["technology"]), (hidden) => chosen.push(new Set(hidden)));
+    const boxes = [...doc.querySelectorAll<HTMLInputElement>(".optizzz-columns-picker input")];
+    expect(boxes.map((box) => [box.closest("label")?.textContent.trim(), box.checked])).toEqual([
+      ["Rang", true],
+      ["Technologie", false],
+      ["Fourmilière", true],
+      ["État", true],
+      ["Trajet", true],
+      ["Aujourd'hui", true],
+      ["7 j", true],
+    ]);
+    boxes[0]?.click();
+    expect(chosen).toEqual([new Set(["technology", "grade"])]);
+  });
+
+  it("is added once, above the table", () => {
+    const doc = membersPage();
+    addMembersColumns(doc, withEverything(), now);
+    addColumnPicker(doc, new Set(), () => undefined);
+    addColumnPicker(doc, new Set(), () => undefined);
+    expect(doc.querySelectorAll(".optizzz-columns-picker")).toHaveLength(1);
+    expect(doc.querySelector(".optizzz-columns-picker")?.nextElementSibling).toBe(table(doc));
   });
 });

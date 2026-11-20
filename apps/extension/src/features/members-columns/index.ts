@@ -1,3 +1,4 @@
+import { storage } from "wxt/utils/storage";
 import { loadPlayersExport } from "@/data/exports";
 import { INACTIVITY_DAYS, loadRecentNights } from "@/data/nights";
 import type { Snapshot } from "@/features/history/api";
@@ -15,6 +16,8 @@ import {
   COLUMN_CLASS,
   MEMBERS_COLUMNS_STYLE,
   removeMembersColumns,
+  addColumnPicker,
+  hideMembersColumns,
   type MembersColumnsContext,
   type MemberEvolution,
 } from "./mount";
@@ -56,7 +59,15 @@ export const membersColumns: Feature = {
     // The roles are the chain's: none while the chain is switched off.
     const showRoles = isEnabled(toggles, "members-columns", "roles") && isEnabled(toggles, "tdc-chain");
     const showEvolution = isEnabled(toggles, "members-columns", "evolution");
-    if (!showTrips && !showRoles && !showEvolution) return;
+
+    // « Colonnes »: the columns hidden, the game's and Optizzz's, remembered per server.
+    const hiddenKey = `local:members-columns:${location.host}:hidden` as const;
+    let hidden = new Set((await storage.getItem<string[]>(hiddenKey)) ?? []);
+    const chooseColumns = (next: Set<string>) => {
+      hidden = next;
+      hideMembersColumns(document, hidden);
+      void storage.setItem(hiddenKey, [...hidden]);
+    };
 
     const [playersExport, levels, chainSettings] = await Promise.all([
       loadPlayersExport(location.origin).catch((error: unknown) => {
@@ -86,7 +97,12 @@ export const membersColumns: Feature = {
 
     // The game fills #alliance over AJAX, and fills it again when the table changes: add the columns each time.
     const apply = () => {
-      if (document.querySelector(`#tabMembresAlliance .${COLUMN_CLASS}`)) return;
+      // The columns already there: only « Colonnes » and what it hides, again (the game may have redrawn the rows).
+      if (document.querySelector(`#tabMembresAlliance .${COLUMN_CLASS}`)) {
+        addColumnPicker(document, hidden, chooseColumns);
+        hideMembersColumns(document, hidden);
+        return;
+      }
       const roles =
         chain && playersExport
           ? rolesOfMembers(playersExport.players, myPseudo, readMembersHuntingField(document), {
@@ -96,6 +112,8 @@ export const membersColumns: Feature = {
           : undefined;
       const evolution = nights && playersExport ? evolutionOfMembers(nights, playersExport.players) : undefined;
       addMembersColumns(document, { myPseudo, trips, roles, evolution }, new Date());
+      addColumnPicker(document, hidden, chooseColumns);
+      hideMembersColumns(document, hidden);
     };
     apply();
     if (showEvolution) {
