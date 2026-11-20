@@ -29,6 +29,12 @@ Coût mesuré le 2026-11-20 sur deux exports réels consécutifs : S2 (20 645 jo
 
 Un gain mêlé de chasses ne correspond à rien : la perte reste sans coupable plutôt qu'avec un faux. La logique est pure, dans `packages/game/src/analysis/floods.ts` (+ test sur des heures construites à la main).
 
+## Reprise
+
+Les deux tables partent vides au déploiement (2026-11-20). L'API de Fourmizzz garde ses exports horaires : `pnpm backfill` (sur le VPS : `deploy/backfill.sh`, en arrière-plan) relit ceux des 30 derniers jours, jusqu'au dernier export lu par le cron, et écrit chaque heure comme le cron (`writeHour`, partagée). Une heure qui a déjà des mouvements est sautée : la reprise peut tourner à côté du cron, qui n'écrit que les heures suivantes, et se relancer. Deux secondes entre deux téléchargements.
+
+Relevé le 2026-11-20 : S5 publie un export par heure depuis un mois (732 sur 30 jours, 0,43 Mo chacun, ≈ 315 Mo) ; S1 à S4 seulement depuis le 14/11 environ (≈ 135 chacun ; 8,5, 4,3, 10 et 44 Mo, soit ≈ 1,1 Go, 580 Mo, 1,4 Go et 5,9 Go). Les pages suivent au passage suivant du cron.
+
 ## Route publique
 
 `GET /api/[server]/players/[id]/analysis`, ouverte à toutes les origines (`access-control-allow-origin: *`, comme `/api/[server]/map`), mise en cache jusqu'au passage suivant du cron :
@@ -53,15 +59,16 @@ Lot 3 (fait le 2026-11-20) : `PlayerHour`, la résolution des floods, la grille 
 
 ## Fichiers
 
-| Fichier                                                         | Rôle                                                                 |
-| --------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `packages/game/src/analysis/floods.ts` (+ test)                 | Résolution des floods d'une heure                                    |
-| `packages/game/src/analysis/activity.ts` (+ test)               | Grilles hausses et baisses, plage calme                              |
-| `packages/game/src/analysis/alliance-floods.ts` (+ test)        | Floods par alliance adverse, schéma de la route                      |
-| `packages/game/src/analysis/player-analysis.ts` (+ test)        | Schéma de la route d'un joueur, texte et date d'un flood             |
-| `apps/web/src/ingest/ingest.ts` (+ test sur Postgres)           | Écriture de `PlayerHour` et `ProbableFlood`, purge à 30 jours        |
-| `apps/web/src/server/queries.ts`                                | `playerHourly`, `playerReach`, `playerPeerRank`, `allianceFloodRows` |
-| `apps/web/src/lib/analysis/player-analysis.ts`                  | La réponse de la route et de la fiche                                |
-| `apps/web/src/app/api/[server]/players/[id]/analysis/route.ts`  | Route publique d'un joueur                                           |
-| `apps/web/src/app/api/[server]/alliances/[tag]/floods/route.ts` | Route publique d'une alliance                                        |
-| `apps/web/src/components/player/`, `alliance/floods-panel.tsx`  | Grilles, floods, tableau par alliance                                |
+| Fichier                                                         | Rôle                                                                        |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `packages/game/src/analysis/floods.ts` (+ test)                 | Résolution des floods d'une heure                                           |
+| `packages/game/src/analysis/activity.ts` (+ test)               | Grilles hausses et baisses, plage calme                                     |
+| `packages/game/src/analysis/alliance-floods.ts` (+ test)        | Floods par alliance adverse, schéma de la route                             |
+| `packages/game/src/analysis/player-analysis.ts` (+ test)        | Schéma de la route d'un joueur, texte et date d'un flood                    |
+| `apps/web/src/ingest/ingest.ts` (+ test sur Postgres)           | Écriture de `PlayerHour` et `ProbableFlood` (`writeHour`), purge à 30 jours |
+| `apps/web/src/ingest/backfill.ts` (+ test sur Postgres)         | Reprise des 30 derniers jours (`pnpm backfill`, `deploy/backfill.sh`)       |
+| `apps/web/src/server/queries.ts`                                | `playerHourly`, `playerReach`, `playerPeerRank`, `allianceFloodRows`        |
+| `apps/web/src/lib/analysis/player-analysis.ts`                  | La réponse de la route et de la fiche                                       |
+| `apps/web/src/app/api/[server]/players/[id]/analysis/route.ts`  | Route publique d'un joueur                                                  |
+| `apps/web/src/app/api/[server]/alliances/[tag]/floods/route.ts` | Route publique d'une alliance                                               |
+| `apps/web/src/components/player/`, `alliance/floods-panel.tsx`  | Grilles, floods, tableau par alliance                                       |

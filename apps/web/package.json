@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
     "ingest": "tsx scripts/ingest.ts",
+    "backfill": "tsx scripts/backfill.ts",
     "test": "vitest run",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

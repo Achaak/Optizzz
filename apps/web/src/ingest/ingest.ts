@@ -48,7 +48,7 @@ async function getJsonOnce(url: string): Promise<unknown> {
   return response.json();
 }
 
-async function getJson(url: string): Promise<unknown> {
+export async function getJson(url: string): Promise<unknown> {
   for (let attempt = 1; ; attempt++) {
     try {
       return await getJsonOnce(url);
@@ -62,7 +62,7 @@ async function getJson(url: string): Promise<unknown> {
   }
 }
 
-const playersOf = async (origin: string, version: string) =>
+export const playersOf = async (origin: string, version: string) =>
   z.array(playerSchema).parse(await getJson(exportUrl(origin, "players", version)));
 const alliancesOf = async (origin: string, version: string) =>
   z.array(allianceSchema).parse(await getJson(exportUrl(origin, "alliances", version)));
@@ -168,7 +168,7 @@ const toAlliance = (row: AllianceRow): Alliance => ({
 });
 
 /** Days the hourly moves and floods are kept. */
-const HOURLY_DAYS = 30;
+export const HOURLY_DAYS = 30;
 /** Two readings further apart than this: no probable flood is looked for between them. */
 const MAX_FLOOD_GAP_MS = 3 * 3_600_000;
 
@@ -181,6 +181,43 @@ export function fieldMoves(before: readonly Player[], after: readonly Player[]) 
       ? []
       : [{ playerId: player.id, field: player.field, delta: player.field - field }];
   });
+}
+
+/**
+ * The hour between two readings: each player's move of the field, and the probable floods when the readings are at
+ * most 3 hours apart (docs/features/site-analyse.md). Shared by the cron's pass and the backfill.
+ */
+export async function writeHour(
+  db: Pick<PrismaClient, "playerHour" | "probableFlood">,
+  server: string,
+  before: { version: string; players: readonly Player[] },
+  after: { version: string; players: readonly Player[] },
+): Promise<void> {
+  const since = versionDate(before.version);
+  const at = versionDate(after.version);
+  await inChunks(fieldMoves(before.players, after.players), (chunk) =>
+    db.playerHour.createMany({ data: chunk.map((move) => ({ server, since, at, ...move })), skipDuplicates: true }),
+  );
+  const victimAlliance = new Map(before.players.map((player) => [player.id, player.alliance]));
+  // Over a longer gap (the cron missed passes) the sums mix too many moves to match anything.
+  const floods =
+    at.getTime() - since.getTime() <= MAX_FLOOD_GAP_MS ? probableFloods(before.players, after.players) : [];
+  await inChunks(floods, (chunk) =>
+    db.probableFlood.createMany({
+      data: chunk.map((flood) => ({
+        server,
+        since,
+        at,
+        victimId: flood.victimId,
+        victimAlliance: victimAlliance.get(flood.victimId) ?? null,
+        amount: flood.amount,
+        attackers: flood.attackers,
+        candidates: flood.candidates,
+        alliance: flood.alliance,
+        sureness: flood.sureness,
+      })),
+    }),
+  );
 }
 
 export interface PassReport {
@@ -280,37 +317,7 @@ export async function ingestServer(db: PrismaClient, server: GameServer, now: Da
               })),
             }),
           );
-        if (before) {
-          // The hour's moves of the field and its probable floods (docs/features/site-analyse.md).
-          const since = versionDate(before.version);
-          const at = versionDate(after.version);
-          await inChunks(fieldMoves(before.players, after.players), (chunk) =>
-            tx.playerHour.createMany({
-              data: chunk.map((move) => ({ server: server.id, since, at, ...move })),
-              skipDuplicates: true,
-            }),
-          );
-          const victimAlliance = new Map(before.players.map((player) => [player.id, player.alliance]));
-          // Over a longer gap (the cron missed passes) the sums mix too many moves to match anything.
-          const floods =
-            at.getTime() - since.getTime() <= MAX_FLOOD_GAP_MS ? probableFloods(before.players, after.players) : [];
-          await inChunks(floods, (chunk) =>
-            tx.probableFlood.createMany({
-              data: chunk.map((flood) => ({
-                server: server.id,
-                since,
-                at,
-                victimId: flood.victimId,
-                victimAlliance: victimAlliance.get(flood.victimId) ?? null,
-                amount: flood.amount,
-                attackers: flood.attackers,
-                candidates: flood.candidates,
-                alliance: flood.alliance,
-                sureness: flood.sureness,
-              })),
-            }),
-          );
-        }
+        if (before) await writeHour(tx, server.id, before, after);
         for (const kind of ["players", "alliances"] as const)
           await tx.exportRead.upsert({
             where: { server_kind: { server: server.id, kind } },
