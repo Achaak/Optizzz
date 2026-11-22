@@ -11,8 +11,12 @@ export default function PrivacyPage() {
         <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">Ce que le site sait de vous</h2>
         <p>
           Sans Compte Optizzz, le site lui-même ne pose aucun cookie. Le serveur du site, à Amsterdam chez Scaleway
-          (Union européenne), ne garde pas de journal des visites : votre adresse IP sert à vous répondre, sans être
-          enregistrée (la limite des demandes de lien de connexion la garde une minute en mémoire).
+          (Union européenne), n&apos;enregistre pas votre adresse IP : elle sert à vous répondre, sans être gardée (la
+          limite des demandes de lien de connexion la garde une minute en mémoire). Pour repérer ce qui charge le
+          serveur, il tient un journal technique de 7 jours au plus : l&apos;heure, le type de page demandée
+          («&nbsp;fiche d&apos;un joueur&nbsp;» sur S4, sans le numéro du joueur, le tag de l&apos;alliance ni ce qui
+          suit le <code>?</code>), la réponse, sa durée et le nom que se donne votre navigateur (pour distinguer les
+          robots). Ni adresse IP, ni cookie, ni la page d&apos;où vous venez.
         </p>
         <p>
           Pour savoir quelles pages servent, le site compte les pages vues : quand une page s&apos;affiche, votre

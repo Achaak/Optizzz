@@ -1,4 +1,4 @@
-# HTTPS for optizzz.fr (Let's Encrypt certificates, renewed by Caddy). No access log: the site keeps no IP address.
+# HTTPS for optizzz.fr (Let's Encrypt certificates, renewed by Caddy).
 optizzz.fr {
 	encode zstd gzip
 	# HTTPS only for a year; no guessing of content types; never inside another site's frame (the account and the
@@ -8,6 +8,30 @@ optizzz.fr {
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+	# Which kinds of pages are asked, by whom (browser or robot) and how fast, to see what loads the VPS (2026-11-21):
+	# no IP address, no header nor cookie, no player number, alliance tag nor query in the path; 7 days at most.
+	# Read on the VPS: docker compose exec caddy tail -f /data/access.log
+	log_append user_agent {http.request.header.User-Agent}
+	log {
+		output file /data/access.log {
+			roll_size 20MiB
+			roll_keep 10
+			roll_keep_for 168h
+		}
+		format filter {
+			wrap json
+			fields {
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+				request>headers delete
+				request>tls delete
+				resp_headers delete
+				# « /s4/players/123/x?q=abc » → « /s4/players/_/x?_ » (players, alliances, Espaces d'alliance).
+				request>uri regexp "(/(?:players|alliances|spaces)/)[^/?]+|(\?).*$" "${1}${2}_"
+			}
+		}
 	}
 	reverse_proxy web:3000
 }
