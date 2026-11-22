@@ -41,7 +41,7 @@ Toutes en français, à des adresses en anglais depuis le 2026-10-23 (`site-outi
 
 - `/guides` et `/guides/<id>` (2026-11-04, `site-guides.md`) : le jeu expliqué avec les outils d'Optizzz.
 
-Les outils et les pages de serveur sont indexés par les moteurs de recherche ; les pages joueur et alliance, et Comparer, sont en `noindex`.
+Les outils et les pages de serveur sont indexés par les moteurs de recherche ; les pages joueur et alliance, et Comparer, sont en `noindex`. `noindex` n'empêchait pas les robots de les charger : le 2026-11-21, 80 des 85 premières requêtes du journal de Caddy venaient de GPTBot et Amazonbot, sur les fiches joueur, Comparer et la carte avec paramètres, chacune rendue par le VPS. `robots.txt` (`src/app/robots.ts`) leur ferme donc `/*/players/`, `/*/alliances/`, `/*/compare` et toute adresse avec `?` : il ne reste que les pages du sitemap.
 
 ### Look
 
