@@ -314,4 +314,17 @@ describe("column picker", () => {
     expect(doc.querySelectorAll(".optizzz-columns-picker")).toHaveLength(1);
     expect(doc.querySelector(".optizzz-columns-picker")?.nextElementSibling).toBe(table(doc));
   });
+
+  it("stays where it is when another script puts its own block between it and the table", () => {
+    const doc = membersPage();
+    addMembersColumns(doc, withEverything(), now);
+    addColumnPicker(doc, new Set(), () => undefined);
+    const picker = doc.querySelector(".optizzz-columns-picker");
+    const foreign = doc.createElement("div");
+    table(doc)?.before(foreign);
+    addColumnPicker(doc, new Set(), () => undefined);
+    // Moved again, the picker would make the other script redraw its block, and so on: the page flickered.
+    expect(doc.querySelector(".optizzz-columns-picker")).toBe(picker);
+    expect(foreign.previousElementSibling).toBe(picker);
+  });
 });

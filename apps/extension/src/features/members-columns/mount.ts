@@ -338,10 +338,10 @@ export function addColumnPicker(doc: Document, hidden: ReadonlySet<string>, onCh
   ];
   const ids = choices.map((choice) => choice.id).join(" ");
   // Built again when columns came since (« Aujourd'hui » and « 7 j » wait for the nightly exports).
-  const existing = table.previousElementSibling;
-  if (existing instanceof HTMLElement && existing.classList.contains("optizzz-columns-picker")) {
-    if (existing.dataset.columns === ids) return;
-  }
+  // Wherever it is: another script may put its block between it and the table, and moving it back made that script
+  // redraw its block, then this one move again… the page flickered.
+  const existing = table.parentElement?.querySelector<HTMLDetailsElement>(":scope > .optizzz-columns-picker");
+  if (existing?.dataset.columns === ids) return;
   const wasOpen = doc.querySelector<HTMLDetailsElement>(".optizzz-columns-picker")?.open ?? false;
   for (const old of doc.querySelectorAll(".optizzz-columns-picker")) old.remove();
   const picker = doc.createElement("details");
