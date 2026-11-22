@@ -8,8 +8,8 @@ Juger une autre alliance face à la sienne : qui peut prendre qui, avec qui elle
 
 ## Où
 
-- **Jeu** : sur la page d'une alliance (`classementAlliance.php?alliance=TAG`), sous l'encart « Progression » des Statistiques d'alliance, quatre encarts repliables : Face-à-face, Bloc diplomatique, Colonies, Floods probables. Face-à-face seulement sur une autre alliance que la mienne ; les trois autres sur toute alliance, la mienne comprise.
-- **Site** : la fiche alliance (`/[server]/alliances/[tag]`), mêmes sections, après le tableau des membres. Face-à-face y a un champ « Face-à-face avec… » (tag), prérempli par l'alliance de mon Espace d'alliance sur ce serveur quand je suis connecté. Pour que la fiche reste statique (reconstruite chaque heure), le champ lit la route `/api/[server]/alliances/[tag]/face-off?with=TAG` (gardée 10 minutes) ; le rapport avec « votre alliance » du Bloc n'est que dans le jeu.
+- **Site seulement** : la fiche alliance (`/[server]/alliances/[tag]`), que « Voir sur optizzz.fr » ouvre depuis la page de l'alliance dans le jeu. Jusqu'au 2026-11-21, quatre encarts repliables s'ajoutaient aussi sous l'encart « Progression » de la page du jeu (`classementAlliance.php?alliance=TAG`) ; ils la rendaient illisible pour ce que le site montre déjà : retirés de l'extension avec leur interrupteur. Le trajet depuis chez moi (Face-à-face) et le rapport avec « votre alliance » (Bloc) n'existaient que dans le jeu et sont partis avec eux.
+- **Fiche** : la fiche alliance (`/[server]/alliances/[tag]`), mêmes sections, après le tableau des membres. Face-à-face y a un champ « Face-à-face avec… » (tag), prérempli par l'alliance de mon Espace d'alliance sur ce serveur quand je suis connecté. Pour que la fiche reste statique (reconstruite chaque heure), le champ lit la route `/api/[server]/alliances/[tag]/face-off?with=TAG` (gardée 10 minutes) ; le rapport avec « votre alliance » du Bloc n'est que dans le jeu.
 - Données : dernier export (état courant de la base sur le site), TDC en direct de mon alliance dans le jeu (tableau Membres mémorisé, le mien dans l'en-tête).
 
 ## Face-à-face
@@ -47,22 +47,19 @@ Règle d'appariement : `site-analyse.md`.
 - Pas de filtre « Floods » dans le Journal du serveur : des milliers de lignes par jour sur S2.
 - Seulement quand le site répond ; sinon l'encart le dit.
 
-## Interrupteur
-
-Feature « Analyse des alliances » dans « Fonctionnalités », allumée par défaut, options « Face-à-face », « Bloc diplomatique », « Colonies », « Floods probables ».
-
 ## Fichiers
 
-| Fichier                                                                 | Rôle                                                       |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `packages/game/src/analysis/face-off.ts` (+ test)                       | Portées croisées, TDC exposé, distance médiane             |
-| `packages/game/src/analysis/bloc.ts` (+ test)                           | Pactes sur deux cercles, guerres, TDC du bloc, son graphe  |
-| `packages/game/src/analysis/colonies.ts` (+ test)                       | Les trois listes et les chaînes                            |
-| `apps/extension/src/features/alliance-analysis/`                        | Encarts de la page d'alliance, montés par `alliance-stats` |
-| `apps/web/src/components/alliance/`                                     | Sections de la fiche alliance                              |
-| `apps/web/src/app/api/[server]/alliances/[tag]/face-off/route.ts`       | Le face-à-face lu par le champ de la fiche                 |
-| `apps/web/src/server/queries.ts` (`allianceAnalysis`, `faceOffMembers`) | Alliances, colonies et membres lus dans la base            |
+| Fichier                                                                 | Rôle                                                      |
+| ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| `packages/game/src/analysis/face-off.ts` (+ test)                       | Portées croisées, TDC exposé, distance médiane            |
+| `packages/game/src/analysis/bloc.ts` (+ test)                           | Pactes sur deux cercles, guerres, TDC du bloc, son graphe |
+| `packages/game/src/analysis/colonies.ts` (+ test)                       | Les trois listes et les chaînes                           |
+| `apps/web/src/components/alliance/`                                     | Sections de la fiche alliance                             |
+| `apps/web/src/app/api/[server]/alliances/[tag]/face-off/route.ts`       | Le face-à-face lu par le champ de la fiche                |
+| `apps/web/src/server/queries.ts` (`allianceAnalysis`, `faceOffMembers`) | Alliances, colonies et membres lus dans la base           |
 
 ## Ordre
 
 Lot 2 (fait le 2026-11-20) : Face-à-face, Bloc, Colonies, dans le jeu puis sur le site. Lot 3 (fait le 2026-11-20) : Floods probables, sur la fiche du site et, lus sur `/api/[server]/alliances/[tag]/floods`, dans le jeu (option « Floods probables par alliance » ; la requête dit quelle page d'alliance est ouverte, comme le disent `PRIVACY.md` et la fiche du store).
+
+Retrait du jeu (2026-11-21) : les quatre encarts de la page d'alliance, l'interrupteur « Analyse des alliances » et la route `/api/[server]/alliances/[tag]/floods` (une ancienne version de l'extension y lit un 404 et n'affiche rien). Tout reste sur la fiche du site.

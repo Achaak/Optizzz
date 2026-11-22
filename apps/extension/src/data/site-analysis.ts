@@ -1,7 +1,6 @@
-// A player's hourly analysis and an alliance's probable floods, read on the Optizzz site, which reads the hourly
-// exports (docs/features/site-analyse.md). Public data; the request says which profile or alliance page is open,
+// A player's hourly analysis, read on the Optizzz site, which reads the hourly
+// exports (docs/features/site-analyse.md). Public data; the request says which profile is open,
 // nothing about the player (no account, no cookie): see PRIVACY.md.
-import { allianceFloodsSchema, type AllianceFloods } from "@optizzz/game/analysis/alliance-floods";
 import { playerAnalysisSchema, type PlayerAnalysis } from "@optizzz/game/analysis/player-analysis";
 import { serverById } from "@optizzz/game/servers";
 import type { z } from "zod";
@@ -29,7 +28,3 @@ async function readSite<T>(origin: string, path: (server: string) => string, sch
 /** The player `id`'s hourly analysis on the `origin` server; null when the site cannot say. */
 export const loadPlayerAnalysis = (origin: string, id: number): Promise<PlayerAnalysis | null> =>
   readSite(origin, () => `players/${String(id)}/analysis`, playerAnalysisSchema);
-
-/** The alliance `tag`'s probable floods over 7 days, by other alliance; null when the site cannot say. */
-export const loadAllianceFloods = (origin: string, tag: string): Promise<AllianceFloods | null> =>
-  readSite(origin, () => `alliances/${encodeURIComponent(tag)}/floods`, allianceFloodsSchema);

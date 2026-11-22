@@ -1,5 +1,4 @@
 // The probable floods of an alliance, by other alliance: see docs/features/analyse-alliances.md.
-import { z } from "zod";
 import { sameTag } from "../diplomacy";
 import type { FloodSureness } from "./floods";
 
@@ -70,18 +69,3 @@ export function floodsByAlliance(floods: readonly AllianceFloodRow[], tag: strin
     inside,
   };
 }
-
-/** The site's route answer, checked by the extension. */
-export const allianceFloodsSchema = z.object({
-  rows: z.array(
-    z.object({
-      opponent: z.string(),
-      kind: z.enum(["alliance", "none"]),
-      taken: z.number(),
-      lost: z.number(),
-      count: z.number().int(),
-    }),
-  ),
-  unknown: z.object({ taken: z.number(), lost: z.number(), count: z.number().int() }),
-  inside: z.object({ amount: z.number(), count: z.number().int() }),
-});

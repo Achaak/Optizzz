@@ -2,7 +2,6 @@
 // and the rankings (the players' one draws nothing).
 import { createRoot, type Root } from "react-dom/client";
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
-import { AllianceAnalysis } from "@/features/alliance-analysis/AllianceAnalysis";
 import { AllianceBox } from "@/features/alliance-stats/AllianceBox";
 import { RECRUITMENT_HASH } from "@/features/recruitment/menu";
 import { Recruitment } from "@/features/recruitment/Recruitment";
@@ -27,7 +26,6 @@ import { fetchGamePage } from "@/utils/game-page";
 import "@/theme/theme.css";
 import "@/utils/history-chart/style.css";
 import "@/features/alliance-stats/style.css";
-import "@/features/alliance-analysis/style.css";
 import { waitForElement } from "@/utils/wait-for-element";
 
 const isStatsPage = () => isMembersPage() && location.hash === STATS_HASH;
@@ -172,42 +170,6 @@ async function mountRecruitmentView(ctx: ContentScriptContext, toggles: Toggles)
   ctx.addEventListener(window, "hashchange", update);
 }
 
-/** Face-à-face, Bloc diplomatique and Colonies, under the « Progression » box (docs/features/analyse-alliances.md). */
-async function mountAllianceAnalysis(ctx: ContentScriptContext, toggles: Toggles) {
-  const tag = new URLSearchParams(location.search).get("alliance");
-  const anchor = findAllianceRankingTable(document);
-  if (!tag || !readAllianceRanking(document) || !anchor) return;
-  const show = {
-    faceOff: isEnabled(toggles, "alliance-analysis", "face-off"),
-    bloc: isEnabled(toggles, "alliance-analysis", "bloc"),
-    colonies: isEnabled(toggles, "alliance-analysis", "colonies"),
-    floods: isEnabled(toggles, "alliance-analysis", "floods"),
-  };
-  if (!show.faceOff && !show.bloc && !show.colonies && !show.floods) return;
-  const ui = await createShadowRootUi<Root>(ctx, {
-    name: "optizzz-alliance-analysis",
-    position: "inline",
-    anchor,
-    append: "after",
-    onMount(container) {
-      const root = createRoot(container);
-      root.render(
-        <AllianceAnalysis
-          origin={location.origin}
-          tag={tag}
-          myTag={readAllianceTag(document)}
-          myPseudo={readLoggedInPseudo(document)}
-          myField={readStock(document)?.huntingField ?? null}
-          show={show}
-        />,
-      );
-      return root;
-    },
-    onRemove: (root) => root?.unmount(),
-  });
-  ui.mount();
-}
-
 /** « Comparer les alliances » over the alliances' ranking, and its « Graphique » column in the game's table. */
 async function mountRankingChart(ctx: ContentScriptContext, statsView: boolean) {
   const ranking = readAlliancesRanking(document);
@@ -264,8 +226,6 @@ export default defineContentScript({
     } else if (location.pathname === "/classement.php") {
       if (isEnabled(toggles, "alliance-stats", "ranking")) await mountRankingChart(ctx, statsView);
     } else {
-      // Mounted first: each goes just after the ranking table, so the « Progression » box comes above it.
-      if (isEnabled(toggles, "alliance-analysis")) await mountAllianceAnalysis(ctx, toggles);
       if (isEnabled(toggles, "alliance-stats", "page")) await mountAllianceBox(ctx, statsView);
     }
   },

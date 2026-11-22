@@ -14,7 +14,6 @@ const HEAVY_SCRIPTS: Record<string, string> = {
   history: "../entrypoints/history.content/index.tsx",
   "alliance-stats": "../entrypoints/alliance-stats.content/index.tsx",
   // Mounted by the statistics' script, which already brings React to the alliances' pages.
-  "alliance-analysis": "../entrypoints/alliance-stats.content/index.tsx",
   "alliance-sharing": "../entrypoints/alliance-sharing.content/index.tsx",
   "laying-templates": "../entrypoints/laying-templates.content/index.tsx",
 };

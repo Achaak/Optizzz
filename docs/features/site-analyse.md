@@ -45,8 +45,6 @@ Depuis le 2026-11-20, un flood n'est apparié qu'au cm² près (l'attaquant gagn
 - `floods` sur 30 jours (heure, montant, sens, attaquants ou victimes, candidats, alliance, sûreté) ;
 - rien sur qui la lit. Validée par zod côté extension (`apps/extension/src/data/site-analysis.ts`).
 
-Pour les alliances : `GET /api/[server]/alliances/[tag]/floods`, le tableau par alliance adverse sur 7 jours.
-
 ## Pages
 
 - **Fiche joueur** (`/[server]/players/[id]`) : tuiles Portée (combien peuvent l'attaquer, combien il peut attaquer), État (inactif probable d'après ses nuits), Plage calme, Rang relatif sur 7 j ; les deux grilles « Quand son TDC bouge » ; les floods probables sur 30 jours (Tous, Perdus, Pris) ; les 5 alliances qui l'ont le plus à portée. Le rang relatif du site écarte les joueurs dont rien n'a bougé de la semaine, au lieu de la règle des 3 nuits (calculée en une requête sur tout le serveur).
@@ -61,16 +59,15 @@ Lot 3 (fait le 2026-11-20) : `PlayerHour`, la résolution des floods, la grille 
 
 ## Fichiers
 
-| Fichier                                                         | Rôle                                                                        |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `packages/game/src/analysis/floods.ts` (+ test)                 | Résolution des floods d'une heure                                           |
-| `packages/game/src/analysis/activity.ts` (+ test)               | Grilles hausses et baisses, plage calme                                     |
-| `packages/game/src/analysis/alliance-floods.ts` (+ test)        | Floods par alliance adverse, schéma de la route                             |
-| `packages/game/src/analysis/player-analysis.ts` (+ test)        | Schéma de la route d'un joueur, texte et date d'un flood                    |
-| `apps/web/src/ingest/ingest.ts` (+ test sur Postgres)           | Écriture de `PlayerHour` et `ProbableFlood` (`writeHour`), purge à 30 jours |
-| `apps/web/src/ingest/backfill.ts` (+ test sur Postgres)         | Reprise des 30 derniers jours (`pnpm backfill`, `deploy/backfill.sh`)       |
-| `apps/web/src/server/queries.ts`                                | `playerHourly`, `playerReach`, `playerPeerRank`, `allianceFloodRows`        |
-| `apps/web/src/lib/analysis/player-analysis.ts`                  | La réponse de la route et de la fiche                                       |
-| `apps/web/src/app/api/[server]/players/[id]/analysis/route.ts`  | Route publique d'un joueur                                                  |
-| `apps/web/src/app/api/[server]/alliances/[tag]/floods/route.ts` | Route publique d'une alliance                                               |
-| `apps/web/src/components/player/`, `alliance/floods-panel.tsx`  | Grilles, floods, tableau par alliance                                       |
+| Fichier                                                        | Rôle                                                                        |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `packages/game/src/analysis/floods.ts` (+ test)                | Résolution des floods d'une heure                                           |
+| `packages/game/src/analysis/activity.ts` (+ test)              | Grilles hausses et baisses, plage calme                                     |
+| `packages/game/src/analysis/alliance-floods.ts` (+ test)       | Floods par alliance adverse, schéma de la route                             |
+| `packages/game/src/analysis/player-analysis.ts` (+ test)       | Schéma de la route d'un joueur, texte et date d'un flood                    |
+| `apps/web/src/ingest/ingest.ts` (+ test sur Postgres)          | Écriture de `PlayerHour` et `ProbableFlood` (`writeHour`), purge à 30 jours |
+| `apps/web/src/ingest/backfill.ts` (+ test sur Postgres)        | Reprise des 30 derniers jours (`pnpm backfill`, `deploy/backfill.sh`)       |
+| `apps/web/src/server/queries.ts`                               | `playerHourly`, `playerReach`, `playerPeerRank`, `allianceFloodRows`        |
+| `apps/web/src/lib/analysis/player-analysis.ts`                 | La réponse de la route et de la fiche                                       |
+| `apps/web/src/app/api/[server]/players/[id]/analysis/route.ts` | Route publique d'un joueur                                                  |
+| `apps/web/src/components/player/`, `alliance/floods-panel.tsx` | Grilles, floods, tableau par alliance                                       |
