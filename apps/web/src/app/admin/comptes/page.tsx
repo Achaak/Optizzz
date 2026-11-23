@@ -2,10 +2,12 @@ import { formatNumber } from "@optizzz/game/format/number-format";
 import { formatPastTime } from "@optizzz/game/format/time-format";
 import { serverById } from "@optizzz/game/servers";
 import type { Metadata } from "next";
+import { ValueBars } from "~/components/bars";
 import { Pager } from "~/components/pager";
 import { PageHeader, Panel } from "~/components/panel";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { discordState, latest, maskEmail, remindersState } from "~/lib/admin/accounts";
+import { type AccountProgress, funnel, reachedStep, returnedLater } from "~/lib/admin/funnel";
 import { pageOf } from "~/lib/game-server";
 import { shortDate } from "~/lib/short-date";
 import { requireAdmin } from "~/server/admin";
@@ -22,6 +24,7 @@ const HEAD = "[&_th]:h-auto [&_th]:py-2 [&_th]:text-xs [&_th]:font-medium [&_th]
 const ACCOUNTS_PER_PAGE = 50;
 
 const serverName = (id: string) => serverById(id)?.name ?? id;
+const percent = (share: number) => `${formatNumber(Math.round(share * 100))} %`;
 
 export default async function AdminAccountsPage({
   searchParams,
@@ -31,7 +34,7 @@ export default async function AdminAccountsPage({
   await requireAdmin();
   const now = new Date();
   const page = pageOf((await searchParams).page);
-  const [spaces, demandes, envois, lastDemandes, accounts, total] = await Promise.all([
+  const [spaces, demandes, envois, lastDemandes, accounts, total, progressRows] = await Promise.all([
     db.space.findMany({
       select: {
         id: true,
@@ -71,7 +74,47 @@ export default async function AdminAccountsPage({
       },
     }),
     db.user.count(),
+    // Every account's progress, for the funnel and the « Étape atteinte » column.
+    db.user.findMany({
+      select: {
+        id: true,
+        createdAt: true,
+        extensions: { select: { id: true }, take: 1 },
+        personalKey: { select: { userId: true } },
+        sessions: { select: { updatedAt: true }, orderBy: { updatedAt: "desc" }, take: 1 },
+        players: {
+          select: {
+            memberships: { select: { space: { select: { _count: { select: { members: true } } } } } },
+            requests: { select: { id: true }, take: 1 },
+            envois: { where: { expiresAt: { gt: now } }, select: { id: true }, take: 1 },
+          },
+        },
+      },
+    }),
   ]);
+  const progress = new Map<string, AccountProgress>(
+    progressRows.map((user) => {
+      const memberships = user.players.flatMap((p) => p.memberships);
+      return [
+        user.id,
+        {
+          extension: user.extensions.length > 0,
+          player: user.players.length > 0,
+          key: user.personalKey !== null,
+          requested: user.players.some((p) => p.requests.length > 0 || p.memberships.length > 0),
+          member: memberships.length > 0,
+          withOthers: memberships.some((m) => m.space._count.members > 1),
+          sharing: user.players.some((p) => p.envois.length > 0),
+        },
+      ];
+    }),
+  );
+  const progressOf = (id: string) => {
+    const p = progress.get(id);
+    return p ? reachedStep(p) : "—";
+  };
+  const steps = funnel([...progress.values()]);
+  const returned = progressRows.filter((u) => returnedLater(u.createdAt, u.sessions[0]?.updatedAt ?? null)).length;
   const ofSpace = <T extends { spaceId: string }>(rows: readonly T[], id: string) => rows.find((r) => r.spaceId === id);
   // Last activity: a member joined, a Demande moved, a relevé was shared.
   const rows = spaces
@@ -101,6 +144,29 @@ export default async function AdminAccountsPage({
           adresses sont masquées.
         </p>
       </PageHeader>
+
+      <Panel
+        title="Du compte à l'espace utilisé"
+        aside={
+          <span className="text-xs text-muted-foreground">
+            {formatNumber(total)} comptes · {formatNumber(returned)} revenus après le premier jour
+          </span>
+        }
+      >
+        <ValueBars
+          rows={steps.map((step) => ({
+            key: step.label,
+            label: step.label,
+            value: step.count,
+            text: `${formatNumber(step.count)} · ${percent(step.share)}${step.lost > 0 ? ` · −${formatNumber(step.lost)}` : ""}`,
+          }))}
+        />
+        <p className="mt-3 text-xs text-muted-foreground">
+          Comptes arrivés à chaque étape, part de tous les comptes, et perdus depuis l&apos;étape d&apos;avant. Une
+          étape plus loin compte les précédentes comme faites. « Revenus »&nbsp;: vus plus d&apos;un jour après
+          l&apos;inscription (une déconnexion efface la trace).
+        </p>
+      </Panel>
 
       <Panel
         flush
@@ -167,6 +233,7 @@ export default async function AdminAccountsPage({
                   <TableHead>Joueurs</TableHead>
                   <TableHead>Extension</TableHead>
                   <TableHead>Clé de chiffrement</TableHead>
+                  <TableHead>Étape atteinte</TableHead>
                   <TableHead>Créé le</TableHead>
                   <TableHead className="pr-4">Dernière connexion</TableHead>
                 </TableRow>
@@ -190,6 +257,7 @@ export default async function AdminAccountsPage({
                       <TableCell className="whitespace-nowrap">
                         {account.personalKey ? "✓ créée" : "— aucune"}
                       </TableCell>
+                      <TableCell className="whitespace-nowrap">{progressOf(account.id)}</TableCell>
                       <TableCell className="whitespace-nowrap">{shortDate(account.createdAt, now)}</TableCell>
                       <TableCell className="pr-4 whitespace-nowrap text-muted-foreground">
                         {session ? formatPastTime(session.updatedAt, now) : "—"}

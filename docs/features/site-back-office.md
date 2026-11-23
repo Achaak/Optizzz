@@ -38,9 +38,9 @@ Le format de `report` est décrit et relu par des schémas zod dans `apps/web/sr
 
 ## Comptes et Espaces (`/admin/comptes`)
 
-- **Espaces d'alliance**, du plus récemment actif au moins : serveur, membres, adhésions en attente, Demandes en cours, relevés partagés encore valables, état de Discord (✓ actif, ▲ refusé, — aucun) et des rappels du site (✓ actifs, ▲ suspendus, — aucun), création, dernière activité (un membre arrivé, une Demande qui bouge, un relevé partagé).
-- **Comptes**, les plus récents d'abord, 50 par page : adresse masquée (`a•••@gmail.com`), Joueurs rattachés (serveur et pseudo), extensions liées, Clé de chiffrement créée ou non, création, dernière connexion.
-- Ni contenu chiffré ni adresse en entier. Logique : `apps/web/src/lib/admin/accounts.ts` (testée).
+- **Du compte à l'espace utilisé** (ajouté le 2026-11-23, après le constat de 34 comptes et d'aucun Espace utilisé) : un entonnoir sur tous les comptes, en barres. Étapes : compte créé, extension liée, Joueur rattaché, phrase choisie (Clé de chiffrement), demande ou espace, dans un espace, espace à plusieurs (au moins un autre membre), partage des relevés (un Envoi encore valable). Pour chaque étape : les comptes qui l'ont atteinte, leur part de tous les comptes, et les perdus depuis l'étape d'avant. Une étape plus loin compte les précédentes comme faites : un Joueur rattaché vaut extension liée même si elle a été déliée depuis. À côté : les comptes **revenus après le premier jour** (dernière session mise à jour plus de 24 h après l'inscription ; la session n'est prolongée qu'une fois par jour, et une déconnexion ou une session expirée efface la trace, donc c'est un minimum).- **Espaces d'alliance**, du plus récemment actif au moins : serveur, membres, adhésions en attente, Demandes en cours, relevés partagés encore valables, état de Discord (✓ actif, ▲ refusé, — aucun) et des rappels du site (✓ actifs, ▲ suspendus, — aucun), création, dernière activité (un membre arrivé, une Demande qui bouge, un relevé partagé).
+- **Comptes**, les plus récents d'abord, 50 par page : adresse masquée (`a•••@gmail.com`), Joueurs rattachés (serveur et pseudo), extensions liées, Clé de chiffrement créée ou non, étape atteinte de l'entonnoir, création, dernière connexion.
+- Ni contenu chiffré ni adresse en entier. Logique : `apps/web/src/lib/admin/accounts.ts` et `funnel.ts` (testées).
 
 ## Audience (`/admin/audience`)
 
