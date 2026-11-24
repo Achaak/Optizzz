@@ -21,6 +21,11 @@ export interface Settings {
   /** Units kept home, by unit key. */
   reserve: Record<string, number>;
   dispatch: Dispatch;
+  /**
+   * « Prévision de TdC »: cm² the player expects to gain (+) or lose (-) between the launch and the fight, a flood
+   * sent to other hunters or received; added to the arrival field on every launch while it is on.
+   */
+  fieldForecast: { enabled: boolean; change: number };
   /** Every setting shown; the simple view otherwise. */
   advanced: boolean;
   open: boolean;
@@ -34,6 +39,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ratio: 8,
   reserve: {},
   dispatch: "mix",
+  fieldForecast: { enabled: false, change: 0 },
   advanced: false,
   open: true,
   sections: { data: true, parameters: true, result: true, byField: false, launch: true, details: false },
@@ -57,6 +63,7 @@ export async function readSettings(host: string): Promise<Settings> {
     ...stored,
     sections: { ...DEFAULT_SETTINGS.sections, ...stored?.sections },
     columns: { ...DEFAULT_SETTINGS.columns, ...stored?.columns },
+    fieldForecast: { ...DEFAULT_SETTINGS.fieldForecast, ...stored?.fieldForecast },
   };
   // Objectives dropped since (« zéro perte », « pertes rares ») fall back to the default.
   if (!["yield", "ratio"].includes(settings.objective)) settings.objective = DEFAULT_SETTINGS.objective;
@@ -72,4 +79,16 @@ export function huntableArmy(available: Readonly<Record<string, number>>, reserv
   return Object.fromEntries(
     Object.entries(available).map(([unit, count]) => [unit, Math.max(0, count - (reserve[unit] ?? 0))]),
   );
+}
+
+/**
+ * The field when the hunts fight: the field at launch, what the hunts under way bring back, and the forecast change
+ * when it is on. Never below 1 cm².
+ */
+export function forecastArrivalField(
+  launchField: number,
+  ongoingGain: number,
+  forecast: Settings["fieldForecast"],
+): number {
+  return Math.max(1, launchField + ongoingGain + (forecast.enabled ? forecast.change : 0));
 }

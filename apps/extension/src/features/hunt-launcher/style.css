@@ -105,6 +105,11 @@
   grid-template-columns: minmax(130px, max-content) auto auto auto 1fr;
 }
 
+/* « revenir à 1 368 746 » stays on one line */
+.parameters .row .optizzz-button-link {
+  white-space: nowrap;
+}
+
 .objective {
   display: flex;
   flex-wrap: wrap;
@@ -122,6 +127,19 @@
   display: inline-flex;
   align-items: center;
   gap: var(--optizzz-space-1);
+}
+
+/* « Prévision de TdC »: the box, its signed field, what it does; in both views */
+.field-forecast {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--optizzz-space-2) var(--optizzz-space-3);
+  margin: var(--optizzz-space-2) 0 var(--optizzz-space-3);
+}
+
+.field-forecast input[type="text"] {
+  text-align: right;
 }
 
 .return-target {

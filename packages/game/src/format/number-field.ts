@@ -1,7 +1,7 @@
 export interface NumberFieldRules {
   min?: number;
   max?: number;
-  /** Rounds down to a whole number. */
+  /** Drops the decimals (towards zero). */
   integer?: boolean;
   /** An empty field means « no value » (null) instead of being refused. */
   allowEmpty?: boolean;
@@ -11,11 +11,12 @@ export interface NumberFieldRules {
 
 const SUFFIXES: Record<string, number> = { k: 1e3, m: 1e6 };
 
-/** « 10 000 », « 10k », « 1,5 M » → the number, spaces left out; null when unreadable. */
+/** « 10 000 », « 10k », « 1,5 M », « -2k » → the number, spaces left out; null when unreadable. */
 function readAmount(text: string): number | null {
-  const match = /^(\d+(?:\.\d+)?)([km])?$/i.exec(text.replace(/[\s\u00a0\u202f]/g, ""));
-  if (!match?.[1]) return null;
-  return Number(match[1]) * (match[2] ? (SUFFIXES[match[2].toLowerCase()] ?? 1) : 1);
+  const match = /^([+\-\u2212])?(\d+(?:\.\d+)?)([km])?$/i.exec(text.replace(/[\s\u00a0\u202f]/g, ""));
+  if (!match?.[2]) return null;
+  const sign = match[1] === "-" || match[1] === "\u2212" ? -1 : 1;
+  return sign * Number(match[2]) * (match[3] ? (SUFFIXES[match[3].toLowerCase()] ?? 1) : 1);
 }
 
 /**
@@ -27,7 +28,7 @@ export function parseNumberField(text: string, rules: NumberFieldRules = {}): nu
   if (trimmed === "") return rules.allowEmpty ? null : undefined;
   let value = rules.amount ? (readAmount(trimmed) ?? NaN) : Number(trimmed);
   if (!Number.isFinite(value)) return undefined;
-  if (rules.integer) value = Math.floor(value);
+  if (rules.integer) value = Math.trunc(value);
   if (rules.min !== undefined) value = Math.max(rules.min, value);
   if (rules.max !== undefined) value = Math.min(rules.max, value);
   return value;

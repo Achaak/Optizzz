@@ -8,6 +8,8 @@ interface Props extends InputProps, NumberFieldRules {
   value: number | null;
   /** Called once the player is done typing (pause, Enter, leaving the field), with a valid value only. */
   onCommit: (value: number | null) => void;
+  /** An amount shown with its sign (« +5 000 », « −12 000 »): a change rather than a total. */
+  signed?: boolean;
   /** Pause after the last keystroke before the value is committed. */
   commitDelayMs?: number;
 }
@@ -17,7 +19,7 @@ interface Props extends InputProps, NumberFieldRules {
  * computation that answers later, and only a valid, clamped number is passed on.
  */
 export function NumberField(props: Props) {
-  const { value, onCommit, min, max, integer, allowEmpty, amount, commitDelayMs = 600, ...input } = props;
+  const { value, onCommit, min, max, integer, allowEmpty, amount, signed, commitDelayMs = 600, ...input } = props;
   const [draft, setDraft] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -33,7 +35,7 @@ export function NumberField(props: Props) {
       {...input}
       // An amount is text, to take « 10 000 » or « 10k »; shown as the game writes it.
       {...(amount ? { type: "text", inputMode: "decimal" as const } : { type: "number", min, max })}
-      value={draft ?? (value === null ? "" : amount ? formatNumber(value) : value)}
+      value={draft ?? (value === null ? "" : amount ? amountText(value, signed) : value)}
       onChange={(event) => {
         const text = event.target.value;
         setDraft(text);
@@ -53,4 +55,9 @@ export function NumberField(props: Props) {
       }}
     />
   );
+}
+
+function amountText(value: number, signed = false): string {
+  if (!signed || value === 0) return formatNumber(value);
+  return `${value < 0 ? "\u2212" : "+"}${formatNumber(Math.abs(value))}`;
 }

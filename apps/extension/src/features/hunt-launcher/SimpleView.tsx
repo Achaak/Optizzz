@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Plan } from "@optizzz/game/hunt/planner";
 import type { Settings } from "./settings";
 import { formatChance, presetOf, PRESETS, promotionCounts, splitText } from "@optizzz/game/hunt/texts";
@@ -18,11 +19,14 @@ interface Props {
   /** What the advanced settings change that the simple view does not show, as short phrases. */
   custom: string[];
   onAdvanced: () => void;
+  /** « Prévision de TdC », shared with the advanced view. */
+  forecast: ReactNode;
   now: Date;
 }
 
 /** The launcher for players who want one choice and the figures that matter. */
-export function SimpleView({ settings, updateSettings, plan, layingSpeed, hasTroops, custom, onAdvanced, now }: Props) {
+export function SimpleView(props: Props) {
+  const { settings, updateSettings, plan, layingSpeed, hasTroops, custom, onAdvanced, now } = props;
   const preset = presetOf(settings);
   const hunts = plan?.hunts ?? [];
   const lost = hunts.reduce((sum, hunt) => sum + hunt.outcome.lostUnits.mean, 0);
@@ -70,6 +74,7 @@ export function SimpleView({ settings, updateSettings, plan, layingSpeed, hasTro
           </span>
         </label>
       )}
+      {props.forecast}
 
       {plan && hunts.length > 0 && (
         <>

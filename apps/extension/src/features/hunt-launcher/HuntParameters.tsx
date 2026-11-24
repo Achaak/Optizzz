@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { REFERENCE_RATIOS } from "@optizzz/game/hunt/calystene";
 import { amountForDuration, huntDurationSeconds } from "@optizzz/game/hunt/difficulty";
 import type { RatioChoice } from "@optizzz/game/hunt/extras";
@@ -20,6 +20,8 @@ interface Props {
   readArrivalField: number;
   onLaunchField: (field: number | null) => void;
   onArrivalField: (field: number | null) => void;
+  /** « Prévision de TdC », shared with the simple view. */
+  forecast: ReactNode;
   /** Null: the planner chooses. */
   huntCount: number | null;
   huntAmount: number | null;
@@ -73,7 +75,7 @@ export function HuntParameters(props: Props) {
           )}
         </label>
         <label className="row">
-          <span title="Votre TDC quand les chasses combattront : celui d'aujourd'hui plus ce que rapportent les chasses en cours. Changez-le si vous attendez un flood.">
+          <span title="Votre TDC quand les chasses combattront : celui d'aujourd'hui plus ce que rapportent les chasses en cours, et la prévision de TdC si elle est cochée. Changez-le si vous attendez un flood.">
             TdC à l'arrivée
           </span>
           <NumberField
@@ -93,6 +95,7 @@ export function HuntParameters(props: Props) {
           )}
         </label>
       </div>
+      {props.forecast}
 
       <div className="objective">
         <div className="optizzz-segmented" role="group" aria-label="Objectif">

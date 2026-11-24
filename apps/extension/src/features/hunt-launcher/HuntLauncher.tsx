@@ -10,6 +10,7 @@ import type { RatioChoice } from "@optizzz/game/hunt/extras";
 import { summarize, type Objective, type Plan, type PlanInput } from "@optizzz/game/hunt/planner";
 import type { Extras } from "@optizzz/game/hunt/requests";
 import { armyFromKeys, armyToKeys, UNITS } from "@optizzz/game/army/units";
+import { FieldForecast } from "./FieldForecast";
 import { FieldTable, HuntDetails } from "./HuntDetails";
 import { HuntParameters } from "./HuntParameters";
 import { HuntResult } from "./HuntResult";
@@ -19,7 +20,14 @@ import { hasNoArmyToSend, readHuntForm, type HuntForm, type OngoingHunt } from "
 import { PlayerData } from "./PlayerData";
 import { SimpleView } from "./SimpleView";
 import { SiteLinks } from "./SiteLinks";
-import { DEFAULT_SETTINGS, huntableArmy, readSettings, writeSettings, type SectionKey } from "./settings";
+import {
+  DEFAULT_SETTINGS,
+  forecastArrivalField,
+  huntableArmy,
+  readSettings,
+  writeSettings,
+  type SectionKey,
+} from "./settings";
 import { huntsText, unitsText } from "@optizzz/game/hunt/texts";
 import { formatAmount, formatNumber } from "@optizzz/game/format/number-format";
 import { Amount } from "@/utils/Amount";
@@ -61,7 +69,13 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   const [launchEdit, setLaunchEdit] = useState<number | null>(null);
   const [arrivalEdit, setArrivalEdit] = useState<number | null>(null);
   const launchField = launchEdit ?? currentField;
-  const arrivalField = arrivalEdit ?? launchField + ongoingGain;
+  // What the arrival field comes back to: the forecast (flood planned…) counts until the player types one.
+  const forecastField = forecastArrivalField(
+    launchField,
+    ongoingGain,
+    settings?.fieldForecast ?? DEFAULT_SETTINGS.fieldForecast,
+  );
+  const arrivalField = arrivalEdit ?? forecastField;
   const [huntCount, setHuntCount] = useState<number | null>(null);
   const [huntAmount, setHuntAmount] = useState<number | null>(null);
   const [answered, setAnswered] = useState<{ input: PlanInput; answer: Plan } | null>(null);
@@ -325,6 +339,19 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
   // Changing what the plan is computed from drops the hunts changed by hand.
   const reset = () => setOverride(null);
 
+  const forecast = (
+    <FieldForecast
+      forecast={settings.fieldForecast}
+      onChange={(fieldForecast) => {
+        updateSettings((s) => ({ ...s, fieldForecast }));
+        // The forecast sets the arrival field again: a field typed before would hide it.
+        setArrivalEdit(null);
+      }}
+      hidden={arrivalEdit !== null}
+      onApply={() => setArrivalEdit(null)}
+    />
+  );
+
   const launchArea = hasPlan && (
     <>
       <HuntTable
@@ -455,6 +482,7 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
           hasTroops={UNITS.some((unit) => unit.key !== "JSN" && unit.promotesTo && (form.available[unit.key] ?? 0) > 0)}
           custom={custom}
           onAdvanced={() => setAdvanced(true)}
+          forecast={forecast}
           now={now}
         />
         {notices}
@@ -518,9 +546,10 @@ export function HuntLauncher({ origin, currentField, ongoing, readAt, probes }: 
           launchField={launchField}
           arrivalField={arrivalField}
           readLaunchField={currentField}
-          readArrivalField={launchField + ongoingGain}
+          readArrivalField={forecastField}
           onLaunchField={setLaunchEdit}
           onArrivalField={setArrivalEdit}
+          forecast={forecast}
           huntCount={huntCount}
           huntAmount={huntAmount}
           planCount={answer?.hunts.length ?? 1}

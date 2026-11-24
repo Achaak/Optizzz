@@ -27,6 +27,15 @@ describe("parseNumberField", () => {
     expect(parseNumberField("10 000")).toBeUndefined();
   });
 
+  it("reads a signed amount", () => {
+    const amount = { amount: true };
+    expect(parseNumberField("-12 000", amount)).toBe(-12_000);
+    expect(parseNumberField("\u221212k", amount)).toBe(-12_000);
+    expect(parseNumberField("+5 000", amount)).toBe(5_000);
+    expect(parseNumberField("-12 000", { ...amount, min: 1 })).toBe(1);
+    expect(parseNumberField("--5", amount)).toBeUndefined();
+  });
+
   it("refuses an empty or unreadable field unless empty is allowed", () => {
     expect(parseNumberField("")).toBeUndefined();
     expect(parseNumberField("abc")).toBeUndefined();
