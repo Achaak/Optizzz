@@ -106,6 +106,15 @@ Tickets 15, 15b et 15c. Le format des octets et le modèle de confiance sont dan
 
 Tout ce qui suit vit dans le schéma Postgres `accounts`, que le site de production écrit avec le rôle `optizzz_app` et que le rôle en lecture seule `optizzz_read` ne voit pas (ADR 0008). E-mail, sessions, hachages des jetons d'extension, Joueurs (serveur, id, pseudo, date de déclaration), clé publique et clé privée chiffrée (avec les paramètres d'Argon2id), espaces (serveur, tag, nom), appartenances (Joueur, rôle, date), Clés d'alliance scellées (une par membre et par version), demandes à rejoindre, certificats et révocations signés par les Admins (en clair), liste de confiance de chaque membre (chiffrée pour lui seul). Jamais la Phrase de chiffrement, jamais une clé en clair.
 
+## Entrée dans les Espaces : liaison et rattachement (2026-11-24)
+
+Décidé après l'entonnoir du back office (`site-back-office.md`) : sur 34 comptes, 21 n'avaient jamais lié l'extension, 6 l'avaient liée sans rattacher de Joueur. Choix du propriétaire : l'offre dans le jeu va sur la page Membres de l'alliance ; « Rattacher » est aussi proposé sur optizzz.fr juste après la liaison.
+
+- **Retour après la connexion** : « Se connecter » de `/connect-extension` mène à `/login?next=/connect-extension`. Le lien magique ouvert dans les 30 minutes (la durée d'une demande de liaison) ramène sur `/connect-extension`, et l'extension se lie d'elle-même : plus besoin de recliquer « Connecter mon Compte Optizzz ». `returnPath` (`src/lib/login-links.ts`) accepte cette seule adresse en plus des espaces.
+- **`/spaces` sans Joueur** : trois étapes numérotées (installer l'extension, avec les liens Chrome Web Store et AMO ; la connecter ; rattacher son pseudo), les étapes faites marquées « ✓ … fait ».
+- **« Rattacher » sur `/connect-extension`** : une fois liée, le script de liaison demande au fond l'offre du dernier onglet du jeu (la même que dans les paramètres) et la dessine dans l'emplacement vide `data-optizzz-attach` de la page (`ATTACH_SLOT_ATTRIBUTE`), dans une racine fantôme fermée : les scripts du site ne la lisent pas et un clic qu'ils fabriqueraient est ignoré. Messages `optizzz-link` `offer`, `attach`, `decline`, acceptés du seul script de liaison ; le fond ne rattache que le Joueur qu'il a lui-même proposé. Sans offre (jeu jamais ouvert, Joueur déjà rattaché ou refusé), la page dit où le faire.
+- **Page Membres de l'alliance** (`alliance.php?Membres`, tableau du jeu et vues d'alliance d'Optizzz ; `members-offer.ts`, interrupteur « Compte Optizzz ») : au-dessus du contenu, une fois, « Connecter mon Compte Optizzz » pour une extension non liée (ce que l'Espace apporte, « Facultatif. Sans compte lié, rien ne part de votre navigateur. »), ou « Rattacher Pseudo (S5) » pour une extension liée dont le Joueur ne l'est pas. Chaque offre a son « Non merci », mémorisé (`connectOfferDeclined`, et la liste des refus de rattachement). L'état est lu sans requête au site (`status` avec `quiet`) : le fond ne parle toujours au site qu'à l'ouverture des paramètres et sur un clic.
+
 ## Comptes Optizzz : réalisation (ticket 14)
 
 Décisions prises en codant :

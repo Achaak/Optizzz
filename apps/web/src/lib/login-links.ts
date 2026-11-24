@@ -14,8 +14,12 @@ export function verifyLinkPath(token: string): string {
   return `/api/auth/magic-link/verify?${params.toString()}`;
 }
 
-/** Where to go back after signing in (an invitation link, /spaces): only those pages of the site, nothing else. */
+/**
+ * Where to go back after signing in (an invitation link, /spaces, or /connect-extension, where the extension's link
+ * asked less than 30 minutes ago completes by itself): only those pages of the site, nothing else.
+ */
 export function returnPath(value: string | null): string | null {
+  if (value === "/connect-extension") return value;
   return value !== null && /^\/spaces(\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/.test(value)
     ? value
     : null;

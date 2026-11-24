@@ -12,6 +12,11 @@ describe("returnPath", () => {
     expect(returnPath("/spaces/../account")).toBeNull();
     expect(returnPath(null)).toBeNull();
   });
+
+  it("goes back to the extension's link page, where a pending link completes by itself", () => {
+    expect(returnPath("/connect-extension")).toBe("/connect-extension");
+    expect(returnPath("/connect-extension/x")).toBeNull();
+  });
 });
 
 describe("confirmLinkUrl", () => {

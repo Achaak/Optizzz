@@ -9,6 +9,12 @@ export const CONNECT_EXTENSION_PATH = "/connect-extension";
 export const LINK_STATE_ATTRIBUTE = "data-optizzz-link";
 
 /**
+ * Where on that page the extension's script draws « Rattacher Pseudo (S5) à votre Compte Optizzz », once linked: an
+ * empty element the page leaves alone, which the script fills inside its own closed shadow root.
+ */
+export const ATTACH_SLOT_ATTRIBUTE = "data-optizzz-attach";
+
+/**
  * - `linking`: the extension is asking for its token;
  * - `linked`: done;
  * - `not-requested`: the extension is there but was not asked to link (« Connecter mon Compte Optizzz » not clicked);

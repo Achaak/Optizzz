@@ -23,7 +23,8 @@ export interface AccountStatus {
 }
 
 export type AccountAction =
-  | { type: "optizzz-account"; action: "status"; origin: string | null }
+  /** `quiet`: from what is kept, without asking the site (the game's pages: only the settings and clicks ask it). */
+  | { type: "optizzz-account"; action: "status"; origin: string | null; quiet?: boolean }
   | { type: "optizzz-account"; action: "attach"; origin: string }
   | { type: "optizzz-account"; action: "decline"; origin: string }
   | { type: "optizzz-account"; action: "disconnect" }
@@ -34,7 +35,18 @@ export type AccountAction =
   | { type: "optizzz-account"; action: "choose"; server: string; pseudo: string; choices: EnvoiChoices };
 
 export type LinkMessage =
-  { type: "optizzz-link"; action: "start" } | { type: "optizzz-link"; action: "token"; token: string };
+  | { type: "optizzz-link"; action: "start" }
+  | { type: "optizzz-link"; action: "token"; token: string }
+  /** Once linked: the Player to offer to attach, from the last game tab, as in the popup. */
+  | { type: "optizzz-link"; action: "offer" }
+  /** « Rattacher » or « Non merci », on a click in the link script's own box. */
+  | { type: "optizzz-link"; action: "attach" | "decline" };
+
+/** What the link script shows: the offer, and what the last action did. */
+export interface LinkOffer {
+  offer: { serverName: string; pseudo: string } | null;
+  notice: { kind: "success" | "error"; text: string } | null;
+}
 
 /**
  * From the space script on optizzz.fr: the last Members page list kept for a server (« s5 »), the Clé d'alliance the
@@ -67,7 +79,9 @@ export function isAccountAction(message: unknown): message is AccountAction {
   if (m?.type !== "optizzz-account") return false;
   switch (m.action) {
     case "status":
-      return m.origin === null || typeof m.origin === "string";
+      return (
+        (m.origin === null || typeof m.origin === "string") && (m.quiet === undefined || typeof m.quiet === "boolean")
+      );
     case "attach":
     case "decline":
       return typeof m.origin === "string";
@@ -137,7 +151,13 @@ export function isEnvoiMessage(message: unknown): message is EnvoiMessage {
 export function isLinkMessage(message: unknown): message is LinkMessage {
   const m = record(message);
   if (m?.type !== "optizzz-link") return false;
-  return m.action === "start" || (m.action === "token" && typeof m.token === "string" && /^[\w-]{43}$/.test(m.token));
+  return (
+    m.action === "start" ||
+    m.action === "offer" ||
+    m.action === "attach" ||
+    m.action === "decline" ||
+    (m.action === "token" && typeof m.token === "string" && /^[\w-]{43}$/.test(m.token))
+  );
 }
 
 export function isSpaceMessage(message: unknown): message is SpaceMessage {

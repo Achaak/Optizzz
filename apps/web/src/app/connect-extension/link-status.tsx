@@ -1,7 +1,8 @@
 "use client";
 
-import { LINK_STATE_ATTRIBUTE, type LinkState } from "@optizzz/game/site-links/extension-link";
+import { ATTACH_SLOT_ATTRIBUTE, LINK_STATE_ATTRIBUTE, type LinkState } from "@optizzz/game/site-links/extension-link";
 import Link from "next/link";
+import { CHROME_STORE, FIREFOX_ADDONS } from "~/lib/extension-stores";
 import { useEffect, useState } from "react";
 
 /** Without a word from the extension after this, it is not installed, or has not been given optizzz.fr. */
@@ -45,11 +46,14 @@ export function LinkStatus({ email }: { email: string }) {
           <p className="font-medium">
             C&apos;est fait : l&apos;extension de ce navigateur est liée à votre Compte Optizzz.
           </p>
+          {/* The extension draws « Rattacher Pseudo (S5) » here, in its own shadow root: React leaves it empty. */}
+          <div {...{ [ATTACH_SLOT_ATTRIBUTE]: "" }} />
           <p className="text-muted-foreground">
-            Vous pouvez fermer cet onglet. L&apos;extension vous proposera de rattacher votre Joueur la prochaine fois
-            que vous ouvrirez ses paramètres.{" "}
-            <Link href="/account" className="underline">
-              Mon compte
+            Pour rejoindre un Espace d&apos;alliance, rattachez votre pseudo du jeu. Si rien n&apos;est proposé
+            ci-dessus, ouvrez une page du jeu, puis les paramètres de l&apos;extension (icône Optizzz)&nbsp;:
+            «&nbsp;Rattacher&nbsp;».{" "}
+            <Link href="/spaces" className="underline">
+              Espaces d&apos;alliance
             </Link>
           </p>
         </>
@@ -65,6 +69,19 @@ export function LinkStatus({ email }: { email: string }) {
             Dans les paramètres de l&apos;extension Optizzz («&nbsp;Fonctionnalités&nbsp;»), cliquez «&nbsp;Connecter
             mon Compte Optizzz&nbsp;» : elle vous demandera l&apos;accès à optizzz.fr, puis reviendra ici.
           </p>
+          {state === "absent" && (
+            <p className="text-muted-foreground">
+              Pas encore installée&nbsp;? L&apos;extension Optizzz{" "}
+              <a href={CHROME_STORE} className="underline">
+                pour Chrome
+              </a>{" "}
+              ou{" "}
+              <a href={FIREFOX_ADDONS} className="underline">
+                pour Firefox
+              </a>
+              .
+            </p>
+          )}
         </>
       )}
     </div>

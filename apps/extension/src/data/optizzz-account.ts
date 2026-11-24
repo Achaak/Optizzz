@@ -21,6 +21,7 @@ const LINK_REQUESTED_KEY = "local:optizzzAccount:linkRequestedAt";
 const PLAYERS_KEY = "local:optizzzAccount:players";
 const DECLINED_KEY = "local:optizzzAccount:declined";
 const LAST_SERVER_KEY = "local:optizzzAccount:lastServer";
+const CONNECT_OFFER_DECLINED_KEY = "local:optizzzAccount:connectOfferDeclined";
 const playerKey = (origin: string) => `local:optizzzAccount:player:${new URL(origin).host}` as const;
 
 /**
@@ -73,6 +74,15 @@ export async function decline(server: string, pseudo: string): Promise<void> {
   const declined = new Set(await loadDeclined());
   declined.add(declinedKey(server, pseudo));
   await storage.setItem(DECLINED_KEY, [...declined]);
+}
+
+/** « Non merci » to « Connecter mon Compte Optizzz » on the alliance's Members page: not offered again. */
+export async function loadConnectOfferDeclined(): Promise<boolean> {
+  return (await storage.getItem<boolean>(CONNECT_OFFER_DECLINED_KEY)) ?? false;
+}
+
+export async function declineConnectOffer(): Promise<void> {
+  await storage.setItem(CONNECT_OFFER_DECLINED_KEY, true);
 }
 
 /** The pseudo of the game's header, kept by `collect` per server, and the server of the last game tab. */

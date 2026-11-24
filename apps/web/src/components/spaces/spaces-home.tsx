@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button } from "~/components/ui/button";
+import { CHROME_STORE, FIREFOX_ADDONS } from "~/lib/extension-stores";
 import { Input } from "~/components/ui/input";
 import { shortDate } from "~/lib/short-date";
 import { newSpace } from "~/lib/spaces/access";
@@ -46,19 +47,7 @@ export function SpacesHome() {
         lire.
       </PageHeader>
       {players.length === 0 ? (
-        <Panel title="Rattacher votre Joueur">
-          {extensionLinked ? (
-            <p>
-              Ouvrez le jeu&nbsp;: l&apos;extension liée vous proposera de rattacher votre pseudo à votre Compte
-              Optizzz. Revenez ensuite ici.
-            </p>
-          ) : (
-            <p>
-              Un espace se rejoint avec votre pseudo du jeu, rattaché par l&apos;extension Optizzz. Dans ses paramètres
-              («&nbsp;Fonctionnalités&nbsp;»), cliquez «&nbsp;Connecter mon Compte Optizzz&nbsp;», puis ouvrez le jeu.
-            </p>
-          )}
-        </Panel>
+        <GetStarted extensionLinked={extensionLinked} />
       ) : (
         <div className="grid items-start gap-6 lg:grid-cols-2">
           {players.map((player) => (
@@ -67,6 +56,76 @@ export function SpacesHome() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Before any Player: the extension to install, to link, then the pseudo to attach, in that order. */
+function GetStarted({ extensionLinked }: { extensionLinked: boolean }) {
+  const step = (n: number, done: boolean) => (
+    <span
+      aria-hidden
+      className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold"
+    >
+      {done ? "✓" : n}
+    </span>
+  );
+  return (
+    <Panel title="Pour rejoindre l'espace de votre alliance">
+      <p className="text-muted-foreground">
+        Un espace se rejoint avec votre pseudo du jeu, que seule l&apos;extension Optizzz peut rattacher à ce compte.
+        Trois étapes, une seule fois.
+      </p>
+      <ol className="mt-4 space-y-4">
+        <li className="flex gap-3">
+          {step(1, extensionLinked)}
+          <div className="space-y-2">
+            <p className="font-medium">
+              Installer l&apos;extension{extensionLinked && <span className="text-muted-foreground"> · fait</span>}
+            </p>
+            {!extensionLinked && (
+              <p className="flex flex-wrap gap-2">
+                <a href={CHROME_STORE} className="rounded-full border px-3 py-1 font-medium hover:bg-accent">
+                  Pour Chrome
+                </a>
+                <a href={FIREFOX_ADDONS} className="rounded-full border px-3 py-1 font-medium hover:bg-accent">
+                  Pour Firefox
+                </a>
+                <span className="self-center text-muted-foreground">
+                  Déjà installée&nbsp;? Passez à l&apos;étape 2.
+                </span>
+              </p>
+            )}
+          </div>
+        </li>
+        <li className="flex gap-3">
+          {step(2, extensionLinked)}
+          <div className="space-y-1">
+            <p className="font-medium">
+              La connecter à ce compte
+              {extensionLinked && <span className="text-muted-foreground"> · fait</span>}
+            </p>
+            {!extensionLinked && (
+              <p className="text-muted-foreground">
+                Cliquez sur l&apos;icône Optizzz dans la barre du navigateur, puis «&nbsp;Connecter mon Compte
+                Optizzz&nbsp;». L&apos;extension demande l&apos;accès à optizzz.fr et revient sur ce site, sur ce
+                navigateur.
+              </p>
+            )}
+          </div>
+        </li>
+        <li className="flex gap-3">
+          {step(3, false)}
+          <div className="space-y-1">
+            <p className="font-medium">Rattacher votre pseudo</p>
+            <p className="text-muted-foreground">
+              {extensionLinked
+                ? "Ouvrez la page Membres de votre alliance dans le jeu, ou l'icône Optizzz sur une page du jeu : « Rattacher Pseudo (S5) à votre Compte Optizzz ». Revenez ensuite ici."
+                : "Proposé juste après la connexion de l'extension, sur un clic."}
+            </p>
+          </div>
+        </li>
+      </ol>
+    </Panel>
   );
 }
 

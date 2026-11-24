@@ -11,6 +11,7 @@ import { convoyHistory, convoyPlanner, convoyWorkers } from "./convoy";
 import { allianceConvoys, envoiRelay } from "./optizzz-account/alliance-convoys";
 import { allianceDemandes, demandeLevels } from "./optizzz-account/alliance-demandes";
 import { allianceFloods } from "./optizzz-account/alliance-floods";
+import { membersOffer } from "./optizzz-account/members-offer";
 import { stateRereads } from "./optizzz-account/state-rereads";
 import { endTimes } from "./end-times";
 import type { Feature } from "./feature";
@@ -64,6 +65,7 @@ export const features: Feature[] = [
   allianceDemandes,
   demandeLevels,
   allianceFloods,
+  membersOffer,
   targets,
   membersColumns,
   profileProduction,

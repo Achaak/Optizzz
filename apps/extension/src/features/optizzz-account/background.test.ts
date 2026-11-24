@@ -268,6 +268,30 @@ describe("linked", () => {
     expect(await loadLink()).toBeNull();
   });
 
+  it("reads what is kept, without asking the site, for a quiet status from the game", async () => {
+    const quiet = { type: "optizzz-account", action: "status", origin: S5, quiet: true } as const;
+    expect(await answer(service(), quiet, "game")).toMatchObject({ offer: { pseudo: "Calystene" } });
+    expect(site.calls).toEqual([]);
+  });
+
+  it("offers the same Player on the link page, and attaches or forgets it from there", async () => {
+    expect(await service().linkOffer()).toEqual({
+      offer: { serverName: "S5", pseudo: "Calystene" },
+      notice: null,
+    });
+    expect(await service().linkAnswer("attach")).toEqual({
+      offer: null,
+      notice: { kind: "success", text: "Calystene (S5) est rattaché à votre Compte Optizzz." },
+    });
+    expect(site.calls.at(-1)).toMatchObject({ body: { server: "s5", pseudo: "Calystene" } });
+  });
+
+  it("forgets the offer from the link page on « Non merci », sending nothing", async () => {
+    expect(await service().linkAnswer("decline")).toEqual({ offer: null, notice: null });
+    expect(await loadDeclined()).toEqual(["s5:Calystene"]);
+    expect(site.calls).toEqual([]);
+  });
+
   it("keeps the refusals after « Déconnecter »", async () => {
     await decline("s5", "Calystene");
     await service().disconnect(null);
@@ -304,6 +328,10 @@ describe("who may send what", () => {
     await answer(service(), { type: "optizzz-account", action: "connect" }, "game");
     expect(opened).toBe(1);
     expect(await answer(service(), token, "link")).toEqual({ ok: true });
+    // The link page's offer and « Rattacher » come only from the link script.
+    expect(answer(service(), { type: "optizzz-link", action: "attach" }, "page")).toBeNull();
+    expect(answer(service(), { type: "optizzz-link", action: "offer" }, "game")).toBeNull();
+    expect(await answer(service(), { type: "optizzz-link", action: "offer" }, "link")).toMatchObject({ notice: null });
   });
 
   it("opens « Autoriser Discord » on a click in the settings only", async () => {

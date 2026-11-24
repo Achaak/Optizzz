@@ -44,6 +44,7 @@ import {
   type AccountStatus,
   type EnvoiMessage,
   type LinkMessage,
+  type LinkOffer,
   type SpaceMessage,
 } from "./messages";
 import { gameServerOf, offerFor } from "./offer";
@@ -208,6 +209,20 @@ export function accountService({ now, fetch, permitted, openConnectPage, openDis
     return { ok: true };
   }
 
+  /** What the link page offers once linked: the Player of the last game tab, as the popup would. */
+  async function linkOffer(notice: Notice = null): Promise<LinkOffer> {
+    const { offer } = await status(null);
+    return { offer: offer && { serverName: offer.serverName, pseudo: offer.pseudo }, notice };
+  }
+
+  /** « Rattacher » or « Non merci » on the link page: the offered Player only, as in the settings. */
+  async function linkAnswer(action: "attach" | "decline"): Promise<LinkOffer> {
+    const { offer } = await status(null);
+    if (!offer) return linkOffer();
+    const after = action === "attach" ? await attach(offer.origin) : await declineOffer(offer.origin);
+    return linkOffer(after.notice);
+  }
+
   /** A category checked or unchecked for one of the account's Joueurs. */
   async function choose(message: Extract<AccountAction, { action: "choose" }>): Promise<AccountStatus> {
     const attached = await loadAttachedPlayers();
@@ -225,6 +240,8 @@ export function accountService({ now, fetch, permitted, openConnectPage, openDis
     disconnect,
     linkStart,
     linkToken,
+    linkOffer,
+    linkAnswer,
     members,
     localChainRoles,
     connect: openConnectPage,
@@ -310,12 +327,22 @@ export function answer(
   }
   if (message.type === "optizzz-link") {
     if (from !== "link") return null;
-    return message.action === "start" ? service.linkStart() : service.linkToken(message.token);
+    switch (message.action) {
+      case "start":
+        return service.linkStart();
+      case "token":
+        return service.linkToken(message.token);
+      case "offer":
+        return service.linkOffer();
+      case "attach":
+      case "decline":
+        return service.linkAnswer(message.action);
+    }
   }
   if (from !== "page" && from !== "game") return null;
   switch (message.action) {
     case "status":
-      return service.status(message.origin, null, true);
+      return service.status(message.origin, null, message.quiet !== true);
     case "attach":
       return service.attach(message.origin);
     case "decline":
